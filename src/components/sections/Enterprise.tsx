@@ -10,39 +10,38 @@ import {
 } from "lucide-react";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 import { SectionReveal } from "@/components/ui/SectionReveal";
-
-const features = [
-  {
-    icon: Crown,
-    title: "Executive Contact Intelligence",
-    description:
-      "Access decision-maker data and relationship mapping for enterprise accounts.",
-  },
-  {
-    icon: Network,
-    title: "Company Relationship Mapping",
-    description:
-      "Visualize corporate structures, subsidiaries, and group affiliations across Belgium.",
-  },
-  {
-    icon: BarChart3,
-    title: "Custom Data Intelligence",
-    description:
-      "Tailored enrichment pipelines, custom filters, and proprietary scoring models.",
-  },
-  {
-    icon: HeadphonesIcon,
-    title: "Dedicated Account Manager",
-    description:
-      "Priority support, volume discounts, and a single point of contact for your team.",
-  },
-];
+import { useTranslations } from "@/providers/TranslationsProvider";
 
 export function Enterprise() {
+  const { t } = useTranslations();
+
+  const features = [
+    {
+      icon: Crown,
+      title: t("enterprise.executiveTitle"),
+      description: t("enterprise.executiveDesc"),
+    },
+    {
+      icon: Network,
+      title: t("enterprise.mappingTitle"),
+      description: t("enterprise.mappingDesc"),
+    },
+    {
+      icon: BarChart3,
+      title: t("enterprise.intelligenceTitle"),
+      description: t("enterprise.intelligenceDesc"),
+    },
+    {
+      icon: HeadphonesIcon,
+      title: t("enterprise.managerTitle"),
+      description: t("enterprise.managerDesc"),
+    },
+  ];
+
   return (
     <section
       id="enterprise"
-      className="relative overflow-hidden bg-deep-navy py-16 sm:py-24 md:py-32"
+      className="relative overflow-hidden bg-[#060a14] py-16 sm:py-24 md:py-32 dark:bg-[#040810]"
     >
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute top-0 left-1/4 h-96 w-96 rounded-full bg-primary/20 blur-[120px]" />
@@ -59,21 +58,22 @@ export function Enterprise() {
         <div className="grid items-center gap-10 sm:gap-16 lg:grid-cols-2">
           <SectionReveal direction="left">
             <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-accent">
-              Enterprise
+              {t("enterprise.eyebrow")}
             </p>
             <h2 className="text-2xl font-semibold tracking-tight text-balance text-white sm:text-3xl md:text-4xl lg:text-5xl">
-              Built for serious
+              {t("enterprise.titleLine1")}
               <br />
-              <span className="text-gradient-accent">Belgian enterprises</span>
+              <span className="text-gradient-accent">{t("enterprise.titleHighlight")}</span>
             </h2>
             <p className="mt-6 text-lg leading-relaxed text-white/60">
-              Volume lists of 10,000+ companies, API access, custom enrichment
-              pipelines, and dedicated support for teams that demand precision at
-              scale.
+              {t("enterprise.description")}
             </p>
             <div className="mt-8">
-              <MagneticButton href="#contact" className="!bg-white !text-deep-navy !shadow-white/10 hover:!bg-white/90">
-                Talk to Sales
+              <MagneticButton
+                href="#contact"
+                className="!bg-white !text-[#060a14] !shadow-white/10 hover:!bg-white/90"
+              >
+                {t("enterprise.talkToSales")}
                 <ArrowRight className="h-4 w-4" />
               </MagneticButton>
             </div>
@@ -84,12 +84,11 @@ export function Enterprise() {
               <SectionReveal key={feature.title} delay={i * 0.1}>
                 <motion.div
                   whileHover={{ y: -4 }}
-                  className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition-colors hover:border-accent/30 hover:bg-white/8 sm:rounded-2xl sm:p-6"
+                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                  className="glass rounded-2xl border-white/10 bg-white/5 p-4 transition-colors hover:border-accent/30 hover:bg-white/8 sm:p-6"
                 >
                   <feature.icon className="mb-4 h-6 w-6 text-accent" />
-                  <h3 className="mb-2 font-semibold text-white">
-                    {feature.title}
-                  </h3>
+                  <h3 className="mb-2 font-semibold text-white">{feature.title}</h3>
                   <p className="text-sm leading-relaxed text-white/50">
                     {feature.description}
                   </p>
@@ -100,8 +99,8 @@ export function Enterprise() {
         </div>
 
         <SectionReveal delay={0.3}>
-          <div className="mt-10 overflow-hidden rounded-xl border border-white/10 bg-white/5 p-1 backdrop-blur-sm sm:mt-16 sm:rounded-2xl">
-            <div className="relative h-36 overflow-hidden rounded-lg sm:h-48 sm:rounded-xl md:h-56">
+          <div className="mt-10 overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-1 backdrop-blur-sm sm:mt-16">
+            <div className="relative h-36 overflow-hidden rounded-xl sm:h-48 md:h-56">
               <svg
                 className="absolute inset-0 h-full w-full"
                 viewBox="0 0 800 200"
@@ -145,7 +144,7 @@ export function Enterprise() {
               </svg>
               <div className="absolute inset-0 flex items-center justify-center px-4">
                 <p className="text-center text-xs font-medium text-white/40 sm:text-sm">
-                  Enterprise relationship network · 2M+ nodes
+                  {t("enterprise.networkLabel")}
                 </p>
               </div>
             </div>

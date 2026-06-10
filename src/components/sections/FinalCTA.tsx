@@ -2,38 +2,41 @@
 
 import { ProgressiveContactForm } from "@/components/forms/ProgressiveContactForm";
 import { SectionReveal } from "@/components/ui/SectionReveal";
+import { AmbientGlow } from "@/components/visuals/AmbientBackground";
+import { useTranslations } from "@/providers/TranslationsProvider";
 
 export function FinalCTA() {
+  const { t } = useTranslations();
+
   return (
     <section
       id="contact"
-      className="relative overflow-hidden bg-gradient-to-b from-light-bg via-white to-light-bg py-16 sm:py-24 md:py-32"
+      className="cta-section noise-overlay relative overflow-hidden py-16 sm:py-24 md:py-32"
     >
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 h-[min(600px,100vw)] w-[min(600px,100vw)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/8 blur-[120px]" />
-      </div>
+      <AmbientGlow className="left-1/2 top-1/2 h-[min(700px,90vw)] w-[min(700px,90vw)] -translate-x-1/2 -translate-y-1/2" />
+      <div
+        className="cta-radial-pulse pointer-events-none absolute inset-0"
+        aria-hidden="true"
+      />
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid min-w-0 items-start gap-10 sm:gap-12 lg:grid-cols-2 lg:gap-16">
           <SectionReveal direction="left">
             <p className="mb-3 text-xs font-medium tracking-[0.15em] text-primary uppercase sm:mb-4 sm:text-sm sm:tracking-[0.2em]">
-              Get Started
+              {t("finalCta.eyebrow")}
             </p>
             <h2 className="text-2xl font-semibold tracking-tight text-balance text-deep-navy sm:text-3xl md:text-4xl lg:text-5xl">
-              Get your custom B2B leads list today and start reaching high-intent
-              Belgian companies with up to{" "}
+              {t("finalCta.title")}{" "}
               <span className="font-semibold text-gradient-accent">
-                72% higher engagement potential
+                {t("finalCta.titleHighlight")}
               </span>{" "}
-              than generic prospect lists.
+              {t("finalCta.titleEnd")}
             </h2>
             <p className="mt-4 text-sm text-muted sm:mt-6 sm:text-base">
-              It takes just 2 minutes to submit the form and start pitching to the
-              right people. You&apos;re one strong leads list away from your next
-              wave of clients.
+              {t("finalCta.description")}
             </p>
             <p className="mt-6 text-lg font-semibold text-gradient-accent sm:mt-8 sm:text-xl">
-              Better Leads, Better Connections, More Clients
+              {t("finalCta.tagline")}
             </p>
           </SectionReveal>
 

@@ -5,13 +5,7 @@ import { Star, Quote } from "lucide-react";
 import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { SectionReveal } from "@/components/ui/SectionReveal";
-
-const metrics = [
-  { value: 500, suffix: "+", label: "Belgian businesses served" },
-  { value: 2, suffix: "M+", label: "Companies in database" },
-  { value: 150000, suffix: "+", label: "Leads delivered" },
-  { value: 94, suffix: "%", label: "Client satisfaction" },
-];
+import { useTranslations } from "@/providers/TranslationsProvider";
 
 const logos = [
   "Deloitte Partners",
@@ -22,38 +16,44 @@ const logos = [
   "Benelux Advisory",
 ];
 
-const testimonials = [
-  {
-    quote:
-      "BelgoBase cut our prospecting time by 80%. The data quality is exceptional — every lead is actionable from day one.",
-    author: "Sophie Vermeulen",
-    role: "Head of Sales, Flanders Tech",
-    rating: 5,
-  },
-  {
-    quote:
-      "Finally, a Belgian lead provider that understands GDPR and delivers real KBO data. Our outbound conversion doubled.",
-    author: "Marc Janssens",
-    role: "CEO, Brussels Growth Co.",
-    rating: 5,
-  },
-  {
-    quote:
-      "The lookalike analysis alone was worth it. We found 200 companies matching our best clients in under 24 hours.",
-    author: "Elena De Smet",
-    role: "Growth Lead, Antwerp Digital",
-    rating: 5,
-  },
-];
-
 export function SocialProof() {
+  const { t } = useTranslations();
+
+  const metrics = [
+    { value: 500, suffix: "+", label: t("socialProof.metricBusinesses") },
+    { value: 2, suffix: "M+", label: t("socialProof.metricCompanies") },
+    { value: 150000, suffix: "+", label: t("socialProof.metricLeads") },
+    { value: 94, suffix: "%", label: t("socialProof.metricSatisfaction") },
+  ];
+
+  const testimonials = [
+    {
+      quote: t("socialProof.testimonial1Quote"),
+      author: t("socialProof.testimonial1Author"),
+      role: t("socialProof.testimonial1Role"),
+      rating: 5,
+    },
+    {
+      quote: t("socialProof.testimonial2Quote"),
+      author: t("socialProof.testimonial2Author"),
+      role: t("socialProof.testimonial2Role"),
+      rating: 5,
+    },
+    {
+      quote: t("socialProof.testimonial3Quote"),
+      author: t("socialProof.testimonial3Author"),
+      role: t("socialProof.testimonial3Role"),
+      rating: 5,
+    },
+  ];
+
   return (
-    <section id="social-proof" className="noise-overlay relative bg-white py-16 sm:py-24 md:py-32">
+    <section id="social-proof" className="noise-overlay relative bg-surface py-16 sm:py-24 md:py-32">
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
-          eyebrow="Social Proof"
-          title="Trusted by Belgian B2B teams"
-          description="From startups to enterprise sales teams — BelgoBase powers outbound growth across Belgium."
+          eyebrow={t("socialProof.eyebrow")}
+          title={t("socialProof.title")}
+          description={t("socialProof.description")}
         />
 
         <div className="mb-12 grid grid-cols-2 gap-4 sm:mb-20 sm:gap-6 md:grid-cols-4">
@@ -89,8 +89,8 @@ export function SocialProof() {
             <SectionReveal key={testimonial.author} delay={i * 0.15}>
               <motion.div
                 whileHover={{ y: -4 }}
-                transition={{ duration: 0.3 }}
-                className="gradient-border group h-full rounded-xl p-5 shadow-sm sm:rounded-2xl sm:p-6"
+                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                className="gradient-border group h-full rounded-2xl p-5 sm:p-6"
               >
                 <Quote className="mb-4 h-8 w-8 text-primary/20" />
                 <div className="mb-4 flex gap-0.5">

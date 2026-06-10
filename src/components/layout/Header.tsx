@@ -1,43 +1,44 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "framer-motion";
 import { Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { MagneticButton } from "@/components/ui/MagneticButton";
+import { useTranslations } from "@/providers/TranslationsProvider";
 import { cn } from "@/lib/utils";
 
-const navLinks = [
-  { label: "Process", href: "#process" },
-  { label: "Industries", href: "#industries" },
-  { label: "Results", href: "#results" },
-  { label: "Pricing", href: "#pricing" },
-];
-
 export function Header() {
+  const { t } = useTranslations();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { scrollY } = useScroll();
-  const headerBg = useTransform(
-    scrollY,
-    [0, 80],
-    ["rgba(248, 250, 252, 0)", "rgba(248, 250, 252, 0.85)"],
-  );
-  const headerBorder = useTransform(
-    scrollY,
-    [0, 80],
-    ["rgba(226, 232, 240, 0)", "rgba(226, 232, 240, 1)"],
-  );
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const navLinks = [
+    { label: t("nav.process"), href: "#process" },
+    { label: t("nav.industries"), href: "#industries" },
+    { label: t("nav.results"), href: "#results" },
+    { label: t("nav.pricing"), href: "#pricing" },
+  ];
 
   return (
-    <motion.header
-      style={{
-        backgroundColor: headerBg,
-        borderBottomColor: headerBorder,
-      }}
-      className="fixed top-0 right-0 left-0 z-50 border-b backdrop-blur-xl"
+    <header
+      className={cn(
+        "glass-nav fixed top-0 right-0 left-0 z-50 transition-[opacity,box-shadow] duration-500",
+        scrolled
+          ? "opacity-100 shadow-lg shadow-black/5 dark:shadow-black/20"
+          : "opacity-[0.88]",
+      )}
     >
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-4 sm:h-16 sm:gap-3 sm:px-6 lg:px-8">
         <a href="#" className="flex min-w-0 shrink items-center gap-2">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary sm:h-8 sm:w-8">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary shadow-lg shadow-primary/25 sm:h-8 sm:w-8">
             <span className="text-xs font-bold text-white sm:text-sm">B</span>
           </div>
           <span className="truncate text-base font-semibold tracking-tight text-deep-navy sm:text-lg">
@@ -50,42 +51,46 @@ export function Header() {
             <a
               key={link.href}
               href={link.href}
-              className="text-sm text-muted transition-colors hover:text-deep-navy"
+              className="text-sm text-muted transition-colors duration-200 hover:text-foreground"
             >
               {link.label}
             </a>
           ))}
         </nav>
 
-        <div className="hidden items-center gap-2 lg:flex lg:gap-3">
+        <div className="hidden items-center gap-2 lg:flex lg:gap-2.5">
           <MagneticButton
             href="#contact"
             variant="secondary"
             className="!px-4 !py-2.5 !text-xs xl:!px-5 xl:!text-sm"
           >
-            Access Sample Leads
+            {t("nav.accessSample")}
           </MagneticButton>
           <MagneticButton href="#contact" className="!px-4 !py-2.5 !text-xs xl:!px-5 xl:!text-sm">
-            Get 30 Free Leads
+            {t("nav.getFreeLeads")}
           </MagneticButton>
         </div>
 
-        <button
-          type="button"
-          className="shrink-0 rounded-lg p-1.5 lg:hidden"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label={mobileOpen ? "Close menu" : "Open menu"}
-          aria-expanded={mobileOpen}
-        >
-          {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
+        <div className="flex items-center gap-1.5 lg:hidden">
+          <LanguageSwitcher />
+          <ThemeToggle />
+          <button
+            type="button"
+            className="shrink-0 rounded-xl p-1.5 transition-colors hover:bg-surface-hover"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label={mobileOpen ? t("nav.closeMenu") : t("nav.openMenu")}
+            aria-expanded={mobileOpen}
+          >
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       <div
         className={cn(
-          "overflow-hidden border-t border-border bg-white/95 backdrop-blur-xl transition-all duration-300 lg:hidden",
+          "overflow-hidden border-t border-border bg-surface/95 backdrop-blur-xl transition-all duration-300 lg:hidden",
           mobileOpen
-            ? "max-h-[24rem] opacity-100"
+            ? "max-h-[28rem] opacity-100"
             : "max-h-0 border-transparent opacity-0",
         )}
       >
@@ -95,21 +100,21 @@ export function Header() {
               key={link.href}
               href={link.href}
               onClick={() => setMobileOpen(false)}
-              className="rounded-lg px-3 py-2.5 text-sm text-muted transition-colors hover:bg-light-bg hover:text-deep-navy"
+              className="rounded-xl px-3 py-2.5 text-sm text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
             >
               {link.label}
             </a>
           ))}
           <div className="mt-3 flex flex-col gap-2">
             <MagneticButton href="#contact" variant="secondary" className="w-full">
-              Access Sample Leads
+              {t("nav.accessSample")}
             </MagneticButton>
             <MagneticButton href="#contact" className="w-full">
-              Get 30 Free Leads
+              {t("nav.getFreeLeads")}
             </MagneticButton>
           </div>
         </nav>
       </div>
-    </motion.header>
+    </header>
   );
 }

@@ -38,7 +38,7 @@ export async function submitContactForm(
     }
     return {
       success: false,
-      message: "Please fix the errors below.",
+      message: "fixErrors",
       errors: fieldErrors,
     };
   }
@@ -50,7 +50,7 @@ export async function submitContactForm(
     console.error("Missing CONTACT_EMAIL or RESEND_API_KEY environment variables");
     return {
       success: false,
-      message: "Service temporarily unavailable. Please try again later.",
+      message: "serviceUnavailable",
     };
   }
 
@@ -82,14 +82,13 @@ export async function submitContactForm(
 
     return {
       success: true,
-      message:
-        "Thank you! We'll review your request and get back to you within hours.",
+      message: "successMessage",
     };
   } catch (error) {
     console.error("Resend error:", error);
     return {
       success: false,
-      message: "Something went wrong. Please try again or email us directly.",
+      message: "errorMessage",
     };
   }
 }

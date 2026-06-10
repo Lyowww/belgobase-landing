@@ -4,39 +4,39 @@ import { motion } from "framer-motion";
 import { ClipboardList, Euro, FileSpreadsheet } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { SectionReveal } from "@/components/ui/SectionReveal";
-
-const steps = [
-  {
-    number: "01",
-    icon: ClipboardList,
-    title: "Share your target",
-    description:
-      "Tell us who you're looking for (sector, region, legal form, contacts). One form or email is enough — no setup required.",
-  },
-  {
-    number: "02",
-    icon: Euro,
-    title: "Get a fixed price upfront",
-    description:
-      "We confirm available companies and send a clear, final price before we start. Exclude existing clients via enterprise numbers if needed.",
-  },
-  {
-    number: "03",
-    icon: FileSpreadsheet,
-    title: "Receive your ready-to-use list",
-    description:
-      "We filter 2M+ companies, enrich available data, and quality-check everything. Delivered in Excel the same day — ready for CRM, outreach, or calls.",
-  },
-];
+import { useTranslations } from "@/providers/TranslationsProvider";
 
 export function Process() {
+  const { t } = useTranslations();
+
+  const steps = [
+    {
+      number: "01",
+      icon: ClipboardList,
+      title: t("process.step1Title"),
+      description: t("process.step1Description"),
+    },
+    {
+      number: "02",
+      icon: Euro,
+      title: t("process.step2Title"),
+      description: t("process.step2Description"),
+    },
+    {
+      number: "03",
+      icon: FileSpreadsheet,
+      title: t("process.step3Title"),
+      description: t("process.step3Description"),
+    },
+  ];
+
   return (
     <section id="process" className="section-alt noise-overlay relative py-16 sm:py-24 md:py-32">
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
-          eyebrow="Process"
-          title="Lead Generation Turned Simple"
-          description="Your lead list, delivered in 3 easy steps."
+          eyebrow={t("process.eyebrow")}
+          title={t("process.title")}
+          description={t("process.description")}
         />
 
         <div className="relative">
@@ -47,14 +47,14 @@ export function Process() {
               <SectionReveal key={step.number} delay={i * 0.15}>
                 <motion.div
                   whileHover={{ y: -6 }}
-                  transition={{ duration: 0.3 }}
+                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                   className="group relative"
                 >
                   {i < steps.length - 1 && (
                     <div className="absolute top-12 -right-4 hidden h-px w-8 bg-primary/20 md:block" />
                   )}
 
-                  <div className="rounded-xl border border-border/60 bg-white p-5 shadow-sm transition-shadow duration-300 group-hover:shadow-lg group-hover:shadow-primary/5 sm:rounded-2xl sm:p-8">
+                  <div className="premium-card rounded-2xl p-5 sm:p-8">
                     <div className="mb-6 flex items-center justify-between">
                       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/15">
                         <step.icon className="h-6 w-6 text-primary" />

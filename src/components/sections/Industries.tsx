@@ -4,42 +4,45 @@ import { motion } from "framer-motion";
 import { Rocket, Briefcase, Building, X } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { SectionReveal } from "@/components/ui/SectionReveal";
-
-const industries = [
-  {
-    icon: Rocket,
-    title: "Sales & Growth Teams",
-    subtitle: "Sales, marketing, SaaS, startups, enterprise teams",
-    benefits: ["Faster outbound", "Better targeting"],
-  },
-  {
-    icon: Briefcase,
-    title: "Service & Advisory Firms",
-    subtitle: "Agencies, consulting, recruitment, financial services",
-    benefits: ["New client acquisition", "Qualified prospects"],
-  },
-  {
-    icon: Building,
-    title: "Local & Specialized Professionals",
-    subtitle: "Real estate, regional businesses",
-    benefits: ["Local market access", "Structured company data"],
-  },
-];
-
-const notFit = [
-  "You want generic, non-targeted lead lists",
-  "You rely only on inbound leads",
-  "You're not actively doing outbound sales or outreach",
-];
+import { useTranslations } from "@/providers/TranslationsProvider";
 
 export function Industries() {
+  const { t } = useTranslations();
+
+  const industries = [
+    {
+      icon: Rocket,
+      title: t("industries.salesTitle"),
+      subtitle: t("industries.salesSubtitle"),
+      benefits: [t("industries.salesBenefit1"), t("industries.salesBenefit2")],
+    },
+    {
+      icon: Briefcase,
+      title: t("industries.serviceTitle"),
+      subtitle: t("industries.serviceSubtitle"),
+      benefits: [t("industries.serviceBenefit1"), t("industries.serviceBenefit2")],
+    },
+    {
+      icon: Building,
+      title: t("industries.localTitle"),
+      subtitle: t("industries.localSubtitle"),
+      benefits: [t("industries.localBenefit1"), t("industries.localBenefit2")],
+    },
+  ];
+
+  const notFit = [
+    t("industries.notFit1"),
+    t("industries.notFit2"),
+    t("industries.notFit3"),
+  ];
+
   return (
-    <section id="industries" className="noise-overlay relative bg-white py-16 sm:py-24 md:py-32">
+    <section id="industries" className="noise-overlay relative bg-surface py-16 sm:py-24 md:py-32">
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
-          eyebrow="Industries"
-          title="If you sell to Belgian companies, BelgoBase is for you"
-          description="Industries we serve and the solutions they receive:"
+          eyebrow={t("industries.eyebrow")}
+          title={t("industries.title")}
+          description={t("industries.description")}
         />
 
         <div className="mb-12 grid gap-6 md:grid-cols-3">
@@ -47,8 +50,8 @@ export function Industries() {
             <SectionReveal key={industry.title} delay={i * 0.12}>
               <motion.div
                 whileHover={{ y: -6, scale: 1.01 }}
-                transition={{ duration: 0.3 }}
-                className="gradient-border group h-full rounded-xl p-5 sm:rounded-2xl sm:p-8"
+                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                className="gradient-border group h-full rounded-2xl p-5 sm:p-8"
               >
                 <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 transition-all group-hover:from-primary/20 group-hover:to-accent/20">
                   <industry.icon className="h-6 w-6 text-primary" />
@@ -63,7 +66,7 @@ export function Industries() {
                       key={benefit}
                       className="flex items-center gap-2 text-sm text-deep-navy"
                     >
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                         ✓
                       </span>
                       {benefit}
@@ -76,12 +79,14 @@ export function Industries() {
         </div>
 
         <SectionReveal>
-          <div className="rounded-xl border border-amber-200/60 bg-gradient-to-br from-amber-50/80 to-orange-50/40 p-5 sm:rounded-2xl sm:p-8 md:p-10">
+          <div className="premium-card rounded-2xl border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-orange-500/5 p-5 sm:p-8 md:p-10">
             <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
-                <X className="h-5 w-5 text-amber-600" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/10">
+                <X className="h-5 w-5 text-amber-600 dark:text-amber-400" />
               </div>
-              <h3 className="text-lg font-semibold text-deep-navy">Not a fit if</h3>
+              <h3 className="text-lg font-semibold text-deep-navy">
+                {t("industries.notFitTitle")}
+              </h3>
             </div>
             <ul className="grid gap-3 md:grid-cols-3">
               {notFit.map((item) => (

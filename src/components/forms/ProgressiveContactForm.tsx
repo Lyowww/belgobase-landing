@@ -5,6 +5,7 @@ import { ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { submitContactForm, type ContactFormState } from "@/app/actions/contact";
 import { MagneticButton } from "@/components/ui/MagneticButton";
+import { useTranslations } from "@/providers/TranslationsProvider";
 import { cn } from "@/lib/utils";
 import { emailSchema } from "@/lib/validations/contact";
 
@@ -40,6 +41,7 @@ export function ProgressiveContactForm({
   variant = "default",
   id,
 }: ProgressiveContactFormProps) {
+  const { t } = useTranslations();
   const [state, formAction, isPending] = useActionState(
     submitContactForm,
     initialState,
@@ -50,6 +52,8 @@ export function ProgressiveContactForm({
   const [emailError, setEmailError] = useState<string | null>(null);
   const nameRef = useRef<HTMLInputElement>(null);
 
+  const translateError = (key: string) => t(`validation.${key}`);
+
   useEffect(() => {
     if (state.success && formRef.current) {
       formRef.current.reset();
@@ -59,26 +63,25 @@ export function ProgressiveContactForm({
     }
   }, [state.success]);
 
-  useEffect(() => {
-    if (
-      state.errors &&
-      (state.errors.name || state.errors.company || state.errors.phone)
-    ) {
-      setExpanded(true);
-    }
-  }, [state.errors]);
+  const hasFieldErrors = !!(
+    state.errors?.name ||
+    state.errors?.company ||
+    state.errors?.phone
+  );
+  const isExpanded = expanded || hasFieldErrors;
 
   useEffect(() => {
-    if (expanded && nameRef.current) {
+    if (isExpanded && nameRef.current) {
       const timer = setTimeout(() => nameRef.current?.focus(), 300);
       return () => clearTimeout(timer);
     }
-  }, [expanded]);
+  }, [isExpanded]);
 
   const handleContinue = () => {
     const result = emailSchema.safeParse(emailValue.trim());
     if (!result.success) {
-      setEmailError(result.error.issues[0]?.message ?? "Invalid email");
+      const key = result.error.issues[0]?.message ?? "emailInvalid";
+      setEmailError(translateError(key));
       return;
     }
     setEmailError(null);
@@ -86,7 +89,7 @@ export function ProgressiveContactForm({
   };
 
   const handleEmailKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && !expanded) {
+    if (e.key === "Enter" && !isExpanded) {
       e.preventDefault();
       handleContinue();
     }
@@ -100,7 +103,7 @@ export function ProgressiveContactForm({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className={cn(
-          "rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center sm:rounded-2xl sm:p-10",
+          "form-surface rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-6 text-center sm:rounded-2xl sm:p-10",
           isHero && "shadow-2xl shadow-primary/5",
         )}
       >
@@ -112,9 +115,11 @@ export function ProgressiveContactForm({
           <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-emerald-500 sm:h-16 sm:w-16" />
         </motion.div>
         <h3 className="mb-2 text-lg font-semibold text-deep-navy sm:text-xl">
-          Request received!
+          {t("form.successTitle")}
         </h3>
-        <p className="text-sm text-muted sm:text-base">{state.message}</p>
+        <p className="text-sm text-muted sm:text-base">
+          {translateError(state.message)}
+        </p>
       </motion.div>
     );
   }
@@ -128,10 +133,10 @@ export function ProgressiveContactForm({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: isHero ? 0.3 : 0 }}
       className={cn(
-        "relative rounded-xl border border-border/60 bg-white p-5 shadow-xl shadow-primary/5 sm:rounded-2xl sm:p-8",
+        "form-surface relative rounded-xl p-5 sm:rounded-2xl sm:p-8",
         isHero && "shadow-2xl",
       )}
-      aria-label="Lead request form"
+      aria-label={t("form.ariaLabel")}
     >
       <div className="pointer-events-none absolute -inset-px -z-10 rounded-xl bg-gradient-to-br from-primary/20 via-transparent to-accent/20 opacity-50 blur-sm sm:rounded-2xl" />
 
@@ -143,7 +148,7 @@ export function ProgressiveContactForm({
           htmlFor={`${variant}-email`}
           className="mb-1.5 block text-sm font-medium text-deep-navy"
         >
-          Email Address *
+          {t("form.emailLabel")}
         </label>
         <input
           id={`${variant}-email`}
@@ -162,11 +167,10 @@ export function ProgressiveContactForm({
             emailError || state.errors?.email ? `${variant}-email-error` : undefined
           }
           className={cn(
-            "w-full rounded-lg border bg-white px-3 py-2.5 text-base sm:px-4 sm:text-sm",
-            "transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
-            emailError || state.errors?.email ? "border-red-300" : "border-border",
+            "form-input w-full rounded-xl px-3 py-2.5 text-base sm:px-4 sm:text-sm",
+            emailError || state.errors?.email ? "border-red-400/60" : "",
           )}
-          placeholder="Fill out your email address"
+          placeholder={t("form.emailPlaceholder")}
         />
         {(emailError || state.errors?.email) && (
           <p
@@ -174,13 +178,14 @@ export function ProgressiveContactForm({
             className="mt-1 text-xs text-red-500"
             role="alert"
           >
-            {emailError ?? state.errors?.email}
+            {emailError ??
+              (state.errors?.email ? translateError(state.errors.email) : "")}
           </p>
         )}
       </div>
 
       <AnimatePresence initial={false}>
-        {expanded && (
+        {isExpanded && (
           <motion.div
             key="expanded-fields"
             initial={{ height: 0, opacity: 0 }}
@@ -191,17 +196,12 @@ export function ProgressiveContactForm({
             aria-live="polite"
           >
             <div className="space-y-4 pb-1">
-              <motion.div
-                custom={0}
-                variants={fieldVariants}
-                initial="hidden"
-                animate="show"
-              >
+              <motion.div custom={0} variants={fieldVariants} initial="hidden" animate="show">
                 <label
                   htmlFor={`${variant}-name`}
                   className="mb-1.5 block text-sm font-medium text-deep-navy"
                 >
-                  Full Name *
+                  {t("form.nameLabel")}
                 </label>
                 <input
                   ref={nameRef}
@@ -211,30 +211,24 @@ export function ProgressiveContactForm({
                   required
                   autoComplete="name"
                   className={cn(
-                    "w-full rounded-lg border bg-white px-3 py-2.5 text-base sm:px-4 sm:text-sm",
-                    "transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
-                    state.errors?.name ? "border-red-300" : "border-border",
+                    "form-input w-full rounded-xl px-3 py-2.5 text-base sm:px-4 sm:text-sm",
+                    state.errors?.name ? "border-red-400/60" : "",
                   )}
-                  placeholder="Jan Janssens"
+                  placeholder={t("form.namePlaceholder")}
                 />
                 {state.errors?.name && (
                   <p className="mt-1 text-xs text-red-500" role="alert">
-                    {state.errors.name}
+                    {translateError(state.errors.name)}
                   </p>
                 )}
               </motion.div>
 
-              <motion.div
-                custom={1}
-                variants={fieldVariants}
-                initial="hidden"
-                animate="show"
-              >
+              <motion.div custom={1} variants={fieldVariants} initial="hidden" animate="show">
                 <label
                   htmlFor={`${variant}-company`}
                   className="mb-1.5 block text-sm font-medium text-deep-navy"
                 >
-                  Company Name *
+                  {t("form.companyLabel")}
                 </label>
                 <input
                   id={`${variant}-company`}
@@ -243,30 +237,24 @@ export function ProgressiveContactForm({
                   required
                   autoComplete="organization"
                   className={cn(
-                    "w-full rounded-lg border bg-white px-3 py-2.5 text-base sm:px-4 sm:text-sm",
-                    "transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
-                    state.errors?.company ? "border-red-300" : "border-border",
+                    "form-input w-full rounded-xl px-3 py-2.5 text-base sm:px-4 sm:text-sm",
+                    state.errors?.company ? "border-red-400/60" : "",
                   )}
-                  placeholder="Your Company BVBA"
+                  placeholder={t("form.companyPlaceholder")}
                 />
                 {state.errors?.company && (
                   <p className="mt-1 text-xs text-red-500" role="alert">
-                    {state.errors.company}
+                    {translateError(state.errors.company)}
                   </p>
                 )}
               </motion.div>
 
-              <motion.div
-                custom={2}
-                variants={fieldVariants}
-                initial="hidden"
-                animate="show"
-              >
+              <motion.div custom={2} variants={fieldVariants} initial="hidden" animate="show">
                 <label
                   htmlFor={`${variant}-phone`}
                   className="mb-1.5 block text-sm font-medium text-deep-navy"
                 >
-                  Phone Number
+                  {t("form.phoneLabel")}
                 </label>
                 <input
                   id={`${variant}-phone`}
@@ -274,11 +262,10 @@ export function ProgressiveContactForm({
                   type="tel"
                   autoComplete="tel"
                   className={cn(
-                    "w-full rounded-lg border bg-white px-3 py-2.5 text-base sm:px-4 sm:text-sm",
-                    "transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
-                    state.errors?.phone ? "border-red-300" : "border-border",
+                    "form-input w-full rounded-xl px-3 py-2.5 text-base sm:px-4 sm:text-sm",
+                    state.errors?.phone ? "border-red-400/60" : "",
                   )}
-                  placeholder="+32 2 123 4567"
+                  placeholder={t("form.phonePlaceholder")}
                 />
                 {state.errors?.phone && (
                   <p className="mt-1 text-xs text-red-500" role="alert">
@@ -302,19 +289,19 @@ export function ProgressiveContactForm({
 
       {!state.success && state.message && (
         <p className="mb-4 text-sm text-red-500" role="alert">
-          {state.message}
+          {translateError(state.message)}
         </p>
       )}
 
       <div className="mt-4">
-        {!expanded ? (
+        {!isExpanded ? (
           <MagneticButton
             type="button"
             onClick={handleContinue}
             className="w-full"
             aria-expanded={false}
           >
-            Continue
+            {t("form.continue")}
             <ArrowRight className="h-4 w-4" />
           </MagneticButton>
         ) : (
@@ -332,11 +319,11 @@ export function ProgressiveContactForm({
               {isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Submitting...
+                  {t("form.submitting")}
                 </>
               ) : (
                 <>
-                  Submit
+                  {t("form.submit")}
                   <ArrowRight className="h-4 w-4" />
                 </>
               )}

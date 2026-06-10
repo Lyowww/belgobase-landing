@@ -2,13 +2,13 @@ import { z } from "zod";
 
 export const emailSchema = z
   .string()
-  .min(1, "Please enter your email address")
-  .email("Please enter a valid email address");
+  .min(1, "emailRequired")
+  .email("emailInvalid");
 
 export const contactFormSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
+  name: z.string().min(2, "nameMin"),
   email: emailSchema,
-  company: z.string().min(2, "Company name is required"),
+  company: z.string().min(2, "companyRequired"),
   phone: z.string().optional(),
   requestType: z.enum(["sample", "custom"]).default("sample"),
   criteria: z.string().default("Lead request via website form"),

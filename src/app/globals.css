@@ -11,6 +11,43 @@
   --muted: #64748b;
   --border: #e2e8f0;
   --section-alt: #f1f5f9;
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --surface-hover: #f1f5f9;
+  --card: #ffffff;
+  --card-border: rgba(226, 232, 240, 0.8);
+  --grid-color: rgba(10, 102, 194, 0.06);
+  --glow-primary: rgba(10, 102, 194, 0.12);
+  --glow-accent: rgba(77, 163, 255, 0.1);
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --shadow-color: rgba(10, 102, 194, 0.08);
+  --selection-bg: rgba(10, 102, 194, 0.2);
+}
+
+.dark {
+  --primary-blue: #3b9eff;
+  --dark-blue: #7eb8ff;
+  --accent-blue: #60b4ff;
+  --light-bg: #0c1222;
+  --deep-navy: #f1f5f9;
+  --background: #060a14;
+  --foreground: #e2e8f0;
+  --muted: #94a3b8;
+  --border: rgba(148, 163, 184, 0.12);
+  --section-alt: #0a0f1a;
+  --surface: #0c1222;
+  --surface-elevated: #111827;
+  --surface-hover: rgba(148, 163, 184, 0.08);
+  --card: rgba(17, 24, 39, 0.6);
+  --card-border: rgba(148, 163, 184, 0.1);
+  --grid-color: rgba(77, 163, 255, 0.04);
+  --glow-primary: rgba(59, 158, 255, 0.15);
+  --glow-accent: rgba(96, 180, 255, 0.12);
+  --glass-bg: rgba(12, 18, 34, 0.75);
+  --glass-border: rgba(148, 163, 184, 0.1);
+  --shadow-color: rgba(0, 0, 0, 0.4);
+  --selection-bg: rgba(59, 158, 255, 0.25);
 }
 
 @theme inline {
@@ -24,6 +61,10 @@
   --color-muted: var(--muted);
   --color-border: var(--border);
   --color-section-alt: var(--section-alt);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-hover: var(--surface-hover);
+  --color-card: var(--card);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -48,7 +89,7 @@ body {
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--primary-blue) 20%, transparent);
+  background: var(--selection-bg);
   color: var(--deep-navy);
 }
 
@@ -66,11 +107,15 @@ body {
   opacity: 0.35;
 }
 
+.dark .noise-overlay::before {
+  opacity: 0.15;
+}
+
 .mesh-hero {
   background:
-    radial-gradient(ellipse 80% 60% at 20% 20%, color-mix(in srgb, var(--accent-blue) 12%, transparent), transparent 70%),
-    radial-gradient(ellipse 60% 50% at 80% 10%, color-mix(in srgb, var(--primary-blue) 10%, transparent), transparent 65%),
-    radial-gradient(ellipse 50% 40% at 50% 100%, color-mix(in srgb, var(--dark-blue) 6%, transparent), transparent 60%),
+    radial-gradient(ellipse 80% 60% at 20% 20%, var(--glow-accent), transparent 70%),
+    radial-gradient(ellipse 60% 50% at 80% 10%, var(--glow-primary), transparent 65%),
+    radial-gradient(ellipse 50% 40% at 50% 100%, color-mix(in srgb, var(--dark-blue) 8%, transparent), transparent 60%),
     var(--light-bg);
 }
 
@@ -78,10 +123,26 @@ body {
   background: linear-gradient(180deg, var(--section-alt) 0%, var(--light-bg) 100%);
 }
 
+.dark .section-alt {
+  background: linear-gradient(
+    180deg,
+    var(--section-alt) 0%,
+    color-mix(in srgb, var(--background) 80%, var(--section-alt)) 100%
+  );
+}
+
 .gradient-border {
   position: relative;
-  background: white;
+  background: var(--card);
   border-radius: 1rem;
+  border: 1px solid var(--card-border);
+  box-shadow:
+    0 1px 2px var(--shadow-color),
+    0 4px 16px -4px var(--shadow-color);
+  transition:
+    box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .gradient-border::before {
@@ -101,15 +162,76 @@ body {
   transition: opacity 0.4s ease;
 }
 
+.gradient-border:hover {
+  box-shadow:
+    0 4px 24px -4px var(--shadow-color),
+    0 12px 40px -8px var(--glow-primary);
+}
+
 .gradient-border:hover::before {
   opacity: 1;
 }
 
+.premium-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 1rem;
+  box-shadow:
+    0 1px 2px var(--shadow-color),
+    0 4px 16px -4px var(--shadow-color);
+  transition:
+    box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.premium-card:hover {
+  border-color: color-mix(in srgb, var(--primary-blue) 25%, var(--card-border));
+  box-shadow:
+    0 4px 24px -4px var(--shadow-color),
+    0 12px 40px -8px var(--glow-primary);
+}
+
 .glass {
-  background: color-mix(in srgb, white 72%, transparent);
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-nav {
+  background: color-mix(in srgb, var(--surface) 75%, transparent);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--border);
+}
+
+.glass-control {
+  background: color-mix(in srgb, var(--surface-elevated) 80%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid color-mix(in srgb, white 60%, var(--border));
+  border: 1px solid var(--border);
+}
+
+.glass-dropdown {
+  background: color-mix(in srgb, var(--surface-elevated) 92%, transparent);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border);
+  box-shadow:
+    0 8px 32px -8px var(--shadow-color),
+    0 0 0 1px var(--glass-border);
+}
+
+.glass-toolbar {
+  background: color-mix(in srgb, var(--surface-elevated) 88%, transparent);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  box-shadow:
+    0 8px 32px -8px var(--shadow-color),
+    0 0 0 1px var(--glass-border);
 }
 
 .text-gradient {
@@ -124,6 +246,90 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+.form-surface {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  box-shadow:
+    0 4px 24px -4px var(--shadow-color),
+    0 0 0 1px color-mix(in srgb, var(--primary-blue) 5%, transparent);
+}
+
+.form-input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.form-input:focus {
+  border-color: var(--primary-blue);
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-blue) 15%, transparent);
+}
+
+.cta-section {
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 100%, var(--glow-primary), transparent 70%),
+    radial-gradient(ellipse 40% 30% at 20% 20%, var(--glow-accent), transparent 60%),
+    linear-gradient(180deg, var(--light-bg) 0%, var(--background) 50%, var(--light-bg) 100%);
+}
+
+.pricing-popular {
+  background: var(--card);
+  border: 2px solid var(--primary-blue);
+  box-shadow:
+    0 8px 32px -8px var(--glow-primary),
+    0 0 0 1px color-mix(in srgb, var(--primary-blue) 10%, transparent);
+}
+
+.faq-item {
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.2s ease;
+}
+
+.faq-item:hover {
+  background: color-mix(in srgb, var(--surface-hover) 50%, transparent);
+}
+
+.animated-grid-inner {
+  background-image:
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 10%, transparent 70%);
+  animation: grid-drift 20s linear infinite;
+}
+
+.ambient-glow {
+  animation: ambient-pulse 8s ease-in-out infinite;
+}
+
+.cta-radial-pulse {
+  background: radial-gradient(
+    ellipse 50% 40% at 50% 50%,
+    var(--glow-primary),
+    transparent 70%
+  );
+  animation: pulse-glow 6s ease-in-out infinite;
+}
+
+.section-lazy {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 600px;
+}
+
+@keyframes grid-drift {
+  from { background-position: 0 0; }
+  to { background-position: 64px 64px; }
+}
+
+@keyframes ambient-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.08); opacity: 0.7; }
 }
 
 @keyframes float {
@@ -146,4 +352,15 @@ body {
 
 .animate-pulse-glow {
   animation: pulse-glow 4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-float-delayed,
+  .animate-pulse-glow,
+  .animated-grid-inner,
+  .ambient-glow,
+  .cta-radial-pulse {
+    animation: none;
+  }
 }

@@ -12,38 +12,7 @@ import {
 } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { SectionReveal } from "@/components/ui/SectionReveal";
-
-const included = [
-  {
-    icon: Building2,
-    title: "Company Details",
-    description:
-      "Name, VAT number, legal form, address, status, and incorporation date.",
-  },
-  {
-    icon: BarChart3,
-    title: "Sector Data",
-    description: "Filter by industry, activity, and NACE codes.",
-  },
-  {
-    icon: Mail,
-    title: "Contact Details",
-    description: "Available phone numbers and email addresses.",
-  },
-  {
-    icon: BarChart3,
-    title: "Company Insights",
-    description: "Company age and other targeting attributes.",
-  },
-];
-
-const lookalikeInsights = [
-  "Geographic hotspots",
-  "Key industries & NACE codes",
-  "Common legal forms",
-  "Company age patterns",
-  "Similar companies ranked by match",
-];
+import { useTranslations } from "@/providers/TranslationsProvider";
 
 const sampleRows = [
   {
@@ -73,6 +42,39 @@ const sampleRows = [
 ];
 
 export function LeadPreview() {
+  const { t } = useTranslations();
+
+  const included = [
+    {
+      icon: Building2,
+      title: t("leadPreview.companyDetailsTitle"),
+      description: t("leadPreview.companyDetailsDesc"),
+    },
+    {
+      icon: BarChart3,
+      title: t("leadPreview.sectorDataTitle"),
+      description: t("leadPreview.sectorDataDesc"),
+    },
+    {
+      icon: Mail,
+      title: t("leadPreview.contactDetailsTitle"),
+      description: t("leadPreview.contactDetailsDesc"),
+    },
+    {
+      icon: BarChart3,
+      title: t("leadPreview.companyInsightsTitle"),
+      description: t("leadPreview.companyInsightsDesc"),
+    },
+  ];
+
+  const lookalikeInsights = [
+    t("leadPreview.lookalike1"),
+    t("leadPreview.lookalike2"),
+    t("leadPreview.lookalike3"),
+    t("leadPreview.lookalike4"),
+    t("leadPreview.lookalike5"),
+  ];
+
   return (
     <section
       id="lead-preview"
@@ -80,23 +82,24 @@ export function LeadPreview() {
     >
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
-          eyebrow="Lead List Preview"
-          title="Preview Your B2B Leads List"
-          description="Stop searching manually on LinkedIn or Google. Receive a ready-to-use B2B leads list built around your exact criteria."
+          eyebrow={t("leadPreview.eyebrow")}
+          title={t("leadPreview.title")}
+          description={t("leadPreview.description")}
         />
 
         <div className="grid min-w-0 gap-8 sm:gap-12 lg:grid-cols-2">
           <SectionReveal direction="left">
             <div className="mb-6 sm:mb-8">
               <h3 className="mb-4 text-base font-semibold text-deep-navy sm:mb-6 sm:text-lg">
-                What&apos;s included
+                {t("leadPreview.includedTitle")}
               </h3>
               <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
                 {included.map((item) => (
                   <motion.div
                     key={item.title}
                     whileHover={{ y: -3 }}
-                    className="rounded-xl border border-border/60 bg-white p-4 sm:p-5"
+                    transition={{ duration: 0.3 }}
+                    className="premium-card rounded-xl p-4 sm:p-5"
                   >
                     <item.icon className="mb-2 h-5 w-5 text-primary sm:mb-3" />
                     <h4 className="mb-1 text-sm font-semibold text-deep-navy">
@@ -110,16 +113,15 @@ export function LeadPreview() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 p-4 sm:rounded-2xl sm:p-6">
+            <div className="premium-card rounded-2xl border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 p-4 sm:p-6">
               <h3 className="mb-2 text-base font-semibold text-deep-navy sm:text-lg">
-                Find More Companies Like Your Best Customers
+                {t("leadPreview.lookalikeTitle")}
               </h3>
               <p className="mb-4 text-sm text-muted">
-                Provide 10–30 existing customers and we&apos;ll identify similar
-                companies across 2M+ Belgian businesses.
+                {t("leadPreview.lookalikeDescription")}
               </p>
               <p className="mb-3 text-xs font-medium tracking-wider text-primary uppercase">
-                What we typically uncover
+                {t("leadPreview.lookalikeEyebrow")}
               </p>
               <ul className="space-y-2">
                 {lookalikeInsights.map((insight) => (
@@ -136,7 +138,7 @@ export function LeadPreview() {
           </SectionReveal>
 
           <SectionReveal direction="right" delay={0.15}>
-            <div className="min-w-0 overflow-hidden rounded-xl border border-border/60 bg-white shadow-xl shadow-primary/5 sm:rounded-2xl">
+            <div className="premium-card min-w-0 overflow-hidden shadow-xl shadow-primary/5">
               <div className="flex items-center gap-3 border-b border-border/60 bg-light-bg/80 px-4 py-3 sm:px-5 sm:py-4">
                 <div className="flex shrink-0 gap-1.5">
                   <div className="h-2.5 w-2.5 rounded-full bg-red-400/80 sm:h-3 sm:w-3" />
@@ -144,29 +146,28 @@ export function LeadPreview() {
                   <div className="h-2.5 w-2.5 rounded-full bg-emerald-400/80 sm:h-3 sm:w-3" />
                 </div>
                 <span className="truncate text-xs font-medium text-muted">
-                  BelgoBase Lead Explorer
+                  {t("leadPreview.explorerTitle")}
                 </span>
               </div>
 
               <div className="border-b border-border/40 p-3 sm:p-4">
                 <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
-                  <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-border bg-white px-3 py-2">
+                  <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2">
                     <Search className="h-4 w-4 shrink-0 text-muted" />
                     <span className="truncate text-xs text-muted sm:text-sm">
-                      IT Services · Flanders · BVBA
+                      {t("leadPreview.searchPlaceholder")}
                     </span>
                   </div>
                   <button
                     type="button"
-                    className="flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-border bg-white px-3 py-2 text-xs text-muted sm:text-sm"
+                    className="flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-2 text-xs text-muted sm:text-sm"
                   >
                     <Filter className="h-4 w-4" />
-                    Filters
+                    {t("leadPreview.filters")}
                   </button>
                 </div>
               </div>
 
-              {/* Mobile: card layout */}
               <div className="divide-y divide-border/30 sm:hidden">
                 {sampleRows.map((row, i) => (
                   <motion.div
@@ -198,14 +199,19 @@ export function LeadPreview() {
                 ))}
               </div>
 
-              {/* Desktop: table layout */}
               <div className="hidden overflow-x-auto sm:block">
                 <table className="w-full min-w-[480px] text-left text-sm">
                   <thead>
                     <tr className="border-b border-border/40 bg-light-bg/50 text-xs text-muted">
-                      <th className="px-4 py-3 font-medium">Company</th>
-                      <th className="px-4 py-3 font-medium">Sector</th>
-                      <th className="px-4 py-3 font-medium">Contact</th>
+                      <th className="px-4 py-3 font-medium">
+                        {t("leadPreview.tableCompany")}
+                      </th>
+                      <th className="px-4 py-3 font-medium">
+                        {t("leadPreview.tableSector")}
+                      </th>
+                      <th className="px-4 py-3 font-medium">
+                        {t("leadPreview.tableContact")}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -246,9 +252,9 @@ export function LeadPreview() {
               </div>
 
               <div className="flex flex-col gap-2 bg-light-bg/50 px-4 py-3 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
-                <span>Showing 3 of 1,247 matches</span>
-                <span className="w-fit rounded-full bg-emerald-50 px-2 py-0.5 font-medium text-emerald-600">
-                  94% data completeness
+                <span>{t("leadPreview.showingMatches")}</span>
+                <span className="w-fit rounded-full bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-600 dark:text-emerald-400">
+                  {t("leadPreview.dataCompleteness")}
                 </span>
               </div>
             </div>

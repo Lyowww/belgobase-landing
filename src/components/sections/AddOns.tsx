@@ -4,46 +4,45 @@ import { motion } from "framer-motion";
 import { Zap, Users, RefreshCw, ShieldCheck } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { SectionReveal } from "@/components/ui/SectionReveal";
-
-const addOns = [
-  {
-    icon: Users,
-    title: "Lookalike Company Analysis",
-    price: "€149",
-    description:
-      "Provide 10–30 best customers. We identify matching companies across 2M+ Belgian businesses with ranked similarity scores.",
-  },
-  {
-    icon: Zap,
-    title: "Rush Delivery",
-    price: "€99",
-    description:
-      "Need your list urgently? Priority processing and delivery within 2 hours of confirmation.",
-  },
-  {
-    icon: RefreshCw,
-    title: "Contact Enrichment Boost",
-    price: "€0.15/company",
-    description:
-      "Enhanced email and phone discovery for companies with limited public contact data.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Client Exclusion Setup",
-    price: "Free",
-    description:
-      "Share your client enterprise numbers and we'll automatically exclude them from every future list.",
-  },
-];
+import { useTranslations } from "@/providers/TranslationsProvider";
 
 export function AddOns() {
+  const { t } = useTranslations();
+
+  const addOns = [
+    {
+      icon: Users,
+      title: t("addOns.lookalikeTitle"),
+      price: t("addOns.lookalikePrice"),
+      description: t("addOns.lookalikeDesc"),
+    },
+    {
+      icon: Zap,
+      title: t("addOns.rushTitle"),
+      price: t("addOns.rushPrice"),
+      description: t("addOns.rushDesc"),
+    },
+    {
+      icon: RefreshCw,
+      title: t("addOns.enrichmentTitle"),
+      price: t("addOns.enrichmentPrice"),
+      description: t("addOns.enrichmentDesc"),
+    },
+    {
+      icon: ShieldCheck,
+      title: t("addOns.exclusionTitle"),
+      price: t("addOns.exclusionPrice"),
+      description: t("addOns.exclusionDesc"),
+    },
+  ];
+
   return (
     <section id="addons" className="section-alt noise-overlay relative py-16 sm:py-24 md:py-32">
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
-          eyebrow="Add-ons"
-          title="Enhance your lead list"
-          description="Optional add-ons to maximize the value of every list you order."
+          eyebrow={t("addOns.eyebrow")}
+          title={t("addOns.title")}
+          description={t("addOns.description")}
         />
 
         <div className="grid gap-6 sm:grid-cols-2">
@@ -51,7 +50,8 @@ export function AddOns() {
             <SectionReveal key={addon.title} delay={i * 0.1}>
               <motion.div
                 whileHover={{ y: -4 }}
-                className="gradient-border flex h-full flex-col gap-4 rounded-xl p-4 sm:flex-row sm:gap-5 sm:rounded-2xl sm:p-6"
+                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                className="gradient-border flex h-full flex-col gap-4 rounded-2xl p-4 sm:flex-row sm:gap-5 sm:p-6"
               >
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
                   <addon.icon className="h-6 w-6 text-primary" />

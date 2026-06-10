@@ -16,10 +16,10 @@ type MagneticButtonProps = {
 
 const variants = {
   primary:
-    "bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary-dark hover:shadow-primary/30",
+    "bg-primary text-white shadow-lg shadow-primary/25 hover:bg-primary-dark hover:shadow-primary/35 dark:shadow-primary/20 dark:hover:shadow-primary/30",
   secondary:
-    "border border-border bg-white text-deep-navy hover:border-primary/30 hover:bg-light-bg",
-  ghost: "text-deep-navy hover:bg-light-bg",
+    "border border-border bg-surface-elevated text-deep-navy hover:border-primary/30 hover:bg-surface-hover dark:bg-surface-elevated/80",
+  ghost: "text-deep-navy hover:bg-surface-hover",
 };
 
 export function MagneticButton({
@@ -53,7 +53,7 @@ export function MagneticButton({
   };
 
   const baseClass = cn(
-    "relative inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-medium transition-colors duration-300",
+    "relative inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-medium transition-all duration-300",
     variants[variant],
     disabled && "pointer-events-none opacity-60",
     isFullWidth && "w-full",
