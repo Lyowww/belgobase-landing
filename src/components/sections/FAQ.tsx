@@ -28,6 +28,11 @@ const faqs = [
       "Yes. Filter by sector, region, legal form, company age, revenue, employee count, NACE codes, and more.",
   },
   {
+    question: "Will I receive an invoice?",
+    answer:
+      "Yes. You will receive an official Belgian invoice with VAT for every request. Payment is due within 14 days by bank transfer, or in advance if preferred.",
+  },
+  {
     question: "Can I exclude existing clients?",
     answer:
       "Yes. Share your client list or enterprise numbers and we'll remove them from your results.",

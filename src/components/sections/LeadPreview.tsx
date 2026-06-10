@@ -81,7 +81,7 @@ export function LeadPreview() {
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="Lead List Preview"
-          title="Preview Your Lead List"
+          title="Preview Your B2B Leads List"
           description="Stop searching manually on LinkedIn or Google. Receive a ready-to-use B2B leads list built around your exact criteria."
         />
 

@@ -21,7 +21,7 @@ const industries = [
   {
     icon: Building,
     title: "Local & Specialized Professionals",
-    subtitle: "Real estate, notaries, regional businesses",
+    subtitle: "Real estate, regional businesses",
     benefits: ["Local market access", "Structured company data"],
   },
 ];

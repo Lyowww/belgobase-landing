@@ -21,8 +21,8 @@ export async function submitContactForm(
     email: formData.get("email"),
     company: formData.get("company"),
     phone: formData.get("phone") || undefined,
-    requestType: formData.get("requestType"),
-    criteria: formData.get("criteria"),
+    requestType: formData.get("requestType") || "sample",
+    criteria: formData.get("criteria") || "Lead request via website form",
     website: formData.get("website") ?? "",
   };
 

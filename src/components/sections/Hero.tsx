@@ -1,15 +1,27 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, Shield, MapPin, FileCheck } from "lucide-react";
+import { ArrowRight, UserCheck, RefreshCw, MapPin } from "lucide-react";
 import { MagneticButton } from "@/components/ui/MagneticButton";
-import { HeroVisualization } from "@/components/visuals/HeroVisualization";
+import { ProgressiveContactForm } from "@/components/forms/ProgressiveContactForm";
 import { useMousePosition } from "@/hooks/useMousePosition";
 
 const trustIndicators = [
-  { icon: Shield, label: "GDPR-safe", sub: "Official company data only" },
-  { icon: MapPin, label: "Belgium-only", sub: "2M+ KBO companies" },
-  { icon: FileCheck, label: "No contracts", sub: "Pay per list only" },
+  {
+    icon: UserCheck,
+    label: "No sign-up",
+    sub: "No account required. Submit the form and receive your leads instantly.",
+  },
+  {
+    icon: RefreshCw,
+    label: "Updated daily",
+    sub: "Daily scraping for fresh, accurate data. Never outdated.",
+  },
+  {
+    icon: MapPin,
+    label: "Belgium-oriented",
+    sub: "2M+ KBO companies. Official NBB data.",
+  },
 ];
 
 const container = {
@@ -104,7 +116,7 @@ export function Hero() {
                     <p className="text-sm font-semibold text-deep-navy">
                       {indicator.label}
                     </p>
-                    <p className="text-xs text-muted">{indicator.sub}</p>
+                    <p className="text-xs leading-relaxed text-muted">{indicator.sub}</p>
                   </div>
                 </div>
               ))}
@@ -117,7 +129,7 @@ export function Hero() {
             transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
             className="min-w-0 lg:translate-x-0"
           >
-            <HeroVisualization />
+            <ProgressiveContactForm variant="hero" />
           </motion.div>
         </div>
       </div>

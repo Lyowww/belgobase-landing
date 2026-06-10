@@ -25,7 +25,7 @@ const steps = [
     icon: FileSpreadsheet,
     title: "Receive your ready-to-use list",
     description:
-      "We filter 2M+ companies, enrich available data, and quality-check everything. Delivered in Excel within hours — ready for CRM, outreach, or calls.",
+      "We filter 2M+ companies, enrich available data, and quality-check everything. Delivered in Excel the same day — ready for CRM, outreach, or calls.",
   },
 ];
 
@@ -36,7 +36,7 @@ export function Process() {
         <SectionHeader
           eyebrow="Process"
           title="Lead Generation Turned Simple"
-          description="Your lead list, delivered in 3 steps."
+          description="Your lead list, delivered in 3 easy steps."
         />
 
         <div className="relative">
