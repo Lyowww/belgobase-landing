@@ -48,33 +48,35 @@ const testimonials = [
 
 export function SocialProof() {
   return (
-    <section id="social-proof" className="noise-overlay relative bg-white py-24 md:py-32">
-      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8">
+    <section id="social-proof" className="noise-overlay relative bg-white py-16 sm:py-24 md:py-32">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="Social Proof"
           title="Trusted by Belgian B2B teams"
           description="From startups to enterprise sales teams — BelgoBase powers outbound growth across Belgium."
         />
 
-        <div className="mb-20 grid grid-cols-2 gap-6 md:grid-cols-4">
+        <div className="mb-12 grid grid-cols-2 gap-4 sm:mb-20 sm:gap-6 md:grid-cols-4">
           {metrics.map((metric, i) => (
             <SectionReveal key={metric.label} delay={i * 0.1}>
               <div className="text-center">
-                <p className="text-3xl font-semibold tracking-tight text-deep-navy md:text-4xl">
+                <p className="text-2xl font-semibold tracking-tight text-deep-navy sm:text-3xl md:text-4xl">
                   <AnimatedCounter value={metric.value} suffix={metric.suffix} />
                 </p>
-                <p className="mt-2 text-sm text-muted">{metric.label}</p>
+                <p className="mt-1.5 text-xs text-muted sm:mt-2 sm:text-sm">
+                  {metric.label}
+                </p>
               </div>
             </SectionReveal>
           ))}
         </div>
 
         <SectionReveal>
-          <div className="mb-16 flex flex-wrap items-center justify-center gap-x-10 gap-y-6 opacity-60">
+          <div className="mb-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-4 opacity-60 sm:mb-16 sm:gap-x-10 sm:gap-y-6">
             {logos.map((logo) => (
               <span
                 key={logo}
-                className="text-sm font-medium tracking-wide text-deep-navy/70 uppercase"
+                className="text-center text-xs font-medium tracking-wide text-deep-navy/70 uppercase sm:text-sm"
               >
                 {logo}
               </span>
@@ -88,7 +90,7 @@ export function SocialProof() {
               <motion.div
                 whileHover={{ y: -4 }}
                 transition={{ duration: 0.3 }}
-                className="gradient-border group h-full rounded-2xl p-6 shadow-sm"
+                className="gradient-border group h-full rounded-xl p-5 shadow-sm sm:rounded-2xl sm:p-6"
               >
                 <Quote className="mb-4 h-8 w-8 text-primary/20" />
                 <div className="mb-4 flex gap-0.5">

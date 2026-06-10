@@ -34,8 +34,8 @@ const notFit = [
 
 export function Industries() {
   return (
-    <section id="industries" className="noise-overlay relative bg-white py-24 md:py-32">
-      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8">
+    <section id="industries" className="noise-overlay relative bg-white py-16 sm:py-24 md:py-32">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="Industries"
           title="If you sell to Belgian companies, BelgoBase is for you"
@@ -48,7 +48,7 @@ export function Industries() {
               <motion.div
                 whileHover={{ y: -6, scale: 1.01 }}
                 transition={{ duration: 0.3 }}
-                className="gradient-border group h-full rounded-2xl p-8"
+                className="gradient-border group h-full rounded-xl p-5 sm:rounded-2xl sm:p-8"
               >
                 <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 transition-all group-hover:from-primary/20 group-hover:to-accent/20">
                   <industry.icon className="h-6 w-6 text-primary" />
@@ -76,7 +76,7 @@ export function Industries() {
         </div>
 
         <SectionReveal>
-          <div className="rounded-2xl border border-amber-200/60 bg-gradient-to-br from-amber-50/80 to-orange-50/40 p-8 md:p-10">
+          <div className="rounded-xl border border-amber-200/60 bg-gradient-to-br from-amber-50/80 to-orange-50/40 p-5 sm:rounded-2xl sm:p-8 md:p-10">
             <div className="mb-6 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
                 <X className="h-5 w-5 text-amber-600" />

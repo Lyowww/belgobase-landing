@@ -42,7 +42,7 @@ export function Enterprise() {
   return (
     <section
       id="enterprise"
-      className="relative overflow-hidden bg-deep-navy py-24 md:py-32"
+      className="relative overflow-hidden bg-deep-navy py-16 sm:py-24 md:py-32"
     >
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute top-0 left-1/4 h-96 w-96 rounded-full bg-primary/20 blur-[120px]" />
@@ -55,13 +55,13 @@ export function Enterprise() {
         />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="grid items-center gap-16 lg:grid-cols-2">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid items-center gap-10 sm:gap-16 lg:grid-cols-2">
           <SectionReveal direction="left">
             <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-accent">
               Enterprise
             </p>
-            <h2 className="text-3xl font-semibold tracking-tight text-white md:text-4xl lg:text-5xl">
+            <h2 className="text-2xl font-semibold tracking-tight text-balance text-white sm:text-3xl md:text-4xl lg:text-5xl">
               Built for serious
               <br />
               <span className="text-gradient-accent">Belgian enterprises</span>
@@ -84,7 +84,7 @@ export function Enterprise() {
               <SectionReveal key={feature.title} delay={i * 0.1}>
                 <motion.div
                   whileHover={{ y: -4 }}
-                  className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-colors hover:border-accent/30 hover:bg-white/8"
+                  className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition-colors hover:border-accent/30 hover:bg-white/8 sm:rounded-2xl sm:p-6"
                 >
                   <feature.icon className="mb-4 h-6 w-6 text-accent" />
                   <h3 className="mb-2 font-semibold text-white">
@@ -100,8 +100,8 @@ export function Enterprise() {
         </div>
 
         <SectionReveal delay={0.3}>
-          <div className="mt-16 overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-1 backdrop-blur-sm">
-            <div className="relative h-48 overflow-hidden rounded-xl md:h-56">
+          <div className="mt-10 overflow-hidden rounded-xl border border-white/10 bg-white/5 p-1 backdrop-blur-sm sm:mt-16 sm:rounded-2xl">
+            <div className="relative h-36 overflow-hidden rounded-lg sm:h-48 sm:rounded-xl md:h-56">
               <svg
                 className="absolute inset-0 h-full w-full"
                 viewBox="0 0 800 200"
@@ -143,8 +143,8 @@ export function Enterprise() {
                   />
                 ))}
               </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <p className="text-sm font-medium text-white/40">
+              <div className="absolute inset-0 flex items-center justify-center px-4">
+                <p className="text-center text-xs font-medium text-white/40 sm:text-sm">
                   Enterprise relationship network · 2M+ nodes
                 </p>
               </div>

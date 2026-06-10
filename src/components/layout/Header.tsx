@@ -33,19 +33,19 @@ export function Header() {
         backgroundColor: headerBg,
         borderBottomColor: headerBorder,
       }}
-      className="fixed top-0 left-0 right-0 z-50 border-b backdrop-blur-xl"
+      className="fixed top-0 right-0 left-0 z-50 border-b backdrop-blur-xl"
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8">
-        <a href="#" className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <span className="text-sm font-bold text-white">B</span>
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-6 lg:px-8">
+        <a href="#" className="flex min-w-0 shrink items-center gap-2">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary sm:h-8 sm:w-8">
+            <span className="text-xs font-bold text-white sm:text-sm">B</span>
           </div>
-          <span className="text-lg font-semibold tracking-tight text-deep-navy">
+          <span className="truncate text-base font-semibold tracking-tight text-deep-navy sm:text-lg">
             BelgoBase
           </span>
         </a>
 
-        <nav className="hidden items-center gap-8 md:flex">
+        <nav className="hidden items-center gap-6 lg:flex lg:gap-8">
           {navLinks.map((link) => (
             <a
               key={link.href}
@@ -57,20 +57,25 @@ export function Header() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
-          <MagneticButton href="#contact" variant="secondary" className="!px-5 !py-2.5">
+        <div className="hidden items-center gap-2 lg:flex lg:gap-3">
+          <MagneticButton
+            href="#contact"
+            variant="secondary"
+            className="!px-4 !py-2.5 !text-xs xl:!px-5 xl:!text-sm"
+          >
             Access Sample Leads
           </MagneticButton>
-          <MagneticButton href="#contact" className="!px-5 !py-2.5">
+          <MagneticButton href="#contact" className="!px-4 !py-2.5 !text-xs xl:!px-5 xl:!text-sm">
             Get 30 Free Leads
           </MagneticButton>
         </div>
 
         <button
           type="button"
-          className="md:hidden"
+          className="shrink-0 rounded-lg p-1.5 lg:hidden"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label={mobileOpen ? "Close menu" : "Open menu"}
+          aria-expanded={mobileOpen}
         >
           {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
@@ -78,11 +83,13 @@ export function Header() {
 
       <div
         className={cn(
-          "overflow-hidden border-t border-border bg-white/95 backdrop-blur-xl transition-all duration-300 md:hidden",
-          mobileOpen ? "max-h-80 opacity-100" : "max-h-0 opacity-0 border-transparent",
+          "overflow-hidden border-t border-border bg-white/95 backdrop-blur-xl transition-all duration-300 lg:hidden",
+          mobileOpen
+            ? "max-h-[24rem] opacity-100"
+            : "max-h-0 border-transparent opacity-0",
         )}
       >
-        <nav className="flex flex-col gap-1 px-6 py-4">
+        <nav className="flex flex-col gap-1 px-4 py-4 sm:px-6">
           {navLinks.map((link) => (
             <a
               key={link.href}

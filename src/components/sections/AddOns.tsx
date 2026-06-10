@@ -38,8 +38,8 @@ const addOns = [
 
 export function AddOns() {
   return (
-    <section id="addons" className="section-alt noise-overlay relative py-24 md:py-32">
-      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8">
+    <section id="addons" className="section-alt noise-overlay relative py-16 sm:py-24 md:py-32">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="Add-ons"
           title="Enhance your lead list"
@@ -51,13 +51,13 @@ export function AddOns() {
             <SectionReveal key={addon.title} delay={i * 0.1}>
               <motion.div
                 whileHover={{ y: -4 }}
-                className="gradient-border flex h-full gap-5 rounded-2xl p-6"
+                className="gradient-border flex h-full flex-col gap-4 rounded-xl p-4 sm:flex-row sm:gap-5 sm:rounded-2xl sm:p-6"
               >
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
                   <addon.icon className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <div className="mb-1 flex items-center justify-between gap-4">
+                  <div className="mb-1 flex flex-wrap items-start justify-between gap-2 sm:gap-4">
                     <h3 className="font-semibold text-deep-navy">{addon.title}</h3>
                     <span className="shrink-0 text-sm font-semibold text-primary">
                       {addon.price}

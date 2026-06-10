@@ -19,7 +19,7 @@ export default function Home() {
     <>
       <ScrollProgress />
       <Header />
-      <main>
+      <main className="min-w-0 overflow-x-hidden">
         <Hero />
         <SocialProof />
         <Process />

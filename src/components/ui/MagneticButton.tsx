@@ -36,6 +36,7 @@ export function MagneticButton({
   const y = useMotionValue(0);
   const springX = useSpring(x, { stiffness: 300, damping: 20 });
   const springY = useSpring(y, { stiffness: 300, damping: 20 });
+  const isFullWidth = className?.includes("w-full");
 
   const handleMove = (e: React.MouseEvent) => {
     if (!ref.current || disabled) return;
@@ -55,8 +56,11 @@ export function MagneticButton({
     "relative inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-medium transition-colors duration-300",
     variants[variant],
     disabled && "pointer-events-none opacity-60",
+    isFullWidth && "w-full",
     className,
   );
+
+  const wrapperClass = cn(isFullWidth ? "block w-full" : "inline-block");
 
   const content = (
     <motion.div
@@ -73,14 +77,19 @@ export function MagneticButton({
 
   if (href) {
     return (
-      <a href={href} className="inline-block">
+      <a href={href} className={wrapperClass}>
         {content}
       </a>
     );
   }
 
   return (
-    <button type={type} onClick={onClick} disabled={disabled} className="inline-block">
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={wrapperClass}
+    >
       {content}
     </button>
   );

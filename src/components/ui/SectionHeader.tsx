@@ -19,7 +19,7 @@ export function SectionHeader({
   className,
 }: SectionHeaderProps) {
   return (
-    <SectionReveal className={cn("mb-16 md:mb-20", className)}>
+    <SectionReveal className={cn("mb-10 sm:mb-16 md:mb-20", className)}>
       <div
         className={cn(
           "max-w-3xl",
@@ -27,15 +27,15 @@ export function SectionHeader({
         )}
       >
         {eyebrow && (
-          <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-primary">
+          <p className="mb-3 text-xs font-medium tracking-[0.15em] text-primary uppercase sm:mb-4 sm:text-sm sm:tracking-[0.2em]">
             {eyebrow}
           </p>
         )}
-        <h2 className="text-3xl font-semibold tracking-tight text-deep-navy md:text-4xl lg:text-5xl">
+        <h2 className="text-2xl font-semibold tracking-tight text-balance text-deep-navy sm:text-3xl md:text-4xl lg:text-5xl">
           {title}
         </h2>
         {description && (
-          <p className="mt-5 text-lg leading-relaxed text-muted md:text-xl">
+          <p className="mt-4 text-base leading-relaxed text-muted sm:mt-5 sm:text-lg md:text-xl">
             {description}
           </p>
         )}

@@ -58,23 +58,23 @@ const plans = [
 
 export function Pricing() {
   return (
-    <section id="pricing" className="section-alt noise-overlay relative py-24 md:py-32">
-      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8">
+    <section id="pricing" className="section-alt noise-overlay relative py-16 sm:py-24 md:py-32">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="Pricing"
           title="Transparent, pay-per-list pricing"
           description="No contracts. No recurring fees. Get a fixed price upfront before we start — you only pay for what you need."
         />
 
-        <div className="grid gap-8 lg:grid-cols-3">
+        <div className="grid gap-6 sm:gap-8 lg:grid-cols-3">
           {plans.map((plan, i) => (
             <SectionReveal key={plan.name} delay={i * 0.12}>
               <motion.div
                 whileHover={{ y: -8 }}
                 transition={{ duration: 0.3 }}
-                className={`relative h-full rounded-2xl p-8 ${
+                className={`relative h-full rounded-xl p-5 sm:rounded-2xl sm:p-8 ${
                   plan.popular
-                    ? "border-2 border-primary bg-white shadow-xl shadow-primary/10"
+                    ? "mt-4 border-2 border-primary bg-white pt-8 shadow-xl shadow-primary/10 sm:mt-0 sm:pt-8"
                     : "border border-border/60 bg-white shadow-sm"
                 }`}
               >
@@ -95,7 +95,7 @@ export function Pricing() {
                 </div>
 
                 <div className="mb-2 flex items-baseline gap-1">
-                  <span className="text-4xl font-semibold tracking-tight text-deep-navy">
+                  <span className="text-3xl font-semibold tracking-tight text-deep-navy sm:text-4xl">
                     {plan.price}
                   </span>
                   <span className="text-sm text-muted">{plan.period}</span>

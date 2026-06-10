@@ -42,7 +42,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} scroll-smooth`}
     >
-      <body className="min-h-screen bg-white font-sans text-deep-navy antialiased">
+      <body className="min-h-screen min-w-0 overflow-x-hidden bg-white font-sans text-deep-navy antialiased">
         {children}
       </body>
     </html>

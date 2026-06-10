@@ -65,10 +65,12 @@ function FAQItem({
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-center justify-between gap-4 py-5 text-left"
+        className="flex w-full items-start justify-between gap-3 py-4 text-left sm:items-center sm:gap-4 sm:py-5"
         aria-expanded={isOpen}
       >
-        <span className="text-base font-medium text-deep-navy">{question}</span>
+        <span className="text-left text-sm font-medium text-deep-navy sm:text-base">
+          {question}
+        </span>
         <motion.span
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
@@ -98,12 +100,12 @@ export function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="noise-overlay relative bg-white py-24 md:py-32">
-      <div className="relative z-10 mx-auto max-w-3xl px-6 lg:px-8">
+    <section id="faq" className="noise-overlay relative bg-white py-16 sm:py-24 md:py-32">
+      <div className="relative z-10 mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         <SectionHeader eyebrow="FAQ" title="Still have questions?" />
 
         <SectionReveal>
-          <div className="mb-10 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 p-6 text-center">
+          <div className="mb-8 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 p-4 text-center sm:mb-10 sm:rounded-2xl sm:p-6">
             <p className="text-sm text-muted">
               Request 30 free sample leads and see exactly what you&apos;ll receive.
             </p>
@@ -114,7 +116,7 @@ export function FAQ() {
         </SectionReveal>
 
         <SectionReveal delay={0.1}>
-          <div className="rounded-2xl border border-border/60 bg-white px-6">
+          <div className="rounded-xl border border-border/60 bg-white px-4 sm:rounded-2xl sm:px-6">
             {faqs.map((faq, i) => (
               <FAQItem
                 key={faq.question}
