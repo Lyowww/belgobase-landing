@@ -61,7 +61,7 @@ export function HeroVisualization() {
   ];
 
   return (
-    <div className="relative flex h-full min-h-[420px] w-full min-w-0 sm:min-h-[480px] lg:min-h-[580px]">
+    <div className="relative flex h-full min-h-[320px] w-full min-w-0 sm:min-h-[420px] md:min-h-[480px] lg:min-h-[580px]">
       <div className="gradient-border relative flex h-full w-full flex-col overflow-hidden rounded-2xl sm:rounded-3xl">
         <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl sm:rounded-3xl">
           <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-accent/15 blur-3xl" />

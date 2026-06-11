@@ -64,7 +64,7 @@ export function SocialProof() {
                 <p className="text-2xl font-semibold tracking-tight text-deep-navy sm:text-3xl md:text-4xl">
                   <AnimatedCounter value={metric.value} suffix={metric.suffix} />
                 </p>
-                <p className="mt-1.5 text-xs text-muted sm:mt-2 sm:text-sm">
+                <p className="mt-1.5 line-clamp-2 px-0.5 text-xs leading-tight text-muted sm:mt-2 sm:px-0 sm:text-sm">
                   {metric.label}
                 </p>
               </div>

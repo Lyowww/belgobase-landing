@@ -1,7 +1,7 @@
 "use client";
 
 import { Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useThrottledScroll } from "@/hooks/useThrottledScroll";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
@@ -19,6 +19,15 @@ export function Header({ variant = "default" }: HeaderProps) {
   const scrolled = useThrottledScroll(40);
   const isComingSoon = variant === "comingSoon";
 
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileOpen]);
+
   const navLinks = [
     { label: t("nav.process"), href: "#process" },
     { label: t("nav.industries"), href: "#industries" },
@@ -29,7 +38,7 @@ export function Header({ variant = "default" }: HeaderProps) {
   return (
     <header
       className={cn(
-        "glass-nav relative fixed top-0 right-0 left-0 z-50 transition-[opacity,box-shadow] duration-500",
+        "glass-nav relative fixed top-0 right-0 left-0 z-50 pt-safe transition-[opacity,box-shadow] duration-500",
         scrolled
           ? "opacity-100 shadow-lg shadow-black/5 dark:shadow-black/20"
           : "opacity-[0.88]",
@@ -92,7 +101,7 @@ export function Header({ variant = "default" }: HeaderProps) {
           {!isComingSoon && (
             <button
               type="button"
-              className="shrink-0 rounded-xl p-1.5 transition-colors hover:bg-surface-hover"
+              className="shrink-0 rounded-xl p-2 transition-colors hover:bg-surface-hover touch-manipulation"
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label={mobileOpen ? t("nav.closeMenu") : t("nav.openMenu")}
               aria-expanded={mobileOpen}
@@ -112,7 +121,7 @@ export function Header({ variant = "default" }: HeaderProps) {
             : "max-h-0 border-transparent opacity-0",
         )}
       >
-        <nav className="flex flex-col gap-1 px-4 py-4 sm:px-6">
+        <nav className="flex max-h-[min(28rem,calc(100dvh-4rem))] flex-col gap-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
           {navLinks.map((link) => (
             <a
               key={link.href}

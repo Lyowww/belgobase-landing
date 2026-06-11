@@ -62,7 +62,7 @@ export function EnterpriseVisualization() {
   return (
     <div className="relative w-full">
       <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-1 backdrop-blur-sm">
-        <div className="relative h-[22rem] overflow-hidden rounded-xl sm:h-[24rem] md:h-[26rem]">
+        <div className="relative h-[18rem] overflow-hidden rounded-xl sm:h-[22rem] md:h-[26rem]">
           <div className="pointer-events-none absolute inset-0">
             <div className="absolute -top-16 right-0 h-48 w-48 rounded-full bg-primary/20 blur-3xl" />
             <div className="absolute -bottom-12 left-0 h-40 w-40 rounded-full bg-accent/15 blur-3xl" />
@@ -296,7 +296,9 @@ export function EnterpriseVisualization() {
                 >
                   <stat.icon className="mx-auto mb-1 h-3.5 w-3.5 text-accent sm:h-4 sm:w-4" />
                   <p className="text-sm font-bold text-white sm:text-base">{stat.value}</p>
-                  <p className="truncate text-[10px] text-white/45 sm:text-xs">{stat.label}</p>
+                  <p className="line-clamp-2 text-[10px] leading-tight text-white/45 sm:text-xs">
+                    {stat.label}
+                  </p>
                 </m.div>
               ))}
             </div>

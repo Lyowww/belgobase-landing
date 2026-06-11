@@ -16,7 +16,7 @@ const HeroVisualization = dynamic(
   {
     loading: () => (
       <div
-        className="min-h-[420px] w-full animate-pulse rounded-2xl bg-border/30 sm:min-h-[480px] lg:min-h-[580px]"
+        className="min-h-[320px] w-full animate-pulse rounded-2xl bg-border/30 sm:min-h-[420px] md:min-h-[480px] lg:min-h-[580px]"
         aria-hidden="true"
       />
     ),
@@ -63,10 +63,10 @@ export function Hero() {
   ];
 
   return (
-    <section className="noise-overlay mesh-hero relative overflow-hidden pt-24 pb-16 sm:pt-28 sm:pb-20 md:pt-36 md:pb-28">
+    <section className="noise-overlay mesh-hero relative overflow-hidden pt-[calc(5.5rem+env(safe-area-inset-top,0px))] pb-12 sm:pt-28 sm:pb-20 md:pt-36 md:pb-28">
       <AnimatedGrid />
-      <AmbientGlow className="left-[10%] top-[15%] h-[400px] w-[400px]" color="accent" />
-      <AmbientGlow className="right-[5%] top-[5%] h-[350px] w-[350px]" color="primary" />
+      <AmbientGlow className="left-[5%] top-[12%] h-[min(280px,70vw)] w-[min(280px,70vw)] sm:left-[10%] sm:h-[min(400px,55vw)] sm:w-[min(400px,55vw)]" color="accent" />
+      <AmbientGlow className="right-[2%] top-[5%] h-[min(240px,60vw)] w-[min(240px,60vw)] sm:right-[5%] sm:h-[min(350px,50vw)] sm:w-[min(350px,50vw)]" color="primary" />
 
       {enabled && (
         <m.div
@@ -96,7 +96,7 @@ export function Hero() {
 
             <m.h1
               variants={item}
-              className="mt-6 text-[1.75rem] font-semibold leading-[1.1] tracking-tight text-balance text-deep-navy sm:mt-8 sm:text-4xl sm:leading-[1.08] md:text-5xl lg:text-6xl"
+              className="mt-5 text-[1.625rem] font-semibold leading-[1.12] tracking-tight text-balance text-deep-navy sm:mt-8 sm:text-4xl sm:leading-[1.08] md:text-5xl lg:text-6xl"
             >
               {t("hero.titleLine1")}{" "}
               <span className="text-gradient-accent">{t("hero.titleHighlight")}</span>
@@ -115,7 +115,7 @@ export function Hero() {
             <m.div variants={item} className="mt-6 sm:mt-8">
               <MagneticButton
                 href="#contact"
-                className="w-full !min-w-[13rem] !px-8 !py-3.5 !text-sm sm:w-auto sm:!min-w-[15rem] sm:!px-10 sm:!text-base"
+                className="w-full !min-w-0 !px-6 !py-3.5 !text-sm sm:w-auto sm:!min-w-[15rem] sm:!px-10 sm:!text-base"
               >
                 {t("hero.accessSample")}
                 <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />

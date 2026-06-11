@@ -26,10 +26,12 @@ function FAQItem({
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-center justify-between gap-6 py-5 text-left sm:py-6"
+        className="flex w-full items-start justify-between gap-4 py-5 text-left touch-manipulation sm:items-center sm:gap-6 sm:py-6"
         aria-expanded={isOpen}
       >
-        <span className="text-base font-medium text-deep-navy sm:text-lg">{question}</span>
+        <span className="min-w-0 flex-1 text-base font-medium text-balance text-deep-navy sm:text-lg">
+          {question}
+        </span>
         <span className="flex h-6 w-6 shrink-0 items-center justify-center text-deep-navy">
           {isOpen ? (
             <Minus className="h-5 w-5" strokeWidth={1.5} />
@@ -90,7 +92,7 @@ export function FAQ() {
             <div className="mt-6 sm:mt-8">
               <MagneticButton
                 href="#contact"
-                className="!min-w-[11rem] !px-8 !py-3 !text-sm sm:!min-w-[12rem] sm:!px-10"
+                className="w-full !min-w-0 !px-8 !py-3 !text-sm sm:w-auto sm:!min-w-[12rem] sm:!px-10"
               >
                 {t("faq.getFreeLeads")}
               </MagneticButton>
