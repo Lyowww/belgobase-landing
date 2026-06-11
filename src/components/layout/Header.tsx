@@ -9,10 +9,15 @@ import { MagneticButton } from "@/components/ui/MagneticButton";
 import { useTranslations } from "@/providers/TranslationsProvider";
 import { cn } from "@/lib/utils";
 
-export function Header() {
+type HeaderProps = {
+  variant?: "default" | "comingSoon";
+};
+
+export function Header({ variant = "default" }: HeaderProps) {
   const { t } = useTranslations();
   const [mobileOpen, setMobileOpen] = useState(false);
   const scrolled = useThrottledScroll(40);
+  const isComingSoon = variant === "comingSoon";
 
   const navLinks = [
     { label: t("nav.process"), href: "#process" },
@@ -32,7 +37,10 @@ export function Header() {
     >
       <nav
         aria-label="Main"
-        className="pointer-events-none absolute top-1/2 left-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-6 lg:flex lg:gap-8"
+        className={cn(
+          "pointer-events-none absolute top-1/2 left-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-6 lg:flex lg:gap-8",
+          isComingSoon && "lg:hidden",
+        )}
       >
         {navLinks.map((link) => (
           <a
@@ -62,30 +70,43 @@ export function Header() {
           </span>
         </a>
 
-        <div className="relative z-10 hidden items-center lg:flex">
-          <MagneticButton href="#contact" className="!min-w-[11rem] !px-8 !py-2.5 !text-sm xl:!min-w-[12rem] xl:!px-10">
-            {t("nav.getFreeLeads")}
-          </MagneticButton>
-        </div>
+        {!isComingSoon && (
+          <div className="relative z-10 hidden items-center lg:flex">
+            <MagneticButton
+              href="#contact"
+              className="!min-w-[11rem] !px-8 !py-2.5 !text-sm xl:!min-w-[12rem] xl:!px-10"
+            >
+              {t("nav.getFreeLeads")}
+            </MagneticButton>
+          </div>
+        )}
 
-        <div className="flex items-center gap-1.5 lg:hidden">
+        <div
+          className={cn(
+            "flex items-center gap-1.5",
+            isComingSoon ? "relative z-10 lg:hidden" : "lg:hidden",
+          )}
+        >
           <LanguageSwitcher />
           <ThemeToggle />
-          <button
-            type="button"
-            className="shrink-0 rounded-xl p-1.5 transition-colors hover:bg-surface-hover"
-            onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label={mobileOpen ? t("nav.closeMenu") : t("nav.openMenu")}
-            aria-expanded={mobileOpen}
-          >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+          {!isComingSoon && (
+            <button
+              type="button"
+              className="shrink-0 rounded-xl p-1.5 transition-colors hover:bg-surface-hover"
+              onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label={mobileOpen ? t("nav.closeMenu") : t("nav.openMenu")}
+              aria-expanded={mobileOpen}
+            >
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          )}
         </div>
       </div>
 
       <div
         className={cn(
           "overflow-hidden border-t border-border bg-surface/95 backdrop-blur-xl transition-all duration-300 lg:hidden",
+          isComingSoon && "hidden",
           mobileOpen
             ? "max-h-[28rem] opacity-100"
             : "max-h-0 border-transparent opacity-0",
