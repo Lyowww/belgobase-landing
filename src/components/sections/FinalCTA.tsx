@@ -1,9 +1,11 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { ProgressiveContactForm } from "@/components/forms/ProgressiveContactForm";
 import { SectionReveal } from "@/components/ui/SectionReveal";
 import { AmbientGlow } from "@/components/visuals/AmbientBackground";
 import { useTranslations } from "@/providers/TranslationsProvider";
+import { smoothEase } from "@/lib/motion";
 
 export function FinalCTA() {
   const { t } = useTranslations();
@@ -21,22 +23,37 @@ export function FinalCTA() {
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid min-w-0 items-start gap-10 sm:gap-12 lg:grid-cols-2 lg:gap-16">
           <SectionReveal direction="left">
-            <p className="mb-3 text-xs font-medium tracking-[0.15em] text-primary uppercase sm:mb-4 sm:text-sm sm:tracking-[0.2em]">
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, ease: smoothEase }}
+              className="mb-3 text-xs font-medium tracking-[0.15em] text-primary uppercase sm:mb-4 sm:text-sm sm:tracking-[0.2em]"
+            >
               {t("finalCta.eyebrow")}
-            </p>
-            <h2 className="text-2xl font-semibold tracking-tight text-balance text-deep-navy sm:text-3xl md:text-4xl lg:text-5xl">
+            </motion.p>
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.08, ease: smoothEase }}
+              className="text-2xl font-semibold tracking-tight text-balance text-deep-navy sm:text-3xl md:text-4xl lg:text-5xl"
+            >
               {t("finalCta.title")}{" "}
               <span className="font-semibold text-gradient-accent">
                 {t("finalCta.titleHighlight")}
               </span>{" "}
               {t("finalCta.titleEnd")}
-            </h2>
-            <p className="mt-4 text-sm text-muted sm:mt-6 sm:text-base">
+            </motion.h2>
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.55, delay: 0.16, ease: smoothEase }}
+              className="mt-4 text-[15px] leading-relaxed text-muted sm:mt-6 sm:text-[17px]"
+            >
               {t("finalCta.description")}
-            </p>
-            <p className="mt-6 text-lg font-semibold text-gradient-accent sm:mt-8 sm:text-xl">
-              {t("finalCta.tagline")}
-            </p>
+            </motion.p>
           </SectionReveal>
 
           <SectionReveal direction="right" delay={0.15}>

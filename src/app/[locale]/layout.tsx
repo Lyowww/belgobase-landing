@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist } from "next/font/google";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { getDictionary } from "@/i18n/dictionaries";
 import { i18n, isLocale } from "@/i18n/config";
+import { siteUrl } from "@/lib/site";
 import { isResolvedTheme } from "@/lib/theme";
+import { MotionProvider } from "@/providers/MotionProvider";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { TranslationsProvider } from "@/providers/TranslationsProvider";
 import { cn } from "@/lib/utils";
@@ -14,12 +17,7 @@ const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
   display: "swap",
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-  display: "swap",
+  preload: true,
 });
 
 export async function generateStaticParams() {
@@ -36,16 +34,31 @@ export async function generateMetadata({
 
   const dict = await getDictionary(localeParam);
   const keywords = dict.metadata.keywords.split(", ");
+  const pageUrl = `${siteUrl}/${localeParam}`;
 
   return {
+    metadataBase: new URL(siteUrl),
     title: dict.metadata.title,
     description: dict.metadata.description,
     keywords,
+    applicationName: "BelgoBase",
+    creator: "BelgoBase",
+    formatDetection: {
+      email: false,
+      telephone: false,
+    },
     openGraph: {
       title: dict.metadata.title,
       description: dict.metadata.description,
       type: "website",
       locale: localeParam === "nl" ? "nl_BE" : "en_BE",
+      url: pageUrl,
+      siteName: "BelgoBase",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: dict.metadata.title,
+      description: dict.metadata.description,
     },
     alternates: {
       canonical: `/${localeParam}`,
@@ -53,6 +66,10 @@ export async function generateMetadata({
         en: "/en",
         nl: "/nl",
       },
+    },
+    robots: {
+      index: true,
+      follow: true,
     },
   };
 }
@@ -78,21 +95,23 @@ export default async function LocaleLayout({
   return (
     <html
       lang={localeParam}
-      className={cn(
-        geistSans.variable,
-        geistMono.variable,
-        "scroll-smooth",
-        isDark && "dark",
-      )}
+      className={cn(geistSans.variable, "scroll-smooth")}
       data-scroll-behavior="smooth"
       style={isDark ? { colorScheme: "dark" } : { colorScheme: "light" }}
       suppressHydrationWarning
     >
       <body className="min-h-screen min-w-0 overflow-x-hidden bg-background font-sans text-foreground antialiased transition-colors duration-500">
+        <JsonLd
+          locale={localeParam}
+          title={dictionary.metadata.title}
+          description={dictionary.metadata.description}
+        />
         <ThemeProvider>
-          <TranslationsProvider locale={localeParam} dictionary={dictionary}>
-            {children}
-          </TranslationsProvider>
+          <MotionProvider>
+            <TranslationsProvider locale={localeParam} dictionary={dictionary}>
+              {children}
+            </TranslationsProvider>
+          </MotionProvider>
         </ThemeProvider>
       </body>
     </html>

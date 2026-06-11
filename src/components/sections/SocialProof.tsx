@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Star, Quote } from "lucide-react";
 import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
 import { SectionHeader } from "@/components/ui/SectionHeader";
@@ -18,6 +18,7 @@ const logos = [
 
 export function SocialProof() {
   const { t } = useTranslations();
+  const prefersReducedMotion = useReducedMotion();
 
   const metrics = [
     { value: 500, suffix: "+", label: t("socialProof.metricBusinesses") },
@@ -72,15 +73,34 @@ export function SocialProof() {
         </div>
 
         <SectionReveal>
-          <div className="mb-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-4 opacity-60 sm:mb-16 sm:gap-x-10 sm:gap-y-6">
-            {logos.map((logo) => (
-              <span
-                key={logo}
-                className="text-center text-xs font-medium tracking-wide text-deep-navy/70 uppercase sm:text-sm"
+          <div className="logo-marquee-mask relative mb-10 overflow-hidden sm:mb-16">
+            {prefersReducedMotion ? (
+              <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4 opacity-60 sm:gap-x-10">
+                {logos.map((logo) => (
+                  <span
+                    key={logo}
+                    className="text-xs font-medium tracking-wide text-deep-navy/50 uppercase sm:text-sm"
+                  >
+                    {logo}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <motion.div
+                animate={{ x: ["0%", "-50%"] }}
+                transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
+                className="flex w-max items-center gap-x-10 sm:gap-x-16"
               >
-                {logo}
-              </span>
-            ))}
+                {[...logos, ...logos].map((logo, i) => (
+                  <span
+                    key={`${logo}-${i}`}
+                    className="shrink-0 text-xs font-medium tracking-wide text-deep-navy/50 uppercase sm:text-sm"
+                  >
+                    {logo}
+                  </span>
+                ))}
+              </motion.div>
+            )}
           </div>
         </SectionReveal>
 

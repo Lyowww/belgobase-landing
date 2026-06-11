@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Check, ArrowRight } from "lucide-react";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 import { SectionReveal } from "@/components/ui/SectionReveal";
+import { EnterpriseVisualization } from "@/components/visuals/EnterpriseVisualization";
 import { useTranslations } from "@/providers/TranslationsProvider";
 
 export function Enterprise() {
@@ -76,65 +77,7 @@ export function Enterprise() {
           </SectionReveal>
 
           <SectionReveal direction="right" delay={0.15}>
-            <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-1 backdrop-blur-sm">
-              <div className="relative h-64 overflow-hidden rounded-xl sm:h-72 md:h-80">
-                <svg
-                  className="absolute inset-0 h-full w-full"
-                  viewBox="0 0 800 320"
-                  preserveAspectRatio="xMidYMid slice"
-                  aria-hidden="true"
-                >
-                  {Array.from({ length: 16 }).map((_, i) => {
-                    const x1 = 40 + (i % 4) * 190;
-                    const y1 = 40 + Math.floor(i / 4) * 80;
-                    const x2 = x1 + 60 + (i % 3) * 30;
-                    const y2 = y1 + 50 - (i % 2) * 25;
-                    return (
-                      <motion.line
-                        key={i}
-                        x1={x1}
-                        y1={y1}
-                        x2={x2}
-                        y2={y2}
-                        stroke="#4DA3FF"
-                        strokeWidth="0.6"
-                        opacity="0.35"
-                        initial={{ pathLength: 0 }}
-                        whileInView={{ pathLength: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 1.5, delay: i * 0.08 }}
-                      />
-                    );
-                  })}
-                  {Array.from({ length: 12 }).map((_, i) => (
-                    <motion.circle
-                      key={`node-${i}`}
-                      cx={80 + (i % 4) * 190}
-                      cy={60 + Math.floor(i / 4) * 80}
-                      r="5"
-                      fill="#0A66C2"
-                      initial={{ scale: 0, opacity: 0 }}
-                      whileInView={{ scale: 1, opacity: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 0.4 + i * 0.08, type: "spring" }}
-                    >
-                      <animate
-                        attributeName="opacity"
-                        values="0.5;1;0.5"
-                        dur={`${2 + (i % 3)}s`}
-                        repeatCount="indefinite"
-                      />
-                    </motion.circle>
-                  ))}
-                </svg>
-                <div className="absolute inset-0 bg-gradient-to-t from-[#060a14]/80 via-transparent to-transparent" />
-                <div className="absolute inset-0 flex items-end justify-center px-4 pb-6">
-                  <p className="text-center text-xs font-medium text-white/50 sm:text-sm">
-                    {t("enterprise.networkLabel")}
-                  </p>
-                </div>
-              </div>
-            </div>
+            <EnterpriseVisualization />
           </SectionReveal>
         </div>
       </div>

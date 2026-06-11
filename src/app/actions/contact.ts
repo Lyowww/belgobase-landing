@@ -12,19 +12,6 @@ export type ContactFormState = {
   errors?: Partial<Record<keyof ContactFormData, string>>;
 };
 
-const packageLabels: Record<string, string> = {
-  minimum: "Minimum",
-  plus: "Plus",
-  pro: "Pro",
-  unsure: "Not sure yet",
-};
-
-const timelineLabels: Record<string, string> = {
-  asap: "ASAP (24h)",
-  week: "This week",
-  month: "This month",
-};
-
 export async function submitContactForm(
   _prevState: ContactFormState,
   formData: FormData,
@@ -34,11 +21,8 @@ export async function submitContactForm(
     email: formData.get("email"),
     company: formData.get("company"),
     phone: formData.get("phone") || undefined,
-    criteria: formData.get("criteria"),
-    packageInterest: formData.get("packageInterest"),
-    timeline: formData.get("timeline"),
     gdprConfirm: formData.get("gdprConfirm") ?? undefined,
-    requestType: formData.get("requestType") || "custom",
+    requestType: formData.get("requestType") || "sample",
     website: formData.get("website") ?? "",
   };
 
@@ -71,8 +55,6 @@ export async function submitContactForm(
   }
 
   const data = parsed.data;
-  const packageLabel = packageLabels[data.packageInterest] ?? data.packageInterest;
-  const timelineLabel = timelineLabels[data.timeline] ?? data.timeline;
 
   try {
     const resend = new Resend(resendApiKey);
@@ -81,18 +63,14 @@ export async function submitContactForm(
       from: "BelgoBase <onboarding@resend.dev>",
       to: contactEmail,
       replyTo: data.email,
-      subject: `[BelgoBase] Custom B2B Leads List — ${data.company}`,
+      subject: `[BelgoBase] 30 Free Leads Request — ${data.company}`,
       html: `
-        <h2>New BelgoBase Lead Request</h2>
+        <h2>New 30 Free Leads Request</h2>
         <p><strong>Name:</strong> ${data.name}</p>
         <p><strong>Email:</strong> ${data.email}</p>
         <p><strong>Company:</strong> ${data.company}</p>
         ${data.phone ? `<p><strong>Phone:</strong> ${data.phone}</p>` : ""}
-        <p><strong>Package interest:</strong> ${packageLabel}</p>
-        <p><strong>Timeline:</strong> ${timelineLabel}</p>
-        <p><strong>Target criteria:</strong></p>
-        <p>${data.criteria.replace(/\n/g, "<br>")}</p>
-        <p><strong>B2B data usage confirmed:</strong> Yes</p>
+        <p><strong>Data usage confirmed:</strong> Yes</p>
       `,
     });
 

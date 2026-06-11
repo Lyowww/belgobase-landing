@@ -38,7 +38,7 @@ export function SectionReveal({
       ref={ref}
       initial={{ opacity: 0, ...offset }}
       animate={isInView ? { opacity: 1, x: 0, y: 0 } : { opacity: 0, ...offset }}
-      transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.75, delay, ease: [0.22, 1, 0.36, 1], type: "tween" }}
       className={cn(className)}
     >
       {children}

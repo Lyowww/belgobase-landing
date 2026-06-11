@@ -1,10 +1,12 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { TrendingUp, Clock, Target, Users } from "lucide-react";
 import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { SectionReveal } from "@/components/ui/SectionReveal";
 import { useTranslations } from "@/providers/TranslationsProvider";
+import { hoverLiftSubtle } from "@/lib/motion";
 
 export function Results() {
   const { t } = useTranslations();
@@ -52,10 +54,17 @@ export function Results() {
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {results.map((result, i) => (
             <SectionReveal key={result.label} delay={i * 0.1}>
-              <div className="premium-card group h-full rounded-2xl bg-gradient-to-b from-card to-light-bg/50 p-5 sm:p-8">
-                <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/15">
+              <motion.div
+                whileHover={hoverLiftSubtle}
+                className="premium-card group h-full rounded-2xl bg-gradient-to-b from-card to-light-bg/50 p-5 sm:p-8"
+              >
+                <motion.div
+                  whileHover={{ scale: 1.08, rotate: 3 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 18 }}
+                  className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/15"
+                >
                   <result.icon className="h-5 w-5 text-primary" />
-                </div>
+                </motion.div>
                 <p className="text-3xl font-semibold tracking-tight text-deep-navy sm:text-4xl">
                   <AnimatedCounter value={result.metric} suffix={result.suffix} />
                 </p>
@@ -65,7 +74,7 @@ export function Results() {
                 <p className="mt-2 text-xs leading-relaxed text-muted">
                   {result.description}
                 </p>
-              </div>
+              </motion.div>
             </SectionReveal>
           ))}
         </div>

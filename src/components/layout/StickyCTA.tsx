@@ -1,19 +1,14 @@
 "use client";
 
-import { AnimatePresence, motion, useScroll, useMotionValueEvent } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { useState } from "react";
 import { MagneticButton } from "@/components/ui/MagneticButton";
+import { useThrottledScroll } from "@/hooks/useThrottledScroll";
 import { useTranslations } from "@/providers/TranslationsProvider";
 
 export function StickyCTA() {
   const { t } = useTranslations();
-  const [visible, setVisible] = useState(false);
-  const { scrollY } = useScroll();
-
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    setVisible(latest > 500);
-  });
+  const visible = useThrottledScroll(500);
 
   return (
     <AnimatePresence>

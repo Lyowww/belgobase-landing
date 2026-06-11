@@ -2,11 +2,26 @@
 
 import { motion } from "framer-motion";
 import { ArrowRight, UserCheck, RefreshCw, MapPin } from "lucide-react";
+import dynamic from "next/dynamic";
 import { AmbientGlow, AnimatedGrid } from "@/components/visuals/AmbientBackground";
 import { MagneticButton } from "@/components/ui/MagneticButton";
-import { HeroVisualization } from "@/components/visuals/HeroVisualization";
 import { useTranslations } from "@/providers/TranslationsProvider";
 import { useMousePosition } from "@/hooks/useMousePosition";
+
+const HeroVisualization = dynamic(
+  () =>
+    import("@/components/visuals/HeroVisualization").then((m) => ({
+      default: m.HeroVisualization,
+    })),
+  {
+    loading: () => (
+      <div
+        className="min-h-[420px] w-full animate-pulse rounded-2xl bg-border/30 sm:min-h-[480px] lg:min-h-[580px]"
+        aria-hidden="true"
+      />
+    ),
+  },
+);
 
 const container = {
   hidden: { opacity: 0 },

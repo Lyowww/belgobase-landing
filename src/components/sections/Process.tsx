@@ -42,7 +42,15 @@ export function Process() {
         <SectionHeader
           eyebrow={t("process.eyebrow")}
           title={t("process.title")}
-          description={t("process.description")}
+          description={
+            <>
+              {t("process.descriptionBefore")}
+              <span className="underline decoration-primary underline-offset-4">
+                {t("process.descriptionHighlight")}
+              </span>
+              {t("process.descriptionAfter")}
+            </>
+          }
         />
 
         <div className="relative mx-auto mt-12 max-w-4xl sm:mt-16">

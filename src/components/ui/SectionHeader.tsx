@@ -1,12 +1,13 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { SectionReveal } from "./SectionReveal";
 import { cn } from "@/lib/utils";
 
 type SectionHeaderProps = {
   eyebrow?: string;
   title: string;
-  description?: string;
+  description?: ReactNode;
   align?: "left" | "center";
   className?: string;
 };
