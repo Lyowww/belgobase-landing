@@ -3,6 +3,7 @@ export type ResolvedTheme = "light" | "dark";
 
 export const THEME_COOKIE = "belgobase-theme";
 export const RESOLVED_THEME_COOKIE = "belgobase-resolved";
+export const DEFAULT_THEME: Theme = "light";
 
 export function resolveTheme(
   theme: Theme,

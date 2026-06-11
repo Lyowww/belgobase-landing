@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTheme } from "@/providers/ThemeProvider";
-import type { Theme } from "@/lib/theme";
+import { DEFAULT_THEME, type Theme } from "@/lib/theme";
 import { useTranslations } from "@/providers/TranslationsProvider";
 import { cn } from "@/lib/utils";
 
@@ -36,7 +36,7 @@ export function ThemeToggle({
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const displayTheme = mounted ? theme : "system";
+  const displayTheme = mounted ? theme : DEFAULT_THEME;
   const ActiveIcon =
     options.find((o) => o.value === displayTheme)?.icon ?? Monitor;
 

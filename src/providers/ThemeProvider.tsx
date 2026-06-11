@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  DEFAULT_THEME,
   RESOLVED_THEME_COOKIE,
   THEME_COOKIE,
   resolveTheme,
@@ -44,7 +45,7 @@ function readStoredTheme(): Theme {
   if (stored === "light" || stored === "dark" || stored === "system") {
     return stored;
   }
-  return "system";
+  return DEFAULT_THEME;
 }
 
 function syncCookies(theme: Theme, resolved: ResolvedTheme) {
@@ -58,7 +59,7 @@ type ThemeProviderProps = {
 };
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  const [theme, setThemeState] = useState<Theme>("system");
+  const [theme, setThemeState] = useState<Theme>(DEFAULT_THEME);
   const [systemDark, setSystemDark] = useState(false);
   const [mounted, setMounted] = useState(false);
 
