@@ -1,5 +1,7 @@
 import dynamic from "next/dynamic";
+import { ComingSoon } from "@/components/ComingSoon";
 import { Header } from "@/components/layout/Header";
+import { comingSoonEnabled } from "@/lib/site";
 import { FloatingToolbar } from "@/components/layout/FloatingToolbar";
 import { StickyCTA } from "@/components/layout/StickyCTA";
 import { Footer } from "@/components/layout/Footer";
@@ -57,6 +59,10 @@ const FinalCTA = dynamic(
 );
 
 export default function Home() {
+  if (comingSoonEnabled) {
+    return <ComingSoon />;
+  }
+
   return (
     <>
       <ScrollRestoration />

@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { getDictionary } from "@/i18n/dictionaries";
 import { i18n, isLocale } from "@/i18n/config";
-import { siteUrl } from "@/lib/site";
+import { comingSoonEnabled, siteUrl } from "@/lib/site";
 import { isResolvedTheme } from "@/lib/theme";
 import { MotionProvider } from "@/providers/MotionProvider";
 import { ThemeProvider } from "@/providers/ThemeProvider";
@@ -35,11 +35,15 @@ export async function generateMetadata({
   const dict = await getDictionary(localeParam);
   const keywords = dict.metadata.keywords.split(", ");
   const pageUrl = `${siteUrl}/${localeParam}`;
+  const title = comingSoonEnabled ? dict.comingSoon.metadataTitle : dict.metadata.title;
+  const description = comingSoonEnabled
+    ? dict.comingSoon.metadataDescription
+    : dict.metadata.description;
 
   return {
     metadataBase: new URL(siteUrl),
-    title: dict.metadata.title,
-    description: dict.metadata.description,
+    title,
+    description,
     keywords,
     applicationName: "BelgoBase",
     creator: "BelgoBase",
@@ -48,8 +52,8 @@ export async function generateMetadata({
       telephone: false,
     },
     openGraph: {
-      title: dict.metadata.title,
-      description: dict.metadata.description,
+      title,
+      description,
       type: "website",
       locale: localeParam === "nl" ? "nl_BE" : "en_BE",
       url: pageUrl,
@@ -57,8 +61,8 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: dict.metadata.title,
-      description: dict.metadata.description,
+      title,
+      description,
     },
     alternates: {
       canonical: `/${localeParam}`,
@@ -67,10 +71,9 @@ export async function generateMetadata({
         nl: "/nl",
       },
     },
-    robots: {
-      index: true,
-      follow: true,
-    },
+    robots: comingSoonEnabled
+      ? { index: false, follow: false }
+      : { index: true, follow: true },
   };
 }
 
@@ -103,8 +106,16 @@ export default async function LocaleLayout({
       <body className="min-h-screen min-w-0 overflow-x-hidden bg-background font-sans text-foreground antialiased transition-colors duration-500">
         <JsonLd
           locale={localeParam}
-          title={dictionary.metadata.title}
-          description={dictionary.metadata.description}
+          title={
+            comingSoonEnabled
+              ? dictionary.comingSoon.metadataTitle
+              : dictionary.metadata.title
+          }
+          description={
+            comingSoonEnabled
+              ? dictionary.comingSoon.metadataDescription
+              : dictionary.metadata.description
+          }
         />
         <ThemeProvider>
           <MotionProvider>

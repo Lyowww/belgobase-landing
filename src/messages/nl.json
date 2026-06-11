@@ -323,6 +323,13 @@
     "successMessage": "Bedankt! We sturen uw 30 gratis sample leads binnenkort.",
     "errorMessage": "Er ging iets mis. Probeer opnieuw of mail ons rechtstreeks."
   },
+  "comingSoon": {
+    "badge": "Binnenkort beschikbaar",
+    "title": "Er komt iets groots aan",
+    "description": "We bouwen een slimmere manier om Belgische B2B-prospecten te bereiken met gerichte leads uit 2M+ officiële KBO-bedrijven. Kom binnenkort terug.",
+    "metadataTitle": "BelgoBase — Binnenkort beschikbaar",
+    "metadataDescription": "BelgoBase komt binnenkort. Gerichte B2B-leads uit 2M+ Belgische bedrijven, op basis van officiële KBO-data."
+  },
   "theme": {
     "light": "Lichte modus",
     "dark": "Donkere modus",

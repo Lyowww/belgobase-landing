@@ -323,6 +323,13 @@
     "successMessage": "Thank you! We'll send your 30 free sample leads shortly.",
     "errorMessage": "Something went wrong. Please try again or email us directly."
   },
+  "comingSoon": {
+    "badge": "Launching soon",
+    "title": "Something great is on the way",
+    "description": "We're building a smarter way to reach Belgian B2B prospects with targeted leads from 2M+ official KBO companies. Check back soon.",
+    "metadataTitle": "BelgoBase — Coming Soon",
+    "metadataDescription": "BelgoBase is launching soon. Targeted B2B leads from 2M+ Belgian companies, built from official KBO data."
+  },
   "theme": {
     "light": "Light mode",
     "dark": "Dark mode",
