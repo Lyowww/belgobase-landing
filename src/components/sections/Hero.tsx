@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, UserCheck, RefreshCw, MapPin } from "lucide-react";
 import { AmbientGlow, AnimatedGrid } from "@/components/visuals/AmbientBackground";
 import { MagneticButton } from "@/components/ui/MagneticButton";
-import { ProgressiveContactForm } from "@/components/forms/ProgressiveContactForm";
+import { HeroVisualization } from "@/components/visuals/HeroVisualization";
 import { useTranslations } from "@/providers/TranslationsProvider";
 import { useMousePosition } from "@/hooks/useMousePosition";
 
@@ -62,7 +62,7 @@ export function Hero() {
       )}
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid min-w-0 items-center gap-8 sm:gap-12 lg:grid-cols-2 lg:gap-16">
+        <div className="grid min-w-0 items-stretch gap-8 sm:gap-12 lg:grid-cols-2 lg:gap-16">
           <motion.div
             variants={container}
             initial="hidden"
@@ -97,16 +97,13 @@ export function Hero() {
               {t("hero.description")}
             </motion.p>
 
-            <motion.div
-              variants={item}
-              className="mt-6 flex w-full flex-col gap-3 sm:mt-8 sm:w-auto sm:flex-row sm:flex-wrap sm:gap-4"
-            >
-              <MagneticButton href="#contact" className="w-full sm:w-auto">
-                {t("hero.getFreeLeads")}
-                <ArrowRight className="h-4 w-4" />
-              </MagneticButton>
-              <MagneticButton href="#contact" variant="secondary" className="w-full sm:w-auto">
+            <motion.div variants={item} className="mt-6 sm:mt-8">
+              <MagneticButton
+                href="#contact"
+                className="w-full !min-w-[13rem] !px-8 !py-3.5 !text-sm sm:w-auto sm:!min-w-[15rem] sm:!px-10 sm:!text-base"
+              >
                 {t("hero.accessSample")}
+                <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
               </MagneticButton>
             </motion.div>
 
@@ -132,12 +129,12 @@ export function Hero() {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, x: 0 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="min-w-0 lg:translate-x-0"
+            initial={{ opacity: 0, scale: 0.96, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.9, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            className="flex min-w-0"
           >
-            <ProgressiveContactForm variant="hero" />
+            <HeroVisualization />
           </motion.div>
         </div>
       </div>

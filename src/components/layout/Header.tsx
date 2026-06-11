@@ -30,14 +30,29 @@ export function Header() {
   return (
     <header
       className={cn(
-        "glass-nav fixed top-0 right-0 left-0 z-50 transition-[opacity,box-shadow] duration-500",
+        "glass-nav relative fixed top-0 right-0 left-0 z-50 transition-[opacity,box-shadow] duration-500",
         scrolled
           ? "opacity-100 shadow-lg shadow-black/5 dark:shadow-black/20"
           : "opacity-[0.88]",
       )}
     >
+      <nav
+        aria-label="Main"
+        className="pointer-events-none absolute top-1/2 left-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-6 lg:flex lg:gap-8"
+      >
+        {navLinks.map((link) => (
+          <a
+            key={link.href}
+            href={link.href}
+            className="pointer-events-auto text-sm font-medium text-foreground/90 transition-colors duration-200 hover:text-foreground"
+          >
+            {link.label}
+          </a>
+        ))}
+      </nav>
+
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-4 sm:h-16 sm:gap-3 sm:px-6 lg:px-8">
-        <a href="#" className="flex min-w-0 shrink items-center gap-2">
+        <a href="#" className="relative z-10 flex min-w-0 shrink items-center gap-2">
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary shadow-lg shadow-primary/25 sm:h-8 sm:w-8">
             <span className="text-xs font-bold text-white sm:text-sm">B</span>
           </div>
@@ -46,27 +61,8 @@ export function Header() {
           </span>
         </a>
 
-        <nav className="hidden items-center gap-6 lg:flex lg:gap-8">
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="text-sm text-muted transition-colors duration-200 hover:text-foreground"
-            >
-              {link.label}
-            </a>
-          ))}
-        </nav>
-
-        <div className="hidden items-center gap-2 lg:flex lg:gap-2.5">
-          <MagneticButton
-            href="#contact"
-            variant="secondary"
-            className="!px-4 !py-2.5 !text-xs xl:!px-5 xl:!text-sm"
-          >
-            {t("nav.accessSample")}
-          </MagneticButton>
-          <MagneticButton href="#contact" className="!px-4 !py-2.5 !text-xs xl:!px-5 xl:!text-sm">
+        <div className="relative z-10 hidden items-center lg:flex">
+          <MagneticButton href="#contact" className="!min-w-[11rem] !px-8 !py-2.5 !text-sm xl:!min-w-[12rem] xl:!px-10">
             {t("nav.getFreeLeads")}
           </MagneticButton>
         </div>
@@ -100,15 +96,12 @@ export function Header() {
               key={link.href}
               href={link.href}
               onClick={() => setMobileOpen(false)}
-              className="rounded-xl px-3 py-2.5 text-sm text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
+              className="rounded-xl px-3 py-2.5 text-sm font-medium text-foreground/90 transition-colors hover:bg-surface-hover hover:text-foreground"
             >
               {link.label}
             </a>
           ))}
-          <div className="mt-3 flex flex-col gap-2">
-            <MagneticButton href="#contact" variant="secondary" className="w-full">
-              {t("nav.accessSample")}
-            </MagneticButton>
+          <div className="mt-3">
             <MagneticButton href="#contact" className="w-full">
               {t("nav.getFreeLeads")}
             </MagneticButton>

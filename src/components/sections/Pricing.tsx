@@ -13,49 +13,42 @@ export function Pricing() {
 
   const plans = [
     {
-      name: t("pricing.starterName"),
-      price: "€299",
-      period: t("pricing.perList"),
-      leads: t("pricing.starterLeads"),
-      description: t("pricing.starterDesc"),
+      key: "minimum",
+      name: t("pricing.minimumName"),
+      price: "€0.60",
+      description: t("pricing.minimumDesc"),
+      includesLabel: null as string | null,
       features: [
-        t("pricing.starterFeature1"),
-        t("pricing.starterFeature2"),
-        t("pricing.starterFeature3"),
-        t("pricing.starterFeature4"),
-        t("pricing.starterFeature5"),
+        t("pricing.minimumFeature1"),
+        t("pricing.minimumFeature2"),
+        t("pricing.minimumFeature3"),
+        t("pricing.minimumFeature4"),
       ],
       popular: false,
     },
     {
-      name: t("pricing.growthName"),
-      price: "€799",
-      period: t("pricing.perList"),
-      leads: t("pricing.growthLeads"),
-      description: t("pricing.growthDesc"),
+      key: "plus",
+      name: t("pricing.plusName"),
+      price: "€1.00",
+      description: t("pricing.plusDesc"),
+      includesLabel: t("pricing.plusIncludes"),
       features: [
-        t("pricing.growthFeature1"),
-        t("pricing.growthFeature2"),
-        t("pricing.growthFeature3"),
-        t("pricing.growthFeature4"),
-        t("pricing.growthFeature5"),
-        t("pricing.growthFeature6"),
+        t("pricing.plusFeature1"),
+        t("pricing.plusFeature2"),
+        t("pricing.plusFeature3"),
       ],
       popular: true,
     },
     {
-      name: t("pricing.scaleName"),
-      price: "€1,499",
-      period: t("pricing.perList"),
-      leads: t("pricing.scaleLeads"),
-      description: t("pricing.scaleDesc"),
+      key: "pro",
+      name: t("pricing.proName"),
+      price: "€2.50",
+      description: t("pricing.proDesc"),
+      includesLabel: t("pricing.proIncludes"),
       features: [
-        t("pricing.scaleFeature1"),
-        t("pricing.scaleFeature2"),
-        t("pricing.scaleFeature3"),
-        t("pricing.scaleFeature4"),
-        t("pricing.scaleFeature5"),
-        t("pricing.scaleFeature6"),
+        t("pricing.proFeature1"),
+        t("pricing.proFeature2"),
+        t("pricing.proFeature3"),
       ],
       popular: false,
     },
@@ -70,60 +63,72 @@ export function Pricing() {
           description={t("pricing.description")}
         />
 
-        <div className="grid gap-6 sm:gap-8 lg:grid-cols-3">
+        <div className="grid items-stretch gap-6 sm:gap-8 lg:grid-cols-3">
           {plans.map((plan, i) => (
-            <SectionReveal key={plan.name} delay={i * 0.12}>
+            <SectionReveal key={plan.key} delay={i * 0.12} className="h-full">
               <motion.div
-                whileHover={{ y: -8 }}
-                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                whileHover={{ y: -10, scale: plan.popular ? 1.02 : 1.01 }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 className={cn(
-                  "relative h-full rounded-2xl p-5 sm:p-8",
-                  plan.popular
-                    ? "pricing-popular mt-4 pt-8 sm:mt-0 sm:pt-8"
-                    : "premium-card",
+                  "pricing-card relative flex h-full flex-col rounded-2xl p-5 sm:p-8",
+                  plan.popular ? "pricing-popular mt-4 pt-8 sm:mt-0 sm:pt-8" : "glass premium-card",
                 )}
               >
                 {plan.popular && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1 text-xs font-semibold text-white shadow-lg shadow-primary/30">
+                  <div className="absolute -top-3.5 left-1/2 z-10 -translate-x-1/2">
+                    <motion.span
+                      initial={{ opacity: 0, y: 8 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.3, duration: 0.5 }}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-semibold text-white shadow-lg shadow-primary/40"
+                    >
                       <Sparkles className="h-3 w-3" />
                       {t("pricing.mostPopular")}
-                    </span>
+                    </motion.span>
                   </div>
                 )}
 
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold text-deep-navy">{plan.name}</h3>
-                  <p className="mt-1 text-sm text-muted">{plan.leads}</p>
+                  <p className="mt-1.5 text-sm leading-relaxed text-muted">{plan.description}</p>
                 </div>
 
-                <div className="mb-2 flex items-baseline gap-1">
+                <div className="mb-6 flex items-baseline gap-1">
                   <span className="text-3xl font-semibold tracking-tight text-deep-navy sm:text-4xl">
                     {plan.price}
                   </span>
-                  <span className="text-sm text-muted">{plan.period}</span>
+                  <span className="text-sm font-medium text-muted">{t("pricing.perLead")}</span>
                 </div>
-                <p className="mb-8 text-sm text-muted">{plan.description}</p>
 
-                <ul className="mb-8 space-y-3">
-                  {plan.features.map((feature) => (
-                    <li
-                      key={feature}
-                      className="flex items-start gap-2.5 text-sm text-deep-navy"
-                    >
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
+                <div className="flex flex-1 flex-col">
+                  {plan.includesLabel && (
+                    <p className="mb-3 text-xs font-medium tracking-wide text-muted uppercase">
+                      {plan.includesLabel}
+                    </p>
+                  )}
+                  <ul className="mb-8 flex-1 space-y-3">
+                    {plan.features.map((feature) => (
+                      <li
+                        key={feature}
+                        className="flex items-start gap-2.5 text-sm text-deep-navy"
+                      >
+                        <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                          <Check className="h-3 w-3 text-primary" />
+                        </span>
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
 
-                <MagneticButton
-                  href="#contact"
-                  variant={plan.popular ? "primary" : "secondary"}
-                  className="w-full"
-                >
-                  {t("pricing.getStarted")}
-                </MagneticButton>
+                  <MagneticButton
+                    href="#contact"
+                    variant={plan.popular ? "primary" : "secondary"}
+                    className="mt-auto w-full"
+                  >
+                    {t("pricing.getStarted")}
+                  </MagneticButton>
+                </div>
               </motion.div>
             </SectionReveal>
           ))}

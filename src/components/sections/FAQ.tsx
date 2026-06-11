@@ -1,10 +1,9 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import { useState } from "react";
 import { MagneticButton } from "@/components/ui/MagneticButton";
-import { SectionHeader } from "@/components/ui/SectionHeader";
 import { SectionReveal } from "@/components/ui/SectionReveal";
 import { useTranslations } from "@/providers/TranslationsProvider";
 import { cn } from "@/lib/utils";
@@ -14,33 +13,30 @@ function FAQItem({
   answer,
   isOpen,
   onToggle,
+  isLast,
 }: {
   question: string;
   answer: string;
   isOpen: boolean;
   onToggle: () => void;
+  isLast: boolean;
 }) {
   return (
-    <div className={cn("faq-item", isOpen && "bg-surface-hover/30")}>
+    <div className={cn("border-t border-border", isLast && "border-b")}>
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-start justify-between gap-3 px-1 py-4 text-left sm:items-center sm:gap-4 sm:py-5"
+        className="flex w-full items-center justify-between gap-6 py-5 text-left sm:py-6"
         aria-expanded={isOpen}
       >
-        <span className="text-left text-sm font-medium text-deep-navy sm:text-base">
-          {question}
-        </span>
-        <motion.span
-          animate={{ rotate: isOpen ? 180 : 0 }}
-          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-          className={cn(
-            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors",
-            isOpen ? "bg-primary/10 text-primary" : "bg-surface-hover text-muted",
+        <span className="text-base font-medium text-deep-navy sm:text-lg">{question}</span>
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center text-deep-navy">
+          {isOpen ? (
+            <Minus className="h-5 w-5" strokeWidth={1.5} />
+          ) : (
+            <Plus className="h-5 w-5" strokeWidth={1.5} />
           )}
-        >
-          <ChevronDown className="h-4 w-4" />
-        </motion.span>
+        </span>
       </button>
       <AnimatePresence initial={false}>
         {isOpen && (
@@ -48,10 +44,12 @@ function FAQItem({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             className="overflow-hidden"
           >
-            <p className="px-1 pb-5 text-sm leading-relaxed text-muted">{answer}</p>
+            <p className="pb-5 text-sm leading-relaxed text-muted sm:pb-6 sm:text-base">
+              {answer}
+            </p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -61,7 +59,7 @@ function FAQItem({
 
 export function FAQ() {
   const { t } = useTranslations();
-  const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const faqs = [
     { question: t("faq.q1"), answer: t("faq.a1") },
@@ -77,31 +75,43 @@ export function FAQ() {
 
   return (
     <section id="faq" className="noise-overlay relative bg-surface py-16 sm:py-24 md:py-32">
-      <div className="relative z-10 mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-        <SectionHeader eyebrow={t("faq.eyebrow")} title={t("faq.title")} />
-
-        <SectionReveal>
-          <div className="premium-card mb-8 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 p-4 text-center sm:mb-10 sm:p-6">
-            <p className="text-sm text-muted">{t("faq.ctaText")}</p>
-            <div className="mt-4">
-              <MagneticButton href="#contact">{t("faq.getFreeLeads")}</MagneticButton>
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid items-start gap-12 lg:grid-cols-[2fr_3fr] lg:gap-16 xl:gap-24">
+          <SectionReveal className="lg:sticky lg:top-28 lg:self-start">
+            <p className="mb-3 text-xs font-medium tracking-[0.15em] text-primary uppercase sm:mb-4 sm:text-sm sm:tracking-[0.2em]">
+              {t("faq.eyebrow")}
+            </p>
+            <h2 className="text-3xl font-semibold tracking-tight text-balance text-deep-navy sm:text-4xl lg:text-5xl">
+              {t("faq.title")}
+            </h2>
+            <p className="mt-5 max-w-md text-base leading-relaxed text-muted sm:mt-6 sm:text-lg">
+              {t("faq.ctaText")}
+            </p>
+            <div className="mt-6 sm:mt-8">
+              <MagneticButton
+                href="#contact"
+                className="!min-w-[11rem] !px-8 !py-3 !text-sm sm:!min-w-[12rem] sm:!px-10"
+              >
+                {t("faq.getFreeLeads")}
+              </MagneticButton>
             </div>
-          </div>
-        </SectionReveal>
+          </SectionReveal>
 
-        <SectionReveal delay={0.1}>
-          <div className="premium-card overflow-hidden px-4 sm:px-6">
-            {faqs.map((faq, i) => (
-              <FAQItem
-                key={faq.question}
-                question={faq.question}
-                answer={faq.answer}
-                isOpen={openIndex === i}
-                onToggle={() => setOpenIndex(openIndex === i ? null : i)}
-              />
-            ))}
-          </div>
-        </SectionReveal>
+          <SectionReveal delay={0.1}>
+            <div>
+              {faqs.map((faq, i) => (
+                <FAQItem
+                  key={faq.question}
+                  question={faq.question}
+                  answer={faq.answer}
+                  isOpen={openIndex === i}
+                  onToggle={() => setOpenIndex(openIndex === i ? null : i)}
+                  isLast={i === faqs.length - 1}
+                />
+              ))}
+            </div>
+          </SectionReveal>
+        </div>
       </div>
     </section>
   );

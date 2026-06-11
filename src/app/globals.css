@@ -278,12 +278,82 @@ body {
     linear-gradient(180deg, var(--light-bg) 0%, var(--background) 50%, var(--light-bg) 100%);
 }
 
+.pricing-card {
+  position: relative;
+  transition:
+    box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.pricing-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent-blue) 8%, transparent),
+    transparent 50%,
+    color-mix(in srgb, var(--primary-blue) 6%, transparent)
+  );
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
+
+.pricing-card:hover::before {
+  opacity: 1;
+}
+
+.pricing-card:hover {
+  box-shadow:
+    0 8px 32px -8px var(--glow-primary),
+    0 20px 48px -12px var(--shadow-color);
+}
+
 .pricing-popular {
-  background: var(--card);
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--primary-blue) 6%, var(--card)),
+    var(--card) 40%,
+    color-mix(in srgb, var(--accent-blue) 4%, var(--card))
+  );
   border: 2px solid var(--primary-blue);
   box-shadow:
     0 8px 32px -8px var(--glow-primary),
+    0 16px 48px -12px color-mix(in srgb, var(--primary-blue) 20%, transparent),
     0 0 0 1px color-mix(in srgb, var(--primary-blue) 10%, transparent);
+}
+
+.pricing-popular:hover {
+  box-shadow:
+    0 12px 40px -8px var(--glow-primary),
+    0 24px 56px -12px color-mix(in srgb, var(--primary-blue) 25%, transparent);
+}
+
+.addon-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  box-shadow:
+    0 1px 2px var(--shadow-color),
+    0 4px 16px -4px var(--shadow-color);
+  transition:
+    box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.addon-card:hover {
+  border-color: color-mix(in srgb, var(--primary-blue) 25%, var(--card-border));
+  box-shadow:
+    0 8px 28px -6px var(--glow-primary),
+    0 16px 40px -10px var(--shadow-color);
+}
+
+.form-radio-option:has(:focus-visible) {
+  outline: 2px solid var(--primary-blue);
+  outline-offset: 2px;
 }
 
 .faq-item {

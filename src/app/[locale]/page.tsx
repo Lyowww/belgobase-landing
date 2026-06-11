@@ -1,6 +1,7 @@
 import dynamic from "next/dynamic";
 import { Header } from "@/components/layout/Header";
 import { FloatingToolbar } from "@/components/layout/FloatingToolbar";
+import { StickyCTA } from "@/components/layout/StickyCTA";
 import { Footer } from "@/components/layout/Footer";
 import { ScrollProgress } from "@/components/layout/ScrollProgress";
 import { Hero } from "@/components/sections/Hero";
@@ -46,6 +47,7 @@ export default function Home() {
       <ScrollProgress />
       <Header />
       <FloatingToolbar />
+      <StickyCTA />
       <main className="min-w-0 overflow-x-hidden">
         <Hero />
         <SocialProof />

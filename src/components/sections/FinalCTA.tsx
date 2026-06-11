@@ -18,7 +18,6 @@ export function FinalCTA() {
         className="cta-radial-pulse pointer-events-none absolute inset-0"
         aria-hidden="true"
       />
-
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid min-w-0 items-start gap-10 sm:gap-12 lg:grid-cols-2 lg:gap-16">
           <SectionReveal direction="left">

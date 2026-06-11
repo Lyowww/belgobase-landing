@@ -6,26 +6,28 @@ import { SectionReveal } from "@/components/ui/SectionReveal";
 import { useTranslations } from "@/providers/TranslationsProvider";
 import { cn } from "@/lib/utils";
 
-function CellValue({ value }: { value: string | boolean }) {
-  if (typeof value === "boolean") {
-    return value ? (
-      <Check className="mx-auto h-4 w-4 text-primary" />
-    ) : (
-      <Minus className="mx-auto h-4 w-4 text-border" />
-    );
-  }
-  return <span className="text-sm text-deep-navy">{value}</span>;
-}
-
-function MobilePlanValue({ value }: { value: string | boolean }) {
-  if (typeof value === "boolean") {
-    return value ? (
-      <Check className="h-4 w-4 shrink-0 text-primary" />
-    ) : (
-      <Minus className="h-4 w-4 shrink-0 text-border" />
-    );
-  }
-  return <span className="text-sm font-medium text-deep-navy">{value}</span>;
+function CellValue({
+  value,
+  label,
+}: {
+  value: boolean;
+  label: string;
+}) {
+  return (
+    <span className="inline-flex items-center justify-center" title={label}>
+      {value ? (
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10">
+          <Check className="h-4 w-4 text-primary" aria-hidden="true" />
+          <span className="sr-only">{label}</span>
+        </span>
+      ) : (
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-border/30">
+          <Minus className="h-4 w-4 text-muted/50" aria-hidden="true" />
+          <span className="sr-only">{label}</span>
+        </span>
+      )}
+    </span>
+  );
 }
 
 export function PlanComparison() {
@@ -33,72 +35,75 @@ export function PlanComparison() {
 
   const features = [
     {
-      name: t("comparison.companyCount"),
-      starter: "500",
-      growth: "2,000",
-      scale: "5,000",
+      name: t("comparison.companyName"),
+      minimum: true,
+      plus: true,
+      pro: true,
     },
     {
-      name: t("comparison.contactEnrichment"),
-      starter: t("comparison.basic"),
-      growth: t("comparison.full"),
-      scale: t("comparison.premium"),
+      name: t("comparison.address"),
+      minimum: true,
+      plus: true,
+      pro: true,
     },
     {
-      name: t("comparison.deliveryTime"),
-      starter: t("comparison.hours24"),
-      growth: t("comparison.hours"),
-      scale: t("comparison.hours4"),
+      name: t("comparison.website"),
+      minimum: true,
+      plus: true,
+      pro: true,
     },
     {
-      name: t("comparison.sectorFiltering"),
-      starter: true,
-      growth: true,
-      scale: true,
+      name: t("comparison.generalPhone"),
+      minimum: true,
+      plus: true,
+      pro: true,
     },
     {
-      name: t("comparison.naceFiltering"),
-      starter: false,
-      growth: true,
-      scale: true,
+      name: t("comparison.revenue"),
+      minimum: false,
+      plus: true,
+      pro: true,
     },
     {
-      name: t("comparison.revenueFilters"),
-      starter: false,
-      growth: true,
-      scale: true,
+      name: t("comparison.employeeCount"),
+      minimum: false,
+      plus: true,
+      pro: true,
     },
     {
-      name: t("comparison.clientExclusion"),
-      starter: true,
-      growth: true,
-      scale: true,
+      name: t("comparison.financialData"),
+      minimum: false,
+      plus: true,
+      pro: true,
     },
     {
-      name: t("comparison.lookalikeAnalysis"),
-      starter: false,
-      growth: false,
-      scale: true,
+      name: t("comparison.decisionMakerNames"),
+      minimum: false,
+      plus: false,
+      pro: true,
     },
     {
-      name: t("comparison.dedicatedReview"),
-      starter: false,
-      growth: false,
-      scale: true,
+      name: t("comparison.departmentHeads"),
+      minimum: false,
+      plus: false,
+      pro: true,
     },
     {
-      name: t("comparison.prioritySupport"),
-      starter: false,
-      growth: true,
-      scale: true,
+      name: t("comparison.managementTitles"),
+      minimum: false,
+      plus: false,
+      pro: true,
     },
   ];
 
   const plans = [
-    { key: "starter" as const, name: t("pricing.starterName"), highlight: false },
-    { key: "growth" as const, name: t("pricing.growthName"), highlight: true },
-    { key: "scale" as const, name: t("pricing.scaleName"), highlight: false },
+    { key: "minimum" as const, name: t("pricing.minimumName"), highlight: false },
+    { key: "plus" as const, name: t("pricing.plusName"), highlight: true },
+    { key: "pro" as const, name: t("pricing.proName"), highlight: false },
   ];
+
+  const availableLabel = t("comparison.available");
+  const unavailableLabel = t("comparison.unavailable");
 
   return (
     <section
@@ -148,12 +153,15 @@ export function PlanComparison() {
                   {features.map((feature) => (
                     <li
                       key={feature.name}
-                      className="flex items-center justify-between gap-3 px-4 py-2.5"
+                      className="flex items-center justify-between gap-3 px-4 py-2.5 transition-colors hover:bg-primary/5"
                     >
                       <span className="min-w-0 flex-1 text-xs text-muted">
                         {feature.name}
                       </span>
-                      <MobilePlanValue value={feature[plan.key]} />
+                      <CellValue
+                        value={feature[plan.key]}
+                        label={feature[plan.key] ? availableLabel : unavailableLabel}
+                      />
                     </li>
                   ))}
                 </ul>
@@ -164,22 +172,22 @@ export function PlanComparison() {
 
         <SectionReveal>
           <div className="premium-card hidden overflow-hidden md:block">
-            <div className="overflow-x-auto">
+            <div className="max-h-[70vh] overflow-auto">
               <table className="w-full min-w-[560px]">
-                <thead>
-                  <tr className="border-b border-border bg-light-bg/80">
-                    <th className="sticky left-0 z-10 min-w-[180px] bg-light-bg/95 px-4 py-4 text-left text-sm font-semibold text-deep-navy backdrop-blur-sm lg:px-6">
+                <thead className="sticky top-0 z-20">
+                  <tr className="border-b border-border bg-light-bg/95 backdrop-blur-md">
+                    <th className="sticky left-0 z-30 min-w-[200px] bg-light-bg/95 px-4 py-4 text-left text-sm font-semibold text-deep-navy backdrop-blur-md lg:px-6">
                       {t("comparison.feature")}
                     </th>
                     <th className="px-4 py-4 text-center text-sm font-semibold text-deep-navy lg:px-6">
-                      {t("pricing.starterName")}
+                      {t("pricing.minimumName")}
                     </th>
                     <th className="relative bg-primary/5 px-4 py-4 text-center text-sm font-semibold text-primary lg:px-6">
                       <span className="absolute inset-x-0 top-0 h-0.5 bg-primary" />
-                      {t("pricing.growthName")}
+                      {t("pricing.plusName")}
                     </th>
                     <th className="px-4 py-4 text-center text-sm font-semibold text-deep-navy lg:px-6">
-                      {t("pricing.scaleName")}
+                      {t("pricing.proName")}
                     </th>
                   </tr>
                 </thead>
@@ -192,17 +200,26 @@ export function PlanComparison() {
                         i % 2 === 0 ? "bg-surface" : "bg-light-bg/30",
                       )}
                     >
-                      <td className="sticky left-0 z-10 bg-inherit px-4 py-3 text-sm text-muted lg:px-6 lg:py-4">
+                      <td className="sticky left-0 z-10 bg-inherit px-4 py-3.5 text-sm text-muted lg:px-6 lg:py-4">
                         {feature.name}
                       </td>
-                      <td className="px-4 py-3 text-center lg:px-6 lg:py-4">
-                        <CellValue value={feature.starter} />
+                      <td className="px-4 py-3.5 text-center lg:px-6 lg:py-4">
+                        <CellValue
+                          value={feature.minimum}
+                          label={feature.minimum ? availableLabel : unavailableLabel}
+                        />
                       </td>
-                      <td className="bg-primary/5 px-4 py-3 text-center lg:px-6 lg:py-4">
-                        <CellValue value={feature.growth} />
+                      <td className="bg-primary/5 px-4 py-3.5 text-center lg:px-6 lg:py-4">
+                        <CellValue
+                          value={feature.plus}
+                          label={feature.plus ? availableLabel : unavailableLabel}
+                        />
                       </td>
-                      <td className="px-4 py-3 text-center lg:px-6 lg:py-4">
-                        <CellValue value={feature.scale} />
+                      <td className="px-4 py-3.5 text-center lg:px-6 lg:py-4">
+                        <CellValue
+                          value={feature.pro}
+                          label={feature.pro ? availableLabel : unavailableLabel}
+                        />
                       </td>
                     </tr>
                   ))}
