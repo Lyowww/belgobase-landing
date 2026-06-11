@@ -263,7 +263,6 @@ export function ProgressiveContactForm({
                   id={`${variant}-name`}
                   type="text"
                   autoComplete="name"
-                  autoFocus
                   value={values.name}
                   onChange={(e) => update("name", e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleContinue())}
@@ -305,7 +304,6 @@ export function ProgressiveContactForm({
                   id={`${variant}-company`}
                   type="text"
                   autoComplete="organization"
-                  autoFocus
                   value={values.company}
                   onChange={(e) => update("company", e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleContinue())}
@@ -341,7 +339,6 @@ export function ProgressiveContactForm({
               </label>
               <textarea
                 id={`${variant}-criteria`}
-                autoFocus
                 rows={4}
                 value={values.criteria}
                 onChange={(e) => update("criteria", e.target.value)}

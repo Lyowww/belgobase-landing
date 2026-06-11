@@ -52,7 +52,14 @@ export function Header() {
       </nav>
 
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-4 sm:h-16 sm:gap-3 sm:px-6 lg:px-8">
-        <a href="#" className="relative z-10 flex min-w-0 shrink items-center gap-2">
+        <a
+          href="/"
+          onClick={(e) => {
+            e.preventDefault();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          className="relative z-10 flex min-w-0 shrink items-center gap-2"
+        >
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary shadow-lg shadow-primary/25 sm:h-8 sm:w-8">
             <span className="text-xs font-bold text-white sm:text-sm">B</span>
           </div>

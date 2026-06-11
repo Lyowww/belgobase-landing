@@ -4,6 +4,7 @@ import { FloatingToolbar } from "@/components/layout/FloatingToolbar";
 import { StickyCTA } from "@/components/layout/StickyCTA";
 import { Footer } from "@/components/layout/Footer";
 import { ScrollProgress } from "@/components/layout/ScrollProgress";
+import { ScrollRestoration } from "@/components/layout/ScrollRestoration";
 import { Hero } from "@/components/sections/Hero";
 import { SocialProof } from "@/components/sections/SocialProof";
 
@@ -44,11 +45,12 @@ const FinalCTA = dynamic(
 export default function Home() {
   return (
     <>
+      <ScrollRestoration />
       <ScrollProgress />
       <Header />
       <FloatingToolbar />
       <StickyCTA />
-      <main className="min-w-0 overflow-x-hidden">
+      <main className="min-w-0 overflow-x-hidden [overflow-anchor:none]">
         <Hero />
         <SocialProof />
         <div className="section-lazy">

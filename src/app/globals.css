@@ -388,8 +388,7 @@ body {
 }
 
 .section-lazy {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 600px;
+  /* Avoid content-visibility here — it causes scroll jumps on load */
 }
 
 @keyframes grid-drift {
