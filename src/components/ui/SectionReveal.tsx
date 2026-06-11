@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useInView, useReducedMotion } from "framer-motion";
+import { m, useInView, useReducedMotion } from "framer-motion";
 import { useRef, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +34,7 @@ export function SectionReveal({
   }
 
   return (
-    <motion.div
+    <m.div
       ref={ref}
       initial={{ opacity: 0, ...offset }}
       animate={isInView ? { opacity: 1, x: 0, y: 0 } : { opacity: 0, ...offset }}
@@ -42,6 +42,6 @@ export function SectionReveal({
       className={cn(className)}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Building2, Mail, MapPin, Radar, TrendingUp, Zap } from "lucide-react";
 import { useTranslations } from "@/providers/TranslationsProvider";
 
@@ -105,7 +105,7 @@ export function HeroVisualization() {
                 </radialGradient>
               </defs>
 
-              <motion.ellipse
+              <m.ellipse
                 cx="48"
                 cy="44"
                 rx="28"
@@ -126,7 +126,7 @@ export function HeroVisualization() {
                 const a = cities[from];
                 const b = cities[to];
                 return (
-                  <motion.line
+                  <m.line
                     key={`${from}-${to}`}
                     x1={a.x}
                     y1={a.y}
@@ -145,7 +145,7 @@ export function HeroVisualization() {
                 <g key={city.name}>
                   {city.hub && (
                     <>
-                      <motion.circle
+                      <m.circle
                         cx={city.x}
                         cy={city.y}
                         r="6"
@@ -156,7 +156,7 @@ export function HeroVisualization() {
                         animate={{ scale: [1, 1.6, 1], opacity: [0.5, 0, 0.5] }}
                         transition={{ duration: 3, repeat: Infinity, ease: "easeOut" }}
                       />
-                      <motion.circle
+                      <m.circle
                         cx={city.x}
                         cy={city.y}
                         r="3.5"
@@ -168,7 +168,7 @@ export function HeroVisualization() {
                     </>
                   )}
                   {!city.hub && (
-                    <motion.circle
+                    <m.circle
                       cx={city.x}
                       cy={city.y}
                       r="1.8"
@@ -178,7 +178,7 @@ export function HeroVisualization() {
                       transition={{ delay: 0.3 + i * 0.08, type: "spring" }}
                     />
                   )}
-                  <motion.text
+                  <m.text
                     x={city.x}
                     y={city.y + (city.hub ? 6.5 : 5)}
                     textAnchor="middle"
@@ -188,7 +188,7 @@ export function HeroVisualization() {
                     transition={{ delay: 0.8 + i * 0.05 }}
                   >
                     {city.name}
-                  </motion.text>
+                  </m.text>
                 </g>
               ))}
 
@@ -196,7 +196,7 @@ export function HeroVisualization() {
                 const a = cities[from];
                 const b = cities[to];
                 return (
-                  <motion.circle
+                  <m.circle
                     key={`pulse-${from}-${to}`}
                     r="0.8"
                     fill="var(--accent-blue)"
@@ -217,7 +217,7 @@ export function HeroVisualization() {
               })}
             </svg>
 
-            <motion.div
+            <m.div
               className="glass absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full px-3 py-1.5 shadow-lg sm:px-4 sm:py-2"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -227,10 +227,10 @@ export function HeroVisualization() {
               <span className="whitespace-nowrap text-[10px] font-semibold text-deep-navy sm:text-xs">
                 {t("hero.vizScanning")}
               </span>
-            </motion.div>
+            </m.div>
 
             {leadCards.map((card) => (
-              <motion.div
+              <m.div
                 key={card.name}
                 className={`glass absolute max-w-[calc(100%-1.5rem)] rounded-xl p-2.5 shadow-xl sm:max-w-none sm:p-3 ${
                   card.hideOnMobile ? "hidden sm:block" : ""
@@ -268,13 +268,13 @@ export function HeroVisualization() {
                     {card.revenue}
                   </span>
                 </div>
-              </motion.div>
+              </m.div>
             ))}
           </div>
 
           <div className="mt-4 grid grid-cols-3 gap-2 sm:mt-5 sm:gap-3">
             {stats.map((stat, i) => (
-              <motion.div
+              <m.div
                 key={stat.label}
                 className="premium-card rounded-xl px-2 py-2.5 text-center sm:px-3 sm:py-3"
                 initial={{ opacity: 0, y: 12 }}
@@ -284,7 +284,7 @@ export function HeroVisualization() {
                 <stat.icon className="mx-auto mb-1 h-3.5 w-3.5 text-primary sm:h-4 sm:w-4" />
                 <p className="text-sm font-bold text-deep-navy sm:text-base">{stat.value}</p>
                 <p className="truncate text-[10px] text-muted sm:text-xs">{stat.label}</p>
-              </motion.div>
+              </m.div>
             ))}
           </div>
         </div>

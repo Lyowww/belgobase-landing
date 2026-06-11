@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -79,7 +79,7 @@ export function LanguageSwitcher({
 
       <AnimatePresence>
         {open && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 8, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.96 }}
@@ -113,7 +113,7 @@ export function LanguageSwitcher({
                 <span>{localeNames[loc]}</span>
               </Link>
             ))}
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

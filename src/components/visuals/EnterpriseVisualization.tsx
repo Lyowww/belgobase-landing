@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Building2, Network, Phone, UserRound, Users } from "lucide-react";
 import { useTranslations } from "@/providers/TranslationsProvider";
 
@@ -88,7 +88,7 @@ export function EnterpriseVisualization() {
             <div className="relative min-h-0 flex-1 overflow-hidden rounded-xl border border-white/10 bg-[#0a1020]/80">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(77,163,255,0.12),transparent_65%)]" />
 
-              <motion.div
+              <m.div
                 className="absolute left-1/2 top-1/2 h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent/20"
                 animate={{ rotate: 360, scale: [1, 1.04, 1] }}
                 transition={{
@@ -96,18 +96,18 @@ export function EnterpriseVisualization() {
                   scale: { duration: 4, repeat: Infinity, ease: "easeInOut" },
                 }}
               />
-              <motion.div
+              <m.div
                 className="absolute left-1/2 top-1/2 h-44 w-44 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-primary/20"
                 animate={{ rotate: -360 }}
                 transition={{ duration: 36, repeat: Infinity, ease: "linear" }}
               />
-              <motion.div
+              <m.div
                 className="absolute left-1/2 top-1/2 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/5"
                 animate={{ opacity: [0.3, 0.6, 0.3] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               />
 
-              <motion.div
+              <m.div
                 className="absolute left-1/2 top-1/2 h-28 w-28 origin-bottom -translate-x-1/2 -translate-y-1/2 rounded-full"
                 style={{
                   background:
@@ -138,7 +138,7 @@ export function EnterpriseVisualization() {
                   const pos = polarToCartesian(hub.x, hub.y, node.radius, node.angle);
                   return (
                     <g key={node.role}>
-                      <motion.line
+                      <m.line
                         x1={hub.x}
                         y1={hub.y}
                         x2={pos.x}
@@ -150,7 +150,7 @@ export function EnterpriseVisualization() {
                         viewport={{ once: true }}
                         transition={{ duration: 1, delay: node.delay }}
                       />
-                      <motion.circle
+                      <m.circle
                         r="0.7"
                         fill="#4DA3FF"
                         initial={{ opacity: 0 }}
@@ -166,7 +166,7 @@ export function EnterpriseVisualization() {
                           ease: "easeInOut",
                         }}
                       />
-                      <motion.circle
+                      <m.circle
                         cx={pos.x}
                         cy={pos.y}
                         r="2.2"
@@ -178,7 +178,7 @@ export function EnterpriseVisualization() {
                         viewport={{ once: true }}
                         transition={{ delay: node.delay, type: "spring", stiffness: 220 }}
                       />
-                      <motion.circle
+                      <m.circle
                         cx={pos.x}
                         cy={pos.y}
                         r="3.5"
@@ -198,7 +198,7 @@ export function EnterpriseVisualization() {
                   );
                 })}
 
-                <motion.circle
+                <m.circle
                   cx={hub.x}
                   cy={hub.y}
                   r="5"
@@ -209,7 +209,7 @@ export function EnterpriseVisualization() {
                   animate={{ scale: [1, 2.2, 1], opacity: [0.6, 0, 0.6] }}
                   transition={{ duration: 3, repeat: Infinity, ease: "easeOut" }}
                 />
-                <motion.circle
+                <m.circle
                   cx={hub.x}
                   cy={hub.y}
                   r="3.2"
@@ -221,7 +221,7 @@ export function EnterpriseVisualization() {
                 />
               </svg>
 
-              <motion.div
+              <m.div
                 className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 rounded-2xl border border-white/15 bg-white/10 px-3 py-2 shadow-[0_0_24px_rgba(77,163,255,0.2)] backdrop-blur-md sm:px-4 sm:py-2.5"
                 initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
@@ -234,10 +234,10 @@ export function EnterpriseVisualization() {
                 <span className="whitespace-nowrap text-[10px] font-semibold text-white sm:text-xs">
                   {t("enterprise.vizTarget")}
                 </span>
-              </motion.div>
+              </m.div>
 
               {executiveCards.map((card) => (
-                <motion.div
+                <m.div
                   key={card.name}
                   className={`absolute max-w-[calc(100%-1.5rem)] rounded-xl border border-white/15 bg-[#0d1528]/90 p-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.35)] backdrop-blur-md sm:max-w-none sm:p-3 ${
                     card.hideOnMobile ? "hidden sm:block" : ""
@@ -274,7 +274,7 @@ export function EnterpriseVisualization() {
                       {card.signal}
                     </span>
                   </div>
-                </motion.div>
+                </m.div>
               ))}
 
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#060a14] via-[#060a14]/60 to-transparent px-4 pb-3 pt-10">
@@ -286,7 +286,7 @@ export function EnterpriseVisualization() {
 
             <div className="mt-3 grid grid-cols-3 gap-2 sm:mt-4 sm:gap-3">
               {stats.map((stat, i) => (
-                <motion.div
+                <m.div
                   key={stat.label}
                   className="rounded-xl border border-white/10 bg-white/[0.04] px-2 py-2.5 text-center sm:px-3 sm:py-3"
                   initial={{ opacity: 0, y: 10 }}
@@ -297,7 +297,7 @@ export function EnterpriseVisualization() {
                   <stat.icon className="mx-auto mb-1 h-3.5 w-3.5 text-accent sm:h-4 sm:w-4" />
                   <p className="text-sm font-bold text-white sm:text-base">{stat.value}</p>
                   <p className="truncate text-[10px] text-white/45 sm:text-xs">{stat.label}</p>
-                </motion.div>
+                </m.div>
               ))}
             </div>
           </div>

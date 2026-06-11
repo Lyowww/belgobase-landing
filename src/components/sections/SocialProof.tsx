@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { m, useReducedMotion } from "framer-motion";
 import { Star, Quote } from "lucide-react";
 import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
 import { SectionHeader } from "@/components/ui/SectionHeader";
@@ -86,7 +86,7 @@ export function SocialProof() {
                 ))}
               </div>
             ) : (
-              <motion.div
+              <m.div
                 animate={{ x: ["0%", "-50%"] }}
                 transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
                 className="flex w-max items-center gap-x-10 sm:gap-x-16"
@@ -99,7 +99,7 @@ export function SocialProof() {
                     {logo}
                   </span>
                 ))}
-              </motion.div>
+              </m.div>
             )}
           </div>
         </SectionReveal>
@@ -107,7 +107,7 @@ export function SocialProof() {
         <div className="grid gap-6 md:grid-cols-3">
           {testimonials.map((testimonial, i) => (
             <SectionReveal key={testimonial.author} delay={i * 0.15}>
-              <motion.div
+              <m.div
                 whileHover={{ y: -4 }}
                 transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                 className="gradient-border group h-full rounded-2xl p-5 sm:p-6"
@@ -130,7 +130,7 @@ export function SocialProof() {
                   </p>
                   <p className="text-xs text-muted">{testimonial.role}</p>
                 </div>
-              </motion.div>
+              </m.div>
             </SectionReveal>
           ))}
         </div>

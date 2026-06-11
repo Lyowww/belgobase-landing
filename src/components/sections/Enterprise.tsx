@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Check, ArrowRight } from "lucide-react";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 import { SectionReveal } from "@/components/ui/SectionReveal";
@@ -49,7 +49,7 @@ export function Enterprise() {
 
             <ul className="mt-8 space-y-3.5">
               {features.map((feature, i) => (
-                <motion.li
+                <m.li
                   key={feature}
                   initial={{ opacity: 0, x: -12 }}
                   whileInView={{ opacity: 1, x: 0 }}
@@ -61,7 +61,7 @@ export function Enterprise() {
                     <Check className="h-3 w-3 text-accent" />
                   </span>
                   {feature}
-                </motion.li>
+                </m.li>
               ))}
             </ul>
 

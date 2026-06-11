@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 import { useThrottledScroll } from "@/hooks/useThrottledScroll";
@@ -14,7 +14,7 @@ export function StickyCTA() {
     <AnimatePresence>
       {visible && (
         <>
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 24 }}
@@ -28,9 +28,9 @@ export function StickyCTA() {
                 <ArrowRight className="h-4 w-4" />
               </MagneticButton>
             </div>
-          </motion.div>
+          </m.div>
 
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 48 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 48 }}
@@ -41,7 +41,7 @@ export function StickyCTA() {
               {t("stickyCta.button")}
               <ArrowRight className="h-4 w-4" />
             </MagneticButton>
-          </motion.div>
+          </m.div>
         </>
       )}
     </AnimatePresence>

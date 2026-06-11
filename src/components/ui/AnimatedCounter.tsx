@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useInView, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { m, useInView, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useEffect, useRef } from "react";
 
 type AnimatedCounterProps = {
@@ -33,7 +33,7 @@ export function AnimatedCounter({
   return (
     <span ref={ref} className={className}>
       {prefix}
-      <motion.span>{rounded}</motion.span>
+      <m.span>{rounded}</m.span>
       {suffix}
     </span>
   );

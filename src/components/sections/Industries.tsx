@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Rocket, Briefcase, Building, X } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { SectionReveal } from "@/components/ui/SectionReveal";
@@ -48,7 +48,7 @@ export function Industries() {
         <div className="mb-12 grid gap-6 md:grid-cols-3">
           {industries.map((industry, i) => (
             <SectionReveal key={industry.title} delay={i * 0.12}>
-              <motion.div
+              <m.div
                 whileHover={{ y: -6, scale: 1.01 }}
                 transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                 className="gradient-border group h-full rounded-2xl p-5 sm:p-8"
@@ -73,7 +73,7 @@ export function Industries() {
                     </li>
                   ))}
                 </ul>
-              </motion.div>
+              </m.div>
             </SectionReveal>
           ))}
         </div>

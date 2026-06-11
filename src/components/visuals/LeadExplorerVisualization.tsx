@@ -1,7 +1,17 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Filter, Mail, MapPin, Phone, Search } from "lucide-react";
+import { m } from "framer-motion";
+import {
+  Building2,
+  Database,
+  Filter,
+  Mail,
+  MapPin,
+  Phone,
+  Search,
+  Sparkles,
+  Target,
+} from "lucide-react";
 import { useTranslations } from "@/providers/TranslationsProvider";
 import { smoothEase } from "@/lib/motion";
 
@@ -14,6 +24,7 @@ const sampleRows = [
     email: "info@innotech.be",
     phone: "+32 16 123 456",
     match: 98,
+    initials: "IS",
   },
   {
     name: "Capital Advisory SPRL",
@@ -23,6 +34,7 @@ const sampleRows = [
     email: "contact@capitaladv.be",
     phone: "+32 2 456 7890",
     match: 96,
+    initials: "CA",
   },
   {
     name: "Flanders Logistics NV",
@@ -32,6 +44,7 @@ const sampleRows = [
     email: "sales@flogistics.be",
     phone: "+32 3 234 5678",
     match: 94,
+    initials: "FL",
   },
   {
     name: "Ghent Digital NV",
@@ -41,147 +54,206 @@ const sampleRows = [
     email: "growth@ghentdigital.be",
     phone: "+32 9 876 5432",
     match: 91,
+    initials: "GD",
   },
 ];
+
+function MatchRing({ match, size = 52 }: { match: number; size?: number }) {
+  const stroke = 3;
+  const radius = (size - stroke * 2) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (match / 100) * circumference;
+
+  return (
+    <div className="relative flex shrink-0 items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={stroke}
+          className="text-border/60"
+        />
+        <m.circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="url(#matchGradient)"
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          initial={{ strokeDashoffset: circumference }}
+          whileInView={{ strokeDashoffset: offset }}
+          viewport={{ once: true }}
+          transition={{ duration: 1, delay: 0.2, ease: smoothEase }}
+        />
+        <defs>
+          <linearGradient id="matchGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="var(--primary-blue)" />
+            <stop offset="100%" stopColor="var(--accent-blue)" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <span className="absolute text-[11px] font-bold text-primary">{match}%</span>
+    </div>
+  );
+}
+
+function LeadCard({ row, index }: { row: (typeof sampleRows)[0]; index: number }) {
+  return (
+    <m.article
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-20px" }}
+      transition={{ delay: index * 0.08, duration: 0.5, ease: smoothEase }}
+      whileHover={{ y: -3, transition: { duration: 0.25 } }}
+      className="group relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-surface/80 p-3.5 backdrop-blur-sm transition-shadow hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5 sm:p-4"
+    >
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/[0.04] via-transparent to-accent/[0.03] opacity-0 transition-opacity group-hover:opacity-100" />
+
+      <div className="relative flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-accent/10 text-xs font-bold text-primary ring-1 ring-primary/10">
+          {row.initials}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-deep-navy">{row.name}</p>
+          <p className="mt-0.5 text-[11px] text-muted">{row.vat}</p>
+        </div>
+        <MatchRing match={row.match} size={48} />
+      </div>
+
+      <div className="relative mt-3 flex flex-wrap gap-1.5">
+        <span className="inline-flex items-center gap-1 rounded-md bg-primary/8 px-2 py-0.5 text-[10px] font-medium text-primary">
+          <Building2 className="h-3 w-3" />
+          {row.sector}
+        </span>
+        <span className="inline-flex items-center gap-1 rounded-md bg-border/40 px-2 py-0.5 text-[10px] text-muted">
+          <MapPin className="h-3 w-3" />
+          {row.city}
+        </span>
+      </div>
+
+      <div className="relative mt-3 grid grid-cols-1 gap-1 border-t border-border/40 pt-3 sm:grid-cols-2">
+        <span className="flex items-center gap-1.5 truncate text-[11px] text-deep-navy">
+          <Mail className="h-3 w-3 shrink-0 text-primary" />
+          <span className="truncate">{row.email}</span>
+        </span>
+        <span className="flex items-center gap-1.5 truncate text-[11px] text-muted">
+          <Phone className="h-3 w-3 shrink-0" />
+          <span className="truncate">{row.phone}</span>
+        </span>
+      </div>
+    </m.article>
+  );
+}
 
 export function LeadExplorerVisualization() {
   const { t } = useTranslations();
 
+  const stats = [
+    { label: t("leadPreview.statCompanies"), value: "1,247", icon: Target },
+    { label: t("leadPreview.statMatchRate"), value: "94%", icon: Sparkles },
+    { label: t("leadPreview.statFields"), value: "18+", icon: Database },
+  ];
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
+    <m.div
+      initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.55, ease: smoothEase }}
-      className="premium-card min-w-0 overflow-hidden shadow-lg shadow-primary/5"
+      transition={{ duration: 0.6, ease: smoothEase }}
+      className="relative min-w-0"
     >
-      <div className="flex items-center gap-3 border-b border-border/60 bg-light-bg/80 px-4 py-2.5 sm:px-5 sm:py-3">
-        <div className="flex shrink-0 gap-1.5">
-          <div className="h-2.5 w-2.5 rounded-full bg-red-400/80" />
-          <div className="h-2.5 w-2.5 rounded-full bg-amber-400/80" />
-          <div className="h-2.5 w-2.5 rounded-full bg-emerald-400/80" />
-        </div>
-        <span className="truncate text-xs font-medium text-muted">
-          {t("leadPreview.explorerTitle")}
-        </span>
-        <span className="ml-auto hidden items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 sm:inline-flex dark:text-emerald-400">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-          {t("leadPreview.liveLabel")}
-        </span>
-      </div>
+      <div className="pointer-events-none absolute -inset-3 rounded-3xl bg-gradient-to-br from-primary/10 via-transparent to-accent/10 blur-2xl" />
 
-      <div className="border-b border-border/40 px-3 py-2.5 sm:px-4">
-        <div className="flex gap-2">
-          <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-border bg-surface px-2.5 py-2">
-            <Search className="h-3.5 w-3.5 shrink-0 text-primary" />
-            <span className="truncate text-xs text-muted">
-              {t("leadPreview.searchPlaceholder")}
-            </span>
-          </div>
-          <button
-            type="button"
-            className="flex shrink-0 items-center gap-1 rounded-lg border border-border bg-surface px-2.5 py-2 text-xs text-muted"
-          >
-            <Filter className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">{t("leadPreview.filters")}</span>
-          </button>
-        </div>
-      </div>
+      <div className="gradient-border relative overflow-hidden rounded-2xl">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,var(--glow-primary),transparent_70%)]" />
 
-      <div className="divide-y divide-border/30 sm:hidden">
-        {sampleRows.map((row, i) => (
-          <motion.div
-            key={row.vat}
-            initial={{ opacity: 0, y: 6 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.06, duration: 0.35 }}
-            className="px-4 py-3"
-          >
-            <div className="flex items-start justify-between gap-2">
-              <p className="text-sm font-medium text-deep-navy">{row.name}</p>
-              <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
-                {row.match}%
-              </span>
-            </div>
-            <p className="mt-0.5 text-xs text-muted">{row.vat}</p>
-            <p className="mt-1.5 text-xs text-deep-navy">{row.sector}</p>
-            <p className="mt-0.5 flex items-center gap-1 text-xs text-muted">
-              <MapPin className="h-3 w-3 shrink-0" />
-              {row.city}
-            </p>
-            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 border-t border-border/30 pt-2 text-xs">
-              <span className="flex items-center gap-1 text-deep-navy">
-                <Mail className="h-3 w-3 shrink-0 text-primary" />
-                {row.email}
-              </span>
-              <span className="flex items-center gap-1 text-muted">
-                <Phone className="h-3 w-3 shrink-0" />
-                {row.phone}
-              </span>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-
-      <div className="hidden overflow-x-auto sm:block">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-border/40 bg-light-bg/50 text-xs text-muted">
-              <th className="px-4 py-2 font-medium">{t("leadPreview.tableCompany")}</th>
-              <th className="px-4 py-2 font-medium">{t("leadPreview.tableSector")}</th>
-              <th className="px-4 py-2 font-medium">{t("leadPreview.tableContact")}</th>
-              <th className="px-3 py-2 text-right font-medium">{t("leadPreview.tableMatch")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sampleRows.map((row, i) => (
-              <motion.tr
-                key={row.vat}
-                initial={{ opacity: 0, x: -6 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.06, duration: 0.35 }}
-                className="border-b border-border/30 transition-colors hover:bg-primary/5"
-              >
-                <td className="px-4 py-2.5">
-                  <p className="text-sm font-medium text-deep-navy">{row.name}</p>
-                  <p className="text-xs text-muted">{row.vat}</p>
-                </td>
-                <td className="px-4 py-2.5">
-                  <p className="text-xs text-deep-navy">{row.sector}</p>
-                  <p className="flex items-center gap-1 text-xs text-muted">
-                    <MapPin className="h-3 w-3" />
-                    {row.city}
-                  </p>
-                </td>
-                <td className="px-4 py-2.5">
-                  <p className="flex items-center gap-1 text-xs text-deep-navy">
-                    <Mail className="h-3 w-3 shrink-0 text-primary" />
-                    {row.email}
-                  </p>
-                  <p className="mt-0.5 flex items-center gap-1 text-xs text-muted">
-                    <Phone className="h-3 w-3 shrink-0" />
-                    {row.phone}
-                  </p>
-                </td>
-                <td className="px-3 py-2.5 text-right">
-                  <span className="inline-flex rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
-                    {row.match}%
+        <div className="relative border-b border-border/50 px-4 py-3.5 sm:px-5 sm:py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent shadow-md shadow-primary/20">
+                <Building2 className="h-4 w-4 text-white" />
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-deep-navy">
+                  {t("leadPreview.explorerTitle")}
+                </p>
+                <div className="mt-0.5 flex items-center gap-1.5">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
                   </span>
-                </td>
-              </motion.tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                  <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                    {t("leadPreview.liveLabel")}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/40 bg-light-bg/50 px-4 py-2 text-[11px] text-muted sm:text-xs">
-        <span>{t("leadPreview.showingMatches")}</span>
-        <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-600 dark:text-emerald-400">
-          {t("leadPreview.dataCompleteness")}
-        </span>
+          <div className="mt-3 flex gap-2">
+            <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-border/60 bg-light-bg/80 px-3 py-2.5 shadow-inner shadow-black/[0.02]">
+              <Search className="h-3.5 w-3.5 shrink-0 text-primary" />
+              <span className="truncate text-xs text-muted">{t("leadPreview.searchPlaceholder")}</span>
+            </div>
+            <button
+              type="button"
+              className="flex shrink-0 items-center gap-1.5 rounded-xl border border-border/60 bg-surface px-3 py-2.5 text-xs font-medium text-muted transition-colors hover:border-primary/30 hover:text-primary"
+            >
+              <Filter className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{t("leadPreview.filters")}</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="relative grid grid-cols-3 divide-x divide-border/40 border-b border-border/40 bg-light-bg/40">
+          {stats.map((stat, i) => (
+            <m.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 8 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 + i * 0.06, duration: 0.4, ease: smoothEase }}
+              className="flex flex-col items-center justify-center px-2 py-4 text-center sm:py-5"
+            >
+              <stat.icon className="mb-1.5 h-3.5 w-3.5 text-primary/70" />
+              <p className="text-lg font-bold tracking-tight text-deep-navy sm:text-xl">{stat.value}</p>
+              <p className="mt-0.5 text-[10px] font-medium text-muted sm:text-[11px]">{stat.label}</p>
+            </m.div>
+          ))}
+        </div>
+
+        <div className="relative p-3 sm:p-4">
+          <div className="mb-3 hidden items-center justify-between px-1 sm:flex">
+            <span className="text-[10px] font-semibold tracking-wider text-muted uppercase">
+              {t("leadPreview.tableCompany")}
+            </span>
+            <div className="flex gap-6 text-[10px] font-semibold tracking-wider text-muted uppercase">
+              <span>{t("leadPreview.tableSector")}</span>
+              <span>{t("leadPreview.tableContact")}</span>
+              <span>{t("leadPreview.tableMatch")}</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-3">
+            {sampleRows.map((row, i) => (
+              <LeadCard key={row.vat} row={row} index={i} />
+            ))}
+          </div>
+        </div>
+
+        <div className="relative flex flex-wrap items-center justify-between gap-2 border-t border-border/50 bg-light-bg/50 px-4 py-3 text-[11px] text-muted sm:px-5 sm:text-xs">
+          <span>{t("leadPreview.showingMatches")}</span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 font-medium text-emerald-600 dark:text-emerald-400">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            {t("leadPreview.dataCompleteness")}
+          </span>
+        </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 }

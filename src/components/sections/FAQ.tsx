@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { Minus, Plus } from "lucide-react";
 import { useState } from "react";
 import { MagneticButton } from "@/components/ui/MagneticButton";
@@ -40,7 +40,7 @@ function FAQItem({
       </button>
       <AnimatePresence initial={false}>
         {isOpen && (
-          <motion.div
+          <m.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -50,7 +50,7 @@ function FAQItem({
             <p className="pb-5 text-sm leading-relaxed text-muted sm:pb-6 sm:text-base">
               {answer}
             </p>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

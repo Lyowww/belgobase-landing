@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Mail, Users, SlidersHorizontal, ShieldCheck } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { SectionReveal } from "@/components/ui/SectionReveal";
@@ -48,18 +48,18 @@ export function AddOns() {
         <div className="grid items-stretch gap-6 sm:grid-cols-2">
           {addOns.map((addon, i) => (
             <SectionReveal key={addon.title} delay={i * 0.1} className="h-full">
-              <motion.div
+              <m.div
                 whileHover={{ y: -6 }}
                 transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                 className="addon-card flex h-full flex-col gap-4 rounded-2xl p-5 sm:p-6"
               >
-                <motion.div
+                <m.div
                   whileHover={{ scale: 1.08, rotate: 3 }}
                   transition={{ type: "spring", stiffness: 400, damping: 17 }}
                   className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-accent/10 shadow-sm"
                 >
                   <addon.icon className="h-6 w-6 text-primary" />
-                </motion.div>
+                </m.div>
                 <div className="flex flex-1 flex-col">
                   <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
                     <h3 className="font-semibold text-deep-navy">{addon.title}</h3>
@@ -71,7 +71,7 @@ export function AddOns() {
                     {addon.description}
                   </p>
                 </div>
-              </motion.div>
+              </m.div>
             </SectionReveal>
           ))}
         </div>

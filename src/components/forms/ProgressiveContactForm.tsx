@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { submitContactForm, type ContactFormState } from "@/app/actions/contact";
@@ -103,7 +103,7 @@ export function ProgressiveContactForm({
 
   if (state.success) {
     return (
-      <motion.div
+      <m.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className={cn(
@@ -111,20 +111,20 @@ export function ProgressiveContactForm({
           isHero && "shadow-2xl shadow-primary/5",
         )}
       >
-        <motion.div
+        <m.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: "spring", delay: 0.2 }}
         >
           <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-emerald-500 sm:h-16 sm:w-16" />
-        </motion.div>
+        </m.div>
         <h3 className="mb-2 text-lg font-semibold text-deep-navy sm:text-xl">
           {t("form.successTitle")}
         </h3>
         <p className="text-sm text-muted sm:text-base">
           {translateError(state.message)}
         </p>
-      </motion.div>
+      </m.div>
     );
   }
 
@@ -141,7 +141,7 @@ export function ProgressiveContactForm({
             : null);
 
   return (
-    <motion.form
+    <m.form
       ref={formRef}
       id={id}
       action={formAction}
@@ -293,6 +293,6 @@ export function ProgressiveContactForm({
           )}
         </MagneticButton>
       </div>
-    </motion.form>
+    </m.form>
   );
 }

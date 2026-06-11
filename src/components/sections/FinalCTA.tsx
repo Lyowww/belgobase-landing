@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { ProgressiveContactForm } from "@/components/forms/ProgressiveContactForm";
 import { SectionReveal } from "@/components/ui/SectionReveal";
 import { AmbientGlow } from "@/components/visuals/AmbientBackground";
@@ -23,7 +23,7 @@ export function FinalCTA() {
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid min-w-0 items-start gap-10 sm:gap-12 lg:grid-cols-2 lg:gap-16">
           <SectionReveal direction="left">
-            <motion.p
+            <m.p
               initial={{ opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -31,8 +31,8 @@ export function FinalCTA() {
               className="mb-3 text-xs font-medium tracking-[0.15em] text-primary uppercase sm:mb-4 sm:text-sm sm:tracking-[0.2em]"
             >
               {t("finalCta.eyebrow")}
-            </motion.p>
-            <motion.h2
+            </m.p>
+            <m.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -44,8 +44,8 @@ export function FinalCTA() {
                 {t("finalCta.titleHighlight")}
               </span>{" "}
               {t("finalCta.titleEnd")}
-            </motion.h2>
-            <motion.p
+            </m.h2>
+            <m.p
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -53,7 +53,7 @@ export function FinalCTA() {
               className="mt-4 text-[15px] leading-relaxed text-muted sm:mt-6 sm:text-[17px]"
             >
               {t("finalCta.description")}
-            </motion.p>
+            </m.p>
           </SectionReveal>
 
           <SectionReveal direction="right" delay={0.15}>

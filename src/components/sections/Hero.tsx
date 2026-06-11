@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { ArrowRight, UserCheck, RefreshCw, MapPin } from "lucide-react";
 import dynamic from "next/dynamic";
 import { AmbientGlow, AnimatedGrid } from "@/components/visuals/AmbientBackground";
@@ -69,7 +69,7 @@ export function Hero() {
       <AmbientGlow className="right-[5%] top-[5%] h-[350px] w-[350px]" color="primary" />
 
       {enabled && (
-        <motion.div
+        <m.div
           className="pointer-events-none absolute h-[300px] w-[300px] rounded-full bg-accent/8 blur-[80px] will-change-transform sm:h-[500px] sm:w-[500px] sm:blur-[100px]"
           animate={{ x: x * 0.02 - 150, y: y * 0.02 - 150 }}
           transition={{ type: "spring", stiffness: 50, damping: 30 }}
@@ -78,13 +78,13 @@ export function Hero() {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid min-w-0 items-stretch gap-8 sm:gap-12 lg:grid-cols-2 lg:gap-16">
-          <motion.div
+          <m.div
             variants={container}
             initial="hidden"
             animate="show"
             className="min-w-0"
           >
-            <motion.div variants={item}>
+            <m.div variants={item}>
               <span className="glass inline-flex max-w-full items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium text-primary shadow-sm sm:px-4 sm:text-sm">
                 <span className="relative flex h-2 w-2 shrink-0">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-40" />
@@ -92,9 +92,9 @@ export function Hero() {
                 </span>
                 <span className="truncate">{t("hero.badge")}</span>
               </span>
-            </motion.div>
+            </m.div>
 
-            <motion.h1
+            <m.h1
               variants={item}
               className="mt-6 text-[1.75rem] font-semibold leading-[1.1] tracking-tight text-balance text-deep-navy sm:mt-8 sm:text-4xl sm:leading-[1.08] md:text-5xl lg:text-6xl"
             >
@@ -103,16 +103,16 @@ export function Hero() {
               <br className="hidden sm:block" />
               <span className="sm:hidden"> </span>
               {t("hero.titleLine2")}
-            </motion.h1>
+            </m.h1>
 
-            <motion.p
+            <m.p
               variants={item}
               className="mt-4 max-w-xl text-base leading-relaxed text-muted sm:mt-6 sm:text-lg md:text-xl"
             >
               {t("hero.description")}
-            </motion.p>
+            </m.p>
 
-            <motion.div variants={item} className="mt-6 sm:mt-8">
+            <m.div variants={item} className="mt-6 sm:mt-8">
               <MagneticButton
                 href="#contact"
                 className="w-full !min-w-[13rem] !px-8 !py-3.5 !text-sm sm:w-auto sm:!min-w-[15rem] sm:!px-10 sm:!text-base"
@@ -120,9 +120,9 @@ export function Hero() {
                 {t("hero.accessSample")}
                 <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
               </MagneticButton>
-            </motion.div>
+            </m.div>
 
-            <motion.div
+            <m.div
               variants={item}
               className="mt-8 grid gap-3 sm:mt-12 sm:grid-cols-3 sm:gap-4"
             >
@@ -140,17 +140,17 @@ export function Hero() {
                   </div>
                 </div>
               ))}
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
 
-          <motion.div
+          <m.div
             initial={{ opacity: 0, scale: 0.96, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.9, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
             className="flex min-w-0"
           >
             <HeroVisualization />
-          </motion.div>
+          </m.div>
         </div>
       </div>
     </section>

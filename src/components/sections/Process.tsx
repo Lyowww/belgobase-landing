@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { ClipboardList, Euro, FileSpreadsheet } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { SectionReveal } from "@/components/ui/SectionReveal";
@@ -140,7 +140,7 @@ function StepLabel({
 
 function ProcessCard({ step }: { step: Step }) {
   return (
-    <motion.div
+    <m.div
       whileHover={{ y: -4 }}
       transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
       className="group relative w-full max-w-md md:max-w-sm lg:max-w-md"
@@ -162,6 +162,6 @@ function ProcessCard({ step }: { step: Step }) {
 
         <p className="relative mt-4 text-sm leading-relaxed text-muted">{step.description}</p>
       </div>
-    </motion.div>
+    </m.div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Check, Sparkles } from "lucide-react";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 import { SectionHeader } from "@/components/ui/SectionHeader";
@@ -66,7 +66,7 @@ export function Pricing() {
         <div className="grid items-stretch gap-6 sm:gap-8 lg:grid-cols-3">
           {plans.map((plan, i) => (
             <SectionReveal key={plan.key} delay={i * 0.12} className="h-full">
-              <motion.div
+              <m.div
                 whileHover={{ y: -10, scale: plan.popular ? 1.02 : 1.01 }}
                 transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 className={cn(
@@ -76,7 +76,7 @@ export function Pricing() {
               >
                 {plan.popular && (
                   <div className="absolute -top-3.5 left-1/2 z-10 -translate-x-1/2">
-                    <motion.span
+                    <m.span
                       initial={{ opacity: 0, y: 8 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
@@ -85,7 +85,7 @@ export function Pricing() {
                     >
                       <Sparkles className="h-3 w-3" />
                       {t("pricing.mostPopular")}
-                    </motion.span>
+                    </m.span>
                   </div>
                 )}
 
@@ -129,7 +129,7 @@ export function Pricing() {
                     {t("pricing.getStarted")}
                   </MagneticButton>
                 </div>
-              </motion.div>
+              </m.div>
             </SectionReveal>
           ))}
         </div>

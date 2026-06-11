@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useInView, useReducedMotion } from "framer-motion";
+import { m, useInView, useReducedMotion } from "framer-motion";
 import { useRef, type ReactNode } from "react";
 import { fadeUp, staggerContainer, smoothEase } from "@/lib/motion";
 import { cn } from "@/lib/utils";
@@ -27,7 +27,7 @@ export function StaggerReveal({
   }
 
   return (
-    <motion.div
+    <m.div
       ref={ref}
       initial="hidden"
       animate={isInView ? "visible" : "hidden"}
@@ -35,7 +35,7 @@ export function StaggerReveal({
       className={cn(className)}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -46,12 +46,12 @@ type StaggerItemProps = {
 
 export function StaggerItem({ children, className }: StaggerItemProps) {
   return (
-    <motion.div
+    <m.div
       variants={fadeUp}
       transition={{ duration: 0.55, ease: smoothEase }}
       className={cn(className)}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }

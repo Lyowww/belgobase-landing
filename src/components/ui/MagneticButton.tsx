@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useMotionValue, useSpring } from "framer-motion";
+import { m, useMotionValue, useSpring } from "framer-motion";
 import { type ReactNode, useRef } from "react";
 import { cn } from "@/lib/utils";
 
@@ -63,7 +63,7 @@ export function MagneticButton({
   const wrapperClass = cn(isFullWidth ? "block w-full" : "inline-block");
 
   const content = (
-    <motion.div
+    <m.div
       ref={ref}
       style={{ x: springX, y: springY }}
       onMouseMove={handleMove}
@@ -72,7 +72,7 @@ export function MagneticButton({
       className={baseClass}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 
   if (href) {
