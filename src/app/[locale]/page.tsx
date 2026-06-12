@@ -1,5 +1,6 @@
 import dynamic from "next/dynamic";
 import { ComingSoon } from "@/components/ComingSoon";
+import { createLocalizedPageMetadata } from "@/lib/seo/metadata";
 import { Header } from "@/components/layout/Header";
 import { comingSoonEnabled } from "@/lib/site";
 import { FloatingToolbar } from "@/components/layout/FloatingToolbar";
@@ -57,6 +58,8 @@ const FinalCTA = dynamic(
   () => import("@/components/sections/FinalCTA").then((m) => ({ default: m.FinalCTA })),
   { loading: () => <SectionSkeleton /> },
 );
+
+export const generateMetadata = createLocalizedPageMetadata();
 
 export default function Home() {
   if (comingSoonEnabled) {

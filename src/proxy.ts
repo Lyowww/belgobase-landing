@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { i18n, isLocale, type Locale } from "@/i18n/config";
+import { PATHNAME_HEADER } from "@/lib/seo/metadata";
+
+function withPathnameHeader(request: NextRequest, pathname: string) {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(PATHNAME_HEADER, pathname);
+  return NextResponse.next({ request: { headers: requestHeaders } });
+}
 
 function getPreferredLocale(request: NextRequest): Locale {
   const cookieLocale = request.cookies.get("NEXT_LOCALE")?.value;
@@ -20,7 +27,9 @@ export function proxy(request: NextRequest) {
     (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`,
   );
 
-  if (pathnameHasLocale) return;
+  if (pathnameHasLocale) {
+    return withPathnameHeader(request, pathname);
+  }
 
   const locale = getPreferredLocale(request);
   const url = request.nextUrl.clone();

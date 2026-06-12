@@ -1,4 +1,5 @@
 import type { Locale } from "@/i18n/config";
+import { buildCanonicalUrl, buildLocalizedPath, getRequestPathname } from "@/lib/seo/metadata";
 import { siteUrl } from "@/lib/site";
 
 type JsonLdProps = {
@@ -7,8 +8,9 @@ type JsonLdProps = {
   description: string;
 };
 
-export function JsonLd({ locale, title, description }: JsonLdProps) {
-  const url = `${siteUrl}/${locale}`;
+export async function JsonLd({ locale, title, description }: JsonLdProps) {
+  const pathname = await getRequestPathname(buildLocalizedPath(locale));
+  const url = buildCanonicalUrl(pathname);
 
   const schema = {
     "@context": "https://schema.org",

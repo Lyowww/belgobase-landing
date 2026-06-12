@@ -1,14 +1,13 @@
 "use client";
 
 import { m } from "framer-motion";
-import { Building2, BarChart3, Check, Mail, Sparkles } from "lucide-react";
+import { Building2, BarChart3, Mail, Sparkles } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { SectionReveal } from "@/components/ui/SectionReveal";
 import { StaggerItem, StaggerReveal } from "@/components/ui/StaggerReveal";
 import { LeadExplorerVisualization } from "@/components/visuals/LeadExplorerVisualization";
-import { LookalikeVisualization } from "@/components/visuals/LookalikeVisualization";
 import { useTranslations } from "@/providers/TranslationsProvider";
-import { hoverLiftSubtle, smoothEase } from "@/lib/motion";
+import { hoverLiftSubtle } from "@/lib/motion";
 
 export function LeadPreview() {
   const { t } = useTranslations();
@@ -34,14 +33,6 @@ export function LeadPreview() {
       title: t("leadPreview.companyInsightsTitle"),
       description: t("leadPreview.companyInsightsDesc"),
     },
-  ];
-
-  const lookalikeInsights = [
-    t("leadPreview.lookalike1"),
-    t("leadPreview.lookalike2"),
-    t("leadPreview.lookalike3"),
-    t("leadPreview.lookalike4"),
-    t("leadPreview.lookalike5"),
   ];
 
   return (
@@ -89,49 +80,6 @@ export function LeadPreview() {
             ))}
           </StaggerReveal>
         </SectionReveal>
-
-        <div className="my-12 h-px bg-border/50 sm:my-16" />
-
-        <div className="grid min-w-0 items-center gap-8 lg:grid-cols-2 lg:gap-12">
-          <SectionReveal direction="left" delay={0.05}>
-            <div className="premium-card relative overflow-hidden rounded-2xl p-5 sm:p-6">
-              <div className="pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full bg-primary/8 blur-2xl" />
-
-              <h3 className="mb-2 text-base font-semibold text-deep-navy sm:text-lg">
-                {t("leadPreview.lookalikeTitle")}
-              </h3>
-              <p className="mb-5 text-sm leading-relaxed text-muted">
-                {t("leadPreview.lookalikeDescription")}
-              </p>
-
-              <p className="mb-3 text-xs font-semibold tracking-wider text-primary uppercase">
-                {t("leadPreview.lookalikeEyebrow")}
-              </p>
-
-              <ul className="space-y-2.5">
-                {lookalikeInsights.map((insight, i) => (
-                  <m.li
-                    key={insight}
-                    initial={{ opacity: 0, x: -10 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.05, duration: 0.35, ease: smoothEase }}
-                    className="flex items-center gap-3 rounded-lg border border-border/30 bg-light-bg/50 px-3 py-2.5 text-sm text-deep-navy"
-                  >
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500/20 to-emerald-600/10">
-                      <Check className="h-2.5 w-2.5 text-emerald-600 dark:text-emerald-400" />
-                    </span>
-                    <span>{insight}</span>
-                  </m.li>
-                ))}
-              </ul>
-            </div>
-          </SectionReveal>
-
-          <SectionReveal direction="right" delay={0.1}>
-            <LookalikeVisualization />
-          </SectionReveal>
-        </div>
       </div>
     </section>
   );

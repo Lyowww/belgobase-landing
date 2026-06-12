@@ -5,6 +5,11 @@ import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { getDictionary } from "@/i18n/dictionaries";
 import { i18n, isLocale } from "@/i18n/config";
+import {
+  buildCanonicalUrl,
+  buildLocalizedPath,
+  getRequestPathname,
+} from "@/lib/seo/metadata";
 import { comingSoonEnabled, siteUrl } from "@/lib/site";
 import { isResolvedTheme } from "@/lib/theme";
 import { MotionProvider } from "@/providers/MotionProvider";
@@ -40,7 +45,8 @@ export async function generateMetadata({
 
   const dict = await getDictionary(localeParam);
   const keywords = dict.metadata.keywords.split(", ");
-  const pageUrl = `${siteUrl}/${localeParam}`;
+  const pathname = await getRequestPathname(buildLocalizedPath(localeParam));
+  const pageUrl = buildCanonicalUrl(pathname);
   const title = comingSoonEnabled ? dict.comingSoon.metadataTitle : dict.metadata.title;
   const description = comingSoonEnabled
     ? dict.comingSoon.metadataDescription
@@ -69,13 +75,6 @@ export async function generateMetadata({
       card: "summary_large_image",
       title,
       description,
-    },
-    alternates: {
-      canonical: `/${localeParam}`,
-      languages: {
-        en: "/en",
-        nl: "/nl",
-      },
     },
     robots: comingSoonEnabled
       ? { index: false, follow: false }
