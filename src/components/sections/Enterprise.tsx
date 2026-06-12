@@ -43,7 +43,7 @@ export function Enterprise() {
             <h2 className="text-2xl font-semibold tracking-tight text-balance text-white sm:text-3xl md:text-4xl lg:text-5xl">
               {t("enterprise.title")}
             </h2>
-            <p className="mt-6 text-lg leading-relaxed text-white/60">
+            <p className="mt-5 text-base leading-relaxed text-white/60 sm:mt-6 sm:text-lg">
               {t("enterprise.description")}
             </p>
 
@@ -68,7 +68,7 @@ export function Enterprise() {
             <div className="mt-10">
               <MagneticButton
                 href="#contact"
-                className="!bg-white !text-[#060a14] !shadow-lg !shadow-accent/20 hover:!bg-white/90"
+                className="w-full !bg-white !text-[#060a14] !shadow-lg !shadow-accent/20 hover:!bg-white/90 sm:w-auto"
               >
                 {t("enterprise.talkToUs")}
                 <ArrowRight className="h-4 w-4" />

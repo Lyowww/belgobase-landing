@@ -71,7 +71,7 @@ export function Pricing() {
                 transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 className={cn(
                   "pricing-card relative flex h-full flex-col rounded-2xl p-5 sm:p-8",
-                  plan.popular ? "pricing-popular mt-4 pt-8 sm:mt-0 sm:pt-8" : "glass premium-card",
+                  plan.popular ? "pricing-popular mt-6 pt-8 sm:mt-0 sm:pt-8" : "glass premium-card",
                 )}
               >
                 {plan.popular && (

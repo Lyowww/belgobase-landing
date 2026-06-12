@@ -222,7 +222,9 @@ export function LeadExplorerVisualization() {
             >
               <stat.icon className="mb-1.5 h-3.5 w-3.5 text-primary/70" />
               <p className="text-lg font-bold tracking-tight text-deep-navy sm:text-xl">{stat.value}</p>
-              <p className="mt-0.5 text-[10px] font-medium text-muted sm:text-[11px]">{stat.label}</p>
+              <p className="mt-0.5 line-clamp-2 text-[10px] leading-tight font-medium text-muted sm:text-[11px]">
+                {stat.label}
+              </p>
             </m.div>
           ))}
         </div>

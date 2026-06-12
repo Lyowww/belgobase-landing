@@ -1,7 +1,7 @@
 "use client";
 
 import { m, useMotionValue, useSpring } from "framer-motion";
-import { type ReactNode, useRef } from "react";
+import { type ReactNode, useRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 type MagneticButtonProps = {
@@ -37,9 +37,14 @@ export function MagneticButton({
   const springX = useSpring(x, { stiffness: 300, damping: 20 });
   const springY = useSpring(y, { stiffness: 300, damping: 20 });
   const isFullWidth = className?.includes("w-full");
+  const [magneticEnabled, setMagneticEnabled] = useState(false);
+
+  useEffect(() => {
+    setMagneticEnabled(window.matchMedia("(pointer: fine)").matches);
+  }, []);
 
   const handleMove = (e: React.MouseEvent) => {
-    if (!ref.current || disabled) return;
+    if (!magneticEnabled || !ref.current || disabled) return;
     const rect = ref.current.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
@@ -53,7 +58,7 @@ export function MagneticButton({
   };
 
   const baseClass = cn(
-    "relative inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-medium transition-all duration-300",
+    "relative inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-medium transition-all duration-300 touch-manipulation",
     variants[variant],
     disabled && "pointer-events-none opacity-60",
     isFullWidth && "w-full",
