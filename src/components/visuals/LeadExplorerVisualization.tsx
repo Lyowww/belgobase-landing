@@ -12,6 +12,7 @@ import {
   Sparkles,
   Target,
 } from "lucide-react";
+import { usePerformanceMode } from "@/hooks/usePerformanceMode";
 import { useTranslations } from "@/providers/TranslationsProvider";
 import { smoothEase } from "@/lib/motion";
 
@@ -110,7 +111,7 @@ function LeadCard({ row, index }: { row: (typeof sampleRows)[0]; index: number }
       viewport={{ once: true, margin: "-20px" }}
       transition={{ delay: index * 0.08, duration: 0.5, ease: smoothEase }}
       whileHover={{ y: -3, transition: { duration: 0.25 } }}
-      className="group relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-surface/80 p-3.5 backdrop-blur-sm transition-shadow hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5 sm:p-4"
+      className="group relative flex flex-col overflow-hidden rounded-xl border border-border/50 bg-surface/95 p-3.5 mobile-backdrop-none backdrop-blur-sm transition-shadow hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5 sm:bg-surface/80 sm:p-4"
     >
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/[0.04] via-transparent to-accent/[0.03] opacity-0 transition-opacity group-hover:opacity-100" />
 
@@ -152,6 +153,7 @@ function LeadCard({ row, index }: { row: (typeof sampleRows)[0]; index: number }
 
 export function LeadExplorerVisualization() {
   const { t } = useTranslations();
+  const { reduceMotionEffects, reduceVisualEffects } = usePerformanceMode();
 
   const stats = [
     { label: t("leadPreview.statCompanies"), value: "1,247", icon: Target },
@@ -167,7 +169,9 @@ export function LeadExplorerVisualization() {
       transition={{ duration: 0.6, ease: smoothEase }}
       className="relative min-w-0"
     >
-      <div className="pointer-events-none absolute -inset-3 rounded-3xl bg-gradient-to-br from-primary/10 via-transparent to-accent/10 blur-2xl" />
+      {!reduceVisualEffects && (
+        <div className="pointer-events-none absolute -inset-3 rounded-3xl bg-gradient-to-br from-primary/10 via-transparent to-accent/10 blur-2xl" />
+      )}
 
       <div className="gradient-border relative overflow-hidden rounded-2xl">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,var(--glow-primary),transparent_70%)]" />
@@ -184,7 +188,9 @@ export function LeadExplorerVisualization() {
                 </p>
                 <div className="mt-0.5 flex items-center gap-1.5">
                   <span className="relative flex h-1.5 w-1.5">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
+                    {!reduceMotionEffects && (
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
+                    )}
                     <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
                   </span>
                   <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">

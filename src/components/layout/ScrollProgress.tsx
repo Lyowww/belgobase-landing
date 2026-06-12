@@ -1,11 +1,13 @@
 "use client";
 
 import { m, useReducedMotion, useScroll, useSpring } from "framer-motion";
+import { usePerformanceMode } from "@/hooks/usePerformanceMode";
 
 export function ScrollProgress() {
   const { scrollYProgress } = useScroll();
   const prefersReducedMotion = useReducedMotion();
-  const scaleX = useSpring(scrollYProgress, {
+  const { isMobile } = usePerformanceMode();
+  const scaleXSpring = useSpring(scrollYProgress, {
     stiffness: 100,
     damping: 30,
     restDelta: 0.001,
@@ -15,8 +17,8 @@ export function ScrollProgress() {
 
   return (
     <m.div
-      className="fixed top-0 left-0 right-0 z-[100] h-[2px] origin-left bg-gradient-to-r from-primary via-accent to-primary-dark"
-      style={{ scaleX }}
+      className="fixed top-0 left-0 right-0 z-[100] h-[2px] origin-left bg-gradient-to-r from-primary via-accent to-primary-dark will-change-transform"
+      style={{ scaleX: isMobile ? scrollYProgress : scaleXSpring }}
     />
   );
 }

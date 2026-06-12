@@ -2,6 +2,8 @@
 
 import { m } from "framer-motion";
 import { Building2, Network, Phone, UserRound, Users } from "lucide-react";
+import { useActiveInView } from "@/hooks/useActiveInView";
+import { usePerformanceMode } from "@/hooks/usePerformanceMode";
 import { useTranslations } from "@/providers/TranslationsProvider";
 
 const orbitNodes = [
@@ -51,6 +53,8 @@ function polarToCartesian(cx: number, cy: number, radius: number, angleDeg: numb
 
 export function EnterpriseVisualization() {
   const { t } = useTranslations();
+  const { ref, active } = useActiveInView();
+  const { reduceMotionEffects, reduceVisualEffects } = usePerformanceMode();
   const hub = { x: 50, y: 50 };
 
   const stats = [
@@ -59,20 +63,34 @@ export function EnterpriseVisualization() {
     { label: t("enterprise.vizDirectLines"), value: "6", icon: Phone },
   ];
 
+  const cardSurface = reduceVisualEffects
+    ? "border border-white/15 bg-[#0d1528]/95"
+    : "border border-white/15 bg-[#0d1528]/90 backdrop-blur-md";
+
   return (
-    <div className="relative w-full">
-      <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-1 backdrop-blur-sm">
+    <div ref={ref} className="viz-container relative w-full">
+      <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-1 mobile-backdrop-none backdrop-blur-sm">
         <div className="relative h-[18rem] overflow-hidden rounded-xl sm:h-[22rem] md:h-[26rem]">
           <div className="pointer-events-none absolute inset-0">
-            <div className="absolute -top-16 right-0 h-48 w-48 rounded-full bg-primary/20 blur-3xl" />
-            <div className="absolute -bottom-12 left-0 h-40 w-40 rounded-full bg-accent/15 blur-3xl" />
+            <div
+              className={`absolute -top-16 right-0 h-48 w-48 rounded-full bg-primary/20 ${
+                reduceVisualEffects ? "mobile-blur-soft opacity-50" : "blur-3xl"
+              }`}
+            />
+            <div
+              className={`absolute -bottom-12 left-0 h-40 w-40 rounded-full bg-accent/15 ${
+                reduceVisualEffects ? "mobile-blur-soft opacity-50" : "blur-3xl"
+              }`}
+            />
           </div>
 
           <div className="relative flex h-full flex-col p-4 sm:p-5">
             <div className="mb-3 flex items-center justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2">
                 <span className="relative flex h-2 w-2 shrink-0">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-50" />
+                  {!reduceMotionEffects && (
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-50" />
+                  )}
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
                 </span>
                 <span className="truncate text-xs font-medium text-white/60 sm:text-sm">
@@ -88,34 +106,45 @@ export function EnterpriseVisualization() {
             <div className="relative min-h-0 flex-1 overflow-hidden rounded-xl border border-white/10 bg-[#0a1020]/80">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(77,163,255,0.12),transparent_65%)]" />
 
-              <m.div
-                className="absolute left-1/2 top-1/2 h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent/20"
-                animate={{ rotate: 360, scale: [1, 1.04, 1] }}
-                transition={{
-                  rotate: { duration: 28, repeat: Infinity, ease: "linear" },
-                  scale: { duration: 4, repeat: Infinity, ease: "easeInOut" },
-                }}
-              />
-              <m.div
-                className="absolute left-1/2 top-1/2 h-44 w-44 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-primary/20"
-                animate={{ rotate: -360 }}
-                transition={{ duration: 36, repeat: Infinity, ease: "linear" }}
-              />
-              <m.div
-                className="absolute left-1/2 top-1/2 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/5"
-                animate={{ opacity: [0.3, 0.6, 0.3] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              />
+              {active && !reduceMotionEffects && (
+                <>
+                  <m.div
+                    className="gpu-layer absolute left-1/2 top-1/2 h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent/20"
+                    animate={{ rotate: 360, scale: [1, 1.04, 1] }}
+                    transition={{
+                      rotate: { duration: 28, repeat: Infinity, ease: "linear" },
+                      scale: { duration: 4, repeat: Infinity, ease: "easeInOut" },
+                    }}
+                  />
+                  <m.div
+                    className="gpu-layer absolute left-1/2 top-1/2 h-44 w-44 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-primary/20"
+                    animate={{ rotate: -360 }}
+                    transition={{ duration: 36, repeat: Infinity, ease: "linear" }}
+                  />
+                  <m.div
+                    className="absolute left-1/2 top-1/2 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/5"
+                    animate={{ opacity: [0.3, 0.6, 0.3] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                  <m.div
+                    className="gpu-layer absolute left-1/2 top-1/2 h-28 w-28 origin-bottom -translate-x-1/2 -translate-y-1/2 rounded-full"
+                    style={{
+                      background:
+                        "conic-gradient(from 0deg, transparent 0deg, rgba(77,163,255,0.25) 40deg, transparent 80deg)",
+                    }}
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                  />
+                </>
+              )}
 
-              <m.div
-                className="absolute left-1/2 top-1/2 h-28 w-28 origin-bottom -translate-x-1/2 -translate-y-1/2 rounded-full"
-                style={{
-                  background:
-                    "conic-gradient(from 0deg, transparent 0deg, rgba(77,163,255,0.25) 40deg, transparent 80deg)",
-                }}
-                animate={{ rotate: 360 }}
-                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-              />
+              {!active && !reduceMotionEffects && (
+                <>
+                  <div className="absolute left-1/2 top-1/2 h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent/20" />
+                  <div className="absolute left-1/2 top-1/2 h-44 w-44 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-primary/20" />
+                  <div className="absolute left-1/2 top-1/2 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/5 opacity-40" />
+                </>
+              )}
 
               <svg
                 className="absolute inset-0 h-full w-full"
@@ -150,22 +179,24 @@ export function EnterpriseVisualization() {
                         viewport={{ once: true }}
                         transition={{ duration: 1, delay: node.delay }}
                       />
-                      <m.circle
-                        r="0.7"
-                        fill="#4DA3FF"
-                        initial={{ opacity: 0 }}
-                        animate={{
-                          cx: [hub.x, pos.x],
-                          cy: [hub.y, pos.y],
-                          opacity: [0, 1, 1, 0],
-                        }}
-                        transition={{
-                          duration: 2.2,
-                          delay: 1.2 + i * 0.35,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                        }}
-                      />
+                      {active && !reduceMotionEffects && (
+                          <m.circle
+                            r="0.7"
+                            fill="#4DA3FF"
+                            initial={{ opacity: 0 }}
+                            animate={{
+                              cx: [hub.x, pos.x],
+                              cy: [hub.y, pos.y],
+                              opacity: [0, 1, 1, 0],
+                            }}
+                            transition={{
+                              duration: 2.2,
+                              delay: 1.2 + i * 0.35,
+                              repeat: Infinity,
+                              ease: "easeInOut",
+                            }}
+                          />
+                        )}
                       <m.circle
                         cx={pos.x}
                         cy={pos.y}
@@ -178,37 +209,51 @@ export function EnterpriseVisualization() {
                         viewport={{ once: true }}
                         transition={{ delay: node.delay, type: "spring", stiffness: 220 }}
                       />
-                      <m.circle
-                        cx={pos.x}
-                        cy={pos.y}
-                        r="3.5"
-                        fill="none"
-                        stroke="#4DA3FF"
-                        strokeWidth="0.2"
-                        initial={{ scale: 0.6, opacity: 0 }}
-                        animate={{ scale: [1, 1.5, 1], opacity: [0.4, 0, 0.4] }}
-                        transition={{
-                          duration: 2.5,
-                          delay: node.delay + 0.5,
-                          repeat: Infinity,
-                          ease: "easeOut",
-                        }}
-                      />
+                      {active && !reduceMotionEffects && (
+                        <m.circle
+                          cx={pos.x}
+                          cy={pos.y}
+                          r="3.5"
+                          fill="none"
+                          stroke="#4DA3FF"
+                          strokeWidth="0.2"
+                          initial={{ scale: 0.6, opacity: 0 }}
+                          animate={{ scale: [1, 1.5, 1], opacity: [0.4, 0, 0.4] }}
+                          transition={{
+                            duration: 2.5,
+                            delay: node.delay + 0.5,
+                            repeat: Infinity,
+                            ease: "easeOut",
+                          }}
+                        />
+                      )}
                     </g>
                   );
                 })}
 
-                <m.circle
-                  cx={hub.x}
-                  cy={hub.y}
-                  r="5"
-                  fill="none"
-                  stroke="#4DA3FF"
-                  strokeWidth="0.35"
-                  initial={{ scale: 0.5, opacity: 0 }}
-                  animate={{ scale: [1, 2.2, 1], opacity: [0.6, 0, 0.6] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeOut" }}
-                />
+                {active && !reduceMotionEffects ? (
+                  <m.circle
+                    cx={hub.x}
+                    cy={hub.y}
+                    r="5"
+                    fill="none"
+                    stroke="#4DA3FF"
+                    strokeWidth="0.35"
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: [1, 2.2, 1], opacity: [0.6, 0, 0.6] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeOut" }}
+                  />
+                ) : (
+                  <circle
+                    cx={hub.x}
+                    cy={hub.y}
+                    r="5"
+                    fill="none"
+                    stroke="#4DA3FF"
+                    strokeWidth="0.35"
+                    opacity={0.3}
+                  />
+                )}
                 <m.circle
                   cx={hub.x}
                   cy={hub.y}
@@ -222,7 +267,11 @@ export function EnterpriseVisualization() {
               </svg>
 
               <m.div
-                className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 rounded-2xl border border-white/15 bg-white/10 px-3 py-2 shadow-[0_0_24px_rgba(77,163,255,0.2)] backdrop-blur-md sm:px-4 sm:py-2.5"
+                className={`absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 rounded-2xl px-3 py-2 shadow-[0_0_24px_rgba(77,163,255,0.2)] sm:px-4 sm:py-2.5 ${
+                  reduceVisualEffects
+                    ? "border border-white/15 bg-[#0d1528]/95"
+                    : "border border-white/15 bg-white/10 backdrop-blur-md"
+                }`}
                 initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
@@ -239,21 +288,28 @@ export function EnterpriseVisualization() {
               {executiveCards.map((card) => (
                 <m.div
                   key={card.name}
-                  className={`absolute max-w-[calc(100%-1.5rem)] rounded-xl border border-white/15 bg-[#0d1528]/90 p-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.35)] backdrop-blur-md sm:max-w-none sm:p-3 ${
+                  className={`absolute max-w-[calc(100%-1.5rem)] rounded-xl p-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.35)] sm:max-w-none sm:p-3 ${
                     card.hideOnMobile ? "hidden sm:block" : ""
-                  } w-[148px] sm:w-[172px] ${card.position}`}
+                  } w-[148px] sm:w-[172px] ${card.position} ${cardSurface}`}
                   initial={{ opacity: 0, y: 16, scale: 0.95 }}
                   whileInView={{ opacity: 1, y: 0, scale: 1 }}
                   viewport={{ once: true }}
-                  animate={{ y: [0, -6, 0] }}
+                  animate={
+                    active && !reduceMotionEffects
+                      ? { y: [0, -6, 0] }
+                      : { y: 0 }
+                  }
                   transition={{
                     opacity: { delay: card.delay, duration: 0.6 },
-                    y: {
-                      delay: card.delay + 1,
-                      duration: 5,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                    },
+                    y:
+                      active && !reduceMotionEffects
+                        ? {
+                            delay: card.delay + 1,
+                            duration: 5,
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                          }
+                        : { duration: 0.3 },
                     scale: { delay: card.delay, duration: 0.6 },
                   }}
                 >

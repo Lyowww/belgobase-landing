@@ -2,6 +2,8 @@
 
 import { m } from "framer-motion";
 import { Building2, Mail, MapPin, Radar, TrendingUp, Zap } from "lucide-react";
+import { useActiveInView } from "@/hooks/useActiveInView";
+import { usePerformanceMode } from "@/hooks/usePerformanceMode";
 import { useTranslations } from "@/providers/TranslationsProvider";
 
 const cities = [
@@ -53,6 +55,8 @@ const leadCards = [
 
 export function HeroVisualization() {
   const { t } = useTranslations();
+  const { ref, active } = useActiveInView();
+  const { reduceMotionEffects, reduceVisualEffects } = usePerformanceMode();
 
   const stats = [
     { label: t("hero.vizCompanies"), value: "2M+", icon: Building2 },
@@ -61,19 +65,34 @@ export function HeroVisualization() {
   ];
 
   return (
-    <div className="relative flex h-full min-h-[320px] w-full min-w-0 sm:min-h-[420px] md:min-h-[480px] lg:min-h-[580px]">
+    <div
+      ref={ref}
+      className="viz-container relative flex h-full min-h-[320px] w-full min-w-0 sm:min-h-[420px] md:min-h-[480px] lg:min-h-[580px]"
+    >
       <div className="gradient-border relative flex h-full w-full flex-col overflow-hidden rounded-2xl sm:rounded-3xl">
         <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl sm:rounded-3xl">
-          <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-accent/15 blur-3xl" />
-          <div className="absolute -bottom-12 -left-12 h-48 w-48 rounded-full bg-primary/15 blur-3xl" />
-          <div className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-3xl" />
+          <div
+            className={`absolute -right-16 -top-16 h-56 w-56 rounded-full bg-accent/15 ${
+              reduceVisualEffects ? "mobile-blur-soft opacity-60" : "blur-3xl"
+            }`}
+          />
+          <div
+            className={`absolute -bottom-12 -left-12 h-48 w-48 rounded-full bg-primary/15 ${
+              reduceVisualEffects ? "mobile-blur-soft opacity-60" : "blur-3xl"
+            }`}
+          />
+          {!reduceVisualEffects && (
+            <div className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-3xl" />
+          )}
         </div>
 
         <div className="relative flex min-h-0 flex-1 flex-col p-4 sm:p-5 lg:p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2">
               <span className="relative flex h-2 w-2 shrink-0">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-50" />
+                {!reduceMotionEffects && (
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-50" />
+                )}
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
               </span>
               <span className="truncate text-xs font-medium text-muted sm:text-sm">
@@ -115,10 +134,16 @@ export function HeroVisualization() {
                 strokeWidth="0.3"
                 strokeDasharray="2 2"
                 initial={{ opacity: 0, rotate: 0 }}
-                animate={{ opacity: 0.35, rotate: 360 }}
+                animate={
+                  active
+                    ? { opacity: 0.35, rotate: 360 }
+                    : { opacity: 0.35, rotate: 0 }
+                }
                 transition={{
                   opacity: { duration: 1 },
-                  rotate: { duration: 40, repeat: Infinity, ease: "linear" },
+                  rotate: active
+                    ? { duration: 40, repeat: Infinity, ease: "linear" }
+                    : { duration: 0 },
                 }}
               />
 
@@ -153,8 +178,16 @@ export function HeroVisualization() {
                         stroke="var(--primary-blue)"
                         strokeWidth="0.3"
                         initial={{ scale: 0.5, opacity: 0 }}
-                        animate={{ scale: [1, 1.6, 1], opacity: [0.5, 0, 0.5] }}
-                        transition={{ duration: 3, repeat: Infinity, ease: "easeOut" }}
+                        animate={
+                          active
+                            ? { scale: [1, 1.6, 1], opacity: [0.5, 0, 0.5] }
+                            : { scale: 1, opacity: 0.25 }
+                        }
+                        transition={
+                          active
+                            ? { duration: 3, repeat: Infinity, ease: "easeOut" }
+                            : { duration: 0.3 }
+                        }
                       />
                       <m.circle
                         cx={city.x}
@@ -192,33 +225,36 @@ export function HeroVisualization() {
                 </g>
               ))}
 
-              {connections.slice(0, 4).map(([from, to], i) => {
-                const a = cities[from];
-                const b = cities[to];
-                return (
-                  <m.circle
-                    key={`pulse-${from}-${to}`}
-                    r="0.8"
-                    fill="var(--accent-blue)"
-                    initial={{ opacity: 0 }}
-                    animate={{
-                      cx: [a.x, b.x],
-                      cy: [a.y, b.y],
-                      opacity: [0, 1, 1, 0],
-                    }}
-                    transition={{
-                      duration: 2.5,
-                      delay: 1.5 + i * 0.6,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                    }}
-                  />
-                );
-              })}
+              {active &&
+                connections.slice(0, reduceMotionEffects ? 2 : 4).map(([from, to], i) => {
+                  const a = cities[from];
+                  const b = cities[to];
+                  return (
+                    <m.circle
+                      key={`pulse-${from}-${to}`}
+                      r="0.8"
+                      fill="var(--accent-blue)"
+                      initial={{ opacity: 0 }}
+                      animate={{
+                        cx: [a.x, b.x],
+                        cy: [a.y, b.y],
+                        opacity: [0, 1, 1, 0],
+                      }}
+                      transition={{
+                        duration: 2.5,
+                        delay: 1.5 + i * 0.6,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                      }}
+                    />
+                  );
+                })}
             </svg>
 
             <m.div
-              className="glass absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full px-3 py-1.5 shadow-lg sm:px-4 sm:py-2"
+              className={`absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full px-3 py-1.5 shadow-lg sm:px-4 sm:py-2 ${
+                reduceVisualEffects ? "border border-border/60 bg-surface/95" : "glass"
+              }`}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.5, duration: 0.6 }}
@@ -232,19 +268,29 @@ export function HeroVisualization() {
             {leadCards.map((card) => (
               <m.div
                 key={card.name}
-                className={`glass absolute max-w-[calc(100%-1.5rem)] rounded-xl p-2.5 shadow-xl sm:max-w-none sm:p-3 ${
+                className={`absolute max-w-[calc(100%-1.5rem)] rounded-xl p-2.5 shadow-xl sm:max-w-none sm:p-3 ${
+                  reduceVisualEffects
+                    ? "border border-border/60 bg-surface/95"
+                    : "glass"
+                } ${
                   card.hideOnMobile ? "hidden sm:block" : ""
                 } w-[140px] sm:w-[168px] ${card.position}`}
                 initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: [0, -5, 0] }}
+                animate={
+                  active
+                    ? { opacity: 1, y: [0, -5, 0] }
+                    : { opacity: 1, y: 0 }
+                }
                 transition={{
                   opacity: { delay: card.delay, duration: 0.6 },
-                  y: {
-                    delay: card.delay + 1,
-                    duration: 4.5,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  },
+                  y: active
+                    ? {
+                        delay: card.delay + 1,
+                        duration: 4.5,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                      }
+                    : { duration: 0.3 },
                 }}
               >
                 <div className="flex items-start gap-2">

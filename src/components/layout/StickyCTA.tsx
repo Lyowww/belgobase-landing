@@ -35,7 +35,7 @@ export function StickyCTA() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 48 }}
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed right-0 bottom-0 left-0 z-50 border-t border-border/60 bg-surface/90 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] backdrop-blur-xl lg:hidden"
+            className="fixed right-0 bottom-0 left-0 z-50 border-t border-border/60 bg-surface/96 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] mobile-backdrop-none backdrop-blur-xl lg:hidden"
           >
             <MagneticButton href="#contact" className="w-full">
               {t("stickyCta.button")}

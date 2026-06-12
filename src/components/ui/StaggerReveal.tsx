@@ -2,6 +2,7 @@
 
 import { m, useInView, useReducedMotion } from "framer-motion";
 import { useRef, type ReactNode } from "react";
+import { usePerformanceMode } from "@/hooks/usePerformanceMode";
 import { fadeUp, staggerContainer, smoothEase } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,7 @@ export function StaggerReveal({
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-60px" });
   const prefersReducedMotion = useReducedMotion();
+  const { isMobile } = usePerformanceMode();
 
   if (prefersReducedMotion) {
     return <div className={cn(className)}>{children}</div>;
@@ -31,7 +33,10 @@ export function StaggerReveal({
       ref={ref}
       initial="hidden"
       animate={isInView ? "visible" : "hidden"}
-      variants={staggerContainer(stagger, delayChildren)}
+      variants={staggerContainer(
+        isMobile ? stagger * 0.6 : stagger,
+        isMobile ? delayChildren * 0.5 : delayChildren,
+      )}
       className={cn(className)}
     >
       {children}
@@ -45,10 +50,12 @@ type StaggerItemProps = {
 };
 
 export function StaggerItem({ children, className }: StaggerItemProps) {
+  const { isMobile } = usePerformanceMode();
+
   return (
     <m.div
-      variants={fadeUp}
-      transition={{ duration: 0.55, ease: smoothEase }}
+      variants={isMobile ? { hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0 } } : fadeUp}
+      transition={{ duration: isMobile ? 0.4 : 0.55, ease: smoothEase }}
       className={cn(className)}
     >
       {children}

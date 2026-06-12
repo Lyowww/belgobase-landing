@@ -66,7 +66,10 @@ export function Hero() {
     <section className="noise-overlay mesh-hero relative overflow-hidden pt-[calc(5.5rem+env(safe-area-inset-top,0px))] pb-12 sm:pt-28 sm:pb-20 md:pt-36 md:pb-28">
       <AnimatedGrid />
       <AmbientGlow className="left-[5%] top-[12%] h-[min(280px,70vw)] w-[min(280px,70vw)] sm:left-[10%] sm:h-[min(400px,55vw)] sm:w-[min(400px,55vw)]" color="accent" />
-      <AmbientGlow className="right-[2%] top-[5%] h-[min(240px,60vw)] w-[min(240px,60vw)] sm:right-[5%] sm:h-[min(350px,50vw)] sm:w-[min(350px,50vw)]" color="primary" />
+      <AmbientGlow
+        className="right-[2%] top-[5%] hidden h-[min(240px,60vw)] w-[min(240px,60vw)] sm:right-[5%] sm:block sm:h-[min(350px,50vw)] sm:w-[min(350px,50vw)]"
+        color="primary"
+      />
 
       {enabled && (
         <m.div

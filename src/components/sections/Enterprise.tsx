@@ -24,10 +24,10 @@ export function Enterprise() {
       className="relative overflow-hidden bg-[#060a14] py-16 sm:py-24 md:py-32 dark:bg-[#040810]"
     >
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute top-0 left-1/4 h-96 w-96 rounded-full bg-primary/25 blur-[120px]" />
-        <div className="absolute right-1/4 bottom-0 h-80 w-80 rounded-full bg-accent/20 blur-[100px]" />
+        <div className="absolute top-0 left-1/4 h-96 w-96 rounded-full bg-primary/25 blur-[120px] max-lg:blur-[48px] max-lg:opacity-70" />
+        <div className="absolute right-1/4 bottom-0 h-80 w-80 rounded-full bg-accent/20 blur-[100px] max-lg:blur-[40px] max-lg:opacity-70" />
         <div
-          className="absolute inset-0 opacity-[0.03]"
+          className="absolute inset-0 opacity-[0.03] max-lg:hidden"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
           }}

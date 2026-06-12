@@ -79,6 +79,12 @@ html {
   text-size-adjust: 100%;
 }
 
+@media (max-width: 1023px) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 .pb-safe {
   padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
 }
@@ -107,6 +113,12 @@ body {
   overflow-x: hidden;
   min-width: 0;
   -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 1023px) {
+  body {
+    transition: none;
+  }
 }
 
 section[id] {
@@ -471,14 +483,119 @@ section[id] {
   );
 }
 
+/* GPU-friendly compositing for animated layers */
+.gpu-layer {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.viz-container {
+  contain: layout paint;
+}
+
+/* Mobile / touch: drop expensive compositing while keeping the same layout */
+@media (max-width: 1023px), (pointer: coarse) {
+  .glass,
+  .glass-nav,
+  .glass-toolbar,
+  .glass-dropdown,
+  .glass-control {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .glass {
+    background: color-mix(in srgb, var(--glass-bg) 95%, var(--surface));
+  }
+
+  .glass-nav {
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+  }
+
+  .glass-toolbar {
+    background: color-mix(in srgb, var(--surface-elevated) 96%, transparent);
+  }
+
+  .glass-dropdown {
+    background: color-mix(in srgb, var(--surface-elevated) 98%, transparent);
+  }
+
+  .glass-control {
+    background: color-mix(in srgb, var(--surface-elevated) 94%, transparent);
+  }
+
+  .noise-overlay::before {
+    display: none;
+  }
+
+  .animated-grid-inner,
+  .ambient-glow,
+  .cta-radial-pulse,
+  .animate-float,
+  .animate-float-delayed,
+  .animate-pulse-glow {
+    animation: none;
+  }
+
+  .ambient-glow {
+    opacity: 0.45;
+    transform: none;
+  }
+
+  .animate-ping {
+    animation: none;
+    opacity: 0;
+  }
+
+  .mobile-blur-soft {
+    filter: blur(24px);
+  }
+
+  .mobile-blur-none {
+    filter: none;
+  }
+
+  .mobile-backdrop-none {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   .animate-float,
   .animate-float-delayed,
   .animate-pulse-glow,
   .animated-grid-inner,
   .ambient-glow,
-  .cta-radial-pulse {
+  .cta-radial-pulse,
+  .animate-ping {
     animation: none;
+  }
+
+  .animate-ping {
+    opacity: 0;
+  }
+
+  .ambient-glow {
+    opacity: 0.45;
+    transform: none;
+  }
+
+  .noise-overlay::before {
+    display: none;
+  }
+
+  .glass,
+  .glass-nav,
+  .glass-toolbar,
+  .glass-dropdown,
+  .glass-control {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
   .section-lazy {

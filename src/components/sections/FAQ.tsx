@@ -3,6 +3,7 @@
 import { AnimatePresence, m } from "framer-motion";
 import { Minus, Plus } from "lucide-react";
 import { useState } from "react";
+import { usePerformanceMode } from "@/hooks/usePerformanceMode";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 import { SectionReveal } from "@/components/ui/SectionReveal";
 import { useTranslations } from "@/providers/TranslationsProvider";
@@ -14,12 +15,14 @@ function FAQItem({
   isOpen,
   onToggle,
   isLast,
+  liteAnimation,
 }: {
   question: string;
   answer: string;
   isOpen: boolean;
   onToggle: () => void;
   isLast: boolean;
+  liteAnimation: boolean;
 }) {
   return (
     <div className={cn("border-t border-border", isLast && "border-b")}>
@@ -40,27 +43,36 @@ function FAQItem({
           )}
         </span>
       </button>
-      <AnimatePresence initial={false}>
-        {isOpen && (
-          <m.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            className="overflow-hidden"
-          >
-            <p className="pb-5 text-sm leading-relaxed text-muted sm:pb-6 sm:text-base">
-              {answer}
-            </p>
-          </m.div>
-        )}
-      </AnimatePresence>
+      {liteAnimation ? (
+        isOpen && (
+          <p className="pb-5 text-sm leading-relaxed text-muted sm:pb-6 sm:text-base">
+            {answer}
+          </p>
+        )
+      ) : (
+        <AnimatePresence initial={false}>
+          {isOpen && (
+            <m.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="overflow-hidden"
+            >
+              <p className="pb-5 text-sm leading-relaxed text-muted sm:pb-6 sm:text-base">
+                {answer}
+              </p>
+            </m.div>
+          )}
+        </AnimatePresence>
+      )}
     </div>
   );
 }
 
 export function FAQ() {
   const { t } = useTranslations();
+  const { isMobile } = usePerformanceMode();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const faqs = [
@@ -109,6 +121,7 @@ export function FAQ() {
                   isOpen={openIndex === i}
                   onToggle={() => setOpenIndex(openIndex === i ? null : i)}
                   isLast={i === faqs.length - 1}
+                  liteAnimation={isMobile}
                 />
               ))}
             </div>

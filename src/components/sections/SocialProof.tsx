@@ -1,6 +1,7 @@
 "use client";
 
 import { m, useReducedMotion } from "framer-motion";
+import { usePerformanceMode } from "@/hooks/usePerformanceMode";
 import { Star, Quote } from "lucide-react";
 import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
 import { SectionHeader } from "@/components/ui/SectionHeader";
@@ -19,6 +20,8 @@ const logos = [
 export function SocialProof() {
   const { t } = useTranslations();
   const prefersReducedMotion = useReducedMotion();
+  const { reduceMotionEffects } = usePerformanceMode();
+  const staticMarquee = prefersReducedMotion || reduceMotionEffects;
 
   const metrics = [
     { value: 500, suffix: "+", label: t("socialProof.metricBusinesses") },
@@ -74,7 +77,7 @@ export function SocialProof() {
 
         <SectionReveal>
           <div className="logo-marquee-mask relative mb-10 overflow-hidden sm:mb-16">
-            {prefersReducedMotion ? (
+            {staticMarquee ? (
               <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4 opacity-60 sm:gap-x-10">
                 {logos.map((logo) => (
                   <span

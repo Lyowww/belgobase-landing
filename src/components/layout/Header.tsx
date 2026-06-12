@@ -114,7 +114,7 @@ export function Header({ variant = "default" }: HeaderProps) {
 
       <div
         className={cn(
-          "overflow-hidden border-t border-border bg-surface/95 backdrop-blur-xl transition-all duration-300 lg:hidden",
+          "overflow-hidden border-t border-border bg-surface/98 mobile-backdrop-none backdrop-blur-xl transition-[max-height,opacity] duration-300 lg:hidden",
           isComingSoon && "hidden",
           mobileOpen
             ? "max-h-[28rem] opacity-100"
