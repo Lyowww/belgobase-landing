@@ -17,26 +17,26 @@ const orbitNodes = [
 
 const executiveCards = [
   {
-    name: "Sophie Vermeersch",
+    name: "First Last",
     role: "CEO",
-    company: "Brussels Holdings NV",
+    company: "Company Name NV",
     signal: "Direct line",
     delay: 0.8,
     position: "top-[10%] right-[4%] sm:right-[6%]",
   },
   {
-    name: "Thomas De Vries",
+    name: "First Last",
     role: "CFO",
-    company: "Antwerp Logistics SA",
+    company: "Company Name SA",
     signal: "Verified",
     delay: 1.1,
     position: "top-[42%] left-[2%] sm:left-[4%]",
     hideOnMobile: true,
   },
   {
-    name: "Marie Claes",
+    name: "First Last",
     role: "VP Sales",
-    company: "Ghent Industrial NV",
+    company: "Company Name NV",
     signal: "Executive",
     delay: 1.4,
     position: "bottom-[14%] right-[6%] sm:right-[8%]",
@@ -285,9 +285,9 @@ export function EnterpriseVisualization() {
                 </span>
               </m.div>
 
-              {executiveCards.map((card) => (
+              {executiveCards.map((card, index) => (
                 <m.div
-                  key={card.name}
+                  key={`${card.role}-${index}`}
                   className={`absolute max-w-[calc(100%-1.5rem)] rounded-xl p-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.35)] sm:max-w-none sm:p-3 ${
                     card.hideOnMobile ? "hidden sm:block" : ""
                   } w-[148px] sm:w-[172px] ${card.position} ${cardSurface}`}

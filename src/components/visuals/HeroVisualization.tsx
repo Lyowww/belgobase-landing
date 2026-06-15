@@ -27,27 +27,27 @@ const connections: [number, number][] = [
 
 const leadCards = [
   {
-    name: "TechFlow BVBA",
+    name: "Company Name BVBA",
     sector: "IT Services",
-    revenue: "€2.4M",
-    location: "Antwerp",
+    revenue: "€0.0M",
+    location: "City",
     delay: 0.6,
     position: "top-[8%] right-[4%] sm:right-[6%]",
   },
   {
-    name: "Brussels Legal SPRL",
+    name: "Company Name SPRL",
     sector: "Legal Services",
-    revenue: "€890K",
-    location: "Brussels",
+    revenue: "€0.0M",
+    location: "City",
     delay: 1,
     position: "top-[38%] left-[2%] sm:left-[4%]",
     hideOnMobile: true,
   },
   {
-    name: "Ghent Manufacturing NV",
+    name: "Company Name NV",
     sector: "Manufacturing",
-    revenue: "€12.1M",
-    location: "Ghent",
+    revenue: "€0.0M",
+    location: "City",
     delay: 1.4,
     position: "bottom-[22%] right-[8%] sm:right-[10%]",
   },
@@ -265,9 +265,9 @@ export function HeroVisualization() {
               </span>
             </m.div>
 
-            {leadCards.map((card) => (
+            {leadCards.map((card, index) => (
               <m.div
-                key={card.name}
+                key={`${card.name}-${index}`}
                 className={`absolute max-w-[calc(100%-1.5rem)] rounded-xl p-2.5 shadow-xl sm:max-w-none sm:p-3 ${
                   reduceVisualEffects
                     ? "border border-border/60 bg-surface/95"

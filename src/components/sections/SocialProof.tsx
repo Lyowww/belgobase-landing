@@ -9,12 +9,12 @@ import { SectionReveal } from "@/components/ui/SectionReveal";
 import { useTranslations } from "@/providers/TranslationsProvider";
 
 const logos = [
-  "Deloitte Partners",
-  "Flanders Tech",
-  "Brussels Growth Co.",
-  "Antwerp Digital",
-  "Wallonia SaaS",
-  "Benelux Advisory",
+  "Company Name 1",
+  "Company Name 2",
+  "Company Name 3",
+  "Company Name 4",
+  "Company Name 5",
+  "Company Name 6",
 ];
 
 export function SocialProof() {
@@ -109,7 +109,7 @@ export function SocialProof() {
 
         <div className="grid gap-6 md:grid-cols-3">
           {testimonials.map((testimonial, i) => (
-            <SectionReveal key={testimonial.author} delay={i * 0.15}>
+            <SectionReveal key={i} delay={i * 0.15}>
               <m.div
                 whileHover={{ y: -4 }}
                 transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
