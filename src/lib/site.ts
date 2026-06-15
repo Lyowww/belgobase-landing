@@ -12,4 +12,4 @@ export const isProduction =
   (process.env.NODE_ENV === "production" && process.env.VERCEL_ENV !== "preview");
 
 /** Set to true to show the coming soon page instead of the full landing. */
-export const comingSoonEnabled = false;
+export const comingSoonEnabled = true;
