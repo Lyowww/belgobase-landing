@@ -299,13 +299,7 @@
     "errorMessage": "Something went wrong. Please try again or email us directly."
   },
   "comingSoon": {
-    "badge": "Launching soon",
-    "titleLine1": "Belgian B2B leads,",
-    "titleHighlight": "reimagined",
-    "titleLine2": "are almost here",
-    "description": "We're building a smarter way to reach Belgian B2B prospects with targeted leads from 2M+ official KBO companies. The full experience launches soon.",
-    "vizLabel": "KBO Engine",
-    "vizStatus": "Preparing your lead intelligence platform",
+    "title": "Coming soon",
     "metadataTitle": "BelgoBase — Coming Soon",
     "metadataDescription": "BelgoBase is launching soon. Targeted B2B leads from 2M+ Belgian companies, built from official KBO data."
   },

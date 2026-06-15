@@ -299,13 +299,7 @@
     "errorMessage": "Er ging iets mis. Probeer opnieuw of mail ons rechtstreeks."
   },
   "comingSoon": {
-    "badge": "Binnenkort beschikbaar",
-    "titleLine1": "Belgische B2B-leads,",
-    "titleHighlight": "opnieuw uitgevonden",
-    "titleLine2": "komen er bijna aan",
-    "description": "We bouwen een slimmere manier om Belgische B2B-prospecten te bereiken met gerichte leads uit 2M+ officiële KBO-bedrijven. De volledige ervaring komt binnenkort.",
-    "vizLabel": "KBO-engine",
-    "vizStatus": "Uw lead intelligence-platform wordt voorbereid",
+    "title": "Binnenkort beschikbaar",
     "metadataTitle": "BelgoBase — Binnenkort beschikbaar",
     "metadataDescription": "BelgoBase komt binnenkort. Gerichte B2B-leads uit 2M+ Belgische bedrijven, op basis van officiële KBO-data."
   },
