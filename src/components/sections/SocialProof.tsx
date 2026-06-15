@@ -3,18 +3,17 @@
 import { m, useReducedMotion } from "framer-motion";
 import { usePerformanceMode } from "@/hooks/usePerformanceMode";
 import { Star, Quote } from "lucide-react";
-import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { SectionReveal } from "@/components/ui/SectionReveal";
 import { useTranslations } from "@/providers/TranslationsProvider";
 
 const logos = [
-  "Company Name 1",
-  "Company Name 2",
-  "Company Name 3",
-  "Company Name 4",
-  "Company Name 5",
-  "Company Name 6",
+  "Lorem ipsum",
+  "Dolor sit amet",
+  "Consectetur elit",
+  "Sed do eiusmod",
+  "Ut labore et",
+  "Dolore magna",
 ];
 
 export function SocialProof() {
@@ -24,10 +23,10 @@ export function SocialProof() {
   const staticMarquee = prefersReducedMotion || reduceMotionEffects;
 
   const metrics = [
-    { value: 500, suffix: "+", label: t("socialProof.metricBusinesses") },
-    { value: 2, suffix: "M+", label: t("socialProof.metricCompanies") },
-    { value: 150000, suffix: "+", label: t("socialProof.metricLeads") },
-    { value: 94, suffix: "%", label: t("socialProof.metricSatisfaction") },
+    { display: "X+", label: t("socialProof.metricBusinesses") },
+    { display: "XM+", label: t("socialProof.metricCompanies") },
+    { display: "X+", label: t("socialProof.metricLeads") },
+    { display: "X%", label: t("socialProof.metricSatisfaction") },
   ];
 
   const testimonials = [
@@ -65,7 +64,7 @@ export function SocialProof() {
             <SectionReveal key={metric.label} delay={i * 0.1}>
               <div className="text-center">
                 <p className="text-2xl font-semibold tracking-tight text-deep-navy sm:text-3xl md:text-4xl">
-                  <AnimatedCounter value={metric.value} suffix={metric.suffix} />
+                  {metric.display}
                 </p>
                 <p className="mt-1.5 line-clamp-2 px-0.5 text-xs leading-tight text-muted sm:mt-2 sm:px-0 sm:text-sm">
                   {metric.label}

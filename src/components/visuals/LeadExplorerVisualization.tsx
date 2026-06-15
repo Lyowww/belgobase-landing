@@ -18,48 +18,60 @@ import { smoothEase } from "@/lib/motion";
 
 const sampleRows = [
   {
-    name: "Company Name BVBA",
-    vat: "BE 0000.000.001",
-    sector: "62.01 - Software",
-    city: "City",
-    email: "info@example.com",
-    phone: "+32 0 000 0001",
-    match: 98,
-    initials: "CN",
+    name: "Lorem ipsum dolor",
+    vat: "BE X.XXX.XXX",
+    sector: "XX.XX - Lorem ipsum",
+    city: "Lorem ipsum",
+    email: "lorem@ipsum.com",
+    phone: "+X XX XXX XXXX",
+    match: 75,
+    matchLabel: "X",
+    initials: "LI",
   },
   {
-    name: "Company Name SPRL",
-    vat: "BE 0000.000.002",
-    sector: "69.20 - Accounting",
-    city: "City",
-    email: "contact@example.com",
-    phone: "+32 0 000 0002",
-    match: 96,
-    initials: "CN",
+    name: "Dolor sit amet",
+    vat: "BE X.XXX.XXX",
+    sector: "XX.XX - Consectetur",
+    city: "Lorem ipsum",
+    email: "lorem@ipsum.com",
+    phone: "+X XX XXX XXXX",
+    match: 75,
+    matchLabel: "X",
+    initials: "DS",
   },
   {
-    name: "Company Name NV",
-    vat: "BE 0000.000.003",
-    sector: "49.41 - Freight",
-    city: "City",
-    email: "sales@example.com",
-    phone: "+32 0 000 0003",
-    match: 94,
-    initials: "CN",
+    name: "Consectetur elit",
+    vat: "BE X.XXX.XXX",
+    sector: "XX.XX - Adipiscing",
+    city: "Lorem ipsum",
+    email: "lorem@ipsum.com",
+    phone: "+X XX XXX XXXX",
+    match: 75,
+    matchLabel: "X",
+    initials: "CE",
   },
   {
-    name: "Company Name NV",
-    vat: "BE 0000.000.004",
-    sector: "62.02 - IT consultancy",
-    city: "City",
-    email: "hello@example.com",
-    phone: "+32 0 000 0004",
-    match: 91,
-    initials: "CN",
+    name: "Sed do eiusmod",
+    vat: "BE X.XXX.XXX",
+    sector: "XX.XX - Tempor",
+    city: "Lorem ipsum",
+    email: "lorem@ipsum.com",
+    phone: "+X XX XXX XXXX",
+    match: 75,
+    matchLabel: "X",
+    initials: "SD",
   },
 ];
 
-function MatchRing({ match, size = 52 }: { match: number; size?: number }) {
+function MatchRing({
+  match,
+  matchLabel,
+  size = 52,
+}: {
+  match: number;
+  matchLabel?: string;
+  size?: number;
+}) {
   const stroke = 3;
   const radius = (size - stroke * 2) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -98,7 +110,9 @@ function MatchRing({ match, size = 52 }: { match: number; size?: number }) {
           </linearGradient>
         </defs>
       </svg>
-      <span className="absolute text-[11px] font-bold text-primary">{match}%</span>
+      <span className="absolute text-[11px] font-bold text-primary">
+        {matchLabel ?? match}%
+      </span>
     </div>
   );
 }
@@ -123,7 +137,7 @@ function LeadCard({ row, index }: { row: (typeof sampleRows)[0]; index: number }
           <p className="truncate text-sm font-semibold text-deep-navy">{row.name}</p>
           <p className="mt-0.5 text-[11px] text-muted">{row.vat}</p>
         </div>
-        <MatchRing match={row.match} size={48} />
+        <MatchRing match={row.match} matchLabel={row.matchLabel} size={48} />
       </div>
 
       <div className="relative mt-3 flex flex-wrap gap-1.5">
@@ -156,9 +170,9 @@ export function LeadExplorerVisualization() {
   const { reduceMotionEffects, reduceVisualEffects } = usePerformanceMode();
 
   const stats = [
-    { label: t("leadPreview.statCompanies"), value: "1,247", icon: Target },
-    { label: t("leadPreview.statMatchRate"), value: "94%", icon: Sparkles },
-    { label: t("leadPreview.statFields"), value: "18+", icon: Database },
+    { label: t("leadPreview.statCompanies"), value: "X", icon: Target },
+    { label: t("leadPreview.statMatchRate"), value: "X%", icon: Sparkles },
+    { label: t("leadPreview.statFields"), value: "X+", icon: Database },
   ];
 
   return (
@@ -249,7 +263,7 @@ export function LeadExplorerVisualization() {
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-3">
             {sampleRows.map((row, i) => (
-              <LeadCard key={row.vat} row={row} index={i} />
+              <LeadCard key={i} row={row} index={i} />
             ))}
           </div>
         </div>

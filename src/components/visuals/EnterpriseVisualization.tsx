@@ -17,27 +17,27 @@ const orbitNodes = [
 
 const executiveCards = [
   {
-    name: "First Last",
-    role: "CEO",
-    company: "Company Name NV",
-    signal: "Direct line",
+    name: "Lorem Ipsum",
+    role: "Lorem ipsum",
+    company: "Lorem ipsum dolor",
+    signal: "Lorem ipsum",
     delay: 0.8,
     position: "top-[10%] right-[4%] sm:right-[6%]",
   },
   {
-    name: "First Last",
-    role: "CFO",
-    company: "Company Name SA",
-    signal: "Verified",
+    name: "Lorem Ipsum",
+    role: "Dolor sit",
+    company: "Consectetur elit",
+    signal: "Lorem ipsum",
     delay: 1.1,
     position: "top-[42%] left-[2%] sm:left-[4%]",
     hideOnMobile: true,
   },
   {
-    name: "First Last",
-    role: "VP Sales",
-    company: "Company Name NV",
-    signal: "Executive",
+    name: "Lorem Ipsum",
+    role: "Sed eiusmod",
+    company: "Ut labore et",
+    signal: "Lorem ipsum",
     delay: 1.4,
     position: "bottom-[14%] right-[6%] sm:right-[8%]",
   },
@@ -58,9 +58,9 @@ export function EnterpriseVisualization() {
   const hub = { x: 50, y: 50 };
 
   const stats = [
-    { label: t("enterprise.vizExecutives"), value: "12+", icon: UserRound },
-    { label: t("enterprise.vizConnections"), value: "48", icon: Network },
-    { label: t("enterprise.vizDirectLines"), value: "6", icon: Phone },
+    { label: t("enterprise.vizExecutives"), value: "X+", icon: UserRound },
+    { label: t("enterprise.vizConnections"), value: "X", icon: Network },
+    { label: t("enterprise.vizDirectLines"), value: "X", icon: Phone },
   ];
 
   const cardSurface = reduceVisualEffects

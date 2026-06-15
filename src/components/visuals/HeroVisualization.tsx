@@ -27,27 +27,27 @@ const connections: [number, number][] = [
 
 const leadCards = [
   {
-    name: "Company Name BVBA",
-    sector: "IT Services",
-    revenue: "€0.0M",
-    location: "City",
+    name: "Lorem ipsum dolor",
+    sector: "Lorem ipsum",
+    revenue: "€X.XM",
+    location: "Lorem ipsum",
     delay: 0.6,
     position: "top-[8%] right-[4%] sm:right-[6%]",
   },
   {
-    name: "Company Name SPRL",
-    sector: "Legal Services",
-    revenue: "€0.0M",
-    location: "City",
+    name: "Dolor sit amet",
+    sector: "Consectetur elit",
+    revenue: "€XK",
+    location: "Lorem ipsum",
     delay: 1,
     position: "top-[38%] left-[2%] sm:left-[4%]",
     hideOnMobile: true,
   },
   {
-    name: "Company Name NV",
-    sector: "Manufacturing",
-    revenue: "€0.0M",
-    location: "City",
+    name: "Sed do eiusmod",
+    sector: "Tempor incididunt",
+    revenue: "€X.XM",
+    location: "Lorem ipsum",
     delay: 1.4,
     position: "bottom-[22%] right-[8%] sm:right-[10%]",
   },
@@ -59,9 +59,9 @@ export function HeroVisualization() {
   const { reduceMotionEffects, reduceVisualEffects } = usePerformanceMode();
 
   const stats = [
-    { label: t("hero.vizCompanies"), value: "2M+", icon: Building2 },
-    { label: t("hero.vizMatchRate"), value: "94%", icon: TrendingUp },
-    { label: t("hero.vizContacts"), value: "850K+", icon: Mail },
+    { label: t("hero.vizCompanies"), value: "XM+", icon: Building2 },
+    { label: t("hero.vizMatchRate"), value: "X%", icon: TrendingUp },
+    { label: t("hero.vizContacts"), value: "XK+", icon: Mail },
   ];
 
   return (
