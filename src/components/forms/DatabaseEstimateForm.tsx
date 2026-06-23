@@ -1,7 +1,8 @@
 "use client";
 
-import { ChevronDown, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
 import { useState } from "react";
+import { MagneticButton } from "@/components/ui/MagneticButton";
 import { useTranslations } from "@/providers/TranslationsProvider";
 import { cn } from "@/lib/utils";
 
@@ -45,64 +46,63 @@ export function DatabaseEstimateForm({
 
   return (
     <form onSubmit={handleSubmit} className={cn("space-y-5", className)}>
-      <div>
-        <label
-          htmlFor="database-industry"
-          className="mb-2 block text-sm font-semibold text-white"
-        >
-          {t("database.formIndustryLabel")}
-        </label>
-        <div className="relative">
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div className="sm:col-span-1">
+          <label
+            htmlFor="database-industry"
+            className="mb-1.5 block text-sm font-medium text-deep-navy"
+          >
+            {t("database.formIndustryLabel")}
+          </label>
           <select
             id="database-industry"
             value={industry}
             onChange={(e) => onIndustryChange(e.target.value)}
-            className="w-full appearance-none rounded-xl border border-white/10 bg-[#1c1c1c] px-4 py-3.5 pr-10 text-sm text-white outline-none transition-colors focus:border-white/25 focus:ring-2 focus:ring-white/10"
+            className={cn(
+              "form-input form-select w-full rounded-xl px-3 py-2.5 text-base sm:px-4 sm:text-sm",
+              !industry && "text-muted",
+            )}
           >
-            <option value="" disabled className="text-zinc-400">
+            <option value="" disabled>
               {t("database.formIndustryPlaceholder")}
             </option>
             {INDUSTRY_OPTIONS.map((option) => (
-              <option key={option} value={option} className="bg-[#1c1c1c] text-white">
+              <option key={option} value={option}>
                 {option}
               </option>
             ))}
           </select>
-          <ChevronDown
-            className="pointer-events-none absolute top-1/2 right-3.5 h-4 w-4 -translate-y-1/2 text-zinc-500"
-            aria-hidden
+        </div>
+
+        <div className="sm:col-span-1">
+          <label
+            htmlFor="database-email"
+            className="mb-1.5 block text-sm font-medium text-deep-navy"
+          >
+            {t("database.formEmailLabel")}
+          </label>
+          <input
+            id="database-email"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder={t("database.formEmailPlaceholder")}
+            className="form-input w-full rounded-xl px-3 py-2.5 text-base placeholder:text-muted sm:px-4 sm:text-sm"
           />
         </div>
       </div>
 
-      <div>
-        <label
-          htmlFor="database-email"
-          className="mb-2 block text-sm font-semibold text-white"
-        >
-          {t("database.formEmailLabel")}
-        </label>
-        <input
-          id="database-email"
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder={t("database.formEmailPlaceholder")}
-          className="w-full rounded-xl border border-white/10 bg-[#1c1c1c] px-4 py-3.5 text-sm text-white placeholder:text-zinc-500 outline-none transition-colors focus:border-white/25 focus:ring-2 focus:ring-white/10"
-        />
-      </div>
-
-      <button
+      <MagneticButton
         type="submit"
         disabled={submitted || !industry}
-        className="flex w-full items-center justify-center gap-2 rounded-full border border-white/10 bg-[#2a2a2a] px-6 py-3.5 text-sm font-medium text-zinc-300 transition-colors hover:border-white/20 hover:bg-[#333333] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full"
       >
         <Mail className="h-4 w-4" />
         {submitted ? t("database.formSubmitted") : t("database.formSubmit")}
-      </button>
+      </MagneticButton>
 
-      <p className="text-center text-xs text-zinc-500">{t("database.formNote")}</p>
+      <p className="text-center text-xs text-muted sm:text-sm">{t("database.formNote")}</p>
     </form>
   );
 }
