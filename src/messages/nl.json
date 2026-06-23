@@ -323,7 +323,6 @@
     "errorMessage": "Er ging iets mis. Probeer opnieuw of mail ons rechtstreeks."
   },
   "comingSoon": {
-<<<<<<< Updated upstream
     "badge": "Binnenkort beschikbaar",
     "titleLine1": "Belgische B2B-leads,",
     "titleHighlight": "opnieuw uitgevonden",
@@ -333,11 +332,6 @@
     "vizStatus": "Uw lead intelligence-platform wordt voorbereid",
     "metadataTitle": "BelgoBase — Binnenkort beschikbaar",
     "metadataDescription": "BelgoBase komt binnenkort. Gerichte B2B-leads uit 2M+ Belgische bedrijven, op basis van officiële KBO-data."
-=======
-    "title": "Binnenkort beschikbaar",
-    "metadataTitle": "BelgoLeads — Binnenkort beschikbaar",
-    "metadataDescription": "BelgoLeads komt binnenkort. Gerichte B2B-leads uit 1,9M+ Belgische bedrijven, op basis van officiële KBO-data."
->>>>>>> Stashed changes
   },
   "theme": {
     "light": "Lichte modus",

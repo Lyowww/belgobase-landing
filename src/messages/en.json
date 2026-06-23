@@ -323,7 +323,6 @@
     "errorMessage": "Something went wrong. Please try again or email us directly."
   },
   "comingSoon": {
-<<<<<<< Updated upstream
     "badge": "Launching soon",
     "titleLine1": "Belgian B2B leads,",
     "titleHighlight": "reimagined",
@@ -333,11 +332,6 @@
     "vizStatus": "Preparing your lead intelligence platform",
     "metadataTitle": "BelgoBase — Coming Soon",
     "metadataDescription": "BelgoBase is launching soon. Targeted B2B leads from 2M+ Belgian companies, built from official KBO data."
-=======
-    "title": "Coming soon",
-    "metadataTitle": "BelgoLeads — Coming Soon",
-    "metadataDescription": "BelgoLeads is launching soon. Targeted B2B leads from 1.9M+ Belgian companies, built from official KBO data."
->>>>>>> Stashed changes
   },
   "theme": {
     "light": "Light mode",
