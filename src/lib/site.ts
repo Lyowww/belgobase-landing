@@ -12,4 +12,12 @@ export const isProduction =
   (process.env.NODE_ENV === "production" && process.env.VERCEL_ENV !== "preview");
 
 /** Set to true to show the coming soon page instead of the full landing. */
+<<<<<<< Updated upstream
 export const comingSoonEnabled = false;
+=======
+export const comingSoonEnabled = true;
+
+export const contactPhone = "+32 470 12 34 56";
+export const contactPhoneHref = "tel:+32470123456";
+export const contactEmail = "hello@belgoleads.com";
+>>>>>>> Stashed changes

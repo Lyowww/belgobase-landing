@@ -1,44 +1,45 @@
 {
   "metadata": {
-    "title": "BelgoBase — Targeted B2B Leads from 2M+ Belgian Companies",
-    "description": "Get custom B2B leads lists built from official Belgian KBO data. GDPR-safe, pay-per-list, delivered in hours. Request 30 free sample leads today.",
+    "title": "BelgoLeads — Targeted B2B Leads from 1.9M+ Belgian Companies",
+    "description": "Get custom B2B lead lists built from official Belgian KBO data. GDPR-safe, pay-per-list, delivered in hours. Request 30 free sample leads today.",
     "keywords": "Belgian B2B leads, KBO company data, Belgium lead generation, B2B prospecting Belgium, GDPR compliant leads"
   },
   "nav": {
     "process": "Process",
     "industries": "Industries",
-    "results": "Results",
+    "results": "Database",
     "pricing": "Pricing",
     "accessSample": "Access Sample Leads",
     "getFreeLeads": "Get 30 Free Leads",
+    "questions": "Questions?",
     "openMenu": "Open menu",
     "closeMenu": "Close menu"
   },
   "hero": {
-    "badge": "Trusted by 500+ Belgian B2B teams",
+    "badge": "Built on 1,951,114 KBO Company Records",
     "titleLine1": "Reach Your Next",
     "titleHighlight": "100+ Clients",
     "titleLine2": "With Targeted B2B Leads",
-    "description": "Struggling to generate consistent leads? Get a custom B2B leads list built from 2M+ Belgian companies and start closing more sales faster.",
+    "description": "Struggling to generate consistent leads? Get a custom B2B lead list built from 1,951,114 Belgian companies and start closing more sales faster.",
     "getFreeLeads": "Get 30 Free Leads",
     "accessSample": "Access Sample Leads",
-    "trustNoSignup": "No sign-up",
-    "trustNoSignupSub": "No account required. Submit the form and receive your leads instantly.",
-    "trustUpdated": "Updated daily",
-    "trustUpdatedSub": "Daily scraping for fresh, accurate data. Never outdated.",
-    "trustBelgium": "Belgium-oriented",
-    "trustBelgiumSub": "2M+ KBO companies. Official NBB data.",
-    "vizLive": "Live · 2M+ KBO Companies",
+    "trustNoSignup": "No Contracts",
+    "trustNoSignupSub": "No credits or subscriptions required. Order only the leads you need.",
+    "trustUpdated": "Fresh Data, Every Order",
+    "trustUpdatedSub": "Every lead list is built using up-to-date Belgian company data.",
+    "trustBelgium": "100% Belgian, by Design",
+    "trustBelgiumSub": "Access nearly 2 million Belgian company records from the KBO",
+    "vizLive": "Live · 1.9M+ KBO Companies",
     "vizEngine": "Intelligence Engine",
     "vizScanning": "Scanning Belgium...",
     "vizCompanies": "Companies",
-    "vizMatchRate": "Match Rate",
+    "vizMatchRate": "Match rate",
     "vizContacts": "Contacts"
   },
   "socialProof": {
     "eyebrow": "Social Proof",
     "title": "Trusted by Belgian B2B teams",
-    "description": "From startups to enterprise sales teams — BelgoBase powers outbound growth across Belgium.",
+    "description": "From startups to enterprise sales teams — BelgoLeads powers outbound growth across Belgium.",
     "metricBusinesses": "Belgian businesses served",
     "metricCompanies": "Companies in database",
     "metricLeads": "Leads delivered",
@@ -55,7 +56,7 @@
   },
   "process": {
     "eyebrow": "Process",
-    "title": "Lead Generation Turned Simple",
+    "title": "Lead Generation, Made Simple",
     "descriptionBefore": "Your lead list, delivered in ",
     "descriptionHighlight": "3 easy steps",
     "descriptionAfter": ".",
@@ -64,12 +65,12 @@
     "step2Title": "Get a fixed price upfront",
     "step2Description": "We confirm available companies and send a clear, final price before we start. Exclude existing clients via enterprise numbers if needed.",
     "step3Title": "Receive your ready-to-use list",
-    "step3Description": "We filter 2M+ companies, enrich available data, and quality-check everything. Delivered in Excel the same day — ready for CRM, outreach, or calls."
+    "step3Description": "We filter nearly 2 million companies, enrich available data, and quality-check everything. Delivered in Excel the same day — ready for CRM, outreach, or calls."
   },
   "industries": {
     "eyebrow": "Industries",
-    "title": "If you sell to Belgian companies, BelgoBase is for you",
-    "description": "Industries we serve and the solutions they receive:",
+    "title": "If you sell to Belgian companies, BelgoLeads is for you",
+    "description": "Who we serve — and what you get:",
     "salesTitle": "Sales & Growth Teams",
     "salesSubtitle": "Sales, marketing, SaaS, startups, enterprise teams",
     "salesBenefit1": "Faster outbound",
@@ -82,15 +83,15 @@
     "localSubtitle": "Real estate, regional businesses",
     "localBenefit1": "Local market access",
     "localBenefit2": "Structured company data",
-    "notFitTitle": "Not a fit if",
+    "notFitTitle": "Not the right fit if",
     "notFit1": "You want generic, non-targeted lead lists",
     "notFit2": "You rely only on inbound leads",
     "notFit3": "You're not actively doing outbound sales or outreach"
   },
   "leadPreview": {
     "eyebrow": "Lead List Preview",
-    "title": "Preview Your B2B Leads List",
-    "description": "Stop searching manually on LinkedIn or Google. Receive a ready-to-use B2B leads list built around your exact criteria.",
+    "title": "Preview Your B2B Lead List",
+    "description": "Stop searching manually on LinkedIn or Google. Receive a ready-to-use B2B lead list built around your exact criteria.",
     "includedTitle": "What's included",
     "companyDetailsTitle": "Company Details",
     "companyDetailsDesc": "Name, VAT number, legal form, address, status, and incorporation date.",
@@ -100,7 +101,7 @@
     "contactDetailsDesc": "Available phone numbers and email addresses.",
     "companyInsightsTitle": "Company Insights",
     "companyInsightsDesc": "Company age and other targeting attributes.",
-    "explorerTitle": "BelgoBase Lead Explorer",
+    "explorerTitle": "BelgoLeads Lead Explorer",
     "liveLabel": "Live",
     "statCompanies": "Matches",
     "statMatchRate": "Match rate",
@@ -114,18 +115,25 @@
     "showingMatches": "Lorem ipsum — showing X of X matches",
     "dataCompleteness": "X% lorem ipsum dolor"
   },
-  "results": {
-    "eyebrow": "Results",
-    "title": "Measurable impact for Belgian B2B teams",
-    "description": "Real outcomes from teams using BelgoBase to power their outbound sales.",
-    "engagementLabel": "Higher engagement vs. generic lists",
-    "engagementDesc": "Targeted Belgian company data drives significantly better outreach response rates.",
-    "timeLabel": "Reduction in prospecting time",
-    "timeDesc": "Skip manual LinkedIn and Google searches. Get a CRM-ready list in hours.",
-    "accuracyLabel": "Data accuracy rate",
-    "accuracyDesc": "Every list is quality-checked against official KBO records before delivery.",
-    "meetingsLabel": "More qualified meetings booked",
-    "meetingsDesc": "Sales teams report 3x more booked meetings with BelgoBase-targeted lists."
+  "database": {
+    "eyebrow": "Database",
+    "title": "Find Your Market in Belgium",
+    "description": "From construction and healthcare to IT and manufacturing, explore the number of companies available in every industry.",
+    "cardTitle": "How many potential customers are in your market?",
+    "cardDescription": "Get a free estimate of how many Belgian companies in your industry are currently available in BelgoLeads.",
+    "statIt": "IT / Software",
+    "statRealEstate": "Real Estate",
+    "statHoreca": "HORECA",
+    "statMarketing": "Marketing Agencies",
+    "available": "available",
+    "inlineIndustryPlaceholder": "Choose an industry",
+    "formIndustryLabel": "Select your industry",
+    "formIndustryPlaceholder": "Choose an industry",
+    "formEmailLabel": "Business email",
+    "formEmailPlaceholder": "you@company.com",
+    "formSubmit": "Get My Free Estimate",
+    "formSubmitted": "Request sent!",
+    "formNote": "No account required. We'll send your estimate right away."
   },
   "pricing": {
     "eyebrow": "Pricing",
@@ -144,11 +152,13 @@
     "plusFeature2": "Employee count",
     "plusFeature3": "Financial data",
     "proName": "Pro",
-    "proDesc": "Everything in Plus,and decision-maker intelligence.",
-    "proIncludes": "Everything in PLUS, AND:",
-    "proFeature1": "Decision-maker names",
-    "proFeature2": "Department heads",
-    "proFeature3": "Management titles",
+    "proDesc": "Everything in Plus, plus advanced filtering.",
+    "proIncludes": "Filter by:",
+    "proFeature1": "Location",
+    "proFeature2": "Marketing expenses",
+    "proFeature3": "Payroll costs",
+    "proFeature4": "Industry codes",
+    "proFeature5": "Custom filter combinations",
     "mostPopular": "Most Popular",
     "perLead": "/ lead",
     "getStarted": "Get Started"
@@ -156,7 +166,7 @@
   "comparison": {
     "eyebrow": "Compare Plans",
     "title": "Compare plans at a glance",
-    "description": "See exactly which data fields are included in each enrichment level.",
+    "description": "See what's included in each plan — from essential company data to advanced filters.",
     "feature": "Data field",
     "mostPopularShort": "Most Popular",
     "available": "Available",
@@ -168,9 +178,11 @@
     "revenue": "Revenue",
     "employeeCount": "Employee count",
     "financialData": "Financial data",
-    "decisionMakerNames": "Decision-maker names",
-    "departmentHeads": "Department heads",
-    "managementTitles": "Management titles"
+    "location": "Location",
+    "marketingExpenses": "Marketing expenses",
+    "payrollCosts": "Payroll costs",
+    "industryCodes": "Industry codes",
+    "customFilterCombinations": "Custom filter combinations"
   },
   "addOns": {
     "eyebrow": "Add-ons",
@@ -210,7 +222,7 @@
   "faq": {
     "eyebrow": "FAQ",
     "title": "Still have questions?",
-    "ctaText": "Request 30 free sample leads and see exactly what you'll receive.",
+    "ctaText": "Request 30 free sample leads to see exactly what you'll get.",
     "getFreeLeads": "Get 30 Free Leads",
     "q1": "How quickly will I receive my lead list?",
     "a1": "Most lists are delivered within hours of confirmation. Larger or highly specific requests may take longer.",
@@ -227,28 +239,40 @@
     "q7": "What format will I receive?",
     "a7": "Your list is delivered in Excel and can be imported into most CRM systems.",
     "q8": "Do you cover all of Belgium?",
-    "a8": "Yes. Our database contains 2M+ Belgian companies from the official KBO.",
+    "a8": "Yes. Our database contains 1,951,114 Belgian companies from the official KBO.",
     "q9": "Can I see a sample before ordering?",
     "a9": "Yes. Request 30 free sample leads to evaluate the data before purchasing."
   },
   "finalCta": {
     "eyebrow": "Get Started",
-    "title": "Get your custom B2B leads list today with up to",
+    "title": "Get your custom B2B lead list today with up to",
     "titleHighlight": "72% higher engagement potential",
     "titleEnd": "than generic prospect lists.",
-    "description": "It takes just 2 minutes to submit the form and start pitching to the right people. You're one strong leads list away from your next wave of clients."
+    "description": "It takes just 2 minutes to submit the form and start reaching the right prospects. You're one strong lead list away from your next wave of clients."
   },
   "footer": {
-    "tagline": "Official Belgian company data · GDPR-safe · Belgium-only",
-    "copyright": "All rights reserved."
+    "tagline": "Verified Belgian business data for sales teams, agencies, recruiters, and B2B companies.",
+    "stats": "~2M Belgian companies • Updated daily • GDPR-conscious",
+    "copyright": "All rights reserved.",
+    "product": "Product",
+    "company": "Company",
+    "legal": "Legal",
+    "process": "Process",
+    "industries": "Industries",
+    "database": "Database",
+    "pricing": "Pricing",
+    "contact": "Contact",
+    "faq": "FAQ",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
   },
   "form": {
     "nameLabel": "Name",
-    "namePlaceholder": "Lorem ipsum",
+    "namePlaceholder": "Your name",
     "companyLabel": "Company Name",
-    "companyPlaceholder": "Lorem ipsum dolor",
+    "companyPlaceholder": "Your company",
     "emailLabel": "Email Address",
-    "emailPlaceholder": "lorem@ipsum.com",
+    "emailPlaceholder": "you@company.com",
     "phoneLabel": "Telephone",
     "phonePlaceholder": "+X XX XXX XXXX",
     "criteriaLabel": "Which companies are you looking for?",
@@ -299,6 +323,7 @@
     "errorMessage": "Something went wrong. Please try again or email us directly."
   },
   "comingSoon": {
+<<<<<<< Updated upstream
     "badge": "Launching soon",
     "titleLine1": "Belgian B2B leads,",
     "titleHighlight": "reimagined",
@@ -308,6 +333,11 @@
     "vizStatus": "Preparing your lead intelligence platform",
     "metadataTitle": "BelgoBase — Coming Soon",
     "metadataDescription": "BelgoBase is launching soon. Targeted B2B leads from 2M+ Belgian companies, built from official KBO data."
+=======
+    "title": "Coming soon",
+    "metadataTitle": "BelgoLeads — Coming Soon",
+    "metadataDescription": "BelgoLeads is launching soon. Targeted B2B leads from 1.9M+ Belgian companies, built from official KBO data."
+>>>>>>> Stashed changes
   },
   "theme": {
     "light": "Light mode",

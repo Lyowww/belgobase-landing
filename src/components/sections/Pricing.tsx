@@ -49,6 +49,8 @@ export function Pricing() {
         t("pricing.proFeature1"),
         t("pricing.proFeature2"),
         t("pricing.proFeature3"),
+        t("pricing.proFeature4"),
+        t("pricing.proFeature5"),
       ],
       popular: false,
     },

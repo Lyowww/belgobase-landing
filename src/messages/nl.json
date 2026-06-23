@@ -1,34 +1,35 @@
 {
   "metadata": {
-    "title": "BelgoBase — Gerichte B2B-leads uit 2M+ Belgische bedrijven",
+    "title": "BelgoLeads — Gerichte B2B-leads uit 1,9M+ Belgische bedrijven",
     "description": "Ontvang op maat gemaakte B2B-leadslijsten op basis van officiële Belgische KBO-data. AVG-veilig, betalen per lijst, geleverd binnen enkele uren. Vraag vandaag nog 30 gratis sample leads aan.",
     "keywords": "Belgische B2B leads, KBO bedrijfsdata, leadgeneratie België, B2B prospectie België, AVG-conforme leads"
   },
   "nav": {
     "process": "Proces",
     "industries": "Sectoren",
-    "results": "Resultaten",
+    "results": "Database",
     "pricing": "Prijzen",
     "accessSample": "Sample leads bekijken",
     "getFreeLeads": "Ontvang 30 gratis leads",
+    "questions": "Vragen?",
     "openMenu": "Menu openen",
     "closeMenu": "Menu sluiten"
   },
   "hero": {
-    "badge": "Vertrouwd door 500+ Belgische B2B-teams",
-    "titleLine1": "B2B Leadgeneratie Met",
-    "titleHighlight": "2M+ Belgische Bedrijven",
-    "titleLine2": "",
-    "description": "De meeste sales teams verliezen uren aan prospectonderzoek. Met BelgoBase versnelt u uw B2B leadgeneratie dankzij gerichte lijsten van bedrijven die aansluiten bij uw ideale klant, zodat u sneller gesprekken, offertes en nieuwe klanten genereert.",
+    "badge": "Gebouwd op 1.951.114 KBO-bedrijfsrecords",
+    "titleLine1": "Bereik uw volgende",
+    "titleHighlight": "100+ klanten",
+    "titleLine2": "met gerichte B2B-leads",
+    "description": "Moeite om consequente leads te genereren? Ontvang een op maat gemaakte B2B-leadslijst op basis van 1.951.114 Belgische bedrijven en sluit sneller meer deals.",
     "getFreeLeads": "Ontvang 30 gratis leads",
     "accessSample": "Sample leads bekijken",
-    "trustNoSignup": "Geen registratie",
-    "trustNoSignupSub": "Geen account nodig. Vul het formulier in en ontvang uw leads direct.",
-    "trustUpdated": "Dagelijks bijgewerkt",
-    "trustUpdatedSub": "Dagelijkse scraping voor actuele, nauwkeurige data. Nooit verouderd.",
-    "trustBelgium": "België-georiënteerd",
-    "trustBelgiumSub": "2M+ KBO-bedrijven. Officiële NBB-data.",
-    "vizLive": "Live · 2M+ KBO-bedrijven",
+    "trustNoSignup": "Geen contracten",
+    "trustNoSignupSub": "Geen credits of abonnementen nodig. Bestel alleen de leads die u nodig heeft.",
+    "trustUpdated": "Verse data, elke bestelling",
+    "trustUpdatedSub": "Elke leadslijst wordt opgebouwd met actuele Belgische bedrijfsdata.",
+    "trustBelgium": "100% Belgisch, standaard",
+    "trustBelgiumSub": "Toegang tot bijna 2 miljoen Belgische bedrijfsrecords uit de KBO",
+    "vizLive": "Live · 1,9M+ KBO-bedrijven",
     "vizEngine": "Intelligence Engine",
     "vizScanning": "België scannen...",
     "vizCompanies": "Bedrijven",
@@ -38,7 +39,7 @@
   "socialProof": {
     "eyebrow": "Social Proof",
     "title": "Vertrouwd door Belgische B2B-teams",
-    "description": "Van startups tot enterprise salesteams — BelgoBase drijft outbound groei in heel België.",
+    "description": "Van startups tot enterprise salesteams — BelgoLeads drijft outbound groei in heel België.",
     "metricBusinesses": "Belgische bedrijven bediend",
     "metricCompanies": "Bedrijven in database",
     "metricLeads": "Leads geleverd",
@@ -55,7 +56,7 @@
   },
   "process": {
     "eyebrow": "Proces",
-    "title": "Leadgeneratie eenvoudig gemaakt",
+    "title": "Leadgeneratie, eenvoudig gemaakt",
     "descriptionBefore": "Uw leadslijst, geleverd in ",
     "descriptionHighlight": "3 eenvoudige stappen",
     "descriptionAfter": ".",
@@ -64,12 +65,12 @@
     "step2Title": "Vaste prijs vooraf",
     "step2Description": "We bevestigen beschikbare bedrijven en sturen een duidelijke, definitieve prijs voordat we starten. Sluit bestaande klanten uit via ondernemingsnummers indien nodig.",
     "step3Title": "Ontvang uw kant-en-klare lijst",
-    "step3Description": "We filteren 2M+ bedrijven, verrijken beschikbare data en controleren alles op kwaliteit. Dezelfde dag geleverd in Excel — klaar voor CRM, outreach of bellen."
+    "step3Description": "We filteren bijna 2 miljoen bedrijven, verrijken beschikbare data en controleren alles op kwaliteit. Dezelfde dag geleverd in Excel — klaar voor CRM, outreach of bellen."
   },
   "industries": {
     "eyebrow": "Sectoren",
-    "title": "Als u aan Belgische bedrijven verkoopt, is BelgoBase voor u",
-    "description": "Sectoren die we bedienen en de oplossingen die ze ontvangen:",
+    "title": "Als u aan Belgische bedrijven verkoopt, is BelgoLeads voor u",
+    "description": "Wie we bedienen — en wat u krijgt:",
     "salesTitle": "Sales & groeiteams",
     "salesSubtitle": "Sales, marketing, SaaS, startups, enterprise teams",
     "salesBenefit1": "Snellere outbound",
@@ -82,7 +83,7 @@
     "localSubtitle": "Vastgoed, regionale bedrijven",
     "localBenefit1": "Toegang tot lokale markt",
     "localBenefit2": "Gestructureerde bedrijfsdata",
-    "notFitTitle": "Geen match als",
+    "notFitTitle": "Geen goede match als",
     "notFit1": "U generieke, niet-gerichte leadslijsten wilt",
     "notFit2": "U alleen op inbound leads vertrouwt",
     "notFit3": "U niet actief outbound sales of outreach doet"
@@ -100,7 +101,7 @@
     "contactDetailsDesc": "Beschikbare telefoonnummers en e-mailadressen.",
     "companyInsightsTitle": "Bedrijfsinzichten",
     "companyInsightsDesc": "Bedrijfsleeftijd en andere targetingattributen.",
-    "explorerTitle": "BelgoBase Lead Explorer",
+    "explorerTitle": "BelgoLeads Lead Explorer",
     "liveLabel": "Live",
     "statCompanies": "Matches",
     "statMatchRate": "Matchpercentage",
@@ -114,18 +115,25 @@
     "showingMatches": "Lorem ipsum — X van X matches getoond",
     "dataCompleteness": "X% lorem ipsum dolor"
   },
-  "results": {
-    "eyebrow": "Resultaten",
-    "title": "Meetbare impact voor Belgische B2B-teams",
-    "description": "Echte resultaten van teams die BelgoBase gebruiken voor outbound sales.",
-    "engagementLabel": "Hogere betrokkenheid vs. generieke lijsten",
-    "engagementDesc": "Gerichte Belgische bedrijfsdata levert aanzienlijk betere responspercentages op outreach.",
-    "timeLabel": "Minder prospectietijd",
-    "timeDesc": "Sla handmatig LinkedIn- en Google-zoeken over. Ontvang een CRM-klare lijst binnen enkele uren.",
-    "accuracyLabel": "Data-nauwkeurigheid",
-    "accuracyDesc": "Elke lijst wordt gecontroleerd tegen officiële KBO-records vóór levering.",
-    "meetingsLabel": "Meer gekwalificeerde meetings",
-    "meetingsDesc": "Salesteams rapporteren 3x meer geboekte meetings met BelgoBase-gerichte lijsten."
+  "database": {
+    "eyebrow": "Database",
+    "title": "Vind uw markt in België",
+    "description": "Van bouw en gezondheidszorg tot IT en productie — ontdek het aantal beschikbare bedrijven in elke sector.",
+    "cardTitle": "Hoeveel potentiële klanten zitten er in uw markt?",
+    "cardDescription": "Ontvang een gratis schatting van hoeveel Belgische bedrijven in uw sector momenteel beschikbaar zijn in BelgoLeads.",
+    "statIt": "IT / Software",
+    "statRealEstate": "Vastgoed",
+    "statHoreca": "HORECA",
+    "statMarketing": "Marketingbureaus",
+    "available": "beschikbaar",
+    "inlineIndustryPlaceholder": "Kies een sector",
+    "formIndustryLabel": "Selecteer uw sector",
+    "formIndustryPlaceholder": "Kies een sector",
+    "formEmailLabel": "Zakelijk e-mailadres",
+    "formEmailPlaceholder": "u@bedrijf.com",
+    "formSubmit": "Ontvang mijn gratis schatting",
+    "formSubmitted": "Aanvraag verzonden!",
+    "formNote": "Geen account nodig. We sturen uw schatting meteen op."
   },
   "pricing": {
     "eyebrow": "Prijzen",
@@ -144,11 +152,13 @@
     "plusFeature2": "Werknemersaantal",
     "plusFeature3": "Financiële data",
     "proName": "Pro",
-    "proDesc": "Alles in Plus, en beslissingsnemer-intelligence.",
-    "proIncludes": "Alles in PLUS, EN:",
-    "proFeature1": "Namen van beslissingsnemers",
-    "proFeature2": "Afdelingshoofden",
-    "proFeature3": "Managementtitels",
+    "proDesc": "Alles in Plus, plus geavanceerde filtering.",
+    "proIncludes": "Filter op:",
+    "proFeature1": "Locatie",
+    "proFeature2": "Marketinguitgaven",
+    "proFeature3": "Loonkosten",
+    "proFeature4": "Sectorcodes",
+    "proFeature5": "Aangepaste filtercombinaties",
     "mostPopular": "Meest populair",
     "perLead": "/ lead",
     "getStarted": "Aan de slag"
@@ -156,7 +166,7 @@
   "comparison": {
     "eyebrow": "Vergelijk plannen",
     "title": "Vergelijk plannen in één oogopslag",
-    "description": "Zie precies welke datavelden in elk verrijkingsniveau zitten.",
+    "description": "Zie wat in elk plan zit — van essentiële bedrijfsdata tot geavanceerde filters.",
     "feature": "Dataveld",
     "mostPopularShort": "Meest populair",
     "available": "Beschikbaar",
@@ -168,9 +178,11 @@
     "revenue": "Omzet",
     "employeeCount": "Werknemersaantal",
     "financialData": "Financiële data",
-    "decisionMakerNames": "Namen van beslissingsnemers",
-    "departmentHeads": "Afdelingshoofden",
-    "managementTitles": "Managementtitels"
+    "location": "Locatie",
+    "marketingExpenses": "Marketinguitgaven",
+    "payrollCosts": "Loonkosten",
+    "industryCodes": "Sectorcodes",
+    "customFilterCombinations": "Aangepaste filtercombinaties"
   },
   "addOns": {
     "eyebrow": "Add-ons",
@@ -210,7 +222,7 @@
   "faq": {
     "eyebrow": "FAQ",
     "title": "Nog vragen?",
-    "ctaText": "Vraag 30 gratis sample leads aan en zie precies wat u ontvangt.",
+    "ctaText": "Vraag 30 gratis sample leads aan om precies te zien wat u ontvangt.",
     "getFreeLeads": "Ontvang 30 gratis leads",
     "q1": "Hoe snel ontvang ik mijn leadslijst?",
     "a1": "De meeste lijsten worden binnen enkele uren na bevestiging geleverd. Grotere of zeer specifieke aanvragen kunnen langer duren.",
@@ -227,7 +239,7 @@
     "q7": "In welk formaat ontvang ik de lijst?",
     "a7": "Uw lijst wordt geleverd in Excel en kan geïmporteerd worden in de meeste CRM-systemen.",
     "q8": "Dekken jullie heel België?",
-    "a8": "Ja. Onze database bevat 2M+ Belgische bedrijven uit de officiële KBO.",
+    "a8": "Ja. Onze database bevat 1.951.114 Belgische bedrijven uit de officiële KBO.",
     "q9": "Kan ik een sample zien vóór bestelling?",
     "a9": "Ja. Vraag 30 gratis sample leads aan om de data te evalueren vóór aankoop."
   },
@@ -236,19 +248,31 @@
     "title": "Ontvang vandaag uw op maat gemaakte B2B-leadslijst met tot",
     "titleHighlight": "72% hoger engagementpotentieel",
     "titleEnd": "dan generieke prospectlijsten.",
-    "description": "Het duurt slechts 2 minuten om het formulier in te dienen en de juiste mensen te benaderen. U bent één sterke leadslijst verwijderd van uw volgende golf klanten."
+    "description": "Het duurt slechts 2 minuten om het formulier in te dienen en de juiste prospects te benaderen. U bent één sterke leadslijst verwijderd van uw volgende golf klanten."
   },
   "footer": {
-    "tagline": "Officiële Belgische bedrijfsdata · AVG-veilig · Alleen België",
-    "copyright": "Alle rechten voorbehouden."
+    "tagline": "Geverifieerde Belgische bedrijfsdata voor salesteams, bureaus, recruiters en B2B-bedrijven.",
+    "stats": "~2M Belgische bedrijven • Dagelijks bijgewerkt • AVG-bewust",
+    "copyright": "Alle rechten voorbehouden.",
+    "product": "Product",
+    "company": "Bedrijf",
+    "legal": "Juridisch",
+    "process": "Proces",
+    "industries": "Sectoren",
+    "database": "Database",
+    "pricing": "Prijzen",
+    "contact": "Contact",
+    "faq": "FAQ",
+    "privacy": "Privacybeleid",
+    "terms": "Gebruiksvoorwaarden"
   },
   "form": {
     "nameLabel": "Naam",
-    "namePlaceholder": "Lorem ipsum",
+    "namePlaceholder": "Uw naam",
     "companyLabel": "Bedrijfsnaam",
-    "companyPlaceholder": "Lorem ipsum dolor",
+    "companyPlaceholder": "Uw bedrijf",
     "emailLabel": "E-mailadres",
-    "emailPlaceholder": "lorem@ipsum.com",
+    "emailPlaceholder": "u@bedrijf.com",
     "phoneLabel": "Telefoon",
     "phonePlaceholder": "+X XX XXX XXXX",
     "criteriaLabel": "Welke bedrijven zoekt u?",
@@ -299,6 +323,7 @@
     "errorMessage": "Er ging iets mis. Probeer opnieuw of mail ons rechtstreeks."
   },
   "comingSoon": {
+<<<<<<< Updated upstream
     "badge": "Binnenkort beschikbaar",
     "titleLine1": "Belgische B2B-leads,",
     "titleHighlight": "opnieuw uitgevonden",
@@ -308,6 +333,11 @@
     "vizStatus": "Uw lead intelligence-platform wordt voorbereid",
     "metadataTitle": "BelgoBase — Binnenkort beschikbaar",
     "metadataDescription": "BelgoBase komt binnenkort. Gerichte B2B-leads uit 2M+ Belgische bedrijven, op basis van officiële KBO-data."
+=======
+    "title": "Binnenkort beschikbaar",
+    "metadataTitle": "BelgoLeads — Binnenkort beschikbaar",
+    "metadataDescription": "BelgoLeads komt binnenkort. Gerichte B2B-leads uit 1,9M+ Belgische bedrijven, op basis van officiële KBO-data."
+>>>>>>> Stashed changes
   },
   "theme": {
     "light": "Lichte modus",

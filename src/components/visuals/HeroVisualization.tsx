@@ -59,9 +59,9 @@ export function HeroVisualization() {
   const { reduceMotionEffects, reduceVisualEffects } = usePerformanceMode();
 
   const stats = [
-    { label: t("hero.vizCompanies"), value: "XM+", icon: Building2 },
-    { label: t("hero.vizMatchRate"), value: "X%", icon: TrendingUp },
-    { label: t("hero.vizContacts"), value: "XK+", icon: Mail },
+    { label: t("hero.vizCompanies"), value: "~2M", icon: Building2 },
+    { label: t("hero.vizMatchRate"), value: "90%+", icon: TrendingUp },
+    { label: t("hero.vizContacts"), value: "~1M", icon: Mail },
   ];
 
   return (
