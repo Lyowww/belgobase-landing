@@ -60,10 +60,10 @@ export async function submitContactForm(
     const resend = new Resend(resendApiKey);
 
     await resend.emails.send({
-      from: "BelgoBase <onboarding@resend.dev>",
+      from: "BelgoLeads <onboarding@resend.dev>",
       to: contactEmail,
       replyTo: data.email,
-      subject: `[BelgoBase] 30 Free Leads Request — ${data.company}`,
+      subject: `[BelgoLeads] 30 Free Leads Request — ${data.company}`,
       html: `
         <h2>New 30 Free Leads Request</h2>
         <p><strong>Name:</strong> ${data.name}</p>

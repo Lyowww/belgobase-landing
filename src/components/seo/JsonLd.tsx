@@ -18,7 +18,7 @@ export async function JsonLd({ locale, title, description }: JsonLdProps) {
       {
         "@type": "Organization",
         "@id": `${siteUrl}/#organization`,
-        name: "BelgoBase",
+        name: "BelgoLeads",
         url: siteUrl,
         description,
         areaServed: {
@@ -30,7 +30,7 @@ export async function JsonLd({ locale, title, description }: JsonLdProps) {
         "@type": "WebSite",
         "@id": `${siteUrl}/#website`,
         url: siteUrl,
-        name: "BelgoBase",
+        name: "BelgoLeads",
         description: title,
         inLanguage: locale === "nl" ? "nl-BE" : "en-BE",
         publisher: { "@id": `${siteUrl}/#organization` },
