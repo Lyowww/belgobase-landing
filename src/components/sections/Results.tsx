@@ -55,7 +55,7 @@ export function Results() {
         />
 
         <SectionReveal delay={0.1}>
-          <div className="form-surface mx-auto max-w-4xl overflow-hidden rounded-2xl sm:rounded-3xl">
+          <div className="form-surface mx-auto max-w-4xl rounded-2xl sm:rounded-3xl">
             <div className="px-5 py-6 sm:px-8 sm:py-8">
               <h3 className="text-lg font-semibold tracking-tight text-deep-navy sm:text-xl">
                 {t("database.cardTitle")}

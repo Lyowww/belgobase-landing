@@ -2,6 +2,7 @@
 
 import { Mail } from "lucide-react";
 import { useState } from "react";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 import { useTranslations } from "@/providers/TranslationsProvider";
 import { cn } from "@/lib/utils";
@@ -54,24 +55,13 @@ export function DatabaseEstimateForm({
           >
             {t("database.formIndustryLabel")}
           </label>
-          <select
+          <CustomSelect
             id="database-industry"
             value={industry}
-            onChange={(e) => onIndustryChange(e.target.value)}
-            className={cn(
-              "form-input form-select w-full rounded-xl px-3 py-2.5 text-base sm:px-4 sm:text-sm",
-              !industry && "text-muted",
-            )}
-          >
-            <option value="" disabled>
-              {t("database.formIndustryPlaceholder")}
-            </option>
-            {INDUSTRY_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+            onChange={onIndustryChange}
+            options={INDUSTRY_OPTIONS}
+            placeholder={t("database.formIndustryPlaceholder")}
+          />
         </div>
 
         <div className="sm:col-span-1">
