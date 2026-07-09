@@ -9,7 +9,6 @@ import {
   MapPin,
   Phone,
   Search,
-  Sparkles,
   Target,
 } from "lucide-react";
 import { usePerformanceMode } from "@/hooks/usePerformanceMode";
@@ -170,9 +169,9 @@ export function LeadExplorerVisualization() {
   const { reduceMotionEffects, reduceVisualEffects } = usePerformanceMode();
 
   const stats = [
-    { label: t("leadPreview.statCompanies"), value: "X", icon: Target },
-    { label: t("leadPreview.statMatchRate"), value: "X%", icon: Sparkles },
-    { label: t("leadPreview.statFields"), value: "X+", icon: Database },
+    { label: t("leadPreview.statFilters"), value: "—", icon: Filter },
+    { label: t("leadPreview.statCompanies"), value: "—", icon: Target },
+    { label: t("leadPreview.statFields"), value: "—", icon: Database },
   ];
 
   return (

@@ -15,7 +15,9 @@ export function Pricing() {
     {
       key: "minimum",
       name: t("pricing.minimumName"),
-      price: "€0.60",
+      tag: t("pricing.minimumTag"),
+      price: t("pricing.minimumPrice"),
+      priceSuffix: t("pricing.minimumPriceSuffix"),
       description: t("pricing.minimumDesc"),
       includesLabel: null as string | null,
       features: [
@@ -23,26 +25,35 @@ export function Pricing() {
         t("pricing.minimumFeature2"),
         t("pricing.minimumFeature3"),
         t("pricing.minimumFeature4"),
+        t("pricing.minimumFeature5"),
       ],
       popular: false,
+      cta: t("pricing.minimumCta"),
     },
     {
       key: "plus",
       name: t("pricing.plusName"),
-      price: "€1.00",
+      tag: null as string | null,
+      price: t("pricing.plusPrice"),
+      priceSuffix: null as string | null,
       description: t("pricing.plusDesc"),
       includesLabel: t("pricing.plusIncludes"),
       features: [
         t("pricing.plusFeature1"),
         t("pricing.plusFeature2"),
         t("pricing.plusFeature3"),
+        t("pricing.plusFeature4"),
+        t("pricing.plusFeature5"),
       ],
       popular: true,
+      cta: t("pricing.plusCta"),
     },
     {
       key: "pro",
       name: t("pricing.proName"),
-      price: "€2.50",
+      tag: null as string | null,
+      price: t("pricing.proPrice"),
+      priceSuffix: null as string | null,
       description: t("pricing.proDesc"),
       includesLabel: t("pricing.proIncludes"),
       features: [
@@ -53,6 +64,7 @@ export function Pricing() {
         t("pricing.proFeature5"),
       ],
       popular: false,
+      cta: t("pricing.proCta"),
     },
   ];
 
@@ -76,7 +88,7 @@ export function Pricing() {
                   plan.popular ? "pricing-popular mt-6 pt-8 sm:mt-0 sm:pt-8" : "glass premium-card",
                 )}
               >
-                {plan.popular && (
+                {(plan.popular || plan.tag) && (
                   <div className="absolute -top-3.5 left-1/2 z-10 -translate-x-1/2">
                     <m.span
                       initial={{ opacity: 0, y: 8 }}
@@ -85,8 +97,8 @@ export function Pricing() {
                       transition={{ delay: 0.3, duration: 0.5 }}
                       className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-semibold text-white shadow-lg shadow-primary/40"
                     >
-                      <Sparkles className="h-3 w-3" />
-                      {t("pricing.mostPopular")}
+                      {plan.popular && <Sparkles className="h-3 w-3" />}
+                      {plan.popular ? t("pricing.mostPopular") : plan.tag}
                     </m.span>
                   </div>
                 )}
@@ -100,7 +112,9 @@ export function Pricing() {
                   <span className="text-3xl font-semibold tracking-tight text-deep-navy sm:text-4xl">
                     {plan.price}
                   </span>
-                  <span className="text-sm font-medium text-muted">{t("pricing.perLead")}</span>
+                  {plan.priceSuffix ? (
+                    <span className="text-sm font-medium text-muted">{plan.priceSuffix}</span>
+                  ) : null}
                 </div>
 
                 <div className="flex flex-1 flex-col">
@@ -128,7 +142,7 @@ export function Pricing() {
                     variant={plan.popular ? "primary" : "secondary"}
                     className="mt-auto w-full"
                   >
-                    {t("pricing.getStarted")}
+                    {plan.cta}
                   </MagneticButton>
                 </div>
               </m.div>

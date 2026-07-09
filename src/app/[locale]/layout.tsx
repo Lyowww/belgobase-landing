@@ -57,8 +57,8 @@ export async function generateMetadata({
     title,
     description,
     keywords,
-    applicationName: "BelgoLeads",
-    creator: "BelgoLeads",
+    applicationName: "BelgoBase",
+    creator: "BelgoBase",
     formatDetection: {
       email: false,
       telephone: false,
@@ -69,7 +69,7 @@ export async function generateMetadata({
       type: "website",
       locale: localeParam === "nl" ? "nl_BE" : "en_BE",
       url: pageUrl,
-      siteName: "BelgoLeads",
+      siteName: "BelgoBase",
     },
     twitter: {
       card: "summary_large_image",

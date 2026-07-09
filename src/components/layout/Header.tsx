@@ -76,7 +76,7 @@ export function Header({ variant = "default" }: HeaderProps) {
             <span className="text-xs font-bold text-white sm:text-sm">B</span>
           </div>
           <span className="truncate text-base font-semibold tracking-tight text-deep-navy sm:text-lg">
-            BelgoLeads
+            BelgoBase
           </span>
         </a>
 

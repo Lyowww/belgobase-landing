@@ -9,34 +9,16 @@ import { SectionReveal } from "@/components/ui/SectionReveal";
 import { useTranslations } from "@/providers/TranslationsProvider";
 
 const STAT_BOXES = [
-  { key: "it", labelKey: "database.statIt" as const, count: "45,700+" },
-  { key: "realEstate", labelKey: "database.statRealEstate" as const, count: "43,000+" },
-  { key: "horeca", labelKey: "database.statHoreca" as const, count: "56,500+" },
-  {
-    key: "marketing",
-    labelKey: "database.statMarketing" as const,
-    count: "13,600+",
-  },
+  { key: "it", labelKey: "database.statIt" as const },
+  { key: "realEstate", labelKey: "database.statRealEstate" as const },
+  { key: "horeca", labelKey: "database.statHoreca" as const },
+  { key: "marketing", labelKey: "database.statMarketing" as const },
 ] as const;
 
-function StatBox({
-  label,
-  count,
-  availableLabel,
-}: {
-  label: string;
-  count: string;
-  availableLabel: string;
-}) {
+function StatBox({ label }: { label: string }) {
   return (
     <div className="premium-card flex min-h-[5.5rem] flex-col justify-center rounded-xl px-4 py-3.5 sm:min-h-[6rem] sm:px-5 sm:py-4">
-      <p className="text-xs text-muted sm:text-sm">{label}</p>
-      <p className="mt-1 text-lg font-semibold tracking-tight text-deep-navy sm:text-2xl">
-        {count}
-        <span className="ml-1.5 text-xs font-normal text-muted sm:text-sm">
-          {availableLabel}
-        </span>
-      </p>
+      <p className="text-sm font-medium text-deep-navy sm:text-base">{label}</p>
     </div>
   );
 }
@@ -66,12 +48,7 @@ export function Results() {
 
               <div className="mt-6 grid grid-cols-2 gap-3 sm:mt-8 sm:gap-4 lg:grid-cols-4">
                 {STAT_BOXES.map((box) => (
-                  <StatBox
-                    key={box.key}
-                    label={t(box.labelKey)}
-                    count={box.count}
-                    availableLabel={t("database.available")}
-                  />
+                  <StatBox key={box.key} label={t(box.labelKey)} />
                 ))}
               </div>
             </div>

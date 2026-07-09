@@ -67,7 +67,7 @@ export function Footer() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shadow-md shadow-primary/20">
                 <span className="text-sm font-bold text-white">B</span>
               </div>
-              <span className="text-base font-semibold text-deep-navy">BelgoLeads</span>
+              <span className="text-base font-semibold text-deep-navy">BelgoBase</span>
             </div>
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted">
               {t("footer.tagline")}
@@ -116,7 +116,7 @@ export function Footer() {
 
         <div className="mt-10 border-t border-border pt-6 text-center sm:mt-12">
           <p className="text-sm text-muted">
-            © 2026 BelgoLeads. {t("footer.copyright")}
+            © 2026 BelgoBase. {t("footer.copyright")}
           </p>
         </div>
       </div>

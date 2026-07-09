@@ -63,9 +63,11 @@ export function AddOns() {
                 <div className="flex flex-1 flex-col">
                   <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
                     <h3 className="font-semibold text-deep-navy">{addon.title}</h3>
-                    <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-                      {addon.price}
-                    </span>
+                    {addon.price ? (
+                      <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                        {addon.price}
+                      </span>
+                    ) : null}
                   </div>
                   <p className="flex-1 text-sm leading-relaxed text-muted">
                     {addon.description}
