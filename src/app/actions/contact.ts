@@ -1,6 +1,6 @@
 "use server";
 
-import { Resend } from "resend";
+import { sendNotificationEmail } from "@/lib/email/resend";
 import {
   contactFormSchema,
   type ContactFormData,
@@ -9,29 +9,10 @@ import {
 export type ContactFormState = {
   success: boolean;
   message: string;
-  /** Raw provider/server error for Network + browser console debugging. */
+  /** Sanitized provider/server error for Network + browser console debugging. */
   errorDetail?: string;
   errors?: Partial<Record<keyof ContactFormData, string>>;
 };
-
-function formatErrorDetail(error: unknown): string {
-  if (error == null) return "Unknown error";
-  if (typeof error === "string") return error;
-  if (error instanceof Error) return error.message;
-  if (typeof error === "object") {
-    const record = error as Record<string, unknown>;
-    if (typeof record.message === "string") {
-      const name = typeof record.name === "string" ? `${record.name}: ` : "";
-      return `${name}${record.message}`;
-    }
-    try {
-      return JSON.stringify(error);
-    } catch {
-      return String(error);
-    }
-  }
-  return String(error);
-}
 
 function escapeHtml(value: string): string {
   return value
@@ -40,6 +21,15 @@ function escapeHtml(value: string): string {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function requestSubject(requestType: ContactFormData["requestType"], company: string): string {
+  const label = requestType === "custom" ? "Contact Request" : "Demo Request";
+  return `[BelgoBase] ${label} — ${company}`;
+}
+
+function requestHeading(requestType: ContactFormData["requestType"]): string {
+  return requestType === "custom" ? "New Contact Request" : "New Demo Request";
 }
 
 export async function submitContactForm(
@@ -73,75 +63,37 @@ export async function submitContactForm(
     };
   }
 
-  const contactEmail = process.env.CONTACT_EMAIL?.trim();
-  const resendApiKey = process.env.RESEND_API_KEY?.trim();
-  // Must be a verified domain sender in production.
-  // onboarding@resend.dev only delivers to the Resend account email.
-  const fromEmail =
-    process.env.RESEND_FROM_EMAIL?.trim() ||
-    "BelgoBase <onboarding@resend.dev>";
-
-  if (!contactEmail || !resendApiKey) {
-    const missing = [
-      !resendApiKey ? "RESEND_API_KEY" : null,
-      !contactEmail ? "CONTACT_EMAIL" : null,
-    ]
-      .filter(Boolean)
-      .join(", ");
-    const errorDetail = `Missing environment variable(s): ${missing}`;
-    console.error("[contact]", errorDetail);
-    return {
-      success: false,
-      message: "errorMessage",
-      errorDetail,
-    };
-  }
-
   const data = parsed.data;
   const name = escapeHtml(data.name);
   const email = escapeHtml(data.email);
   const company = escapeHtml(data.company);
   const phone = data.phone ? escapeHtml(data.phone) : null;
 
-  try {
-    const resend = new Resend(resendApiKey);
-
-    const { error } = await resend.emails.send({
-      from: fromEmail,
-      to: contactEmail,
-      replyTo: data.email,
-      subject: `[BelgoBase] Demo Request — ${data.company}`,
-      html: `
-        <h2>New Demo Request</h2>
+  const result = await sendNotificationEmail({
+    replyTo: data.email,
+    subject: requestSubject(data.requestType, data.company),
+    html: `
+        <h2>${requestHeading(data.requestType)}</h2>
         <p><strong>Name:</strong> ${name}</p>
         <p><strong>Email:</strong> ${email}</p>
         <p><strong>Company:</strong> ${company}</p>
         ${phone ? `<p><strong>Phone:</strong> ${phone}</p>` : ""}
         <p><strong>Data usage confirmed:</strong> Yes</p>
       `,
-    });
+  });
 
-    if (error) {
-      const errorDetail = formatErrorDetail(error);
-      console.error("[contact] Resend API error:", errorDetail, error);
-      return {
-        success: false,
-        message: "errorMessage",
-        errorDetail,
-      };
-    }
-
-    return {
-      success: true,
-      message: "successMessage",
-    };
-  } catch (error) {
-    const errorDetail = formatErrorDetail(error);
-    console.error("[contact] Resend error:", errorDetail, error);
+  if (!result.ok) {
+    // errorDetail is safe for logs/devtools (no API keys); keep the user message generic.
+    console.error("[contact] Failed to send notification:", result.errorDetail);
     return {
       success: false,
       message: "errorMessage",
-      errorDetail,
+      errorDetail: result.errorDetail,
     };
   }
+
+  return {
+    success: true,
+    message: "successMessage",
+  };
 }

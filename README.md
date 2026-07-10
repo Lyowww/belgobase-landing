@@ -33,11 +33,12 @@ Create a `.env.local` file in the project root (never commit this file):
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `RESEND_API_KEY` | For contact form | API key from [Resend](https://resend.com) |
-| `CONTACT_EMAIL` | For contact form | Inbox that receives demo requests |
-| `RESEND_FROM_EMAIL` | For contact form (production) | Verified sender, e.g. `BelgoBase <hello@belgoleads.com>` |
+| `ADMIN_EMAIL` | For contact form | Real mailbox that receives demo/contact notifications |
+| `CONTACT_EMAIL` | Fallback | Used as recipient if `ADMIN_EMAIL` is unset |
+| `RESEND_FROM_EMAIL` | Optional | Verified sender, defaults to `BelgoBase <noreply@belgobase.be>` |
 | `NEXT_PUBLIC_SITE_URL` | Optional | Canonical site URL for SEO metadata (defaults to the value in `src/lib/site.ts`) |
 
-Without `RESEND_API_KEY` and `CONTACT_EMAIL`, the contact form returns a “service unavailable” error. Everything else works locally without env vars.
+Without `RESEND_API_KEY` and `ADMIN_EMAIL` (or `CONTACT_EMAIL`), the contact form returns an error. Do **not** set the recipient to `noreply@belgobase.be` — that address is send-only. Everything else works locally without env vars. See `.env.example`.
 
 ---
 
@@ -216,7 +217,7 @@ src/
 │   │   ├── layout.tsx     # Root layout, metadata, providers
 │   │   └── page.tsx       # Home — full landing or coming soon
 │   ├── actions/
-│   │   └── contact.ts     # Server action: demo request emails via Resend
+│   │   └── contact.ts     # Server action: demo/contact emails via Resend
 │   ├── robots.ts          # robots.txt (blocks non-production)
 │   └── sitemap.ts         # sitemap.xml
 ├── components/
@@ -231,6 +232,8 @@ src/
 ├── hooks/                 # Custom React hooks
 ├── i18n/                  # Locale config and dictionaries
 ├── lib/
+│   ├── email/
+│   │   └── resend.ts      # Resend From/To/Reply-To helpers
 │   ├── site.ts            # Site URL, coming soon flag, contact info
 │   ├── seo/               # Metadata and sitemap helpers
 │   ├── theme.ts           # Theme cookie names
@@ -244,14 +247,17 @@ src/
 
 ## Contact form
 
-Demo requests are handled by a Next.js Server Action (`src/app/actions/contact.ts`):
+Demo / contact requests are handled by a Next.js Server Action (`src/app/actions/contact.ts`):
 
 1. Client submits the progressive contact form.
 2. Data is validated with Zod (`src/lib/validations/contact.ts`).
-3. On success, Resend sends an email to `CONTACT_EMAIL`.
+3. On success, Resend sends a notification with:
+   - **From:** `BelgoBase <noreply@belgobase.be>` (or `RESEND_FROM_EMAIL`)
+   - **To:** `ADMIN_EMAIL` / `CONTACT_EMAIL` (a real mailbox)
+   - **Reply-To:** the customer's submitted email
 4. A honeypot field (`website`) blocks basic bots.
 
-Set `RESEND_FROM_EMAIL` to an address on a domain verified in Resend. The default `onboarding@resend.dev` only delivers to the Resend account email and will fail for other inboxes in production.
+Shared Resend helpers live in `src/lib/email/resend.ts`. The noreply address is only used as From — never as To.
 
 ---
 
@@ -271,8 +277,8 @@ The project is designed for [Vercel](https://vercel.com):
 
 1. Import the GitHub repo.
 2. Set **Production Branch** to `main`.
-3. Add environment variables (`RESEND_API_KEY`, `CONTACT_EMAIL`, `RESEND_FROM_EMAIL`, optionally `NEXT_PUBLIC_SITE_URL`) for **Production**.
-4. Verify your sending domain in [Resend Domains](https://resend.com/domains) (DNS records for `belgoleads.com`).
+3. Add environment variables (`RESEND_API_KEY`, `ADMIN_EMAIL`, optionally `RESEND_FROM_EMAIL`, `NEXT_PUBLIC_SITE_URL`) for **Production**.
+4. Verify your sending domain in [Resend Domains](https://resend.com/domains) (DNS records for `belgobase.be`).
 5. Point your domain (`belgobase.com`) to the production deployment.
 
 `robots.ts` disallows all crawlers on non-production builds (`VERCEL_ENV !== "production"`), so preview URLs stay out of search indexes.
