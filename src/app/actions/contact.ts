@@ -9,8 +9,29 @@ import {
 export type ContactFormState = {
   success: boolean;
   message: string;
+  /** Raw provider/server error for Network + browser console debugging. */
+  errorDetail?: string;
   errors?: Partial<Record<keyof ContactFormData, string>>;
 };
+
+function formatErrorDetail(error: unknown): string {
+  if (error == null) return "Unknown error";
+  if (typeof error === "string") return error;
+  if (error instanceof Error) return error.message;
+  if (typeof error === "object") {
+    const record = error as Record<string, unknown>;
+    if (typeof record.message === "string") {
+      const name = typeof record.name === "string" ? `${record.name}: ` : "";
+      return `${name}${record.message}`;
+    }
+    try {
+      return JSON.stringify(error);
+    } catch {
+      return String(error);
+    }
+  }
+  return String(error);
+}
 
 function escapeHtml(value: string): string {
   return value
@@ -61,12 +82,18 @@ export async function submitContactForm(
     "BelgoBase <onboarding@resend.dev>";
 
   if (!contactEmail || !resendApiKey) {
-    console.error(
-      "Missing CONTACT_EMAIL or RESEND_API_KEY environment variables",
-    );
+    const missing = [
+      !resendApiKey ? "RESEND_API_KEY" : null,
+      !contactEmail ? "CONTACT_EMAIL" : null,
+    ]
+      .filter(Boolean)
+      .join(", ");
+    const errorDetail = `Missing environment variable(s): ${missing}`;
+    console.error("[contact]", errorDetail);
     return {
       success: false,
-      message: "serviceUnavailable",
+      message: "errorMessage",
+      errorDetail,
     };
   }
 
@@ -95,10 +122,12 @@ export async function submitContactForm(
     });
 
     if (error) {
-      console.error("Resend API error:", error);
+      const errorDetail = formatErrorDetail(error);
+      console.error("[contact] Resend API error:", errorDetail, error);
       return {
         success: false,
         message: "errorMessage",
+        errorDetail,
       };
     }
 
@@ -107,10 +136,12 @@ export async function submitContactForm(
       message: "successMessage",
     };
   } catch (error) {
-    console.error("Resend error:", error);
+    const errorDetail = formatErrorDetail(error);
+    console.error("[contact] Resend error:", errorDetail, error);
     return {
       success: false,
       message: "errorMessage",
+      errorDetail,
     };
   }
 }
