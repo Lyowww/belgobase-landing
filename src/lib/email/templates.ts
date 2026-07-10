@@ -1,4 +1,7 @@
-import { contactEmail, contactPhone, siteUrl } from "@/lib/site";
+/** Customer-facing brand contact — used only in confirmation emails. */
+const CUSTOMER_EMAIL_SITE_URL = "https://belgobase.com";
+const CUSTOMER_EMAIL_SUPPORT = "david@belgobase.com";
+const CUSTOMER_EMAIL_PHONE = "+32 488 13 96 64";
 
 export type DemoRequestEmailFields = {
   name: string;
@@ -73,9 +76,9 @@ export function buildCustomerConfirmationHtml(
   const company = escapeHtml(fields.company);
   const label = requestLabel(fields.requestType);
   const year = new Date().getFullYear();
-  const supportEmail = escapeHtml(contactEmail);
-  const supportPhone = escapeHtml(contactPhone);
-  const homeUrl = escapeHtml(siteUrl);
+  const supportEmail = escapeHtml(CUSTOMER_EMAIL_SUPPORT);
+  const supportPhone = escapeHtml(CUSTOMER_EMAIL_PHONE);
+  const homeUrl = escapeHtml(CUSTOMER_EMAIL_SITE_URL);
 
   const isDemo = fields.requestType === "sample";
   const title = isDemo
