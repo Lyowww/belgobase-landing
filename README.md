@@ -34,6 +34,7 @@ Create a `.env.local` file in the project root (never commit this file):
 |----------|----------|-------------|
 | `RESEND_API_KEY` | For contact form | API key from [Resend](https://resend.com) |
 | `CONTACT_EMAIL` | For contact form | Inbox that receives demo requests |
+| `RESEND_FROM_EMAIL` | For contact form (production) | Verified sender, e.g. `BelgoBase <hello@belgoleads.com>` |
 | `NEXT_PUBLIC_SITE_URL` | Optional | Canonical site URL for SEO metadata (defaults to the value in `src/lib/site.ts`) |
 
 Without `RESEND_API_KEY` and `CONTACT_EMAIL`, the contact form returns a “service unavailable” error. Everything else works locally without env vars.
@@ -250,7 +251,7 @@ Demo requests are handled by a Next.js Server Action (`src/app/actions/contact.t
 3. On success, Resend sends an email to `CONTACT_EMAIL`.
 4. A honeypot field (`website`) blocks basic bots.
 
-Update the `from` address in `contact.ts` once you have a verified domain in Resend (replace `onboarding@resend.dev`).
+Set `RESEND_FROM_EMAIL` to an address on a domain verified in Resend. The default `onboarding@resend.dev` only delivers to the Resend account email and will fail for other inboxes in production.
 
 ---
 
@@ -264,12 +265,15 @@ The project is designed for [Vercel](https://vercel.com):
 | `dev` | Preview | Staging URL for review |
 | Other branches | Preview | Per-branch preview URLs |
 
+**Local `.env` is not used on Vercel.** Add the same keys in the Vercel project → Settings → Environment Variables (Production), then redeploy.
+
 **Checklist for a new Vercel project:**
 
 1. Import the GitHub repo.
 2. Set **Production Branch** to `main`.
-3. Add environment variables (`RESEND_API_KEY`, `CONTACT_EMAIL`, optionally `NEXT_PUBLIC_SITE_URL`).
-4. Point your domain (`belgobase.com`) to the production deployment.
+3. Add environment variables (`RESEND_API_KEY`, `CONTACT_EMAIL`, `RESEND_FROM_EMAIL`, optionally `NEXT_PUBLIC_SITE_URL`) for **Production**.
+4. Verify your sending domain in [Resend Domains](https://resend.com/domains) (DNS records for `belgoleads.com`).
+5. Point your domain (`belgobase.com`) to the production deployment.
 
 `robots.ts` disallows all crawlers on non-production builds (`VERCEL_ENV !== "production"`), so preview URLs stay out of search indexes.
 
