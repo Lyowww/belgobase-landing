@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { contactEmail as defaultRecipientEmail } from "@/lib/site";
+import { emailSchema } from "@/lib/validations/contact";
 
 /** Default verified sender identity — not a mailbox. Never use as `to`. */
 export const DEFAULT_FROM_EMAIL = "BelgoBase <noreply@belgobase.be>";
@@ -11,33 +12,70 @@ const NON_RECEIVING_LOCAL_PARTS = new Set([
   "do-not-reply",
 ]);
 
-export type SendNotificationEmailInput = {
+export type SendEmailResult =
+  | { ok: true }
+  | { ok: false; errorDetail: string };
+
+/** @deprecated Prefer SendEmailResult */
+export type SendNotificationEmailResult = SendEmailResult;
+
+export type SendAdminNotificationInput = {
   subject: string;
   html: string;
-  /** Customer's email — used only as Reply-To. */
+  /** Customer's email — used as Reply-To so admin can reply directly. */
   replyTo: string;
 };
 
-export type SendNotificationEmailResult =
-  | { ok: true }
-  | { ok: false; errorDetail: string };
+export type SendCustomerConfirmationInput = {
+  /** Customer's submitted email — the To recipient. */
+  to: string;
+  subject: string;
+  html: string;
+};
 
 function extractAddress(value: string): string {
   const match = value.match(/<([^>]+)>/);
   return (match?.[1] ?? value).trim().toLowerCase();
 }
 
-function isNonReceivingAddress(email: string): boolean {
+function isNonReceivingAddress(email: string): string | null {
   const local = email.split("@")[0]?.toLowerCase() ?? "";
-  return NON_RECEIVING_LOCAL_PARTS.has(local);
+  if (NON_RECEIVING_LOCAL_PARTS.has(local)) {
+    return "Address must be a real mailbox, not a noreply sender identity";
+  }
+  return null;
 }
 
 /**
- * Inbox for internal notifications.
+ * Validate an email for use as a recipient.
+ * Rejects empty, invalid, and noreply-style addresses.
+ */
+export function validateRecipientEmail(
+  email: string,
+): { ok: true; email: string } | { ok: false; errorDetail: string } {
+  const parsed = emailSchema.safeParse(email.trim());
+  if (!parsed.success) {
+    return {
+      ok: false,
+      errorDetail: "Customer email is not a valid email address",
+    };
+  }
+
+  const address = extractAddress(parsed.data);
+  const noreplyError = isNonReceivingAddress(address);
+  if (noreplyError) {
+    return { ok: false, errorDetail: noreplyError };
+  }
+
+  return { ok: true, email: address };
+}
+
+/**
+ * Inbox for internal notifications / company contact (Reply-To on customer mail).
  * Prefer ADMIN_EMAIL → CONTACT_EMAIL → site contact email.
  * Never allow noreply-style addresses.
  */
-export function resolveNotificationRecipient():
+export function resolveAdminEmail():
   | { ok: true; email: string }
   | { ok: false; errorDetail: string } {
   const candidate =
@@ -50,23 +88,43 @@ export function resolveNotificationRecipient():
   if (!address.includes("@")) {
     return {
       ok: false,
-      errorDetail: "Notification recipient is not a valid email address",
+      errorDetail: "Admin email is not a valid email address",
     };
   }
 
-  if (isNonReceivingAddress(address)) {
+  const noreplyError = isNonReceivingAddress(address);
+  if (noreplyError) {
     return {
       ok: false,
       errorDetail:
-        "Notification recipient must be a real mailbox, not a noreply sender identity",
+        "Admin email must be a real mailbox, not a noreply sender identity",
     };
   }
 
   return { ok: true, email: address };
 }
 
+/** @deprecated Use resolveAdminEmail */
+export function resolveNotificationRecipient() {
+  return resolveAdminEmail();
+}
+
+/**
+ * Verified From identity.
+ * Prefer FROM_EMAIL → RESEND_FROM_EMAIL → default.
+ * Bare addresses are wrapped as `BelgoBase <address>`.
+ */
 export function resolveFromEmail(): string {
-  return process.env.RESEND_FROM_EMAIL?.trim() || DEFAULT_FROM_EMAIL;
+  const raw =
+    process.env.FROM_EMAIL?.trim() ||
+    process.env.RESEND_FROM_EMAIL?.trim() ||
+    DEFAULT_FROM_EMAIL;
+
+  if (!raw.includes("<") && raw.includes("@")) {
+    return `BelgoBase <${raw}>`;
+  }
+
+  return raw;
 }
 
 export function formatEmailError(error: unknown): string {
@@ -99,13 +157,9 @@ export function formatEmailError(error: unknown): string {
   return String(error);
 }
 
-/**
- * Send an internal notification via Resend.
- * From = verified sender domain · To = admin mailbox · Reply-To = customer.
- */
-export async function sendNotificationEmail(
-  input: SendNotificationEmailInput,
-): Promise<SendNotificationEmailResult> {
+function getResendClient():
+  | { ok: true; client: Resend }
+  | { ok: false; errorDetail: string } {
   const resendApiKey = process.env.RESEND_API_KEY?.trim();
   if (!resendApiKey) {
     return {
@@ -113,28 +167,23 @@ export async function sendNotificationEmail(
       errorDetail: "Missing environment variable(s): RESEND_API_KEY",
     };
   }
+  return { ok: true, client: new Resend(resendApiKey) };
+}
 
-  const recipient = resolveNotificationRecipient();
-  if (!recipient.ok) {
-    return recipient;
-  }
-
-  const from = resolveFromEmail();
-  const fromAddress = extractAddress(from);
-
-  if (fromAddress === recipient.email) {
-    return {
-      ok: false,
-      errorDetail:
-        "Notification recipient must differ from the From address (noreply is send-only)",
-    };
-  }
+async function sendViaResend(input: {
+  from: string;
+  to: string;
+  replyTo: string;
+  subject: string;
+  html: string;
+}): Promise<SendEmailResult> {
+  const clientResult = getResendClient();
+  if (!clientResult.ok) return clientResult;
 
   try {
-    const resend = new Resend(resendApiKey);
-    const { data, error } = await resend.emails.send({
-      from,
-      to: recipient.email,
+    const { data, error } = await clientResult.client.emails.send({
+      from: input.from,
+      to: input.to,
       replyTo: input.replyTo,
       subject: input.subject,
       html: input.html,
@@ -158,4 +207,135 @@ export async function sendNotificationEmail(
     console.error("[email] Resend request failed:", errorDetail);
     return { ok: false, errorDetail };
   }
+}
+
+/**
+ * Internal notification via Resend.
+ * From = verified sender · To = ADMIN_EMAIL · Reply-To = customer.
+ */
+export async function sendAdminNotificationEmail(
+  input: SendAdminNotificationInput,
+): Promise<SendEmailResult> {
+  const customer = validateRecipientEmail(input.replyTo);
+  if (!customer.ok) {
+    return {
+      ok: false,
+      errorDetail: `Invalid customer Reply-To: ${customer.errorDetail}`,
+    };
+  }
+
+  const admin = resolveAdminEmail();
+  if (!admin.ok) return admin;
+
+  const from = resolveFromEmail();
+  const fromAddress = extractAddress(from);
+
+  if (fromAddress === admin.email) {
+    return {
+      ok: false,
+      errorDetail:
+        "Admin email must differ from the From address (noreply is send-only)",
+    };
+  }
+
+  return sendViaResend({
+    from,
+    to: admin.email,
+    replyTo: customer.email,
+    subject: input.subject,
+    html: input.html,
+  });
+}
+
+/**
+ * Customer confirmation via Resend.
+ * From = verified sender · To = customer · Reply-To = company/admin contact.
+ */
+export async function sendCustomerConfirmationEmail(
+  input: SendCustomerConfirmationInput,
+): Promise<SendEmailResult> {
+  const customer = validateRecipientEmail(input.to);
+  if (!customer.ok) return customer;
+
+  const admin = resolveAdminEmail();
+  if (!admin.ok) return admin;
+
+  const from = resolveFromEmail();
+  const fromAddress = extractAddress(from);
+
+  if (fromAddress === customer.email) {
+    return {
+      ok: false,
+      errorDetail:
+        "Customer email must differ from the From address (noreply is send-only)",
+    };
+  }
+
+  return sendViaResend({
+    from,
+    to: customer.email,
+    replyTo: admin.email,
+    subject: input.subject,
+    html: input.html,
+  });
+}
+
+/**
+ * Send both the admin notification and the customer confirmation.
+ * Attempts both even if one fails; returns the first failure detail.
+ */
+export async function sendDemoRequestEmails(input: {
+  customerEmail: string;
+  adminSubject: string;
+  adminHtml: string;
+  customerSubject: string;
+  customerHtml: string;
+}): Promise<SendEmailResult> {
+  const [adminResult, customerResult] = await Promise.all([
+    sendAdminNotificationEmail({
+      replyTo: input.customerEmail,
+      subject: input.adminSubject,
+      html: input.adminHtml,
+    }),
+    sendCustomerConfirmationEmail({
+      to: input.customerEmail,
+      subject: input.customerSubject,
+      html: input.customerHtml,
+    }),
+  ]);
+
+  if (!adminResult.ok && !customerResult.ok) {
+    return {
+      ok: false,
+      errorDetail: `Admin: ${adminResult.errorDetail}; Customer: ${customerResult.errorDetail}`,
+    };
+  }
+
+  if (!adminResult.ok) {
+    console.error(
+      "[email] Admin notification failed after customer send attempt:",
+      adminResult.errorDetail,
+    );
+    return {
+      ok: false,
+      errorDetail: `Admin notification failed: ${adminResult.errorDetail}`,
+    };
+  }
+
+  if (!customerResult.ok) {
+    // Lead is captured; confirmation is secondary — log and still succeed.
+    console.error(
+      "[email] Customer confirmation failed (admin notification sent):",
+      customerResult.errorDetail,
+    );
+  }
+
+  return { ok: true };
+}
+
+/** @deprecated Use sendAdminNotificationEmail */
+export async function sendNotificationEmail(
+  input: SendAdminNotificationInput,
+): Promise<SendEmailResult> {
+  return sendAdminNotificationEmail(input);
 }

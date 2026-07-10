@@ -33,12 +33,13 @@ Create a `.env.local` file in the project root (never commit this file):
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `RESEND_API_KEY` | For contact form | API key from [Resend](https://resend.com) |
-| `ADMIN_EMAIL` | Optional | Override inbox for demo/contact notifications |
+| `ADMIN_EMAIL` | Recommended | Company inbox for internal notifications (+ Reply-To on customer mail) |
 | `CONTACT_EMAIL` | Optional | Used if `ADMIN_EMAIL` is unset |
-| `RESEND_FROM_EMAIL` | Optional | Verified sender, defaults to `BelgoBase <noreply@belgobase.be>` |
+| `FROM_EMAIL` | Optional | Verified sender address, defaults to `noreply@belgobase.be` |
+| `RESEND_FROM_EMAIL` | Optional | Legacy alias for `FROM_EMAIL` |
 | `NEXT_PUBLIC_SITE_URL` | Optional | Canonical site URL for SEO metadata (defaults to the value in `src/lib/site.ts`) |
 
-Without `RESEND_API_KEY`, the contact form returns an error. Notification recipient defaults to the site contact email (`hello@belgoleads.com`) when `ADMIN_EMAIL` / `CONTACT_EMAIL` are unset. Do **not** set the recipient to `noreply@belgobase.be` — that address is send-only. See `.env.example`.
+Without `RESEND_API_KEY`, the contact form returns an error. Admin recipient defaults to the site contact email (`hello@belgoleads.com`) when `ADMIN_EMAIL` / `CONTACT_EMAIL` are unset. Do **not** set the recipient to `noreply@belgobase.be` — that address is send-only. See `.env.example`.
 
 ---
 
@@ -251,13 +252,13 @@ Demo / contact requests are handled by a Next.js Server Action (`src/app/actions
 
 1. Client submits the progressive contact form.
 2. Data is validated with Zod (`src/lib/validations/contact.ts`).
-3. On success, Resend sends a notification with:
-   - **From:** `BelgoBase <noreply@belgobase.be>` (or `RESEND_FROM_EMAIL`)
-   - **To:** `ADMIN_EMAIL` / `CONTACT_EMAIL`, or the site contact email by default
-   - **Reply-To:** the customer's submitted email
-4. A honeypot field (`website`) blocks basic bots.
+3. On success, Resend sends **two** emails in parallel:
+   - **Customer confirmation** — To: submitted email · Reply-To: `ADMIN_EMAIL` · branded HTML receipt
+   - **Admin notification** — To: `ADMIN_EMAIL` · Reply-To: customer email · full request details
+4. Both use **From:** `BelgoBase <noreply@belgobase.be>` (or `FROM_EMAIL` / `RESEND_FROM_EMAIL`).
+5. A honeypot field (`website`) blocks basic bots.
 
-Shared Resend helpers live in `src/lib/email/resend.ts`. The noreply address is only used as From — never as To.
+Shared Resend helpers live in `src/lib/email/resend.ts`; HTML templates in `src/lib/email/templates.ts`. The noreply address is only used as From — never as To.
 
 ---
 
@@ -277,7 +278,7 @@ The project is designed for [Vercel](https://vercel.com):
 
 1. Import the GitHub repo.
 2. Set **Production Branch** to `main`.
-3. Add environment variables (`RESEND_API_KEY`, optionally `ADMIN_EMAIL`, `RESEND_FROM_EMAIL`, `NEXT_PUBLIC_SITE_URL`) for **Production**.
+3. Add environment variables (`RESEND_API_KEY`, `ADMIN_EMAIL`, optionally `FROM_EMAIL`, `NEXT_PUBLIC_SITE_URL`) for **Production**.
 4. Verify your sending domain in [Resend Domains](https://resend.com/domains) (DNS records for `belgobase.be`).
 5. Point your domain (`belgobase.com`) to the production deployment.
 

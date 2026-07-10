@@ -1,6 +1,12 @@
 "use server";
 
-import { sendNotificationEmail } from "@/lib/email/resend";
+import { sendDemoRequestEmails } from "@/lib/email/resend";
+import {
+  adminNotificationSubject,
+  buildAdminNotificationHtml,
+  buildCustomerConfirmationHtml,
+  customerConfirmationSubject,
+} from "@/lib/email/templates";
 import {
   contactFormSchema,
   type ContactFormData,
@@ -13,24 +19,6 @@ export type ContactFormState = {
   errorDetail?: string;
   errors?: Partial<Record<keyof ContactFormData, string>>;
 };
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
-
-function requestSubject(requestType: ContactFormData["requestType"], company: string): string {
-  const label = requestType === "custom" ? "Contact Request" : "Demo Request";
-  return `[BelgoBase] ${label} — ${company}`;
-}
-
-function requestHeading(requestType: ContactFormData["requestType"]): string {
-  return requestType === "custom" ? "New Contact Request" : "New Demo Request";
-}
 
 export async function submitContactForm(
   _prevState: ContactFormState,
@@ -64,27 +52,25 @@ export async function submitContactForm(
   }
 
   const data = parsed.data;
-  const name = escapeHtml(data.name);
-  const email = escapeHtml(data.email);
-  const company = escapeHtml(data.company);
-  const phone = data.phone ? escapeHtml(data.phone) : null;
+  const fields = {
+    name: data.name,
+    email: data.email,
+    company: data.company,
+    phone: data.phone ?? null,
+    requestType: data.requestType,
+  };
 
-  const result = await sendNotificationEmail({
-    replyTo: data.email,
-    subject: requestSubject(data.requestType, data.company),
-    html: `
-        <h2>${requestHeading(data.requestType)}</h2>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Company:</strong> ${company}</p>
-        ${phone ? `<p><strong>Phone:</strong> ${phone}</p>` : ""}
-        <p><strong>Data usage confirmed:</strong> Yes</p>
-      `,
+  const result = await sendDemoRequestEmails({
+    customerEmail: data.email,
+    adminSubject: adminNotificationSubject(data.requestType, data.company),
+    adminHtml: buildAdminNotificationHtml(fields),
+    customerSubject: customerConfirmationSubject(data.requestType),
+    customerHtml: buildCustomerConfirmationHtml(fields),
   });
 
   if (!result.ok) {
     // errorDetail is safe for logs/devtools (no API keys); keep the user message generic.
-    console.error("[contact] Failed to send notification:", result.errorDetail);
+    console.error("[contact] Failed to send emails:", result.errorDetail);
     return {
       success: false,
       message: "errorMessage",
