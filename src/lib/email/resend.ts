@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { contactEmail as defaultRecipientEmail } from "@/lib/site";
 
 /** Default verified sender identity — not a mailbox. Never use as `to`. */
 export const DEFAULT_FROM_EMAIL = "BelgoBase <noreply@belgobase.be>";
@@ -33,7 +34,8 @@ function isNonReceivingAddress(email: string): boolean {
 
 /**
  * Inbox for internal notifications.
- * Prefer ADMIN_EMAIL, then CONTACT_EMAIL. Never allow noreply-style addresses.
+ * Prefer ADMIN_EMAIL → CONTACT_EMAIL → site contact email.
+ * Never allow noreply-style addresses.
  */
 export function resolveNotificationRecipient():
   | { ok: true; email: string }
@@ -41,21 +43,14 @@ export function resolveNotificationRecipient():
   const candidate =
     process.env.ADMIN_EMAIL?.trim() ||
     process.env.CONTACT_EMAIL?.trim() ||
-    "";
-
-  if (!candidate) {
-    return {
-      ok: false,
-      errorDetail: "Missing environment variable(s): ADMIN_EMAIL or CONTACT_EMAIL",
-    };
-  }
+    defaultRecipientEmail;
 
   const address = extractAddress(candidate);
 
   if (!address.includes("@")) {
     return {
       ok: false,
-      errorDetail: "ADMIN_EMAIL/CONTACT_EMAIL is not a valid email address",
+      errorDetail: "Notification recipient is not a valid email address",
     };
   }
 
@@ -63,7 +58,7 @@ export function resolveNotificationRecipient():
     return {
       ok: false,
       errorDetail:
-        "ADMIN_EMAIL/CONTACT_EMAIL must be a real mailbox, not a noreply sender identity",
+        "Notification recipient must be a real mailbox, not a noreply sender identity",
     };
   }
 
