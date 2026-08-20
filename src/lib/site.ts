@@ -1,4 +1,4 @@
-const DEFAULT_SITE_URL = "https://belgobase.com";
+const DEFAULT_SITE_URL = "https://belgoleads.com";
 
 function normalizeSiteUrl(url: string): string {
   return url.replace(/\/+$/, "");
@@ -12,4 +12,8 @@ export const isProduction =
   (process.env.NODE_ENV === "production" && process.env.VERCEL_ENV !== "preview");
 
 /** Set to true to show the coming soon page instead of the full landing. */
-export const comingSoonEnabled = true;
+export const comingSoonEnabled = false;
+
+export const contactPhone = "+32 488 13 96 64";
+export const contactPhoneHref = "tel:+32488139664";
+export const contactEmail = "hello@belgoleads.com";

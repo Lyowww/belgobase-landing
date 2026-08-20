@@ -8,12 +8,12 @@ import { SectionReveal } from "@/components/ui/SectionReveal";
 import { useTranslations } from "@/providers/TranslationsProvider";
 
 const logos = [
-  "Lorem ipsum",
-  "Dolor sit amet",
-  "Consectetur elit",
-  "Sed do eiusmod",
-  "Ut labore et",
-  "Dolore magna",
+  "Revenue teams",
+  "Advisory firms",
+  "Recruiters",
+  "Enterprise sales",
+  "Financial services",
+  "Specialist B2B",
 ];
 
 export function SocialProof() {
@@ -23,10 +23,10 @@ export function SocialProof() {
   const staticMarquee = prefersReducedMotion || reduceMotionEffects;
 
   const metrics = [
-    { display: "X+", label: t("socialProof.metricBusinesses") },
-    { display: "XM+", label: t("socialProof.metricCompanies") },
-    { display: "X+", label: t("socialProof.metricLeads") },
-    { display: "X%", label: t("socialProof.metricSatisfaction") },
+    { display: t("socialProof.metric1Value"), label: t("socialProof.metric1Label") },
+    { display: t("socialProof.metric2Value"), label: t("socialProof.metric2Label") },
+    { display: t("socialProof.metric3Value"), label: t("socialProof.metric3Label") },
+    { display: t("socialProof.metric4Value"), label: t("socialProof.metric4Label") },
   ];
 
   const testimonials = [

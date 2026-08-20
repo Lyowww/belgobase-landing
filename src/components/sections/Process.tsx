@@ -13,18 +13,21 @@ export function Process() {
   const steps = [
     {
       number: "01",
+      label: t("process.step1Label"),
       icon: ClipboardList,
       title: t("process.step1Title"),
       description: t("process.step1Description"),
     },
     {
       number: "02",
+      label: t("process.step2Label"),
       icon: Euro,
       title: t("process.step2Title"),
       description: t("process.step2Description"),
     },
     {
       number: "03",
+      label: t("process.step3Label"),
       icon: FileSpreadsheet,
       title: t("process.step3Title"),
       description: t("process.step3Description"),
@@ -42,15 +45,7 @@ export function Process() {
         <SectionHeader
           eyebrow={t("process.eyebrow")}
           title={t("process.title")}
-          description={
-            <>
-              {t("process.descriptionBefore")}
-              <span className="underline decoration-primary underline-offset-4">
-                {t("process.descriptionHighlight")}
-              </span>
-              {t("process.descriptionAfter")}
-            </>
-          }
+          description={t("process.description")}
         />
 
         <div className="relative mx-auto mt-12 max-w-4xl sm:mt-16">
@@ -70,7 +65,7 @@ export function Process() {
                   direction={cardOnLeft ? "left" : "right"}
                 >
                   <div className="flex flex-col gap-3 md:hidden">
-                    <StepLabel number={step.number} align="left" />
+                    <StepLabel number={step.number} label={step.label} align="left" />
                     <ProcessCard step={step} />
                   </div>
 
@@ -79,7 +74,7 @@ export function Process() {
                       {cardOnLeft ? (
                         <ProcessCard step={step} />
                       ) : (
-                        <StepLabel number={step.number} align="right" />
+                        <StepLabel number={step.number} label={step.label} align="right" />
                       )}
                     </div>
 
@@ -91,7 +86,7 @@ export function Process() {
 
                     <div className="flex min-w-0 justify-start">
                       {cardOnLeft ? (
-                        <StepLabel number={step.number} align="left" />
+                        <StepLabel number={step.number} label={step.label} align="left" />
                       ) : (
                         <ProcessCard step={step} />
                       )}
@@ -109,6 +104,7 @@ export function Process() {
 
 type Step = {
   number: string;
+  label: string;
   icon: typeof ClipboardList;
   title: string;
   description: string;
@@ -116,10 +112,12 @@ type Step = {
 
 function StepLabel({
   number,
+  label,
   align,
   className,
 }: {
   number: string;
+  label: string;
   align: "left" | "right";
   className?: string;
 }) {
@@ -134,6 +132,9 @@ function StepLabel({
       <span className="text-sm font-medium tracking-[0.2em] text-primary/50 uppercase sm:text-base">
         Step {number}
       </span>
+      <p className="mt-1 max-w-[12rem] text-sm font-medium text-deep-navy sm:text-base">
+        {label}
+      </p>
     </div>
   );
 }

@@ -101,11 +101,20 @@ export function Hero() {
               variants={item}
               className="mt-5 text-[1.625rem] font-semibold leading-[1.12] tracking-tight text-balance text-deep-navy sm:mt-8 sm:text-4xl sm:leading-[1.08] md:text-5xl lg:text-6xl"
             >
-              {t("hero.titleLine1")}{" "}
-              <span className="text-gradient-accent">{t("hero.titleHighlight")}</span>
-              <br className="hidden sm:block" />
-              <span className="sm:hidden"> </span>
-              {t("hero.titleLine2")}
+              {t("hero.titleLine1")}
+              {t("hero.titleHighlight") ? (
+                <>
+                  {" "}
+                  <span className="text-gradient-accent">{t("hero.titleHighlight")}</span>
+                </>
+              ) : null}
+              {t("hero.titleLine2") ? (
+                <>
+                  <br className="hidden sm:block" />
+                  <span className="sm:hidden"> </span>
+                  {t("hero.titleLine2")}
+                </>
+              ) : null}
             </m.h1>
 
             <m.p
@@ -115,13 +124,20 @@ export function Hero() {
               {t("hero.description")}
             </m.p>
 
-            <m.div variants={item} className="mt-6 sm:mt-8">
+            <m.div variants={item} className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:items-center">
               <MagneticButton
                 href="#contact"
                 className="w-full !min-w-0 !px-6 !py-3.5 !text-sm sm:w-auto sm:!min-w-[15rem] sm:!px-10 sm:!text-base"
               >
-                {t("hero.accessSample")}
+                {t("hero.primaryCta")}
                 <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
+              </MagneticButton>
+              <MagneticButton
+                href="#lead-preview"
+                variant="secondary"
+                className="w-full !min-w-0 !px-6 !py-3.5 !text-sm sm:w-auto sm:!min-w-[15rem] sm:!px-10 sm:!text-base"
+              >
+                {t("hero.secondaryCta")}
               </MagneticButton>
             </m.div>
 

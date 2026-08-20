@@ -39,11 +39,16 @@ export function FinalCTA() {
               transition={{ duration: 0.6, delay: 0.08, ease: smoothEase }}
               className="text-2xl font-semibold tracking-tight text-balance text-deep-navy sm:text-3xl md:text-4xl lg:text-5xl"
             >
-              {t("finalCta.title")}{" "}
-              <span className="font-semibold text-gradient-accent">
-                {t("finalCta.titleHighlight")}
-              </span>{" "}
-              {t("finalCta.titleEnd")}
+              {t("finalCta.title")}
+              {t("finalCta.titleHighlight") ? (
+                <>
+                  {" "}
+                  <span className="font-semibold text-gradient-accent">
+                    {t("finalCta.titleHighlight")}
+                  </span>
+                </>
+              ) : null}
+              {t("finalCta.titleEnd") ? ` ${t("finalCta.titleEnd")}` : null}
             </m.h2>
             <m.p
               initial={{ opacity: 0, y: 16 }}

@@ -61,6 +61,12 @@ export function ProgressiveContactForm({
     }
   }, [state.success]);
 
+  useEffect(() => {
+    if (!state.success && state.errorDetail) {
+      console.error("[contact form]", state.errorDetail);
+    }
+  }, [state.success, state.errorDetail]);
+
   const update = (field: keyof FormValues, value: string | boolean) => {
     setValues((prev) => ({ ...prev, [field]: value }));
     if (formError) setFormError(null);
@@ -274,7 +280,7 @@ export function ProgressiveContactForm({
 
       {!state.success && state.message && !state.errors && (
         <p className="mt-3 text-sm text-red-500" role="alert">
-          {translateError(state.message)}
+          {state.errorDetail ?? translateError(state.message)}
         </p>
       )}
 

@@ -1,6 +1,12 @@
 "use server";
 
-import { Resend } from "resend";
+import { sendDemoRequestEmails } from "@/lib/email/resend";
+import {
+  adminNotificationSubject,
+  buildAdminNotificationHtml,
+  buildCustomerConfirmationHtml,
+  customerConfirmationSubject,
+} from "@/lib/email/templates";
 import {
   contactFormSchema,
   type ContactFormData,
@@ -9,6 +15,8 @@ import {
 export type ContactFormState = {
   success: boolean;
   message: string;
+  /** Sanitized provider/server error for Network + browser console debugging. */
+  errorDetail?: string;
   errors?: Partial<Record<keyof ContactFormData, string>>;
 };
 
@@ -38,51 +46,40 @@ export async function submitContactForm(
     }
     return {
       success: false,
-      message: "fixErrors",
+      message: "formErrors",
       errors: fieldErrors,
     };
   }
 
-  const contactEmail = process.env.CONTACT_EMAIL;
-  const resendApiKey = process.env.RESEND_API_KEY;
-
-  if (!contactEmail || !resendApiKey) {
-    console.error("Missing CONTACT_EMAIL or RESEND_API_KEY environment variables");
-    return {
-      success: false,
-      message: "serviceUnavailable",
-    };
-  }
-
   const data = parsed.data;
+  const fields = {
+    name: data.name,
+    email: data.email,
+    company: data.company,
+    phone: data.phone ?? null,
+    requestType: data.requestType,
+  };
 
-  try {
-    const resend = new Resend(resendApiKey);
+  const result = await sendDemoRequestEmails({
+    customerEmail: data.email,
+    adminSubject: adminNotificationSubject(data.requestType, data.company),
+    adminHtml: buildAdminNotificationHtml(fields),
+    customerSubject: customerConfirmationSubject(data.requestType),
+    customerHtml: buildCustomerConfirmationHtml(fields),
+  });
 
-    await resend.emails.send({
-      from: "BelgoBase <onboarding@resend.dev>",
-      to: contactEmail,
-      replyTo: data.email,
-      subject: `[BelgoBase] 30 Free Leads Request — ${data.company}`,
-      html: `
-        <h2>New 30 Free Leads Request</h2>
-        <p><strong>Name:</strong> ${data.name}</p>
-        <p><strong>Email:</strong> ${data.email}</p>
-        <p><strong>Company:</strong> ${data.company}</p>
-        ${data.phone ? `<p><strong>Phone:</strong> ${data.phone}</p>` : ""}
-        <p><strong>Data usage confirmed:</strong> Yes</p>
-      `,
-    });
-
-    return {
-      success: true,
-      message: "successMessage",
-    };
-  } catch (error) {
-    console.error("Resend error:", error);
+  if (!result.ok) {
+    // errorDetail is safe for logs/devtools (no API keys); keep the user message generic.
+    console.error("[contact] Failed to send emails:", result.errorDetail);
     return {
       success: false,
       message: "errorMessage",
+      errorDetail: result.errorDetail,
     };
   }
+
+  return {
+    success: true,
+    message: "successMessage",
+  };
 }

@@ -1,12 +1,13 @@
 "use client";
 
-import { Menu, X } from "lucide-react";
+import { Menu, Phone, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useThrottledScroll } from "@/hooks/useThrottledScroll";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 import { useTranslations } from "@/providers/TranslationsProvider";
+import { contactPhone, contactPhoneHref } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 type HeaderProps = {
@@ -31,7 +32,7 @@ export function Header({ variant = "default" }: HeaderProps) {
   const navLinks = [
     { label: t("nav.process"), href: "#process" },
     { label: t("nav.industries"), href: "#industries" },
-    { label: t("nav.results"), href: "#results" },
+    { label: t("nav.results"), href: "#database" },
     { label: t("nav.pricing"), href: "#pricing" },
   ];
 
@@ -80,7 +81,15 @@ export function Header({ variant = "default" }: HeaderProps) {
         </a>
 
         {!isComingSoon && (
-          <div className="relative z-10 hidden items-center lg:flex">
+          <div className="relative z-10 hidden items-center gap-3 lg:flex">
+            <a
+              href={contactPhoneHref}
+              className="inline-flex items-center justify-center rounded-full border border-border bg-surface-elevated p-2.5 text-deep-navy transition-colors hover:border-primary/30 hover:bg-surface-hover"
+              aria-label={`${t("nav.questions")} ${contactPhone}`}
+              title={`${t("nav.questions")} ${contactPhone}`}
+            >
+              <Phone className="h-4 w-4 text-primary" />
+            </a>
             <MagneticButton
               href="#contact"
               className="!min-w-[11rem] !px-8 !py-2.5 !text-sm xl:!min-w-[12rem] xl:!px-10"
@@ -132,7 +141,15 @@ export function Header({ variant = "default" }: HeaderProps) {
               {link.label}
             </a>
           ))}
-          <div className="mt-3">
+          <div className="mt-3 space-y-3">
+            <a
+              href={contactPhoneHref}
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center justify-center gap-2 rounded-full border border-border bg-surface-elevated px-4 py-3 text-sm font-medium text-deep-navy transition-colors hover:bg-surface-hover"
+            >
+              <Phone className="h-4 w-4 text-primary" />
+              {t("nav.questions")}
+            </a>
             <MagneticButton href="#contact" className="w-full">
               {t("nav.getFreeLeads")}
             </MagneticButton>
