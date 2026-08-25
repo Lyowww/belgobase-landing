@@ -268,7 +268,7 @@
     "q2": "Where does the data come from?",
     "a2": "BelgoBase is built on official Belgian company data from the KBO, enriched with NBB financial insights and publicly available business information where available.",
     "q3": "Is the data GDPR-compliant?",
-    "a3": "Yes. We provide company data and general business contact information only. No personal data or LinkedIn scraping.",
+    "a3": "Yes. We aim to provide company data and general business contact information in compliance with applicable laws and regulations and have implemented appropriate measures to support compliance.",
     "q4": "Can I choose my own criteria?",
     "a4": "Yes. Filter by sector, region, legal form, company age, revenue, employee count, NACE codes, payroll signals, and more.",
     "q5": "Will I receive an invoice?",
