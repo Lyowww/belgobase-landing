@@ -4,25 +4,12 @@ import type { ReactNode } from "react";
 import { contactEmail, contactPhone, contactPhoneHref } from "@/lib/site";
 import { useTranslations } from "@/providers/TranslationsProvider";
 
-const footerLinks = {
-  product: [
-    { labelKey: "footer.process" as const, href: "#process" },
-    { labelKey: "footer.industries" as const, href: "#industries" },
-    { labelKey: "footer.database" as const, href: "#database" },
-    { labelKey: "footer.pricing" as const, href: "#pricing" },
-  ],
-  legal: [
-    { labelKey: "footer.privacy" as const, href: "/privacy" },
-    { labelKey: "footer.terms" as const, href: "/terms" },
-  ],
-};
-
 function FooterColumn({
   title,
   children,
 }: {
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div>
@@ -56,7 +43,19 @@ function FooterLinkList({
 }
 
 export function Footer() {
-  const { t } = useTranslations();
+  const { locale, t } = useTranslations();
+  const footerLinks = {
+    product: [
+      { labelKey: "footer.process" as const, href: `/${locale}#process` },
+      { labelKey: "footer.industries" as const, href: `/${locale}#industries` },
+      { labelKey: "footer.database" as const, href: `/${locale}#database` },
+      { labelKey: "footer.pricing" as const, href: `/${locale}#pricing` },
+    ],
+    legal: [
+      { labelKey: "footer.privacy" as const, href: `/${locale}/privacy` },
+      { labelKey: "footer.terms" as const, href: `/${locale}/terms` },
+    ],
+  };
 
   return (
     <footer className="border-t border-border bg-surface pt-12 pb-sticky-cta sm:pt-16">
@@ -100,7 +99,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="#faq"
+                  href={`/${locale}#faq`}
                   className="text-sm text-muted transition-colors hover:text-deep-navy"
                 >
                   {t("footer.faq")}
