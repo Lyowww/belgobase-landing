@@ -302,8 +302,10 @@
     "pricing": "Plans",
     "contact": "Contact",
     "faq": "FAQ",
-    "privacy": "Privacy Policy",
-    "terms": "Terms of Service"
+    "privacy": "Privacy Notice",
+    "terms": "B2B Terms",
+    "cookies": "Cookie Notice",
+    "legalNotice": "Legal Notice"
   },
   "form": {
     "nameLabel": "Name",
@@ -325,8 +327,9 @@
     "timelineAsap": "ASAP (24h)",
     "timelineWeek": "This week",
     "timelineMonth": "This month",
-    "confirmLabel": "I agree that my data may be used to respond to my request.",
-    "dataUsageNote": "Your data will only be used to contact you about your demo or inquiry.",
+    "confirmLabel": "I confirm that I have read the privacy notice.",
+    "dataUsageNote": "Acknowledging the notice is not consent. Your data is used only to handle your demo or inquiry.",
+    "privacyLink": "Read the privacy notice.",
     "gdprLabel": "I confirm that I use the requested data for B2B prospecting or analysis, not for direct marketing to consumers.",
     "step1Title": "Let's start with you",
     "step1Subtitle": "We'll use this to schedule your demo.",

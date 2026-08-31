@@ -11,7 +11,6 @@ import {
 } from "react";
 import {
   DEFAULT_THEME,
-  RESOLVED_THEME_COOKIE,
   THEME_COOKIE,
   resolveTheme,
   type ResolvedTheme,
@@ -41,17 +40,25 @@ function applyTheme(resolved: ResolvedTheme) {
 }
 
 function readStoredTheme(): Theme {
-  const stored = localStorage.getItem(THEME_COOKIE) as Theme | null;
+  const entry = document.cookie
+    .split("; ")
+    .find((cookie) => cookie.startsWith(`${THEME_COOKIE}=`));
+  const stored = entry?.slice(THEME_COOKIE.length + 1) as Theme | undefined;
   if (stored === "light" || stored === "dark" || stored === "system") {
     return stored;
   }
   return DEFAULT_THEME;
 }
 
-function syncCookies(theme: Theme, resolved: ResolvedTheme) {
-  const maxAge = 60 * 60 * 24 * 365;
-  document.cookie = `${THEME_COOKIE}=${theme};path=/;max-age=${maxAge};SameSite=Lax`;
-  document.cookie = `${RESOLVED_THEME_COOKIE}=${resolved};path=/;max-age=${maxAge};SameSite=Lax`;
+function persistThemePreference(theme: Theme) {
+  const secure = window.location.protocol === "https:" ? ";Secure" : "";
+  if (theme === "system") {
+    document.cookie = `${THEME_COOKIE}=;path=/;max-age=0;SameSite=Lax${secure}`;
+    return;
+  }
+
+  const maxAge = 60 * 60 * 24 * 180;
+  document.cookie = `${THEME_COOKIE}=${theme};path=/;max-age=${maxAge};SameSite=Lax${secure}`;
 }
 
 type ThemeProviderProps = {
@@ -69,16 +76,17 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   );
 
   useEffect(() => {
-    setThemeState(readStoredTheme());
-    setSystemDark(getSystemTheme() === "dark");
-    setMounted(true);
+    const frame = window.requestAnimationFrame(() => {
+      setThemeState(readStoredTheme());
+      setSystemDark(getSystemTheme() === "dark");
+      setMounted(true);
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   useEffect(() => {
     if (!mounted) return;
     applyTheme(resolvedTheme);
-    localStorage.setItem(THEME_COOKIE, theme);
-    syncCookies(theme, resolvedTheme);
   }, [theme, resolvedTheme, mounted]);
 
   useEffect(() => {
@@ -92,6 +100,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   const setTheme = useCallback((next: Theme) => {
     setThemeState(next);
+    persistThemePreference(next);
   }, []);
 
   const value = useMemo(

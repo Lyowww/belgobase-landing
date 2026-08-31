@@ -39,7 +39,7 @@ export function ProgressiveContactForm({
   variant = "default",
   id,
 }: ProgressiveContactFormProps) {
-  const { t } = useTranslations();
+  const { locale, t } = useTranslations();
   const [state, formAction, isPending] = useActionState(
     submitContactForm,
     initialState,
@@ -53,12 +53,14 @@ export function ProgressiveContactForm({
   const isHero = variant === "hero";
 
   useEffect(() => {
-    if (state.success) {
+    if (!state.success) return;
+    const frame = window.requestAnimationFrame(() => {
       setValues(emptyValues);
       setFormError(null);
       setErrorField(null);
       formRef.current?.reset();
-    }
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [state.success]);
 
   useEffect(() => {
@@ -258,7 +260,15 @@ export function ProgressiveContactForm({
             <span className="text-sm font-medium text-deep-navy">{t("form.confirmLabel")}</span>
           </label>
           <p className="mt-2 pl-7 text-xs leading-relaxed text-muted sm:text-sm">
-            {t("form.dataUsageNote")}
+            {t("form.dataUsageNote")}{" "}
+            <a
+              href={`/${locale}/privacy`}
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-primary underline underline-offset-2"
+            >
+              {t("form.privacyLink")}
+            </a>
           </p>
         </div>
       </div>

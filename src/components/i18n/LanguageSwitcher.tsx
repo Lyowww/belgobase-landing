@@ -99,7 +99,8 @@ export function LanguageSwitcher({
                 role="option"
                 aria-selected={locale === loc}
                 onClick={() => {
-                  document.cookie = `NEXT_LOCALE=${loc};path=/;max-age=31536000;samesite=lax`;
+                  const secure = window.location.protocol === "https:" ? ";Secure" : "";
+                  document.cookie = `NEXT_LOCALE=${loc};path=/;max-age=15552000;SameSite=Lax${secure}`;
                   setOpen(false);
                 }}
                 className={cn(

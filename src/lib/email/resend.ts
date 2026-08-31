@@ -323,11 +323,14 @@ export async function sendDemoRequestEmails(input: {
   }
 
   if (!customerResult.ok) {
-    // Lead is captured; confirmation is secondary — log and still succeed.
     console.error(
       "[email] Customer confirmation failed (admin notification sent):",
       customerResult.errorDetail,
     );
+    return {
+      ok: false,
+      errorDetail: `Customer confirmation failed: ${customerResult.errorDetail}`,
+    };
   }
 
   return { ok: true };

@@ -7,8 +7,10 @@ import { buildCanonicalUrl, buildLanguageAlternates, buildLocalizedPath } from "
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   if (!isLocale(locale)) return {};
-  const title = locale === "nl" ? "Privacyverklaring BelgoBase-pilot v1.0" : "BelgoBase Pilot Privacy Notice - Dutch version controls";
-  const description = locale === "nl" ? "Privacyverklaring voor de zakelijke BelgoBase-pilot, versie 1.0." : "English summary of the BelgoBase pilot privacy notice. The Dutch version 1.0 controls.";
+  const title = locale === "nl" ? "Privacyverklaring | BelgoBase" : "Privacy Notice | BelgoBase";
+  const description = locale === "nl"
+    ? "Hoe NovaVenture Group BV, handelend onder de naam BelgoBase, persoonsgegevens verwerkt en welke rechten betrokkenen hebben."
+    : "Read or download the current BelgoBase privacy notice. The published document is available in Dutch.";
   return {
     title,
     description,

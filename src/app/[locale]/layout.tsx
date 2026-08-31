@@ -11,7 +11,7 @@ import {
   getRequestPathname,
 } from "@/lib/seo/metadata";
 import { comingSoonEnabled, siteUrl } from "@/lib/site";
-import { isResolvedTheme } from "@/lib/theme";
+import { isTheme, THEME_COOKIE } from "@/lib/theme";
 import { MotionProvider } from "@/providers/MotionProvider";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { TranslationsProvider } from "@/providers/TranslationsProvider";
@@ -97,8 +97,8 @@ export default async function LocaleLayout({
 
   const dictionary = await getDictionary(localeParam);
   const cookieStore = await cookies();
-  const resolvedTheme = cookieStore.get("belgobase-resolved")?.value;
-  const isDark = isResolvedTheme(resolvedTheme) && resolvedTheme === "dark";
+  const storedTheme = cookieStore.get(THEME_COOKIE)?.value;
+  const isDark = isTheme(storedTheme) && storedTheme === "dark";
 
   return (
     <html

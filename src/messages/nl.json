@@ -302,8 +302,10 @@
     "pricing": "Plannen",
     "contact": "Contact",
     "faq": "FAQ",
-    "privacy": "Privacybeleid",
-    "terms": "Servicevoorwaarden"
+    "privacy": "Privacyverklaring",
+    "terms": "Algemene voorwaarden",
+    "cookies": "Cookieverklaring",
+    "legalNotice": "Wettelijke vermeldingen"
   },
   "form": {
     "nameLabel": "Naam",
@@ -325,8 +327,9 @@
     "timelineAsap": "Zo snel mogelijk (24u)",
     "timelineWeek": "Deze week",
     "timelineMonth": "Deze maand",
-    "confirmLabel": "Ik ga ermee akkoord dat mijn gegevens worden gebruikt om op mijn aanvraag te reageren.",
-    "dataUsageNote": "Uw gegevens worden alleen gebruikt om contact met u op te nemen over uw demo of aanvraag.",
+    "confirmLabel": "Ik bevestig dat ik kennis heb genomen van de privacyverklaring.",
+    "dataUsageNote": "Kennisname is geen toestemming. Uw gegevens worden alleen gebruikt om uw demo- of contactaanvraag te behandelen.",
+    "privacyLink": "Lees de privacyverklaring.",
     "gdprLabel": "Ik bevestig dat ik de aangevraagde gegevens gebruik voor B2B-prospectie of analyse, niet voor direct marketing aan consumenten.",
     "step1Title": "Laten we beginnen met u",
     "step1Subtitle": "We gebruiken dit om uw demo in te plannen.",

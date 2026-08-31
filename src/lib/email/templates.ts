@@ -1,6 +1,6 @@
 /** Customer-facing brand contact — used only in confirmation emails. */
 const CUSTOMER_EMAIL_SITE_URL = "https://belgobase.com";
-const CUSTOMER_EMAIL_SUPPORT = "david@belgobase.com";
+const CUSTOMER_EMAIL_SUPPORT = "legal@belgobase.be";
 const CUSTOMER_EMAIL_PHONE = "+32 488 13 96 64";
 
 export type DemoRequestEmailFields = {

@@ -54,6 +54,8 @@ export function Footer() {
     legal: [
       { labelKey: "footer.privacy" as const, href: `/${locale}/privacy` },
       { labelKey: "footer.terms" as const, href: `/${locale}/terms` },
+      { labelKey: "footer.cookies" as const, href: `/${locale}/cookies` },
+      { labelKey: "footer.legalNotice" as const, href: `/${locale}/legal` },
     ],
   };
 
