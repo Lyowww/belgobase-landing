@@ -19,8 +19,6 @@ export function Pricing() {
     t("pricing.packageFeature6"),
     t("pricing.packageFeature7"),
     t("pricing.packageFeature8"),
-    t("pricing.packageFeature9"),
-    t("pricing.packageFeature10"),
   ];
 
   return (

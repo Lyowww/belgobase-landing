@@ -35,14 +35,6 @@ const Pricing = dynamic(
   () => import("@/components/sections/Pricing").then((m) => ({ default: m.Pricing })),
   { loading: () => <SectionSkeleton /> },
 );
-const AddOns = dynamic(
-  () => import("@/components/sections/AddOns").then((m) => ({ default: m.AddOns })),
-  { loading: () => <SectionSkeleton /> },
-);
-const Enterprise = dynamic(
-  () => import("@/components/sections/Enterprise").then((m) => ({ default: m.Enterprise })),
-  { loading: () => <SectionSkeleton /> },
-);
 const FAQ = dynamic(
   () => import("@/components/sections/FAQ").then((m) => ({ default: m.FAQ })),
   { loading: () => <SectionSkeleton /> },
@@ -85,12 +77,6 @@ export default function Home() {
         </div>
         <div className="section-lazy section-lazy--pricing">
           <Pricing />
-        </div>
-        <div className="section-lazy section-lazy--default">
-          <AddOns />
-        </div>
-        <div className="section-lazy section-lazy--enterprise">
-          <Enterprise />
         </div>
         <div className="section-lazy section-lazy--faq">
           <FAQ />
