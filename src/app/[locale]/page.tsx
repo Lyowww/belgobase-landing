@@ -35,13 +35,6 @@ const Pricing = dynamic(
   () => import("@/components/sections/Pricing").then((m) => ({ default: m.Pricing })),
   { loading: () => <SectionSkeleton /> },
 );
-const PlanComparison = dynamic(
-  () =>
-    import("@/components/sections/PlanComparison").then((m) => ({
-      default: m.PlanComparison,
-    })),
-  { loading: () => <SectionSkeleton /> },
-);
 const AddOns = dynamic(
   () => import("@/components/sections/AddOns").then((m) => ({ default: m.AddOns })),
   { loading: () => <SectionSkeleton /> },
@@ -92,9 +85,6 @@ export default function Home() {
         </div>
         <div className="section-lazy section-lazy--pricing">
           <Pricing />
-        </div>
-        <div className="section-lazy section-lazy--pricing">
-          <PlanComparison />
         </div>
         <div className="section-lazy section-lazy--default">
           <AddOns />
