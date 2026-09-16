@@ -50,7 +50,7 @@ const copy: Record<Locale, Record<LegalKind, LegalCopy>> = {
     privacy: {
       eyebrow: "Juridisch document",
       title: "Privacyverklaring",
-      intro: "Hier kunt u de volledige privacyverklaring van BelgoBase als PDF lezen of downloaden.",
+      intro: "Hier kunt u de privacyverklaring van BelgoBase lezen of downloaden. De aanvulling hieronder beschrijft Slim Zoeken en optioneel dicteren.",
       publishedLabel: "Gepubliceerd",
       publishedDate: "31 augustus 2026",
       readLabel: "PDF lezen",
@@ -122,7 +122,7 @@ const copy: Record<Locale, Record<LegalKind, LegalCopy>> = {
     privacy: {
       eyebrow: "Legal document",
       title: "Privacy Notice",
-      intro: "You can read or download the complete BelgoBase privacy notice as a PDF below.",
+      intro: "Read or download the BelgoBase privacy notice below. The supplement explains Smart Search and optional dictation.",
       languageNotice: "The currently published and controlling document is available in Dutch.",
       publishedLabel: "Published",
       publishedDate: "31 August 2026",
@@ -228,6 +228,33 @@ export function LegalPage({ locale, kind }: { locale: Locale; kind: LegalKind })
             ))}
           </div>
         </section>
+        {kind === "privacy" && (
+          <section aria-labelledby="ai-privacy-title" className="pb-12 sm:pb-16">
+            <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+              <article className="space-y-5 rounded-3xl border border-border bg-surface p-6 text-base leading-7 text-muted sm:p-8">
+                <h2 id="ai-privacy-title" className="text-2xl font-bold text-deep-navy">
+                  {locale === "nl" ? "Aanvulling: Slim Zoeken en dicteren" : "Supplement: Smart Search and dictation"}
+                </h2>
+                <p className="text-sm">{locale === "nl" ? "16 september 2026 — aanvulling op de privacyverklaring hierboven." : "16 September 2026 — supplement to the privacy notice above."}</p>
+                <p>{locale === "nl"
+                  ? "Wanneer u in Slim Zoeken op Versturen klikt, stuurt BelgoBase uw zoektekst, eerdere zoekvragen in hetzelfde gesprek, de ondersteunde huidige filters en de context van eerdere voorstellen en keuzes via de BelgoBase-server naar OpenAI. Het doel is een filtervoorstel of verduidelijkingsvraag te maken. U controleert het voorstel en start zelf de zoekopdracht. De gewone zoekfilters kunt u ook zonder deze AI-functie gebruiken."
+                  : "When you click Send in Smart Search, BelgoBase sends your search text, earlier queries in the same conversation, supported current filters and the context of previous suggestions and choices to OpenAI through the BelgoBase server. This produces a filter suggestion or clarification question. You review the suggestion and start the search yourself. You can also use the regular search filters without this AI feature."}</p>
+                <p>{locale === "nl"
+                  ? "Dicteren is optioneel. De opname begint bij Spreken. Na Stoppen of na maximaal 60 seconden wordt de opname via BelgoBase naar OpenAI gestuurd om tekst te maken. U kunt de tekst controleren en aanpassen voordat u op Versturen klikt. Neem geen vertrouwelijke of onnodige persoonsgegevens op in uw zoekvraag of opname."
+                  : "Dictation is optional. Recording starts when you click Speak. After Stop, or after a maximum of 60 seconds, the recording is sent through BelgoBase to OpenAI for transcription. You can review and edit the text before clicking Send. Do not include confidential information or unnecessary personal data in your query or recording."}</p>
+                <p>{locale === "nl"
+                  ? "De opname- en transcriptiefuncties verwerken audio tijdelijk in geheugen en slaan deze niet als audiobestand op uw computer of de BelgoBase-server op. BelgoBase registreert technische gegevens voor toegang, werking en verbruiksbewaking, waaronder aanvraagnummer, tijdstip, status en verbruik. Nieuw gesprek wist de gesprekscontext in de app; het verwijdert geen gegevens die al naar OpenAI zijn verstuurd."
+                  : "The recording and transcription functions process audio temporarily in memory and do not save it as an audio file on your computer or the BelgoBase server. BelgoBase records technical data for access, operation and usage monitoring, including request identifier, time, status and usage. New conversation clears the conversation context in the app; it does not delete data already sent to OpenAI."}</p>
+                <p>{locale === "nl"
+                  ? "OpenAI verwerkt de verstuurde gegevens als externe AI-aanbieder. BelgoBase schakelt het bewaren van gegenereerde zoekantwoorden voor later ophalen via de API uit. Dit is geen garantie dat OpenAI geen gegevens bewaart voor bijvoorbeeld misbruikcontrole. De bewaartermijnen verschillen per dienst. Meer informatie: "
+                  : "OpenAI processes the submitted data as an external AI provider. BelgoBase disables storage of generated search responses for later API retrieval. This does not guarantee that OpenAI retains no data for purposes such as abuse monitoring. Retention periods differ by service. More information: "}
+                  <a href="https://developers.openai.com/api/docs/guides/your-data" className="text-primary underline">{locale === "nl" ? "OpenAI: gegevensverwerking en bewaring" : "OpenAI: data controls and retention"}</a>.
+                </p>
+                <p>{locale === "nl" ? "Vragen over deze verwerking of uw privacyrechten: " : "Questions about this processing or your privacy rights: "}<a href="mailto:legal@belgobase.be" className="text-primary underline">legal@belgobase.be</a>.</p>
+              </article>
+            </div>
+          </section>
+        )}
       </main>
 
       <Footer />
