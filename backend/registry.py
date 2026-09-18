@@ -43,6 +43,10 @@ class LicenseRegistry(Protocol):
 
     def get_license(self, license_id: str, now: dt.datetime) -> LicenseRecord: ...
 
+    def find_active_profile_licenses(
+        self, support_email: str, now: dt.datetime
+    ) -> tuple[LicenseRecord, ...]: ...
+
     def count_windows_allocated(
         self, license_id: str, *, connection: sqlite3.Connection | None = None
     ) -> int: ...
@@ -122,6 +126,37 @@ class BelgoBaseLicenseRegistry:
         if not record.is_active(now):
             raise LookupError("license_not_available")
         return record
+
+    def find_active_profile_licenses(
+        self, support_email: str, now: dt.datetime
+    ) -> tuple[LicenseRecord, ...]:
+        """Return every currently active licence bound to this customer email.
+
+        ``license_customer_profiles`` is the central, verified customer binding.
+        The caller must require exactly one result before it may issue an OTP;
+        returning all matches prevents this read path from selecting a licence
+        when an address has become ambiguous.
+        """
+        normalized = str(support_email or "").strip().lower()
+        if not normalized or "@" not in normalized:
+            return ()
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                """
+                SELECT l.license_id, l.customer_id, l.status, l.plan,
+                       l.rights_json, l.max_devices, l.starts_at, l.expires_at,
+                       p.support_email
+                FROM licenses l
+                INNER JOIN license_customer_profiles p ON p.license_id=l.license_id
+                WHERE lower(trim(p.support_email))=?
+                """,
+                (normalized,),
+            ).fetchall()
+        finally:
+            connection.close()
+        records = tuple(self._record(row) for row in rows)
+        return tuple(record for record in records if record.is_active(now))
 
     def count_windows_allocated(
         self, license_id: str, *, connection: sqlite3.Connection | None = None

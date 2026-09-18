@@ -29,6 +29,19 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
     return text.replace(old, new, 1)
 
 
+def patch_registry(text: str) -> str:
+    marker = '''TEXT_PRODUCTION_SOFTWARE = frozenset(
+    {
+        ("64-production", "1.0.0", 99, 47),
+'''
+    replacement = '''TEXT_PRODUCTION_SOFTWARE = frozenset(
+    {
+        ("64-production", "1.0.0", 100, 48),
+        ("64-production", "1.0.0", 99, 47),
+'''
+    return replace_once(text, marker, replacement, "BUILD100 production admission")
+
+
 def patch_api(text: str) -> str:
     text = replace_once(
         text,
@@ -37,6 +50,7 @@ def patch_api(text: str) -> str:
         "from belgobase_web_enrollment_1a import (\n"
         "    WebEnrollmentUnavailable, cancel_web_enrollment,\n"
         "    complete_web_enrollment, load_web_legal_bundle,\n"
+        "    initialize_web_enrollment,\n"
         "    prepare_web_enrollment, project_web_account,\n"
         "    trusted_public_key_from_signing_key,\n"
         "    web_enrollment_document, web_enrollment_preflight,\n"
@@ -120,7 +134,8 @@ def patch_api(text: str) -> str:
         "        self.web_legal_bundle = load_web_legal_bundle(self.legal_dir)\n"
         "        self.web_trusted_public_key_b64 = trusted_public_key_from_signing_key(\n"
         "            self.signing_private_key_path\n"
-        "        )\n",
+        "        )\n"
+        "        initialize_web_enrollment(self.database_path)\n",
         "web legal bundle and trusted receipt key",
     )
     marker = "    def device_activate(\n"
@@ -214,7 +229,7 @@ def patch_runner(text: str) -> str:
 
 
 PATCHERS = {
-    "belgobase_account_registry_56a.py": lambda text: text,
+    "belgobase_account_registry_56a.py": patch_registry,
     "belgobase_account_api_56a.py": patch_api,
     "run_account_service_production.py": patch_runner,
 }

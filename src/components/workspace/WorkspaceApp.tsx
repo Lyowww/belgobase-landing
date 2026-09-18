@@ -5,7 +5,7 @@ import type { Locale } from "@/i18n/config";
 import styles from "./WorkspaceApp.module.css";
 
 type Session = { authenticated?: boolean; csrf?: string; account?: { name?: string; email?: string } };
-type Phase = "checking" | "choice" | "login" | "loginCode" | "enroll" | "enrollCode" | "profile" | "workspace";
+type Phase = "checking" | "login" | "loginCode" | "enroll" | "enrollCode" | "profile" | "workspace";
 type Declaration = "terms_accepted" | "usage_terms_accepted" | "privacy_acknowledged" | "authority_declared";
 type LegalDocument = { document_id: string; title: string; role: "contractual_terms" | "acceptable_use_terms" | "privacy_notice"; version: string; view_url: string; download_url?: string; sha256: string };
 type Details = { company?: { company_type?: string; enterprise_number?: string; legal_name?: string; address?: { street?: string; house_number?: string; postal_code?: string; municipality?: string } }; legal?: { documents?: LegalDocument[]; choice_texts?: Partial<Record<"general_terms" | "usage_terms" | "privacy_notice" | "business_authority", string>> }; preflight_id?: string; preflight_fingerprint?: string };
@@ -15,8 +15,8 @@ const initialDeclarations: Record<Declaration, boolean> = { terms_accepted: fals
 const declarationByRole: Record<LegalDocument["role"], Declaration> = { contractual_terms: "terms_accepted", acceptable_use_terms: "usage_terms_accepted", privacy_notice: "privacy_acknowledged" };
 const text = {
   nl: {
-    title: "BelgoBase online", choose: "Kies hoe je BelgoBase wilt openen.", existing: "Ik heb al BelgoBase", existingHelp: "Meld je aan met het e-mailadres van je account.", new: "Nieuw bij BelgoBase", newHelp: "Schrijf je zakelijke account veilig in.",
-    email: "E-mailadres", license: "Licentiecode bij eerste aanmelding", enrollmentLicense: "BelgoBase-licentiecode", licenseHelp: "Heb je eerder al online aangemeld? Laat dit veld dan leeg.", remember: "Op dit apparaat aangemeld blijven", send: "Code per e-mail ontvangen",
+    title: "BelgoBase online", existing: "Inloggen", existingHelp: "Meld je aan met het e-mailadres van je account.", new: "Nieuw bij BelgoBase", newHelp: "Schrijf je zakelijke account veilig in.", noAccount: "Nog geen account?", createAccount: "Maak een account aan",
+    email: "E-mailadres", license: "Licentiecode (optioneel)", enrollmentLicense: "BelgoBase-licentiecode", licenseHelp: "Heb je al een BelgoBase-account? Dan volstaat je geregistreerde e-mailadres.", remember: "Op dit apparaat aangemeld blijven", send: "Code per e-mail ontvangen",
     codeTitle: "Controleer je e-mail", codeHelp: "Voer de beveiligingscode uit je e-mail in.", code: "Beveiligingscode", login: "Aanmelden", verify: "E-mailadres bevestigen", back: "Terug", otherEmail: "Gebruik een ander e-mailadres",
     profileTitle: "Bevestig je bedrijfsgegevens", profileHelp: "BelgoBase is momenteel beschikbaar voor professionele gebruikers. Zoek je onderneming op en controleer de gegevens voordat je inschrijving wordt voltooid.",
     enterprise: "Ondernemingsnummer (KBO)", find: "Bedrijfsgegevens ophalen", company: "Wettelijke bedrijfsnaam", address: "Adres", name: "Naam van de aanvaarder", function: "Functie van de aanvaarder", read: "Lees document", close: "Sluiten", finish: "Zakelijke inschrijving voltooien",
@@ -24,8 +24,8 @@ const text = {
     generic: "Dit kon niet worden afgerond. Controleer je gegevens en probeer opnieuw.", invalid: "Controleer de ingevulde gegevens.", invalidCode: "De code is ongeldig of verlopen.", enrollmentInvalid: "Je inschrijving is niet meer geldig. Begin opnieuw.", companyMissing: "Deze onderneming werd niet gevonden. Controleer het ondernemingsnummer.", conflict: "Deze licentie is al gekoppeld. Meld je aan met het bestaande e-mailadres.", legal: "Bevestig alle verplichte documenten en gegevens.", devices: "Het maximum aantal actieve apparaten is bereikt.", unavailable: "Aanmelden is tijdelijk niet beschikbaar. Probeer later opnieuw.",
   },
   en: {
-    title: "BelgoBase online", choose: "Choose how you want to open BelgoBase.", existing: "I already use BelgoBase", existingHelp: "Sign in with the email address on your account.", new: "New to BelgoBase", newHelp: "Set up your professional account securely.",
-    email: "Email address", license: "License code for your first sign-in", enrollmentLicense: "BelgoBase license code", licenseHelp: "Already signed in online before? Leave this field empty.", remember: "Keep me signed in on this device", send: "Send email code",
+    title: "BelgoBase online", existing: "Sign in", existingHelp: "Sign in with the email address on your account.", new: "New to BelgoBase", newHelp: "Set up your professional account securely.", noAccount: "No account yet?", createAccount: "Create an account",
+    email: "Email address", license: "License code (optional)", enrollmentLicense: "BelgoBase license code", licenseHelp: "Already have a BelgoBase account? Your registered email address is enough.", remember: "Keep me signed in on this device", send: "Send email code",
     codeTitle: "Check your email", codeHelp: "Enter the security code from your email.", code: "Security code", login: "Sign in", verify: "Confirm email address", back: "Back", otherEmail: "Use a different email address",
     profileTitle: "Confirm your company details", profileHelp: "BelgoBase is currently available to professional users. Find your company and check the details before completing enrolment.",
     enterprise: "Company number (CBE)", find: "Get company details", company: "Legal company name", address: "Address", name: "Name of the person accepting", function: "Role of the person accepting", read: "Read document", close: "Close", finish: "Complete professional enrolment",
@@ -77,17 +77,17 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
     const response = await fetch("/api/web/auth/session", { cache: "no-store", credentials: "same-origin" });
     const value = await json(response);
     if (response.ok && value.authenticated) { setAccount(value.account); setCsrf(value.csrf || ""); setPhase("workspace"); return; }
-    setCsrf(""); setPhase("choice");
+    setCsrf(""); setPhase("login");
   }, []);
   useEffect(() => {
-    const timer = window.setTimeout(() => void loadSession().catch(() => { setError(t.generic); setPhase("choice"); }), 0);
+    const timer = window.setTimeout(() => void loadSession().catch(() => { setError(t.generic); setPhase("login"); }), 0);
     return () => window.clearTimeout(timer);
   }, [loadSession, t.generic]);
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin || event.source !== frame.current?.contentWindow) return;
       if (event.data?.type === "belgobase-web-auth-expired" || event.data?.type === "belgobase-web-logout") {
-        setAccount(undefined); setLicenseCode(""); setChallengeId(""); setCode(""); clearEnrollment(); setError(t.expired); setPhase("choice");
+        setAccount(undefined); setLicenseCode(""); setChallengeId(""); setCode(""); clearEnrollment(); setError(t.expired); setPhase("login");
       }
     };
     window.addEventListener("message", onMessage); return () => window.removeEventListener("message", onMessage);
@@ -148,9 +148,9 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
   }
   async function logout() {
     setBusy(true);
-    try { const { response } = await request("/api/web/auth/logout", {}, csrf); if (!response.ok && response.status !== 401) throw new Error(); setAccount(undefined); setLicenseCode(""); setCsrf(""); setChallengeId(""); setCode(""); clearEnrollment(); setPhase("choice"); } catch { setError(t.generic); } finally { setBusy(false); }
+    try { const { response } = await request("/api/web/auth/logout", {}, csrf); if (!response.ok && response.status !== 401) throw new Error(); setAccount(undefined); setLicenseCode(""); setCsrf(""); setChallengeId(""); setCode(""); clearEnrollment(); setPhase("login"); } catch { setError(t.generic); } finally { setBusy(false); }
   }
-  const back = () => { setError(""); setChallengeId(""); setCode(""); clearEnrollment(); setPhase("choice"); };
+  const back = () => { setError(""); setChallengeId(""); setCode(""); clearEnrollment(); setPhase("login"); };
   const documents = details?.legal?.documents || [];
   const choices = details?.legal?.choice_texts || {};
   const legalReady = documents.length === 3 && ["general_terms", "usage_terms", "privacy_notice", "business_authority"].every((key) => typeof choices[key as keyof typeof choices] === "string" && choices[key as keyof typeof choices]?.trim());
@@ -165,7 +165,6 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
   const codePhase = phase === "loginCode" || phase === "enrollCode";
   return <main className={styles.page}><section className={styles.card} aria-labelledby="app-title">
     <p className={styles.brand}>BelgoBase</p>
-    {phase === "choice" ? <><h1 id="app-title">{t.title}</h1><p className={styles.intro}>{t.choose}</p>{error ? <p role="alert" className={styles.error}>{error}</p> : null}<div className={styles.choiceGrid}><button className={styles.choice} type="button" onClick={() => { setError(""); setPhase("login"); }}><strong>{t.existing}</strong><span>{t.existingHelp}</span></button><button className={styles.choice} type="button" onClick={() => { setError(""); setLicenseCode(""); setPhase("enroll"); }}><strong>{t.new}</strong><span>{t.newHelp}</span></button></div><p className={styles.notice}>{t.consumer}</p></> : null}
     {codePhase ? <><h1 id="app-title">{t.codeTitle}</h1><p className={styles.intro}>{t.codeHelp}</p>{error ? <p role="alert" className={styles.error}>{error}</p> : null}<form className={styles.form} onSubmit={phase === "loginCode" ? verifyLogin : verifyEnrollment}><label>{t.code}<input autoComplete="one-time-code" inputMode="numeric" maxLength={12} required value={code} onChange={(event) => setCode(event.target.value)} /></label><button disabled={busy} type="submit">{phase === "loginCode" ? t.login : t.verify}</button><button className={styles.secondary} disabled={busy} type="button" onClick={back}>{t.otherEmail}</button></form></> : null}
     {phase === "profile" ? <>
       <h1 id="app-title">{t.profileTitle}</h1><p className={styles.intro}>{t.profileHelp}</p>{error ? <p role="alert" className={styles.error}>{error}</p> : null}
@@ -185,7 +184,17 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
       </form> : null}
       <button className={styles.textButton} disabled={busy} type="button" onClick={back}>{t.back}</button>
     </> : null}
-    {phase === "login" || phase === "enroll" ? <><h1 id="app-title">{phase === "login" ? t.existing : t.new}</h1><p className={styles.intro}>{phase === "login" ? t.existingHelp : t.newHelp}</p>{error ? <p role="alert" className={styles.error}>{error}</p> : null}<form className={styles.form} onSubmit={phase === "login" ? startLogin : startEnrollment}><label>{t.email}<input autoComplete="email" required type="email" value={email} onChange={(event) => setEmail(event.target.value)} /></label><label>{phase === "login" ? t.license : t.enrollmentLicense}<input autoComplete="off" required={phase === "enroll"} value={licenseCode} onChange={(event) => setLicenseCode(event.target.value)} />{phase === "login" ? <small>{t.licenseHelp}</small> : null}</label><label className={styles.checkbox}><input checked={remember} type="checkbox" onChange={(event) => setRemember(event.target.checked)} />{t.remember}</label><button disabled={busy} type="submit">{t.send}</button><button className={styles.secondary} disabled={busy} type="button" onClick={back}>{t.back}</button></form></> : null}
+    {phase === "login" || phase === "enroll" ? <>
+      <h1 id="app-title">{phase === "login" ? t.existing : t.new}</h1><p className={styles.intro}>{phase === "login" ? t.existingHelp : t.newHelp}</p>{error ? <p role="alert" className={styles.error}>{error}</p> : null}
+      <form className={styles.form} onSubmit={phase === "login" ? startLogin : startEnrollment}>
+        <label>{t.email}<input autoComplete="email" required type="email" value={email} onChange={(event) => setEmail(event.target.value)} /></label>
+        <label>{phase === "login" ? t.license : t.enrollmentLicense}<input autoComplete="off" required={phase === "enroll"} value={licenseCode} onChange={(event) => setLicenseCode(event.target.value)} />{phase === "login" ? <small>{t.licenseHelp}</small> : null}</label>
+        <label className={styles.checkbox}><input checked={remember} type="checkbox" onChange={(event) => setRemember(event.target.checked)} />{t.remember}</label>
+        <button disabled={busy} type="submit">{t.send}</button>
+        {phase === "enroll" ? <button className={styles.secondary} disabled={busy} type="button" onClick={back}>{t.back}</button> : null}
+      </form>
+      {phase === "login" ? <p className={styles.createAccount}>{t.noAccount} <button type="button" onClick={() => { setError(""); setLicenseCode(""); setPhase("enroll"); }}>{t.createAccount}</button></p> : null}
+    </> : null}
     {documentView ? <div className={styles.modalBackdrop} role="presentation"><section aria-label={documentView.title} aria-modal="true" className={styles.documentModal} role="dialog"><div className={styles.documentHeader}><h2>{documentView.title}</h2><button type="button" onClick={() => setDocumentView(undefined)}>{t.close}</button></div><article className={styles.documentText}>{documentView.text}</article></section></div> : null}
   </section></main>;
 }

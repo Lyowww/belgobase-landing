@@ -423,6 +423,54 @@ class AccountCandidateIntegrationTests(unittest.TestCase):
         self.assertEqual(200, status)
         self.assertEqual(self.license["license_id"], completed["license_id"])
 
+    def test_generated_account_service_initializes_web_schema_before_requests(self) -> None:
+        candidate_temp = tempfile.TemporaryDirectory(dir=ROOT / "tools")
+        self.addCleanup(candidate_temp.cleanup)
+        candidate = generate(Path(candidate_temp.name) / "candidate")
+        sys.path.insert(0, str(candidate))
+        self.addCleanup(lambda: sys.path.remove(str(candidate)))
+        sys.modules.pop("belgobase_web_enrollment_1a", None)
+        sys.modules.pop("belgobase_account_api_56a", None)
+        api = importlib.import_module("belgobase_account_api_56a")
+        api.load_legal_bundle = lambda _path: self.legal
+        api.load_web_legal_bundle = lambda _path: self.legal
+        api.trusted_public_key_from_signing_key = lambda _path: self.trusted_public_key
+        api.AccountApiService(
+            database_path=self.database,
+            pepper_path=self.pepper,
+            legal_dir=Path(self.temp.name),
+            signing_private_key_path=self.private_key,
+            internal_proof="q" * 64,
+        )
+        connection = sqlite3.connect(self.database)
+        try:
+            tables = {
+                row[0]
+                for row in connection.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'web_%'"
+                )
+            }
+        finally:
+            connection.close()
+        self.assertTrue(
+            {
+                "web_account_enrollment_claims",
+                "web_account_legal_preflights",
+                "web_legal_acceptance_receipts",
+            }.issubset(tables)
+        )
+
+    def test_generated_registry_adds_only_build100_admission(self) -> None:
+        candidate_temp = tempfile.TemporaryDirectory(dir=ROOT / "tools")
+        self.addCleanup(candidate_temp.cleanup)
+        candidate = generate(Path(candidate_temp.name) / "candidate")
+        before = (PREIMAGE / "belgobase_account_registry_56a.py").read_text(encoding="utf-8")
+        after = (candidate / "belgobase_account_registry_56a.py").read_text(encoding="utf-8")
+        target = '        ("64-production", "1.0.0", 100, 48),\n'
+        self.assertNotIn(target, before)
+        self.assertEqual(1, after.count(target))
+        self.assertEqual(before, after.replace(target, "", 1))
+
 
 if __name__ == "__main__":
     unittest.main()

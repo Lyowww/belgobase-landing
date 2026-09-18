@@ -272,8 +272,9 @@ try {
     if (response.url().endsWith("/api/web/workspace")) workspaceResponses.push(response);
   });
   await page.goto(`${appOrigin}/nl/app`, { waitUntil: "networkidle" });
-  await page.getByRole("button", { name: "Nieuw bij BelgoBase" }).click();
-  const enrollmentEmail = page.getByLabel("E-mailadres");
+  await page.getByLabel("E-mailadres", { exact: true }).waitFor();
+  await page.getByRole("button", { name: "Maak een account aan" }).click();
+  const enrollmentEmail = page.getByLabel("E-mailadres", { exact: true });
   try {
     await enrollmentEmail.waitFor({ timeout: 10_000 });
   } catch (error) {
@@ -317,11 +318,10 @@ try {
   assert.deepEqual(state.enrollmentComplete.declarations, { terms_accepted: true, usage_terms_accepted: true, privacy_acknowledged: true, authority_declared: true });
   assert.deepEqual(state.enrollmentComplete.choice_texts, enrollmentAutofill().legal.choice_texts, "server legal text is echoed unchanged");
   await page.getByRole("button", { name: "Afmelden" }).click();
-  await page.getByRole("button", { name: "Ik heb al BelgoBase" }).waitFor();
-  await page.getByRole("button", { name: "Ik heb al BelgoBase" }).click();
-  const emailField = page.getByLabel("E-mailadres");
+  await page.getByLabel("E-mailadres", { exact: true }).waitFor();
+  const emailField = page.getByLabel("E-mailadres", { exact: true });
   await emailField.fill("owner@example.test");
-  await page.getByLabel("Licentiecode bij eerste aanmelding").fill("MOCK-LICENSE");
+  await page.getByLabel("Licentiecode (optioneel)").fill("MOCK-LICENSE");
   await page.getByRole("button", { name: "Code per e-mail ontvangen" }).click();
   const codeField = page.getByLabel("Beveiligingscode");
   try {
@@ -391,22 +391,20 @@ try {
   state.expireNextBridge = true;
   await frame.locator("#query").fill("verlopen sessie");
   await frame.locator("#search-form").press("Enter");
-  await page.getByRole("heading", { name: "BelgoBase online" }).waitFor();
+  await page.getByRole("heading", { name: "Inloggen" }).waitFor();
   assert.equal(await page.locator('iframe[title="BelgoBase workspace"]').count(), 0, "401 in iframe returns to parent login");
 
-  await page.getByRole("button", { name: "Ik heb al BelgoBase" }).click();
-  await page.getByLabel("E-mailadres").fill("owner@example.test");
+  await page.getByLabel("E-mailadres", { exact: true }).fill("owner@example.test");
   await page.getByRole("button", { name: "Code per e-mail ontvangen" }).click();
   await page.getByLabel("Beveiligingscode").fill("123456");
   await page.getByRole("button", { name: "Aanmelden" }).click();
   await page.locator('iframe[title="BelgoBase workspace"]').waitFor();
   assert.equal(state.loginCalls.length, 1, "later sign-in uses email only login");
   await page.getByRole("button", { name: "Afmelden" }).click();
-  await page.getByRole("heading", { name: "BelgoBase online" }).waitFor();
+  await page.getByRole("heading", { name: "Inloggen" }).waitFor();
   assert.equal(state.logoutCsrf, csrf, "logout carries the session CSRF token");
   await page.goto(appOrigin + "/en/app", { waitUntil: "networkidle" });
-  await page.getByRole("button", { name: "I already use BelgoBase" }).click();
-  await page.getByLabel("Email address").waitFor();
+  await page.getByLabel("Email address", { exact: true }).waitFor();
   await page.setViewportSize({ width: 768, height: 900 });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, "English tablet sign-in has no horizontal overflow");
 

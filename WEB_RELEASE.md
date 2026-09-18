@@ -77,17 +77,42 @@ De VPS draait beide processen als SYSTEM via Scheduled Tasks:
 
 Behoud alle bestaande wrapperinstellingen. De accountwrapper krijgt alleen de
 gedeelde `BELGOBASE_ACCOUNT_INTERNAL_PROOF_FILE`. De API-wrapper krijgt de
-webinstellingen uit `backend/runtime.py`, eerst met `BELGOBASE_WEB_ENABLED=0`.
+webinstellingen uit `backend/runtime.py`, met `BELGOBASE_WEB_ENABLED=1` na de gebonden preflight.
 Beide gebruiken de bestaande centrale licentiedatabase. Nieuwe secretbestanden
 krijgen uitsluitend passende beheerders-/SYSTEM-toegang; rapporteer alleen
 de openbare Ed25519-mailsleutel. De relay-URL is exact
 `https://www.belgobase.com/api/web/mail`, zonder redirect.
 
-Vóór een serverwijziging moet de dagelijkse NBB-taak afgerond zijn. Op de
-laatste read-only controle liep de echte 31H-kandidaatbouw nog; deze taak wordt
-niet gestopt. Controleer daarna opnieuw actuele bron- én wrapperhashes, maak
-code/configuratieherstelkopieën en een consistente SQLite-back-up. Start eerst
-de accounttaak, dan de API met web uit. Controleer bestaande desktoproutes.
-Publiceer vervolgens de passende website/mailrelay via GitHub, controleer
-mailbezorging en activeer pas daarna webtoegang voor de echte gebruikersproef.
-Verloren tijd of een succesvolle build zijn geen vervanging voor die proef.
+De dagelijkse NBB-taak hoeft niet volledig klaar te zijn voor deze codeplaatsing.
+De onderzochte 31H-fase schrijft stagingdata en kan blijven lopen. De concrete
+deployroute neemt de bestaande `Global\BelgoBaseDailyDataDeployment`-mutex,
+controleert fase en actuele bron-/wrapperhashes opnieuw en weigert een botsing
+met de latere datasetomschakeling. Zij stopt nooit de NBB-taak en wijzigt geen
+datasets. Alleen de twee API/accounttaken worden kort herstart, na code/config-
+herstelkopieën en een consistente SQLite-back-up. De accounttaak start eerst.
+Bij mislukking herstelt de route de code, zonder nieuw aangemaakte klantdata
+met een oude database te overschrijven. De GitHub-publicatie brengt daarna de
+bijpassende website en mailrelay online. Echte mail- en aanmeldproeven blijven
+nodig; een succesvolle build alleen is geen volledige gebruiksproef.
+
+
+## Definitieve serialisatie en releasekandidaat (18 september)
+
+De deploy gebruikt `tools/deploy_web_runtime.py --preflight` en `--deploy`.
+Alleen idle of de expliciet gepinde staging-only 31H-fase is toegestaan.
+Andere dagelijkse fasen, waaronder 40A/41A met promote-gold en API-health,
+blokkeren vóór service-stop. De bestaande cutover wordt met herstelkopie en
+exacte pre/posthash aangepast om maximaal 600 seconden op dezelfde mutex te
+wachten; dit voorkomt een onterechte daily-fout tijdens een korte codeplaatsing.
+De wachtcorrectie blijft behouden bij een webcoderollback. Geen datasets wijzigen.
+
+VPS-kandidaat: generated_vps_candidate_release_ready_auth, manifest
+899508d6c0b6fd6fd7b9aa592c1528ac513157c9cddf56c522531b8bfc99f962.
+Accountkandidaat: generated_account_enrollment_candidate_release_ready_schema_build100,
+manifest 8c229ffe05926fafa2d5a2443ea83c963460055039e7d7f05cf0c1bc25b7ddf0.
+Accountstartup initialiseert de registratietabellen. De met Hoofd afgestemde
+BUILD100/UPDATE48-toelating is toegevoegd met behoud van BUILD99 en alle
+bestaande tuples. Dit publiceert geen desktopclient.
+Bestaande klanten met één actieve centrale e-mailbinding kunnen direct een
+OTP aanvragen zonder opnieuw hun licentiecode in te voeren. Nieuwe accounts
+starten via de link onder het loginformulier en vereisen een licentiecode.

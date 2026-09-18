@@ -11,7 +11,7 @@ from typing import Any
 
 from backend.http_adapter import WebAuthHTTPAdapter
 from backend.mailer import SignedWebsiteMailer
-from backend.registry import LicenseRecord
+from backend.registry import BelgoBaseLicenseRegistry, LicenseRecord
 from backend.web_auth import AuthError, WebAuthConfig, WebAuthService
 from backend.workspace_integration import make_workspace_bridge_handler, workspace_scope_resolver
 
@@ -42,6 +42,7 @@ class FakeRegistry:
     def __init__(self, records: dict[str, LicenseRecord]) -> None:
         self.by_code = dict(records)
         self.by_id = {record.license_id: record for record in records.values()}
+        self.profile_records: dict[str, list[LicenseRecord]] = {}
 
     def validate_claim(self, license_code: str, now: dt.datetime) -> LicenseRecord:
         record = self.by_code.get(license_code)
@@ -54,6 +55,15 @@ class FakeRegistry:
         if record is None:
             raise LookupError("missing")
         return record
+
+    def find_active_profile_licenses(
+        self, support_email: str, now: dt.datetime
+    ) -> tuple[LicenseRecord, ...]:
+        return tuple(
+            record
+            for record in self.profile_records.get(support_email, [])
+            if record.is_active(now)
+        )
 
     def count_windows_allocated(
         self, license_id: str, *, connection: sqlite3.Connection | None = None
@@ -85,6 +95,48 @@ def record(
         starts_at="2026-01-01T00:00:00+00:00",
         expires_at="2027-01-01T00:00:00+00:00",
     )
+
+
+class RegistryProfileLookupTests(unittest.TestCase):
+    def test_reads_only_active_licenses_bound_by_central_profile_email(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            database = Path(temporary) / "central.sqlite3"
+            connection = sqlite3.connect(database)
+            try:
+                connection.executescript(
+                    """
+                    CREATE TABLE licenses (
+                        license_id TEXT PRIMARY KEY, customer_id TEXT NOT NULL,
+                        status TEXT NOT NULL, plan TEXT NOT NULL,
+                        rights_json TEXT NOT NULL, max_devices INTEGER NOT NULL,
+                        starts_at TEXT, expires_at TEXT
+                    );
+                    CREATE TABLE license_customer_profiles (
+                        license_id TEXT PRIMARY KEY, support_email TEXT NOT NULL
+                    );
+                    """
+                )
+                rows = (
+                    ("active-1", "customer-1", "active", "2026-01-01T00:00:00+00:00", "2027-01-01T00:00:00+00:00", "DAVID@NOVAVENTURE.BE"),
+                    ("inactive-1", "customer-2", "revoked", "2026-01-01T00:00:00+00:00", "2027-01-01T00:00:00+00:00", "david@novaventure.be"),
+                )
+                for license_id, customer_id, status, starts_at, expires_at, email in rows:
+                    connection.execute(
+                        "INSERT INTO licenses VALUES(?,?,?,?,?,?,?,?)",
+                        (license_id, customer_id, status, "full", '{"exports":true}', 3, starts_at, expires_at),
+                    )
+                    connection.execute(
+                        "INSERT INTO license_customer_profiles VALUES(?,?)", (license_id, email)
+                    )
+                connection.commit()
+            finally:
+                connection.close()
+            registry = BelgoBaseLicenseRegistry(database, lambda *_args, **_kwargs: {})
+            found = registry.find_active_profile_licenses(
+                "david@novaventure.be", dt.datetime(2026, 9, 18, tzinfo=UTC)
+            )
+            self.assertEqual(["active-1"], [item.license_id for item in found])
+
 
 
 class WebAuthTests(unittest.TestCase):
@@ -160,6 +212,99 @@ class WebAuthTests(unittest.TestCase):
             service.start_claim(
                 "wrong@example.test", "BAD", remember_browser=False, source="198.51.100.2"
             )
+
+    def test_unique_active_central_profile_creates_first_web_membership_after_otp(self) -> None:
+        # This uses the actual registry query shape: the central profile, the
+        # licence record and the web-auth state deliberately share one DB.
+        central = self.registry.by_id["lic-1"]
+        connection = sqlite3.connect(self.database)
+        try:
+            connection.executescript(
+                """
+                CREATE TABLE licenses (
+                    license_id TEXT PRIMARY KEY, customer_id TEXT NOT NULL,
+                    status TEXT NOT NULL, plan TEXT NOT NULL,
+                    rights_json TEXT NOT NULL, max_devices INTEGER NOT NULL,
+                    starts_at TEXT, expires_at TEXT
+                );
+                CREATE TABLE license_customer_profiles (
+                    license_id TEXT PRIMARY KEY, support_email TEXT NOT NULL
+                );
+                """
+            )
+            connection.execute(
+                "INSERT INTO licenses VALUES(?,?,?,?,?,?,?,?)",
+                (
+                    central.license_id, central.customer_id, central.status, central.plan,
+                    json.dumps(central.rights), central.max_devices, central.starts_at,
+                    central.expires_at,
+                ),
+            )
+            connection.execute(
+                "INSERT INTO license_customer_profiles VALUES(?,?)",
+                (central.license_id, central.support_email),
+            )
+            connection.commit()
+        finally:
+            connection.close()
+        service = WebAuthService(
+            WebAuthConfig(state_database=self.database, secret=b"s" * 32),
+            BelgoBaseLicenseRegistry(self.database, lambda *_args, **_kwargs: {}),
+            self.mailer,
+            clock=self.clock,
+        )
+
+        started = service.start_login(
+            " OWNER@EXAMPLE.TEST ", remember_browser=False, source="198.51.100.7"
+        )
+        self.assertEqual("if_account_matches", started["delivery"])
+        self.assertEqual(1, len(self.mailer.messages))
+        grant = service.verify_code(started["challenge_id"], self.mailer.messages[-1]["code"])
+
+        self.assertEqual("lic-1", grant.context.license_id)
+        self.assertEqual("owner@example.test", grant.context.email)
+        connection = sqlite3.connect(self.database)
+        try:
+            self.assertEqual(1, connection.execute("SELECT COUNT(*) FROM web_users").fetchone()[0])
+            self.assertEqual(1, connection.execute("SELECT COUNT(*) FROM web_memberships").fetchone()[0])
+        finally:
+            connection.close()
+
+    def test_profile_login_rejects_mismatched_profile_record_without_otp(self) -> None:
+        self.registry.profile_records["owner@example.test"] = [
+            replace(self.registry.by_id["lic-1"], support_email="other@example.test")
+        ]
+
+        started = self.service.start_login(
+            "owner@example.test", remember_browser=False, source="198.51.100.7"
+        )
+
+        self.assertEqual("if_account_matches", started["delivery"])
+        self.assertEqual([], self.mailer.messages)
+
+    def test_profile_login_rejects_ambiguous_active_licenses_without_otp(self) -> None:
+        second = record("lic-2", "tenant-2", "owner@example.test")
+        self.registry.by_id["lic-2"] = second
+        self.registry.profile_records["owner@example.test"] = [self.registry.by_id["lic-1"], second]
+
+        started = self.service.start_login(
+            "owner@example.test", remember_browser=False, source="198.51.100.7"
+        )
+
+        self.assertEqual("if_account_matches", started["delivery"])
+        self.assertEqual([], self.mailer.messages)
+
+    def test_profile_login_rejects_inactive_license_without_otp(self) -> None:
+        inactive = replace(self.registry.by_id["lic-1"], status="revoked")
+        self.registry.by_id["lic-1"] = inactive
+        self.registry.profile_records["owner@example.test"] = [inactive]
+
+        started = self.service.start_login(
+            "owner@example.test", remember_browser=False, source="198.51.100.7"
+        )
+
+        self.assertEqual("if_account_matches", started["delivery"])
+        self.assertEqual([], self.mailer.messages)
 
     def test_remember_and_short_session_lifetimes(self) -> None:
         short = self.grant(remember=False)

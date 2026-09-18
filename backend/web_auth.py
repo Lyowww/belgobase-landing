@@ -409,16 +409,47 @@ class WebAuthService:
             connection.commit()
         finally:
             connection.close()
-        if len(row) != 1:
-            return self._dummy_start()
-        try:
-            record = self.registry.get_license(str(row[0]["license_id"]), self._now())
-        except Exception:
-            return self._dummy_start()
-        if not record.is_active(self._now()) or not hmac.compare_digest(record.support_email, normalized):
+        now = self._now()
+        if len(row) == 1:
+            try:
+                record = self.registry.get_license(str(row[0]["license_id"]), now)
+            except Exception:
+                return self._dummy_start()
+            if not record.is_active(now) or not hmac.compare_digest(record.support_email, normalized):
+                return self._dummy_start()
+            purpose = "login"
+        elif len(row) == 0:
+            # A desktop customer can have a central, verified customer profile
+            # before the browser has any local membership.  The profile lookup
+            # deliberately returns *all* active matches so this path never
+            # assigns an address shared by multiple licences.
+            try:
+                candidates = self.registry.find_active_profile_licenses(normalized, now)
+            except Exception:
+                return self._dummy_start()
+            if len(candidates) != 1:
+                return self._dummy_start()
+            record = candidates[0]
+            if not hmac.compare_digest(record.support_email, normalized):
+                return self._dummy_start()
+            # A previous local binding, even revoked, must not be replaced by
+            # this convenience flow.  The code-verified claim below remains
+            # the only operation that creates its membership.
+            connection = self._connect()
+            try:
+                existing = connection.execute(
+                    "SELECT 1 FROM web_memberships WHERE license_id=?",
+                    (record.license_id,),
+                ).fetchone()
+            finally:
+                connection.close()
+            if existing is not None:
+                return self._dummy_start()
+            purpose = "claim"
+        else:
             return self._dummy_start()
         return self._create_challenge(
-            purpose="login",
+            purpose=purpose,
             email=normalized,
             license_record=record,
             remember_browser=remember_browser,

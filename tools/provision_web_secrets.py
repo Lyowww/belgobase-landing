@@ -1,4 +1,4 @@
-"""Run on the BelgoBase Windows VPS after the daily task finishes.
+"""Provision isolated authentication secrets on the BelgoBase Windows VPS.
 
 Explicit --create only; never outputs private material or changes live services.
 Only the printed public key may be pinned in the website source.
@@ -20,14 +20,6 @@ ROOT = Path("C:/BelgoBase_App/secrets/web_auth")
 def provision() -> dict:
     if os.name != "nt" or not Path("C:/BelgoBase_App/server").is_dir():
         raise RuntimeError("Run only on the BelgoBase Windows VPS")
-    result = subprocess.run(
-        ["powershell", "-NoProfile", "-Command",
-         "(Get-ScheduledTask -TaskName 'BelgoBase VPS Daily NBB Master Pipeline' -ErrorAction Stop).State.ToString()"],
-        capture_output=True, text=True, check=True,
-    )
-    if result.stdout.strip() != "Ready":
-        return {"status": "WAIT_FOR_DAILY", "changed": False}
-
     from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
     from cryptography.hazmat.primitives import serialization
 
@@ -64,10 +56,14 @@ def provision() -> dict:
         path = paths[kind]
         if not path.exists():
             with path.open("xb") as stream:
-                stream.write(secrets.token_bytes(48))
+                stream.write(secrets.token_urlsafe(48).encode("ascii") if kind == "proof" else secrets.token_bytes(48))
             created.append(kind)
         if path.resolve() != path or len(path.read_bytes()) < 32:
             raise RuntimeError("Invalid existing secret; refusing replacement")
+        if kind == "proof":
+            value = path.read_bytes().decode("ascii").strip()
+            if len(value) < 32 or any(ch.isspace() for ch in value):
+                raise RuntimeError("Internal proof must be an ASCII header token")
     path = paths["mail"]
     if not path.exists():
         key = Ed25519PrivateKey.generate()

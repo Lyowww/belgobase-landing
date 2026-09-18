@@ -14,16 +14,16 @@ spec.loader.exec_module(provisioning)
 
 
 class SecretProvisioningTest(unittest.TestCase):
-    def test_running_daily_changes_nothing(self):
+    def test_refuses_outside_the_vps(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory) / 'secrets'
             with patch.object(provisioning, 'ROOT', root), \
                  patch.object(provisioning.os, 'name', 'nt'), \
-                 patch.object(Path, 'is_dir', return_value=True), \
-                 patch.object(provisioning.subprocess, 'run', return_value=
-                              subprocess.CompletedProcess([], 0, 'Running\n', '')):
-                self.assertEqual(provisioning.provision(),
-                                 {'status': 'WAIT_FOR_DAILY', 'changed': False})
+                 patch.object(Path, 'is_dir', return_value=False), \
+                 patch.object(provisioning.subprocess, 'run') as process:
+                with self.assertRaises(RuntimeError):
+                    provisioning.provision()
+                process.assert_not_called()
             self.assertFalse(root.exists())
 
     def test_repeat_preserves_keys_and_output_is_public_only(self):
@@ -38,6 +38,7 @@ class SecretProvisioningTest(unittest.TestCase):
                  patch.object(provisioning.subprocess, 'run', side_effect=process):
                 first = provisioning.provision()
                 before = {p.name: p.read_bytes() for p in root.iterdir()}
+                self.assertGreaterEqual(len(before['account_internal_proof.bin'].decode('ascii').strip()), 32)
                 second = provisioning.provision()
                 self.assertEqual(before, {p.name: p.read_bytes() for p in root.iterdir()})
             self.assertEqual(first['public_key_spki_der_base64'], second['public_key_spki_der_base64'])
