@@ -17,6 +17,17 @@ function load(language = "fr") {
   return window;
 }
 
+test("company metadata has readable labels without exposing missing-value sentinels", () => {
+  const original={fields:[{label:"Straat nl",value:"Kerkstraat"},{label:"Bus",value:"None"},{label:"Naam",value:"None"},{label:"Kbo postcode",value:"2640"}],metrics:[{value:0}]};
+  const data=load("nl").BelgoBaseWebI18n.enrich("company",original);
+  assert.equal(data.fields[0].label,"Straat (NL)");
+  assert.equal(data.fields[1].value,null);
+  assert.equal(data.fields[2].value,"None", "company identity must remain untouched");
+  assert.equal(data.fields[3].label,"Postcode (KBO)");
+  assert.equal(data.metrics[0].value,0);
+  assert.equal(original.fields[1].value,"None", "source payload stays intact");
+});
+
 test("translates only fixed BUILD100 presentation text", () => {
   const i18n = load("fr").BelgoBasePresentationI18n;
   assert.equal(i18n.translate("Omzet"), "Chiffre d’affaires");

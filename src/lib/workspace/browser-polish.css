@@ -1,0 +1,85 @@
+/* Web presentation only. The frozen desktop payload and data logic stay intact. */
+:root { --muted: #56657a; }
+.top .language-switch, .top label[for="language-switch"], .top .version { display: none; }
+.top { gap: 20px; }
+.top .actions { flex-shrink: 0; }
+.content { max-width: 1500px; }
+.intro p { max-width: 65ch; }
+.ghost { color: #52627a; }
+.ghost:hover:not(:disabled) { background: var(--blue-soft); border-radius: 7px; }
+.filter-grid label, .tool-field { font-size: 13px; }
+.filter-grid input, .filter-grid select, .tool-field input, .tool-field select,
+.tool-field textarea, .tool-search, .dialog-input { border-color: #c4cedc; }
+input::placeholder, textarea::placeholder { color: #65748a; opacity: 1; }
+.search:focus-within { border-color: #7d9ced; box-shadow: 0 0 0 3px #2859df14; }
+.search input:focus-visible { outline: none; }
+.filterline { margin-bottom: 18px; }
+.region-quick { margin-top: 12px; }
+.workbar { gap: 6px 14px; }
+.workbar .ghost { padding: 8px; }
+.results-head h2 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 9px; }
+.results-head h2 span { margin-left: 0; }
+.results-foot { flex-wrap: wrap; }
+.table-context { max-width: 85ch; line-height: 1.6; }
+.company:focus-visible { outline-offset: 6px; border-radius: 4px; }
+.company strong, .meta, .info-row { overflow-wrap: anywhere; }
+.tool-group>summary { color: #244b92; }
+.tool-group>summary:hover { background: #f6f8fc; }
+.segment { flex-wrap: wrap; }
+.dialog-head h2 { min-width: 0; overflow-wrap: anywhere; }
+.dialog-footer { flex-wrap: wrap; }
+.bottom-note { line-height: 1.6; gap: 8px 24px; }
+/* The desktop compact sidebar hid the icon spans as well as the labels. */
+@media (min-width: 761px) and (max-width: 850px) {
+  .side .nav>[data-icon], .side .account>.avatar { display: inline-flex; }
+}
+@media (max-width: 760px) {
+  .shell, .shell.assistant-open { display: block; }
+  .side { display: grid; grid-template-columns: 1fr auto; position: relative; width: 100%; height: auto; padding: 12px 14px 8px; gap: 10px; overflow: visible; }
+  .side .brand { width: auto; padding: 0; justify-content: flex-start; font-size: 18px; }
+  .side .brand>span:last-child { display: inline; }
+  .brand-logo { width: 30px; height: 30px; }
+  .side nav { grid-column: 1 / -1; grid-row: 2; display: flex; gap: 6px; overflow-x: auto; padding: 3px 0 5px; scrollbar-width: thin; }
+  .side nav .nav { width: auto; flex: 0 0 auto; margin: 0; padding: 10px 12px; white-space: nowrap; font-size: 13px; gap: 7px; }
+  .side nav .nav>span { display: inline-flex; overflow-wrap: normal; }
+  .side nav .nav>b { display: inline; }
+  .side nav .side-caption { display: none; }
+  .side-bottom { grid-column: 2; grid-row: 1; border: 0; padding: 0; margin: 0; }
+  .side-bottom .account { display: flex; width: auto; padding: 8px; margin: 0; }
+  .side-bottom .account>span { display: inline; }
+  .side-bottom .account>.avatar, .side-bottom #account-name { display: none; }
+  .side-bottom .account small { color: #c2d0e5; }
+  .nav.active { box-shadow: inset 0 -2px #91b2ff; }
+  .top { position: relative; min-height: 64px; height: auto; padding: 12px 16px; flex-wrap: wrap; gap: 10px; }
+  .crumb { font-size: 12px; flex: 1 1 160px; }
+  .top .actions { margin-left: auto; }
+  .content { padding: 22px 16px; }
+  .intro { margin-bottom: 20px; }
+  .intro h1 { font-size: 28px; line-height: 1.2; }
+  .search input, .tool-field input, .tool-field select, .tool-field textarea,
+  .filter-grid input, .filter-grid select, .tool-search, .dialog-input { font-size: 16px; }
+  .region-quick { gap: 8px; }
+  .region-quick>.small { flex-basis: 100%; }
+  .filterline>.actions { width: 100%; gap: 8px; }
+  .secondary, .ghost, .icon-button, .region-button { min-height: 40px; }
+  .workbar { border-top: 1px solid var(--line); padding-top: 10px; }
+  .workbar .spacer { display: none; }
+  .results-head { padding: 16px; gap: 14px; }
+  .results-head h2 { font-size: 17px; }
+  .results-head .actions { width: 100%; }
+  .table-context { padding: 0 16px 12px; }
+  .empty { padding: 32px 18px; }
+  .results-foot { padding: 14px 16px; }
+  .bottom-note { flex-direction: column; align-items: flex-start; }
+  .kpis { gap: 10px; }
+  .kpi { min-width: 0; padding: 15px; }
+  .kpi-value { font-size: 22px; overflow-wrap: anywhere; }
+  .chart-head { gap: 14px; }
+  .segment button { min-height: 38px; }
+  .assistant-dock { position: fixed; z-index: 50; inset: 0; height: 100dvh; width: 100%; padding: 20px 16px; overflow: auto; overscroll-behavior: contain; }
+  .assistant-dock-head { position: sticky; top: -20px; z-index: 2; background: white; padding: 14px 0; }
+  .assistant-dock .icon-button { min-width: 44px; min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
+}

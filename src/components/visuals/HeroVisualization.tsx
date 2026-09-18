@@ -1,7 +1,7 @@
 "use client";
 
 import { m } from "framer-motion";
-import { Building2, Mail, MapPin, Radar, TrendingUp, Zap } from "lucide-react";
+import { Building2, FileSpreadsheet, Landmark, MapPin, Radar, Zap } from "lucide-react";
 import { useActiveInView } from "@/hooks/useActiveInView";
 import { usePerformanceMode } from "@/hooks/usePerformanceMode";
 import { useTranslations } from "@/providers/TranslationsProvider";
@@ -25,43 +25,39 @@ const connections: [number, number][] = [
   [4, 5],
 ];
 
-const leadCards = [
-  {
-    name: "Lorem ipsum dolor",
-    sector: "Lorem ipsum",
-    revenue: "€X.XM",
-    location: "Lorem ipsum",
-    delay: 0.6,
-    position: "top-[8%] right-[4%] sm:right-[6%]",
-  },
-  {
-    name: "Dolor sit amet",
-    sector: "Consectetur elit",
-    revenue: "€XK",
-    location: "Lorem ipsum",
-    delay: 1,
-    position: "top-[38%] left-[2%] sm:left-[4%]",
-    hideOnMobile: true,
-  },
-  {
-    name: "Sed do eiusmod",
-    sector: "Tempor incididunt",
-    revenue: "€X.XM",
-    location: "Lorem ipsum",
-    delay: 1.4,
-    position: "bottom-[22%] right-[8%] sm:right-[10%]",
-  },
-];
-
 export function HeroVisualization() {
   const { t } = useTranslations();
   const { ref, active } = useActiveInView();
   const { reduceMotionEffects, reduceVisualEffects } = usePerformanceMode();
+  const leadCards = [
+    {
+      delay: 0.6,
+      position: "top-[8%] right-[4%] sm:right-[6%]",
+      name: t("hero.vizCard1Name"),
+      sector: t("hero.vizCard1Sector"),
+      location: t("hero.vizCard1Location"),
+    },
+    {
+      delay: 1,
+      position: "top-[38%] left-[2%] sm:left-[4%]",
+      hideOnMobile: true,
+      name: t("hero.vizCard2Name"),
+      sector: t("hero.vizCard2Sector"),
+      location: t("hero.vizCard2Location"),
+    },
+    {
+      delay: 1.4,
+      position: "bottom-[22%] right-[8%] sm:right-[10%]",
+      name: t("hero.vizCard3Name"),
+      sector: t("hero.vizCard3Sector"),
+      location: t("hero.vizCard3Location"),
+    },
+  ];
 
   const stats = [
-    { label: t("hero.vizCompanies"), value: "~2M", icon: Building2 },
-    { label: t("hero.vizMatchRate"), value: "90%+", icon: TrendingUp },
-    { label: t("hero.vizContacts"), value: "~1M", icon: Mail },
+    { label: t("hero.vizCompanies"), value: "KBO", icon: Building2 },
+    { label: t("hero.vizMatchRate"), value: "NBB", icon: Landmark },
+    { label: t("hero.vizContacts"), value: "Excel", icon: FileSpreadsheet },
   ];
 
   return (
@@ -232,9 +228,11 @@ export function HeroVisualization() {
                   return (
                     <m.circle
                       key={`pulse-${from}-${to}`}
+                      cx={a.x}
+                      cy={a.y}
                       r="0.8"
                       fill="var(--accent-blue)"
-                      initial={{ opacity: 0 }}
+                      initial={{ cx: a.x, cy: a.y, opacity: 0 }}
                       animate={{
                         cx: [a.x, b.x],
                         cy: [a.y, b.y],
@@ -267,7 +265,7 @@ export function HeroVisualization() {
 
             {leadCards.map((card, index) => (
               <m.div
-                key={`${card.name}-${index}`}
+                key={`${card.position}-${index}`}
                 className={`absolute max-w-[calc(100%-1.5rem)] rounded-xl p-2.5 shadow-xl sm:max-w-none sm:p-3 ${
                   reduceVisualEffects
                     ? "border border-border/60 bg-surface/95"
@@ -309,10 +307,7 @@ export function HeroVisualization() {
                     <MapPin className="h-2.5 w-2.5 shrink-0" />
                     <span className="truncate">{card.location}</span>
                   </span>
-                  <span className="flex shrink-0 items-center gap-0.5 font-semibold text-emerald-600 dark:text-emerald-400">
-                    <TrendingUp className="h-2.5 w-2.5" />
-                    {card.revenue}
-                  </span>
+                  <span className="shrink-0 font-semibold text-primary">{t("hero.vizExample")}</span>
                 </div>
               </m.div>
             ))}

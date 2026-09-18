@@ -1,9 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import {
-  DatabaseEstimateForm,
-} from "@/components/forms/DatabaseEstimateForm";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { SectionReveal } from "@/components/ui/SectionReveal";
 import { useTranslations } from "@/providers/TranslationsProvider";
@@ -25,8 +21,6 @@ function StatBox({ label }: { label: string }) {
 
 export function Results() {
   const { t } = useTranslations();
-  const [industry, setIndustry] = useState("");
-
   return (
     <section id="database" className="noise-overlay relative bg-surface py-16 sm:py-24 md:py-32">
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -54,7 +48,12 @@ export function Results() {
             </div>
 
             <div className="border-t border-border px-5 py-6 sm:px-8 sm:py-8">
-              <DatabaseEstimateForm industry={industry} onIndustryChange={setIndustry} />
+              <a
+                href="#contact"
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                {t("database.formSubmit")}
+              </a>
             </div>
           </div>
         </SectionReveal>

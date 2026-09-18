@@ -6,42 +6,7 @@ import { useActiveInView } from "@/hooks/useActiveInView";
 import { usePerformanceMode } from "@/hooks/usePerformanceMode";
 import { useTranslations } from "@/providers/TranslationsProvider";
 
-const orbitNodes = [
-  { role: "CEO", angle: -70, radius: 38, delay: 0.3 },
-  { role: "CFO", angle: -10, radius: 42, delay: 0.45 },
-  { role: "CTO", angle: 50, radius: 36, delay: 0.6 },
-  { role: "VP Sales", angle: 110, radius: 40, delay: 0.75 },
-  { role: "Board", angle: 170, radius: 37, delay: 0.9 },
-  { role: "COO", angle: 230, radius: 41, delay: 1.05 },
-];
-
-const executiveCards = [
-  {
-    name: "Lorem Ipsum",
-    role: "Lorem ipsum",
-    company: "Lorem ipsum dolor",
-    signal: "Lorem ipsum",
-    delay: 0.8,
-    position: "top-[10%] right-[4%] sm:right-[6%]",
-  },
-  {
-    name: "Lorem Ipsum",
-    role: "Dolor sit",
-    company: "Consectetur elit",
-    signal: "Lorem ipsum",
-    delay: 1.1,
-    position: "top-[42%] left-[2%] sm:left-[4%]",
-    hideOnMobile: true,
-  },
-  {
-    name: "Lorem Ipsum",
-    role: "Sed eiusmod",
-    company: "Ut labore et",
-    signal: "Lorem ipsum",
-    delay: 1.4,
-    position: "bottom-[14%] right-[6%] sm:right-[8%]",
-  },
-];
+const orbitNodes = [-70, -10, 50, 110, 170, 230].map((angle, index) => ({ angle, radius: [38, 42, 36, 40, 37, 41][index], delay: 0.3 + index * 0.15 }));
 
 function polarToCartesian(cx: number, cy: number, radius: number, angleDeg: number) {
   const angleRad = (angleDeg * Math.PI) / 180;
@@ -58,9 +23,14 @@ export function EnterpriseVisualization() {
   const hub = { x: 50, y: 50 };
 
   const stats = [
-    { label: t("enterprise.vizExecutives"), value: "X+", icon: UserRound },
-    { label: t("enterprise.vizConnections"), value: "X", icon: Network },
-    { label: t("enterprise.vizDirectLines"), value: "X", icon: Phone },
+    { label: t("enterprise.vizExecutives"), value: "—", icon: UserRound },
+    { label: t("enterprise.vizConnections"), value: "—", icon: Network },
+    { label: t("enterprise.vizDirectLines"), value: "—", icon: Phone },
+  ];
+  const cards = [
+    { delay: 0.8, position: "top-[10%] right-[4%] sm:right-[6%]" },
+    { delay: 1.1, position: "top-[42%] left-[2%] sm:left-[4%]", hideOnMobile: true },
+    { delay: 1.4, position: "bottom-[14%] right-[6%] sm:right-[8%]" },
   ];
 
   const cardSurface = reduceVisualEffects
@@ -166,7 +136,7 @@ export function EnterpriseVisualization() {
                 {orbitNodes.map((node, i) => {
                   const pos = polarToCartesian(hub.x, hub.y, node.radius, node.angle);
                   return (
-                    <g key={node.role}>
+                    <g key={node.angle}>
                       <m.line
                         x1={hub.x}
                         y1={hub.y}
@@ -181,9 +151,11 @@ export function EnterpriseVisualization() {
                       />
                       {active && !reduceMotionEffects && (
                           <m.circle
+                            cx={hub.x}
+                            cy={hub.y}
                             r="0.7"
                             fill="#4DA3FF"
-                            initial={{ opacity: 0 }}
+                            initial={{ cx: hub.x, cy: hub.y, opacity: 0 }}
                             animate={{
                               cx: [hub.x, pos.x],
                               cy: [hub.y, pos.y],
@@ -285,9 +257,9 @@ export function EnterpriseVisualization() {
                 </span>
               </m.div>
 
-              {executiveCards.map((card, index) => (
+              {cards.map((card, index) => (
                 <m.div
-                  key={`${card.role}-${index}`}
+                  key={`${card.position}-${index}`}
                   className={`absolute max-w-[calc(100%-1.5rem)] rounded-xl p-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.35)] sm:max-w-none sm:p-3 ${
                     card.hideOnMobile ? "hidden sm:block" : ""
                   } w-[148px] sm:w-[172px] ${card.position} ${cardSurface}`}
@@ -319,15 +291,15 @@ export function EnterpriseVisualization() {
                     </div>
                     <div className="min-w-0">
                       <p className="truncate text-[11px] font-semibold text-white sm:text-xs">
-                        {card.name}
+                        {t("enterprise.vizTarget")}
                       </p>
-                      <p className="truncate text-[10px] text-white/50">{card.role}</p>
+                      <p className="truncate text-[10px] text-white/50">{t("enterprise.vizExecutives")}</p>
                     </div>
                   </div>
                   <div className="mt-2 flex items-center justify-between gap-1 text-[10px]">
-                    <span className="truncate text-white/45">{card.company}</span>
+                    <span className="truncate text-white/45">{t("enterprise.networkLabel")}</span>
                     <span className="shrink-0 rounded-full bg-accent/15 px-1.5 py-0.5 font-medium text-accent">
-                      {card.signal}
+                      {t("enterprise.vizLive")}
                     </span>
                   </div>
                 </m.div>

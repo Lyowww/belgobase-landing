@@ -1,26 +1,12 @@
 "use client";
 
-import { m, useReducedMotion } from "framer-motion";
-import { usePerformanceMode } from "@/hooks/usePerformanceMode";
-import { Star, Quote } from "lucide-react";
+import { m } from "framer-motion";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { SectionReveal } from "@/components/ui/SectionReveal";
 import { useTranslations } from "@/providers/TranslationsProvider";
 
-const logos = [
-  "Revenue teams",
-  "Advisory firms",
-  "Recruiters",
-  "Enterprise sales",
-  "Financial services",
-  "Specialist B2B",
-];
-
 export function SocialProof() {
   const { t } = useTranslations();
-  const prefersReducedMotion = useReducedMotion();
-  const { reduceMotionEffects } = usePerformanceMode();
-  const staticMarquee = prefersReducedMotion || reduceMotionEffects;
 
   const metrics = [
     { display: t("socialProof.metric1Value"), label: t("socialProof.metric1Label") },
@@ -34,19 +20,16 @@ export function SocialProof() {
       quote: t("socialProof.testimonial1Quote"),
       author: t("socialProof.testimonial1Author"),
       role: t("socialProof.testimonial1Role"),
-      rating: 5,
     },
     {
       quote: t("socialProof.testimonial2Quote"),
       author: t("socialProof.testimonial2Author"),
       role: t("socialProof.testimonial2Role"),
-      rating: 5,
     },
     {
       quote: t("socialProof.testimonial3Quote"),
       author: t("socialProof.testimonial3Author"),
       role: t("socialProof.testimonial3Role"),
-      rating: 5,
     },
   ];
 
@@ -74,38 +57,6 @@ export function SocialProof() {
           ))}
         </div>
 
-        <SectionReveal>
-          <div className="logo-marquee-mask relative mb-10 overflow-hidden sm:mb-16">
-            {staticMarquee ? (
-              <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4 opacity-60 sm:gap-x-10">
-                {logos.map((logo) => (
-                  <span
-                    key={logo}
-                    className="text-xs font-medium tracking-wide text-deep-navy/50 uppercase sm:text-sm"
-                  >
-                    {logo}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <m.div
-                animate={{ x: ["0%", "-50%"] }}
-                transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
-                className="flex w-max items-center gap-x-10 sm:gap-x-16"
-              >
-                {[...logos, ...logos].map((logo, i) => (
-                  <span
-                    key={`${logo}-${i}`}
-                    className="shrink-0 text-xs font-medium tracking-wide text-deep-navy/50 uppercase sm:text-sm"
-                  >
-                    {logo}
-                  </span>
-                ))}
-              </m.div>
-            )}
-          </div>
-        </SectionReveal>
-
         <div className="grid gap-6 md:grid-cols-3">
           {testimonials.map((testimonial, i) => (
             <SectionReveal key={i} delay={i * 0.15}>
@@ -114,17 +65,8 @@ export function SocialProof() {
                 transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                 className="gradient-border group h-full rounded-2xl p-5 sm:p-6"
               >
-                <Quote className="mb-4 h-8 w-8 text-primary/20" />
-                <div className="mb-4 flex gap-0.5">
-                  {Array.from({ length: testimonial.rating }).map((_, j) => (
-                    <Star
-                      key={j}
-                      className="h-4 w-4 fill-amber-400 text-amber-400"
-                    />
-                  ))}
-                </div>
                 <p className="mb-6 text-sm leading-relaxed text-muted">
-                  &ldquo;{testimonial.quote}&rdquo;
+                  {testimonial.quote}
                 </p>
                 <div>
                   <p className="text-sm font-semibold text-deep-navy">

@@ -2,6 +2,7 @@
 
 import { Menu, Phone, X } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useThrottledScroll } from "@/hooks/useThrottledScroll";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
@@ -73,11 +74,17 @@ export function Header({ variant = "default" }: HeaderProps) {
               window.scrollTo({ top: 0, behavior: "smooth" });
             }
           }}
+          aria-label="BelgoBase"
           className="relative z-10 flex min-w-0 shrink items-center gap-2"
         >
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary shadow-lg shadow-primary/25 sm:h-8 sm:w-8">
-            <span className="text-xs font-bold text-white sm:text-sm">B</span>
-          </div>
+          <Image
+            src="/brand/belgobase-bb-logo.png"
+            alt=""
+            aria-hidden="true"
+            width={32}
+            height={32}
+            className="h-7 w-7 shrink-0 rounded-lg shadow-lg shadow-primary/25 sm:h-8 sm:w-8"
+          />
           <span className="truncate text-base font-semibold tracking-tight text-deep-navy sm:text-lg">
             BelgoBase
           </span>
@@ -86,7 +93,7 @@ export function Header({ variant = "default" }: HeaderProps) {
         {!isComingSoon && (
           <div className="relative z-10 hidden items-center gap-3 lg:flex">
             <Link href={`/${locale}/app`} className="rounded-full border border-border px-4 py-2.5 text-sm font-semibold text-deep-navy transition-colors hover:border-primary hover:text-primary">
-              {locale === "nl" ? "Inloggen" : "Sign in"}
+              {t("nav.signIn")}
             </Link>
             <a
               href={contactPhoneHref}
@@ -149,7 +156,7 @@ export function Header({ variant = "default" }: HeaderProps) {
           ))}
           <div className="mt-3 space-y-3">
             <Link href={`/${locale}/app`} onClick={() => setMobileOpen(false)} className="flex items-center justify-center rounded-full border border-primary px-4 py-3 text-sm font-semibold text-primary">
-              {locale === "nl" ? "BelgoBase openen" : "Open BelgoBase"}
+              {t("nav.openApp")}
             </Link>
             <a
               href={contactPhoneHref}

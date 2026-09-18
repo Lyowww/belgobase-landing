@@ -15,52 +15,17 @@ import { usePerformanceMode } from "@/hooks/usePerformanceMode";
 import { useTranslations } from "@/providers/TranslationsProvider";
 import { smoothEase } from "@/lib/motion";
 
-const sampleRows = [
-  {
-    name: "Lorem ipsum dolor",
-    vat: "BE X.XXX.XXX",
-    sector: "XX.XX - Lorem ipsum",
-    city: "Lorem ipsum",
-    email: "lorem@ipsum.com",
-    phone: "+X XX XXX XXXX",
-    match: 75,
-    matchLabel: "X",
-    initials: "LI",
-  },
-  {
-    name: "Dolor sit amet",
-    vat: "BE X.XXX.XXX",
-    sector: "XX.XX - Consectetur",
-    city: "Lorem ipsum",
-    email: "lorem@ipsum.com",
-    phone: "+X XX XXX XXXX",
-    match: 75,
-    matchLabel: "X",
-    initials: "DS",
-  },
-  {
-    name: "Consectetur elit",
-    vat: "BE X.XXX.XXX",
-    sector: "XX.XX - Adipiscing",
-    city: "Lorem ipsum",
-    email: "lorem@ipsum.com",
-    phone: "+X XX XXX XXXX",
-    match: 75,
-    matchLabel: "X",
-    initials: "CE",
-  },
-  {
-    name: "Sed do eiusmod",
-    vat: "BE X.XXX.XXX",
-    sector: "XX.XX - Tempor",
-    city: "Lorem ipsum",
-    email: "lorem@ipsum.com",
-    phone: "+X XX XXX XXXX",
-    match: 75,
-    matchLabel: "X",
-    initials: "SD",
-  },
-];
+type SampleRow = {
+  name: string;
+  vat: string;
+  sector: string;
+  city: string;
+  email: string;
+  phone: string;
+  match: number;
+  matchLabel: string;
+  initials: string;
+};
 
 function MatchRing({
   match,
@@ -116,7 +81,7 @@ function MatchRing({
   );
 }
 
-function LeadCard({ row, index }: { row: (typeof sampleRows)[0]; index: number }) {
+function LeadCard({ row, index }: { row: SampleRow; index: number }) {
   return (
     <m.article
       initial={{ opacity: 0, y: 16 }}
@@ -167,6 +132,17 @@ function LeadCard({ row, index }: { row: (typeof sampleRows)[0]; index: number }
 export function LeadExplorerVisualization() {
   const { t } = useTranslations();
   const { reduceMotionEffects, reduceVisualEffects } = usePerformanceMode();
+  const sampleRows: SampleRow[] = ["A", "B", "C", "D"].map((letter) => ({
+    name: `${t("leadPreview.tableCompany")} ${letter}`,
+    vat: "BE 0XX.XXX.XXX",
+    sector: t("leadPreview.tableSector"),
+    city: "—",
+    email: "—",
+    phone: "—",
+    match: 0,
+    matchLabel: "—",
+    initials: letter,
+  }));
 
   const stats = [
     { label: t("leadPreview.statFilters"), value: "—", icon: Filter },

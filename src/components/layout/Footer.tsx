@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Image from "next/image";
 import { contactEmail, contactPhone, contactPhoneHref } from "@/lib/site";
 import { useTranslations } from "@/providers/TranslationsProvider";
 
@@ -65,9 +66,14 @@ export function Footer() {
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,minmax(0,1fr))] lg:gap-12">
           <div className="sm:col-span-2 lg:col-span-1">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shadow-md shadow-primary/20">
-                <span className="text-sm font-bold text-white">B</span>
-              </div>
+              <Image
+                src="/brand/belgobase-bb-logo.png"
+                alt=""
+                aria-hidden="true"
+                width={32}
+                height={32}
+                className="h-8 w-8 shrink-0 rounded-lg shadow-md shadow-primary/20"
+              />
               <span className="text-base font-semibold text-deep-navy">BelgoBase</span>
             </div>
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted">

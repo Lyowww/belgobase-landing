@@ -130,7 +130,7 @@ function StepLabel({
       )}
     >
       <span className="text-sm font-medium tracking-[0.2em] text-primary/50 uppercase sm:text-base">
-        Step {number}
+        {number} · {label}
       </span>
       <p className="mt-1 max-w-[12rem] text-sm font-medium text-deep-navy sm:text-base">
         {label}

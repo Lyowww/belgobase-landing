@@ -1,6 +1,6 @@
 "use client";
 
-import { m, useInView, useReducedMotion } from "framer-motion";
+import { m, useInView } from "framer-motion";
 import { useRef, type ReactNode } from "react";
 import { usePerformanceMode } from "@/hooks/usePerformanceMode";
 import { cn } from "@/lib/utils";
@@ -27,8 +27,7 @@ export function SectionReveal({
 }: SectionRevealProps) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-80px" });
-  const prefersReducedMotion = useReducedMotion();
-  const { isMobile } = usePerformanceMode();
+  const { isMobile, prefersReducedMotion } = usePerformanceMode();
   const base = offsets[direction];
   const offset = isMobile
     ? { x: base.x * 0.5, y: base.y * 0.5 }

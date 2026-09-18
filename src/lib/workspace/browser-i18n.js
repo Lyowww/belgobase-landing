@@ -20,8 +20,8 @@
   const translate=(value, key, selectedLanguage=language()) => {
     if (typeof value!=="string") return value;
     const nl=canonical.get(value)||value;
-    if (selectedLanguage==="nl") return nl;
     const keyed=key && catalog._KEY_LABELS[key];
+    if (selectedLanguage==="nl") return keyed?.[0] || nl;
     if (keyed) return keyed[selectedLanguage==="fr"?1:2] || value;
     const entry=entryFor(nl);
     return entry?.[selectedLanguage==="fr"?0:1] || value;
@@ -39,6 +39,16 @@
     }
     if (method!=="workspace_data" && method!=="company" && method!=="compare_companies" && method!=="account_action") return result;
     const copy=structuredClone(result);
+    // The web projection supplies legacy humanized field keys ("Straat nl").
+    // Relabel known metadata only; never rewrite company names or source values.
+    if (method==="company" && Array.isArray(copy.fields)) {
+      copy.fields=copy.fields.map(field=>{
+        const key=field.key || String(field.label||"").toLowerCase().replaceAll(" ","_");
+        const label=catalog._KEY_LABELS[key] ? translate(field.label,key,selectedLanguage) : field.label;
+        const missingAddress=["bus","straat_nl","straat_fr","huisnummer","kbo_postcode","gemeente_nl","gemeente_fr"].includes(key) && ["None","null","NaN"].includes(field.value);
+        return {...field,label,...(missingAddress?{value:null}:{})};
+      });
+    }
     const visit=(value,key)=>{
       if (!value || typeof value!=="object") return;
       if (Array.isArray(value)) { value.forEach(item=>visit(item,key)); return; }

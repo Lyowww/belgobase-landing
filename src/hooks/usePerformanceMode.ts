@@ -44,7 +44,15 @@ function readMode(prefersReducedMotion: boolean | null): PerformanceMode {
 
 export function usePerformanceMode(): PerformanceMode {
   const prefersReducedMotion = useReducedMotion();
-  const [mode, setMode] = useState(() => readMode(prefersReducedMotion));
+  // The first client render must match the server. Read device preferences
+  // after hydration; otherwise mobile layouts start with mismatched styles.
+  const [mode, setMode] = useState<PerformanceMode>({
+    prefersReducedMotion: false,
+    isMobile: false,
+    isTouch: false,
+    reduceMotionEffects: false,
+    reduceVisualEffects: false,
+  });
 
   useEffect(() => {
     const mobileMq = window.matchMedia(MOBILE_QUERY);

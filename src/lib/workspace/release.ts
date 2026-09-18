@@ -10,6 +10,7 @@ export async function workspaceRelease() {
     readFile(path.join(root, "assets/premium_i18n.js")),
     readFile(path.join(root, "browser-i18n.js")),
     readFile(path.join(root, "browser-adapter.js")),
+    readFile(path.join(root, "browser-polish.css")),
   ]);
   const hash = createHash("sha256");
   for (const file of files) hash.update(file);

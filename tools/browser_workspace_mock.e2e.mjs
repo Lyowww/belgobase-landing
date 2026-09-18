@@ -113,8 +113,8 @@ function company() {
     ok: true,
     company: { number: "0123456789", name: "Voorbeeld Bouw BV", city: "Gent", postcode: "9000", nace: "41201", status: "AC", legal_form: "BV", revenue: 1250000, profit: 145000, fte: 12, year: 2024 },
     fields: [{ label: "Adres", value: "Voorbeeldstraat 1, 9000 Gent" }, { label: "Activiteit", value: "Algemene bouwwerken" }],
-    metrics: [{ key: "revenue", label: "Omzet", value: 1250000, unit: "ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬", year: 2024, note: "reported" }, { key: "profit", label: "Resultaat", value: 145000, unit: "ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬", year: 2024, note: "reported" }, { key: "fte", label: "Personeel", value: 12, unit: "VTE", year: 2024, note: "reported" }],
-    history: { years: [2023, 2024], series: { revenue: [980000, 1250000], profit: [100000, 145000], fte: [10, 12], assets: [400000, 510000] }, label: "FinanciÃƒÆ’Ã‚Â«le evolutie", note: "Mock bronjaren." },
+    metrics: [{ key: "revenue", label: "Omzet", value: 1250000, unit: "€", year: 2024, note: "reported" }, { key: "profit", label: "Resultaat", value: 145000, unit: "€", year: 2024, note: "reported" }, { key: "fte", label: "Personeel", value: 12, unit: "VTE", year: 2024, note: "reported" }],
+    history: { years: [2023, 2024], series: { revenue: [980000, 1250000], profit: [100000, 145000], fte: [10, 12], assets: [400000, 510000] }, label: "Financi\u00eble evolutie", note: "Mock bronjaren." },
     financial: [{ label: "Omzet", value: 1250000, year: 2024, status: "reported", source: "Mock bron", explanation: "" }],
   };
 }
@@ -296,7 +296,7 @@ try {
   await page.getByLabel("Beveiligingscode").fill("123456");
   await page.getByRole("button", { name: "E-mailadres bevestigen" }).click();
   await page.getByRole("heading", { name: "Bevestig je bedrijfsgegevens" }).waitFor();
-  await page.getByLabel("Ondernemingsnummer (KBO)").fill("0123456789");
+  await page.getByLabel("Ondernemingsnummer (KBO)").fill("BE 0123.456.789");
   await page.getByRole("button", { name: "Bedrijfsgegevens ophalen" }).click();
   await page.getByLabel("Wettelijke bedrijfsnaam").waitFor();
   assert.equal(await page.getByLabel("Wettelijke bedrijfsnaam").inputValue(), "Voorbeeld Bouw BV", "KBO autofill remains editable");
@@ -371,15 +371,15 @@ try {
   assert.ok(state.bridgeCalls.some((call) => call.method === "ai_wallet"), "wallet reads the server snapshot through the bridge");
   const languageRequest = page.waitForRequest((request) => request.url().endsWith("/api/web/bridge/set_language"));
   const languageResponse = page.waitForResponse((response) => response.url().endsWith("/api/web/bridge/set_language"));
-  await frame.locator("#language-switch").selectOption("fr");
+  await page.getByRole("combobox", { name: "Taal / Language / Langue", exact: true }).selectOption("fr");
   await languageRequest;
   await languageResponse;
   assert.equal(await frame.locator("#language-switch").inputValue(), "fr", "the selected workspace language changes immediately");
   assert.ok(state.bridgeCalls.some((call) => call.method === "set_language" && call.payload.language === "fr"), "language preference is persisted through the bridge");
   assert.notEqual(await frame.locator("#new-search").innerText(), "Nieuwe zoekopdracht", "French changes visible labels, not just the dropdown");
-  await frame.locator("#language-switch").selectOption("en");
+  await page.getByRole("combobox", { name: "Taal / Language / Langue", exact: true }).selectOption("en");
   await frame.locator("#new-search").getByText("New search", { exact: true }).waitFor();
-  await frame.locator("#language-switch").selectOption("nl");
+  await page.getByRole("combobox", { name: "Taal / Language / Langue", exact: true }).selectOption("nl");
   await frame.locator("#new-search").getByText("Nieuwe zoekopdracht", { exact: true }).waitFor();
   await frame.locator("#assistant-close").click();
   await frame.locator("#query").waitFor();
@@ -393,11 +393,23 @@ try {
   await frame.getByRole("heading", { name: "Voorbeeld Bouw BV" }).waitFor();
   assert.ok(state.bridgeCalls.some((call) => call.method === "company"), "company detail reached the bridge");
   for (const [language, revenue] of [["fr", "Chiffre d’affaires"], ["en", "Revenue"], ["nl", "Omzet"]]) {
-    await frame.locator("#language-switch").selectOption(language);
+    await page.getByRole("combobox", { name: "Taal / Language / Langue", exact: true }).selectOption(language);
     assert.equal(await frame.locator('[data-metric="revenue"]').innerText(), revenue, "financial chart labels follow selected language");
     assert.equal(await frame.getByRole("heading", { name: "Voorbeeld Bouw BV" }).count(), 1, "company identity is never translated");
   }
   await page.screenshot({ path: screenshotPath, fullPage: true });
+  await page.getByRole("button", { name: "Account sluiten", exact: true }).click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  assert.equal(await frame.locator('body').evaluate(el => el.scrollWidth <= innerWidth), true, 'mobile workspace fits viewport');
+  assert.equal(await frame.locator('[data-view="search"] [data-i18n="nav.companies"]').isVisible(), true, 'mobile navigation has readable labels');
+  await page.screenshot({ path: path.join(artifactDirectory, 'mobile-dossier.png'), fullPage: true });
+  await frame.locator('#assistant-nav').click();
+  const assistantBox = await frame.locator('#assistant-dock').boundingBox();
+  assert.ok(assistantBox && assistantBox.width >= 380 && assistantBox.height > 400, 'mobile assistant opens as usable full-width panel: '+JSON.stringify(assistantBox));
+  await page.screenshot({ path: path.join(artifactDirectory, 'mobile-assistant.png'), fullPage: true });
+  await frame.locator('#assistant-close').click();
+  await page.setViewportSize({ width: 1440, height: 900 });
+
 
   await frame.locator("#back").click();
   const downloadPromise = page.waitForEvent("download");
@@ -436,6 +448,21 @@ try {
   await page.setViewportSize({ width: 768, height: 900 });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, "English tablet sign-in has no horizontal overflow");
 
+  const marketingErrors=[];
+  page.on('pageerror', error=>marketingErrors.push(error.message));
+  page.on('console', message=>{if(message.type()==='error') marketingErrors.push(message.text());});
+  for (const language of ['nl','en']) {
+    await page.goto(appOrigin + '/' + language, {waitUntil: 'networkidle'});
+    assert.doesNotMatch(await page.locator('main').innerText(), /Lorem ipsum|Dolor sit amet/);
+    await page.setViewportSize({width:390,height:844});
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'marketing mobile width '+language);
+    await page.screenshot({path:path.join(artifactDirectory,'marketing-'+language+'-mobile.png')});
+    await page.setViewportSize({width:1440,height:900});
+    await page.screenshot({path:path.join(artifactDirectory,'marketing-'+language+'-desktop.png')});
+  }
+
+  await writeFile(path.join(artifactDirectory,"marketing-errors.json"),JSON.stringify(marketingErrors,null,2));
+  assert.equal(marketingErrors.length,0,"marketing renders without browser errors; see marketing-errors.json");
   console.log(JSON.stringify({ ok: true, enrollmentScreenshot: enrollmentScreenshotPath, documentScreenshot: documentScreenshotPath, screenshot: screenshotPath, bridgeMethods: state.bridgeCalls.map((call) => call.method), version: release }, null, 2));
   await context.close();
 } finally {
