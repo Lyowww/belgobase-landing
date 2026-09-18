@@ -5,7 +5,7 @@ import { buildCanonicalUrl, buildLanguageAlternates, buildLocalizedPath } from "
 
 const LOCALE_APP_DIR = path.join(process.cwd(), "src/app/[locale]");
 
-const IGNORED_ROUTE_DIRS = new Set(["api"]);
+const IGNORED_ROUTE_DIRS = new Set(["api", "app"]);
 
 function discoverRouteSuffixes(dir: string, prefix = ""): string[] {
   const routes: string[] = [];

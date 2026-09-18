@@ -1,0 +1,2861 @@
+{
+  "provenance": {
+    "baseline": "BUILD98_UPDATE46_FINAL3",
+    "sha256": "9e7c6b54a74fa041f46011a2366fc9f930764aca21a10407f07042361f912ff9"
+  },
+  "filter_labels": {
+    "naam": "Bedrijfsnaam bevat",
+    "ondernemingsnummer": "Ondernemingsnummer",
+    "kbo_status": "KBO-status",
+    "juridical_form": "Rechtsvorm opnemen",
+    "juridical_form_exclude": "Rechtsvorm uitsluiten",
+    "kbo_postcode": "Postcodes opnemen",
+    "kbo_postcode_exclude": "Postcodes uitsluiten",
+    "gemeente_nl": "Gemeente",
+    "gemeente_fr": "Gemeente (Frans)",
+    "nace_version": "NACE-versie",
+    "gemeente_nl_match": "Gemeenteselectie",
+    "gemeente_fr_match": "Gemeenteselectie (Frans)",
+    "jaar_exact": "NBB-bronjaar",
+    "jaar_min": "NBB-bronjaar vanaf",
+    "jaar_max": "NBB-bronjaar tot",
+    "latest_only": "Alleen laatste NBB-record",
+    "financial_summary_status": "Financiële verrijking"
+  },
+  "filter_schema": {
+    "fields": [
+      {
+        "key": "activity_classification",
+        "label": "activity classification",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "activity_group",
+        "label": "activity group",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "adres_missing_mode",
+        "label": "adres missing mode",
+        "group": "geavanceerd",
+        "type": "select",
+        "options": [
+          {
+            "value": "alle",
+            "label": "alle"
+          },
+          {
+            "value": "alleen_met_waarde",
+            "label": "alleen_met_waarde"
+          },
+          {
+            "value": "alleen_zonder_waarde",
+            "label": "alleen_zonder_waarde"
+          }
+        ],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "adres_type",
+        "label": "adres type",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "balanstotaal_missing_mode",
+        "label": "balanstotaal missing mode",
+        "group": "geavanceerd",
+        "type": "select",
+        "options": [
+          {
+            "value": "alle",
+            "label": "alle"
+          },
+          {
+            "value": "alleen_met_waarde",
+            "label": "alleen_met_waarde"
+          },
+          {
+            "value": "alleen_zonder_waarde",
+            "label": "alleen_zonder_waarde"
+          }
+        ],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "balanstotaal_status",
+        "label": "balanstotaal status",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "boekjaar_einddatum_max",
+        "label": "boekjaar einddatum max",
+        "group": "geavanceerd",
+        "type": "date",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "boekjaar_einddatum_min",
+        "label": "boekjaar einddatum min",
+        "group": "geavanceerd",
+        "type": "date",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "brutomarge_missing_mode",
+        "label": "brutomarge missing mode",
+        "group": "geavanceerd",
+        "type": "select",
+        "options": [
+          {
+            "value": "alle",
+            "label": "alle"
+          },
+          {
+            "value": "alleen_met_waarde",
+            "label": "alleen_met_waarde"
+          },
+          {
+            "value": "alleen_zonder_waarde",
+            "label": "alleen_zonder_waarde"
+          }
+        ],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "brutomarge_status",
+        "label": "brutomarge status",
+        "group": "geavanceerd",
+        "type": "select",
+        "options": [
+          {
+            "value": "exact",
+            "label": "exact"
+          },
+          {
+            "value": "berekend",
+            "label": "berekend"
+          },
+          {
+            "value": "geschat",
+            "label": "geschat"
+          },
+          {
+            "value": "niet_beschikbaar",
+            "label": "niet_beschikbaar"
+          }
+        ],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "bus",
+        "label": "bus",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "depotdatum_max",
+        "label": "depotdatum max",
+        "group": "geavanceerd",
+        "type": "date",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "depotdatum_min",
+        "label": "depotdatum min",
+        "group": "geavanceerd",
+        "type": "date",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "ebitda_missing_mode",
+        "label": "ebitda missing mode",
+        "group": "geavanceerd",
+        "type": "select",
+        "options": [
+          {
+            "value": "alle",
+            "label": "alle"
+          },
+          {
+            "value": "alleen_met_waarde",
+            "label": "alleen_met_waarde"
+          },
+          {
+            "value": "alleen_zonder_waarde",
+            "label": "alleen_zonder_waarde"
+          }
+        ],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "ebitda_status",
+        "label": "ebitda status",
+        "group": "geavanceerd",
+        "type": "select",
+        "options": [
+          {
+            "value": "exact",
+            "label": "exact"
+          },
+          {
+            "value": "berekend",
+            "label": "berekend"
+          },
+          {
+            "value": "geschat",
+            "label": "geschat"
+          },
+          {
+            "value": "niet_beschikbaar",
+            "label": "niet_beschikbaar"
+          }
+        ],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "eigen_vermogen_missing_mode",
+        "label": "eigen vermogen missing mode",
+        "group": "geavanceerd",
+        "type": "select",
+        "options": [
+          {
+            "value": "alle",
+            "label": "alle"
+          },
+          {
+            "value": "alleen_met_waarde",
+            "label": "alleen_met_waarde"
+          },
+          {
+            "value": "alleen_zonder_waarde",
+            "label": "alleen_zonder_waarde"
+          }
+        ],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "eigen_vermogen_status",
+        "label": "eigen vermogen status",
+        "group": "geavanceerd",
+        "type": "select",
+        "options": [
+          {
+            "value": "exact",
+            "label": "exact"
+          },
+          {
+            "value": "berekend",
+            "label": "berekend"
+          },
+          {
+            "value": "geschat",
+            "label": "geschat"
+          },
+          {
+            "value": "niet_beschikbaar",
+            "label": "niet_beschikbaar"
+          }
+        ],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "finance_status",
+        "label": "finance status",
+        "group": "geavanceerd",
+        "type": "select",
+        "options": [
+          {
+            "value": "alle",
+            "label": "alle"
+          },
+          {
+            "value": "omzet_en_winst_ok",
+            "label": "omzet_en_winst_ok"
+          },
+          {
+            "value": "omzet_ok_winst_missing",
+            "label": "omzet_ok_winst_missing"
+          },
+          {
+            "value": "omzet_missing_winst_ok",
+            "label": "omzet_missing_winst_ok"
+          },
+          {
+            "value": "omzet_en_winst_missing",
+            "label": "omzet_en_winst_missing"
+          },
+          {
+            "value": "finance_join_missing",
+            "label": "finance_join_missing"
+          },
+          {
+            "value": "geen_nbb_data",
+            "label": "geen_nbb_data"
+          }
+        ],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "financial_summary_status",
+        "label": "Financiële verrijking",
+        "group": "geavanceerd",
+        "type": "select",
+        "options": [
+          {
+            "value": "met_financial_summary",
+            "label": "met_financial_summary"
+          },
+          {
+            "value": "zonder_financial_summary",
+            "label": "zonder_financial_summary"
+          }
+        ],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "gemeente_fr",
+        "label": "Gemeente (Frans)",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "gemeente_fr_match",
+        "label": "Gemeenteselectie (Frans)",
+        "group": "locatie",
+        "type": "select",
+        "options": [
+          {
+            "value": "contains",
+            "label": "Naam bevat (bestaande zoekwijze)"
+          },
+          {
+            "value": "exact",
+            "label": "Exacte gemeentenaam"
+          }
+        ],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "gemeente_nl",
+        "label": "Gemeente",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "gemeente_nl_match",
+        "label": "Gemeenteselectie",
+        "group": "locatie",
+        "type": "select",
+        "options": [
+          {
+            "value": "contains",
+            "label": "Naam bevat (bestaande zoekwijze)"
+          },
+          {
+            "value": "exact",
+            "label": "Exacte gemeentenaam"
+          }
+        ],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "historical_or_event_relevant",
+        "label": "historical or event relevant",
+        "group": "geavanceerd",
+        "type": "select",
+        "options": [
+          {
+            "value": "true",
+            "label": "true"
+          },
+          {
+            "value": "false",
+            "label": "false"
+          }
+        ],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "huisnummer",
+        "label": "huisnummer",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "jaar_exact",
+        "label": "NBB-bronjaar",
+        "group": "geavanceerd",
+        "type": "number",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "jaar_max",
+        "label": "NBB-bronjaar tot",
+        "group": "geavanceerd",
+        "type": "number",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "jaar_min",
+        "label": "NBB-bronjaar vanaf",
+        "group": "geavanceerd",
+        "type": "number",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "juridical_form",
+        "label": "Rechtsvorm opnemen",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [
+          {
+            "value": "TYPE:1",
+            "label": "1 — Eenmanszaak / natuurlijke persoon"
+          },
+          {
+            "value": "TYPE:2",
+            "label": "2 — Rechtspersoon (alle rechtsvormen)"
+          },
+          {
+            "value": "001",
+            "label": "001 — Europese Coöperatieve Vennootschap"
+          },
+          {
+            "value": "002",
+            "label": "002 — Organisme voor de Financiering van Pensioenen"
+          },
+          {
+            "value": "003",
+            "label": "003 — BTW-eenheid"
+          },
+          {
+            "value": "006",
+            "label": "006 — Coöperatieve vennootschap met onbeperkte aansprakelijkheid"
+          },
+          {
+            "value": "007",
+            "label": "007 — Coöperatieve vennootschap met onbeperkte aansprakelijkheid, bij wijze van deelneming"
+          },
+          {
+            "value": "008",
+            "label": "008 — Coöperatieve vennootschap met beperkte aansprakelijkheid"
+          },
+          {
+            "value": "009",
+            "label": "009 — Coöperatieve vennootschap met beperkte aansprakelijkheid, bij wijze van deelneming"
+          },
+          {
+            "value": "011",
+            "label": "011 — Vennootschap onder firma"
+          },
+          {
+            "value": "012",
+            "label": "012 — Gewone commanditaire vennootschap"
+          },
+          {
+            "value": "013",
+            "label": "013 — Commanditaire vennootschap op aandelen"
+          },
+          {
+            "value": "014",
+            "label": "014 — NV — Naamloze vennootschap"
+          },
+          {
+            "value": "015",
+            "label": "015 — Besloten vennootschap met beperkte aansprakelijkheid"
+          },
+          {
+            "value": "016",
+            "label": "016 — Coöperatieve vennootschap (oud statuut)"
+          },
+          {
+            "value": "017",
+            "label": "017 — VZW — Vereniging zonder winstoogmerk"
+          },
+          {
+            "value": "018",
+            "label": "018 — Instelling van openbaar nut"
+          },
+          {
+            "value": "019",
+            "label": "019 — Ziekenfonds / Maatschappij van onderlinge bijstand / Landsbond van ziekenfondsen"
+          },
+          {
+            "value": "020",
+            "label": "020 — Beroepsvereniging"
+          },
+          {
+            "value": "021",
+            "label": "021 — Onderlinge verzekeringsvereniging / Gemeenschappelijke verzekeringskas van privaat recht"
+          },
+          {
+            "value": "022",
+            "label": "022 — Internationale wetenschappelijke organisatie van Belgisch recht"
+          },
+          {
+            "value": "023",
+            "label": "023 — Buitenlandse privaatrechtelijke vereniging met vestiging in België"
+          },
+          {
+            "value": "025",
+            "label": "025 — Landbouwvennootschap"
+          },
+          {
+            "value": "026",
+            "label": "026 — Private stichting"
+          },
+          {
+            "value": "027",
+            "label": "027 — Europese vennootschap (Societas Europaea)"
+          },
+          {
+            "value": "028",
+            "label": "028 — Instelling zonder winstoogmerk"
+          },
+          {
+            "value": "029",
+            "label": "029 — Stichting van openbaar nut"
+          },
+          {
+            "value": "030",
+            "label": "030 — Buitenlandse entiteit"
+          },
+          {
+            "value": "040",
+            "label": "040 — Kongolese vennootschap"
+          },
+          {
+            "value": "051",
+            "label": "051 — Andere privaatrechtelijke vorm met rechtspersoonlijkheid"
+          },
+          {
+            "value": "060",
+            "label": "060 — Economisch samenwerkingsverband"
+          },
+          {
+            "value": "065",
+            "label": "065 — Europees economisch samenwerkingsverband"
+          },
+          {
+            "value": "070",
+            "label": "070 — VME — Vereniging van mede-eigenaars"
+          },
+          {
+            "value": "108",
+            "label": "108 — Coöperatieve vennootschap met beperkte aansprakelijkheid van publiek recht"
+          },
+          {
+            "value": "110",
+            "label": "110 — Rijk, Provincie, Gewest, Gemeenschap"
+          },
+          {
+            "value": "114",
+            "label": "114 — Naamloze vennootschap van publiek recht"
+          },
+          {
+            "value": "116",
+            "label": "116 — Coöperatieve vennootschap van publiek recht (oud statuut)"
+          },
+          {
+            "value": "117",
+            "label": "117 — Vereniging zonder winstoogmerk van publiek recht"
+          },
+          {
+            "value": "123",
+            "label": "123 — Beroepsvereniging / Orde"
+          },
+          {
+            "value": "124",
+            "label": "124 — Openbare instelling"
+          },
+          {
+            "value": "125",
+            "label": "125 — Internationale vereniging zonder winstoogmerk"
+          },
+          {
+            "value": "127",
+            "label": "127 — Berg van Barmhartigheid"
+          },
+          {
+            "value": "129",
+            "label": "129 — Polder / Watering"
+          },
+          {
+            "value": "151",
+            "label": "151 — Andere rechtsvorm"
+          },
+          {
+            "value": "160",
+            "label": "160 — Buitenlandse of internationale publieke organisatie"
+          },
+          {
+            "value": "217",
+            "label": "217 — Europese politieke partij"
+          },
+          {
+            "value": "218",
+            "label": "218 — Europese politieke stichting"
+          },
+          {
+            "value": "230",
+            "label": "230 — Buitenlandse entiteit met onroerend goed in België (met rechtspersoonlijkheid)"
+          },
+          {
+            "value": "235",
+            "label": "235 — Buitenlandse entiteit zonder Belgische vestiging met vertegenwoordiger voor BTW"
+          },
+          {
+            "value": "265",
+            "label": "265 — Europees economisch samenwerkingsverband zonder zetel met vestiging in België (EESV)"
+          },
+          {
+            "value": "301",
+            "label": "301 — Federale overheidsdienst"
+          },
+          {
+            "value": "302",
+            "label": "302 — Programmatorische federale overheidsdienst"
+          },
+          {
+            "value": "303",
+            "label": "303 — Andere federale dienst"
+          },
+          {
+            "value": "310",
+            "label": "310 — Overheid van het Vlaamse Gewest en van de Vlaamse Gemeenschap"
+          },
+          {
+            "value": "320",
+            "label": "320 — Overheid van het Waalse Gewest"
+          },
+          {
+            "value": "325",
+            "label": "325 — Internationale vereniging zonder winstoogmerk van publiek recht"
+          },
+          {
+            "value": "330",
+            "label": "330 — Overheid van het Brusselse Hoofdstedelijke Gewest"
+          },
+          {
+            "value": "340",
+            "label": "340 — Overheid van de Franse Gemeenschap"
+          },
+          {
+            "value": "350",
+            "label": "350 — Overheid van de Duitstalige Gemeenschap"
+          },
+          {
+            "value": "370",
+            "label": "370 — Ministerie van Economische Zaken"
+          },
+          {
+            "value": "371",
+            "label": "371 — Ministerie van Buitenlandse Zaken, Buitenlandse handel en Ontwikkelingssamenwerking"
+          },
+          {
+            "value": "379",
+            "label": "379 — Ministerie van Binnenlandse Zaken"
+          },
+          {
+            "value": "380",
+            "label": "380 — Ministerie van Justitie"
+          },
+          {
+            "value": "385",
+            "label": "385 — Ministerie van de Vlaamse Gemeenschap"
+          },
+          {
+            "value": "386",
+            "label": "386 — Ministerie van de Franse Gemeenschap"
+          },
+          {
+            "value": "387",
+            "label": "387 — Ministerie van het Brusselse Hoofdstedelijke Gewest"
+          },
+          {
+            "value": "388",
+            "label": "388 — Ministerie van het Waalse Gewest"
+          },
+          {
+            "value": "393",
+            "label": "393 — Andere"
+          },
+          {
+            "value": "400",
+            "label": "400 — Provinciale overheid"
+          },
+          {
+            "value": "411",
+            "label": "411 — Stad / gemeente"
+          },
+          {
+            "value": "412",
+            "label": "412 — Openbaar centrum voor maatschappelijk welzijn"
+          },
+          {
+            "value": "413",
+            "label": "413 — Lokale politiezone"
+          },
+          {
+            "value": "414",
+            "label": "414 — Intercommunale"
+          },
+          {
+            "value": "415",
+            "label": "415 — Projectvereniging"
+          },
+          {
+            "value": "416",
+            "label": "416 — Dienstverlenende vereniging (Vlaams Gewest)"
+          },
+          {
+            "value": "417",
+            "label": "417 — Opdrachthoudende vereniging (Vlaams Gewest)"
+          },
+          {
+            "value": "418",
+            "label": "418 — Autonoom gemeentebedrijf"
+          },
+          {
+            "value": "419",
+            "label": "419 — Autonoom provinciebedrijf"
+          },
+          {
+            "value": "420",
+            "label": "420 — Vereniging van OCMW's"
+          },
+          {
+            "value": "422",
+            "label": "422 — Hulpverleningszone"
+          },
+          {
+            "value": "451",
+            "label": "451 — Organismen ingeschreven voor de R.V.P."
+          },
+          {
+            "value": "452",
+            "label": "452 — Organisme ingeschreven voor de Administratie van de Pensioenen"
+          },
+          {
+            "value": "453",
+            "label": "453 — Buitenlandse onderneming zonder Belgische vestiging genoteerd op de beurs"
+          },
+          {
+            "value": "454",
+            "label": "454 — Buitenlandse entiteit met onroerend goed in België (zonder rechtspersoonlijkheid)"
+          },
+          {
+            "value": "506",
+            "label": "506 — Coöperatieve vennootschap met onbeperkte aansprakelijkheid met een sociaal oogmerk"
+          },
+          {
+            "value": "508",
+            "label": "508 — Coöperatieve vennootschap met beperkte aansprakelijkheid met een sociaal oogmerk"
+          },
+          {
+            "value": "511",
+            "label": "511 — Vennootschap onder firma met een sociaal oogmerk"
+          },
+          {
+            "value": "512",
+            "label": "512 — Gewone commanditaire vennootschap met een sociaal oogmerk"
+          },
+          {
+            "value": "513",
+            "label": "513 — Commanditaire vennootschap op aandelen met een sociaal oogmerk"
+          },
+          {
+            "value": "514",
+            "label": "514 — Naamloze vennootschap met een sociaal oogmerk"
+          },
+          {
+            "value": "515",
+            "label": "515 — Besloten vennootschap met beperkte aansprakelijkheid met een sociaal oogmerk"
+          },
+          {
+            "value": "560",
+            "label": "560 — Economisch samenwerkingsverband met een sociaal oogmerk"
+          },
+          {
+            "value": "610",
+            "label": "610 — BV — Besloten Vennootschap"
+          },
+          {
+            "value": "612",
+            "label": "612 — Commanditaire vennootschap"
+          },
+          {
+            "value": "616",
+            "label": "616 — Besloten Vennootschap van publiek recht"
+          },
+          {
+            "value": "617",
+            "label": "617 — Commanditaire vennootschap van publiek recht"
+          },
+          {
+            "value": "651",
+            "label": "651 — Andere vorm met een sociaal oogmerk van publiek recht"
+          },
+          {
+            "value": "702",
+            "label": "702 — Maatschap"
+          },
+          {
+            "value": "706",
+            "label": "706 — CV — Coöperatieve vennootschap"
+          },
+          {
+            "value": "716",
+            "label": "716 — Coöperatieve vennootschap van publiek recht"
+          },
+          {
+            "value": "721",
+            "label": "721 — Vennootschap of vereniging zonder rechtspersoonlijkheid"
+          },
+          {
+            "value": "722",
+            "label": "722 — Tijdelijke vereniging"
+          },
+          {
+            "value": "790",
+            "label": "790 — Diversen zonder rechtspersoonlijkheid"
+          },
+          {
+            "value": "999",
+            "label": "999 — Ongekende rechtsvorm RSZ"
+          }
+        ],
+        "multiple": true,
+        "hint": ""
+      },
+      {
+        "key": "juridical_form_exclude",
+        "label": "Rechtsvorm uitsluiten",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [
+          {
+            "value": "TYPE:1",
+            "label": "1 — Eenmanszaak / natuurlijke persoon"
+          },
+          {
+            "value": "TYPE:2",
+            "label": "2 — Rechtspersoon (alle rechtsvormen)"
+          },
+          {
+            "value": "001",
+            "label": "001 — Europese Coöperatieve Vennootschap"
+          },
+          {
+            "value": "002",
+            "label": "002 — Organisme voor de Financiering van Pensioenen"
+          },
+          {
+            "value": "003",
+            "label": "003 — BTW-eenheid"
+          },
+          {
+            "value": "006",
+            "label": "006 — Coöperatieve vennootschap met onbeperkte aansprakelijkheid"
+          },
+          {
+            "value": "007",
+            "label": "007 — Coöperatieve vennootschap met onbeperkte aansprakelijkheid, bij wijze van deelneming"
+          },
+          {
+            "value": "008",
+            "label": "008 — Coöperatieve vennootschap met beperkte aansprakelijkheid"
+          },
+          {
+            "value": "009",
+            "label": "009 — Coöperatieve vennootschap met beperkte aansprakelijkheid, bij wijze van deelneming"
+          },
+          {
+            "value": "011",
+            "label": "011 — Vennootschap onder firma"
+          },
+          {
+            "value": "012",
+            "label": "012 — Gewone commanditaire vennootschap"
+          },
+          {
+            "value": "013",
+            "label": "013 — Commanditaire vennootschap op aandelen"
+          },
+          {
+            "value": "014",
+            "label": "014 — NV — Naamloze vennootschap"
+          },
+          {
+            "value": "015",
+            "label": "015 — Besloten vennootschap met beperkte aansprakelijkheid"
+          },
+          {
+            "value": "016",
+            "label": "016 — Coöperatieve vennootschap (oud statuut)"
+          },
+          {
+            "value": "017",
+            "label": "017 — VZW — Vereniging zonder winstoogmerk"
+          },
+          {
+            "value": "018",
+            "label": "018 — Instelling van openbaar nut"
+          },
+          {
+            "value": "019",
+            "label": "019 — Ziekenfonds / Maatschappij van onderlinge bijstand / Landsbond van ziekenfondsen"
+          },
+          {
+            "value": "020",
+            "label": "020 — Beroepsvereniging"
+          },
+          {
+            "value": "021",
+            "label": "021 — Onderlinge verzekeringsvereniging / Gemeenschappelijke verzekeringskas van privaat recht"
+          },
+          {
+            "value": "022",
+            "label": "022 — Internationale wetenschappelijke organisatie van Belgisch recht"
+          },
+          {
+            "value": "023",
+            "label": "023 — Buitenlandse privaatrechtelijke vereniging met vestiging in België"
+          },
+          {
+            "value": "025",
+            "label": "025 — Landbouwvennootschap"
+          },
+          {
+            "value": "026",
+            "label": "026 — Private stichting"
+          },
+          {
+            "value": "027",
+            "label": "027 — Europese vennootschap (Societas Europaea)"
+          },
+          {
+            "value": "028",
+            "label": "028 — Instelling zonder winstoogmerk"
+          },
+          {
+            "value": "029",
+            "label": "029 — Stichting van openbaar nut"
+          },
+          {
+            "value": "030",
+            "label": "030 — Buitenlandse entiteit"
+          },
+          {
+            "value": "040",
+            "label": "040 — Kongolese vennootschap"
+          },
+          {
+            "value": "051",
+            "label": "051 — Andere privaatrechtelijke vorm met rechtspersoonlijkheid"
+          },
+          {
+            "value": "060",
+            "label": "060 — Economisch samenwerkingsverband"
+          },
+          {
+            "value": "065",
+            "label": "065 — Europees economisch samenwerkingsverband"
+          },
+          {
+            "value": "070",
+            "label": "070 — VME — Vereniging van mede-eigenaars"
+          },
+          {
+            "value": "108",
+            "label": "108 — Coöperatieve vennootschap met beperkte aansprakelijkheid van publiek recht"
+          },
+          {
+            "value": "110",
+            "label": "110 — Rijk, Provincie, Gewest, Gemeenschap"
+          },
+          {
+            "value": "114",
+            "label": "114 — Naamloze vennootschap van publiek recht"
+          },
+          {
+            "value": "116",
+            "label": "116 — Coöperatieve vennootschap van publiek recht (oud statuut)"
+          },
+          {
+            "value": "117",
+            "label": "117 — Vereniging zonder winstoogmerk van publiek recht"
+          },
+          {
+            "value": "123",
+            "label": "123 — Beroepsvereniging / Orde"
+          },
+          {
+            "value": "124",
+            "label": "124 — Openbare instelling"
+          },
+          {
+            "value": "125",
+            "label": "125 — Internationale vereniging zonder winstoogmerk"
+          },
+          {
+            "value": "127",
+            "label": "127 — Berg van Barmhartigheid"
+          },
+          {
+            "value": "129",
+            "label": "129 — Polder / Watering"
+          },
+          {
+            "value": "151",
+            "label": "151 — Andere rechtsvorm"
+          },
+          {
+            "value": "160",
+            "label": "160 — Buitenlandse of internationale publieke organisatie"
+          },
+          {
+            "value": "217",
+            "label": "217 — Europese politieke partij"
+          },
+          {
+            "value": "218",
+            "label": "218 — Europese politieke stichting"
+          },
+          {
+            "value": "230",
+            "label": "230 — Buitenlandse entiteit met onroerend goed in België (met rechtspersoonlijkheid)"
+          },
+          {
+            "value": "235",
+            "label": "235 — Buitenlandse entiteit zonder Belgische vestiging met vertegenwoordiger voor BTW"
+          },
+          {
+            "value": "265",
+            "label": "265 — Europees economisch samenwerkingsverband zonder zetel met vestiging in België (EESV)"
+          },
+          {
+            "value": "301",
+            "label": "301 — Federale overheidsdienst"
+          },
+          {
+            "value": "302",
+            "label": "302 — Programmatorische federale overheidsdienst"
+          },
+          {
+            "value": "303",
+            "label": "303 — Andere federale dienst"
+          },
+          {
+            "value": "310",
+            "label": "310 — Overheid van het Vlaamse Gewest en van de Vlaamse Gemeenschap"
+          },
+          {
+            "value": "320",
+            "label": "320 — Overheid van het Waalse Gewest"
+          },
+          {
+            "value": "325",
+            "label": "325 — Internationale vereniging zonder winstoogmerk van publiek recht"
+          },
+          {
+            "value": "330",
+            "label": "330 — Overheid van het Brusselse Hoofdstedelijke Gewest"
+          },
+          {
+            "value": "340",
+            "label": "340 — Overheid van de Franse Gemeenschap"
+          },
+          {
+            "value": "350",
+            "label": "350 — Overheid van de Duitstalige Gemeenschap"
+          },
+          {
+            "value": "370",
+            "label": "370 — Ministerie van Economische Zaken"
+          },
+          {
+            "value": "371",
+            "label": "371 — Ministerie van Buitenlandse Zaken, Buitenlandse handel en Ontwikkelingssamenwerking"
+          },
+          {
+            "value": "379",
+            "label": "379 — Ministerie van Binnenlandse Zaken"
+          },
+          {
+            "value": "380",
+            "label": "380 — Ministerie van Justitie"
+          },
+          {
+            "value": "385",
+            "label": "385 — Ministerie van de Vlaamse Gemeenschap"
+          },
+          {
+            "value": "386",
+            "label": "386 — Ministerie van de Franse Gemeenschap"
+          },
+          {
+            "value": "387",
+            "label": "387 — Ministerie van het Brusselse Hoofdstedelijke Gewest"
+          },
+          {
+            "value": "388",
+            "label": "388 — Ministerie van het Waalse Gewest"
+          },
+          {
+            "value": "393",
+            "label": "393 — Andere"
+          },
+          {
+            "value": "400",
+            "label": "400 — Provinciale overheid"
+          },
+          {
+            "value": "411",
+            "label": "411 — Stad / gemeente"
+          },
+          {
+            "value": "412",
+            "label": "412 — Openbaar centrum voor maatschappelijk welzijn"
+          },
+          {
+            "value": "413",
+            "label": "413 — Lokale politiezone"
+          },
+          {
+            "value": "414",
+            "label": "414 — Intercommunale"
+          },
+          {
+            "value": "415",
+            "label": "415 — Projectvereniging"
+          },
+          {
+            "value": "416",
+            "label": "416 — Dienstverlenende vereniging (Vlaams Gewest)"
+          },
+          {
+            "value": "417",
+            "label": "417 — Opdrachthoudende vereniging (Vlaams Gewest)"
+          },
+          {
+            "value": "418",
+            "label": "418 — Autonoom gemeentebedrijf"
+          },
+          {
+            "value": "419",
+            "label": "419 — Autonoom provinciebedrijf"
+          },
+          {
+            "value": "420",
+            "label": "420 — Vereniging van OCMW's"
+          },
+          {
+            "value": "422",
+            "label": "422 — Hulpverleningszone"
+          },
+          {
+            "value": "451",
+            "label": "451 — Organismen ingeschreven voor de R.V.P."
+          },
+          {
+            "value": "452",
+            "label": "452 — Organisme ingeschreven voor de Administratie van de Pensioenen"
+          },
+          {
+            "value": "453",
+            "label": "453 — Buitenlandse onderneming zonder Belgische vestiging genoteerd op de beurs"
+          },
+          {
+            "value": "454",
+            "label": "454 — Buitenlandse entiteit met onroerend goed in België (zonder rechtspersoonlijkheid)"
+          },
+          {
+            "value": "506",
+            "label": "506 — Coöperatieve vennootschap met onbeperkte aansprakelijkheid met een sociaal oogmerk"
+          },
+          {
+            "value": "508",
+            "label": "508 — Coöperatieve vennootschap met beperkte aansprakelijkheid met een sociaal oogmerk"
+          },
+          {
+            "value": "511",
+            "label": "511 — Vennootschap onder firma met een sociaal oogmerk"
+          },
+          {
+            "value": "512",
+            "label": "512 — Gewone commanditaire vennootschap met een sociaal oogmerk"
+          },
+          {
+            "value": "513",
+            "label": "513 — Commanditaire vennootschap op aandelen met een sociaal oogmerk"
+          },
+          {
+            "value": "514",
+            "label": "514 — Naamloze vennootschap met een sociaal oogmerk"
+          },
+          {
+            "value": "515",
+            "label": "515 — Besloten vennootschap met beperkte aansprakelijkheid met een sociaal oogmerk"
+          },
+          {
+            "value": "560",
+            "label": "560 — Economisch samenwerkingsverband met een sociaal oogmerk"
+          },
+          {
+            "value": "610",
+            "label": "610 — BV — Besloten Vennootschap"
+          },
+          {
+            "value": "612",
+            "label": "612 — Commanditaire vennootschap"
+          },
+          {
+            "value": "616",
+            "label": "616 — Besloten Vennootschap van publiek recht"
+          },
+          {
+            "value": "617",
+            "label": "617 — Commanditaire vennootschap van publiek recht"
+          },
+          {
+            "value": "651",
+            "label": "651 — Andere vorm met een sociaal oogmerk van publiek recht"
+          },
+          {
+            "value": "702",
+            "label": "702 — Maatschap"
+          },
+          {
+            "value": "706",
+            "label": "706 — CV — Coöperatieve vennootschap"
+          },
+          {
+            "value": "716",
+            "label": "716 — Coöperatieve vennootschap van publiek recht"
+          },
+          {
+            "value": "721",
+            "label": "721 — Vennootschap of vereniging zonder rechtspersoonlijkheid"
+          },
+          {
+            "value": "722",
+            "label": "722 — Tijdelijke vereniging"
+          },
+          {
+            "value": "790",
+            "label": "790 — Diversen zonder rechtspersoonlijkheid"
+          },
+          {
+            "value": "999",
+            "label": "999 — Ongekende rechtsvorm RSZ"
+          }
+        ],
+        "multiple": true,
+        "hint": ""
+      },
+      {
+        "key": "juridical_situation",
+        "label": "juridical situation",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "kbo_match_status",
+        "label": "kbo match status",
+        "group": "geavanceerd",
+        "type": "select",
+        "options": [
+          {
+            "value": "alle",
+            "label": "alle"
+          },
+          {
+            "value": "kbo_ok_actief",
+            "label": "kbo_ok_actief"
+          },
+          {
+            "value": "kbo_niet_actief",
+            "label": "kbo_niet_actief"
+          },
+          {
+            "value": "kbo_status_missing",
+            "label": "kbo_status_missing"
+          }
+        ],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "kbo_postcode",
+        "label": "Postcodes opnemen",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "kbo_postcode_exclude",
+        "label": "Postcodes uitsluiten",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "kbo_status",
+        "label": "KBO-status",
+        "group": "geavanceerd",
+        "type": "select",
+        "options": [
+          {
+            "value": "AC",
+            "label": "AC"
+          },
+          {
+            "value": "ST",
+            "label": "ST"
+          }
+        ],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "land",
+        "label": "land",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "latest_only",
+        "label": "Alleen laatste NBB-record",
+        "group": "geavanceerd",
+        "type": "boolean",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "lifecycle_bucket",
+        "label": "lifecycle bucket",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "max_balanstotaal",
+        "label": "max balanstotaal",
+        "group": "geavanceerd",
+        "type": "number",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "max_brutomarge",
+        "label": "max brutomarge",
+        "group": "geavanceerd",
+        "type": "number",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "max_ebitda",
+        "label": "max ebitda",
+        "group": "geavanceerd",
+        "type": "number",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "max_eigen_vermogen",
+        "label": "max eigen vermogen",
+        "group": "geavanceerd",
+        "type": "number",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "max_omzet",
+        "label": "max omzet",
+        "group": "geavanceerd",
+        "type": "number",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "max_personeel_vte",
+        "label": "max personeel vte",
+        "group": "geavanceerd",
+        "type": "number",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "max_rest_na_schulden",
+        "label": "max rest na schulden",
+        "group": "geavanceerd",
+        "type": "number",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "max_schulden",
+        "label": "max schulden",
+        "group": "geavanceerd",
+        "type": "number",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "max_winst",
+        "label": "max winst",
+        "group": "geavanceerd",
+        "type": "number",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "min_balanstotaal",
+        "label": "min balanstotaal",
+        "group": "geavanceerd",
+        "type": "number",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "min_brutomarge",
+        "label": "min brutomarge",
+        "group": "geavanceerd",
+        "type": "number",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "min_ebitda",
+        "label": "min ebitda",
+        "group": "geavanceerd",
+        "type": "number",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "min_eigen_vermogen",
+        "label": "min eigen vermogen",
+        "group": "geavanceerd",
+        "type": "number",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "min_omzet",
+        "label": "min omzet",
+        "group": "geavanceerd",
+        "type": "number",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "min_personeel_vte",
+        "label": "min personeel vte",
+        "group": "geavanceerd",
+        "type": "number",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "min_rest_na_schulden",
+        "label": "min rest na schulden",
+        "group": "geavanceerd",
+        "type": "number",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "min_schulden",
+        "label": "min schulden",
+        "group": "geavanceerd",
+        "type": "number",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "min_winst",
+        "label": "min winst",
+        "group": "geavanceerd",
+        "type": "number",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "naam",
+        "label": "Bedrijfsnaam bevat",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "naam_missing_mode",
+        "label": "naam missing mode",
+        "group": "geavanceerd",
+        "type": "select",
+        "options": [
+          {
+            "value": "alle",
+            "label": "alle"
+          },
+          {
+            "value": "alleen_met_waarde",
+            "label": "alleen_met_waarde"
+          },
+          {
+            "value": "alleen_zonder_waarde",
+            "label": "alleen_zonder_waarde"
+          }
+        ],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "naam_taal",
+        "label": "naam taal",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "naam_type",
+        "label": "naam type",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "nace_exact",
+        "label": "nace exact",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "nace_exact_exclude",
+        "label": "nace exact exclude",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "nace_missing_mode",
+        "label": "nace missing mode",
+        "group": "geavanceerd",
+        "type": "select",
+        "options": [
+          {
+            "value": "alle",
+            "label": "alle"
+          },
+          {
+            "value": "alleen_met_waarde",
+            "label": "alleen_met_waarde"
+          },
+          {
+            "value": "alleen_zonder_waarde",
+            "label": "alleen_zonder_waarde"
+          }
+        ],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "nace_prefix",
+        "label": "nace prefix",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "nace_prefix_exclude",
+        "label": "nace prefix exclude",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "nace_version",
+        "label": "NACE-versie",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "nbb_bronbestand",
+        "label": "nbb bronbestand",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "nbb_postcode",
+        "label": "nbb postcode",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "omzet_missing_mode",
+        "label": "omzet missing mode",
+        "group": "geavanceerd",
+        "type": "select",
+        "options": [
+          {
+            "value": "alle",
+            "label": "alle"
+          },
+          {
+            "value": "alleen_met_waarde",
+            "label": "alleen_met_waarde"
+          },
+          {
+            "value": "alleen_zonder_waarde",
+            "label": "alleen_zonder_waarde"
+          }
+        ],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "omzet_status",
+        "label": "omzet status",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "ondernemingsnummer",
+        "label": "Ondernemingsnummer",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "personeel_missing_mode",
+        "label": "personeel missing mode",
+        "group": "geavanceerd",
+        "type": "select",
+        "options": [
+          {
+            "value": "alle",
+            "label": "alle"
+          },
+          {
+            "value": "alleen_met_waarde",
+            "label": "alleen_met_waarde"
+          },
+          {
+            "value": "alleen_zonder_waarde",
+            "label": "alleen_zonder_waarde"
+          }
+        ],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "personeel_status",
+        "label": "personeel status",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "postcode_status",
+        "label": "postcode status",
+        "group": "geavanceerd",
+        "type": "select",
+        "options": [
+          {
+            "value": "valid",
+            "label": "valid"
+          },
+          {
+            "value": "valid_duplicate_equivalent",
+            "label": "valid_duplicate_equivalent"
+          },
+          {
+            "value": "invalid_source",
+            "label": "invalid_source"
+          }
+        ],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "regions",
+        "label": "Gewest",
+        "group": "locatie",
+        "type": "text",
+        "options": [],
+        "multiple": true,
+        "hint": ""
+      },
+      {
+        "key": "rest_na_schulden_missing_mode",
+        "label": "rest na schulden missing mode",
+        "group": "geavanceerd",
+        "type": "select",
+        "options": [
+          {
+            "value": "alle",
+            "label": "alle"
+          },
+          {
+            "value": "alleen_met_waarde",
+            "label": "alleen_met_waarde"
+          },
+          {
+            "value": "alleen_zonder_waarde",
+            "label": "alleen_zonder_waarde"
+          }
+        ],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "rest_na_schulden_status",
+        "label": "rest na schulden status",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "schulden_missing_mode",
+        "label": "schulden missing mode",
+        "group": "geavanceerd",
+        "type": "select",
+        "options": [
+          {
+            "value": "alle",
+            "label": "alle"
+          },
+          {
+            "value": "alleen_met_waarde",
+            "label": "alleen_met_waarde"
+          },
+          {
+            "value": "alleen_zonder_waarde",
+            "label": "alleen_zonder_waarde"
+          }
+        ],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "schulden_status",
+        "label": "schulden status",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "start_date_max",
+        "label": "start date max",
+        "group": "geavanceerd",
+        "type": "date",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "start_date_min",
+        "label": "start date min",
+        "group": "geavanceerd",
+        "type": "date",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "straat_fr",
+        "label": "straat fr",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "straat_nl",
+        "label": "straat nl",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "type_of_enterprise",
+        "label": "type of enterprise",
+        "group": "geavanceerd",
+        "type": "select",
+        "options": [
+          {
+            "value": "1",
+            "label": "1"
+          },
+          {
+            "value": "2",
+            "label": "2"
+          }
+        ],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "winst_missing_mode",
+        "label": "winst missing mode",
+        "group": "geavanceerd",
+        "type": "select",
+        "options": [
+          {
+            "value": "alle",
+            "label": "alle"
+          },
+          {
+            "value": "alleen_met_waarde",
+            "label": "alleen_met_waarde"
+          },
+          {
+            "value": "alleen_zonder_waarde",
+            "label": "alleen_zonder_waarde"
+          }
+        ],
+        "multiple": false,
+        "hint": ""
+      },
+      {
+        "key": "winst_status",
+        "label": "winst status",
+        "group": "geavanceerd",
+        "type": "text",
+        "options": [],
+        "multiple": false,
+        "hint": ""
+      }
+    ],
+    "groups": [
+      {
+        "key": "bedrijf",
+        "label": "Bedrijfsgegevens"
+      },
+      {
+        "key": "locatie",
+        "label": "Locatie"
+      },
+      {
+        "key": "sector",
+        "label": "Activiteiten"
+      },
+      {
+        "key": "jaarrekening",
+        "label": "Jaarrekening en datums"
+      },
+      {
+        "key": "personeel",
+        "label": "Personeel"
+      },
+      {
+        "key": "financieel",
+        "label": "Financiële cijfers"
+      },
+      {
+        "key": "geavanceerd",
+        "label": "Aanvullende filters"
+      }
+    ],
+    "source": "frozen premium_workspace.schema type rules; full validation remains core-owned"
+  },
+  "catalogs": {
+    "sectors": [
+      {
+        "value": "",
+        "label": "Geen sectorfilter"
+      },
+      {
+        "value": "01",
+        "label": "01 — Landbouw, teelt en veeteelt"
+      },
+      {
+        "value": "02",
+        "label": "02 — Bosbouw en exploitatie van bossen"
+      },
+      {
+        "value": "03",
+        "label": "03 — Visserij en aquacultuur"
+      },
+      {
+        "value": "05",
+        "label": "05 — Winning van steenkool en bruinkool"
+      },
+      {
+        "value": "06",
+        "label": "06 — Winning van aardolie en aardgas"
+      },
+      {
+        "value": "07",
+        "label": "07 — Winning van metaalertsen"
+      },
+      {
+        "value": "08",
+        "label": "08 — Overige winning van delfstoffen"
+      },
+      {
+        "value": "09",
+        "label": "09 — Ondersteunende activiteiten mijnbouw"
+      },
+      {
+        "value": "10",
+        "label": "10 — Vervaardiging van voedingsmiddelen"
+      },
+      {
+        "value": "11",
+        "label": "11 — Vervaardiging van dranken"
+      },
+      {
+        "value": "12",
+        "label": "12 — Vervaardiging van tabaksproducten"
+      },
+      {
+        "value": "13",
+        "label": "13 — Vervaardiging van textiel"
+      },
+      {
+        "value": "14",
+        "label": "14 — Vervaardiging van kleding"
+      },
+      {
+        "value": "15",
+        "label": "15 — Leer en producten van leer"
+      },
+      {
+        "value": "16",
+        "label": "16 — Hout, kurk, vlechtwerk"
+      },
+      {
+        "value": "17",
+        "label": "17 — Papier en papierwaren"
+      },
+      {
+        "value": "18",
+        "label": "18 — Drukkerijen en reproductie"
+      },
+      {
+        "value": "19",
+        "label": "19 — Cokes en geraffineerde aardolieproducten"
+      },
+      {
+        "value": "20",
+        "label": "20 — Chemische producten"
+      },
+      {
+        "value": "21",
+        "label": "21 — Farmaceutische producten"
+      },
+      {
+        "value": "22",
+        "label": "22 — Rubber en kunststof"
+      },
+      {
+        "value": "23",
+        "label": "23 — Niet-metaalhoudende minerale producten"
+      },
+      {
+        "value": "24",
+        "label": "24 — Metalen in primaire vorm"
+      },
+      {
+        "value": "25",
+        "label": "25 — Metaalproducten, geen machines"
+      },
+      {
+        "value": "26",
+        "label": "26 — Computers, elektronica en optica"
+      },
+      {
+        "value": "27",
+        "label": "27 — Elektrische apparatuur"
+      },
+      {
+        "value": "28",
+        "label": "28 — Machines, apparaten en werktuigen"
+      },
+      {
+        "value": "29",
+        "label": "29 — Auto's, aanhangwagens en opleggers"
+      },
+      {
+        "value": "30",
+        "label": "30 — Overige transportmiddelen"
+      },
+      {
+        "value": "31",
+        "label": "31 — Meubelen"
+      },
+      {
+        "value": "32",
+        "label": "32 — Overige industrie"
+      },
+      {
+        "value": "33",
+        "label": "33 — Reparatie en installatie van machines"
+      },
+      {
+        "value": "35",
+        "label": "35 — Elektriciteit, gas, stoom en gekoelde lucht"
+      },
+      {
+        "value": "36",
+        "label": "36 — Winning, behandeling en distributie van water"
+      },
+      {
+        "value": "37",
+        "label": "37 — Afvalwaterafvoer"
+      },
+      {
+        "value": "38",
+        "label": "38 — Afvalinzameling, verwerking en recycling"
+      },
+      {
+        "value": "39",
+        "label": "39 — Sanering en afvalbeheer"
+      },
+      {
+        "value": "41",
+        "label": "41 — Bouw van gebouwen"
+      },
+      {
+        "value": "42",
+        "label": "42 — Weg- en waterbouw"
+      },
+      {
+        "value": "43",
+        "label": "43 — Gespecialiseerde bouwwerkzaamheden"
+      },
+      {
+        "value": "45",
+        "label": "45 — Auto- en motorhandel en herstelling"
+      },
+      {
+        "value": "46",
+        "label": "46 — Groothandel"
+      },
+      {
+        "value": "47",
+        "label": "47 — Detailhandel / winkels"
+      },
+      {
+        "value": "49",
+        "label": "49 — Vervoer over land en via pijpleidingen"
+      },
+      {
+        "value": "50",
+        "label": "50 — Vervoer over water"
+      },
+      {
+        "value": "51",
+        "label": "51 — Luchtvaart"
+      },
+      {
+        "value": "52",
+        "label": "52 — Opslag en vervoerondersteuning"
+      },
+      {
+        "value": "53",
+        "label": "53 — Post en koeriers"
+      },
+      {
+        "value": "55",
+        "label": "55 — Verschaffen van accommodatie"
+      },
+      {
+        "value": "56",
+        "label": "56 — Horeca / restaurants / cafés / catering"
+      },
+      {
+        "value": "58",
+        "label": "58 — Uitgeverijen"
+      },
+      {
+        "value": "59",
+        "label": "59 — Film, video, tv-programma's, muziek"
+      },
+      {
+        "value": "60",
+        "label": "60 — Radio en televisie"
+      },
+      {
+        "value": "61",
+        "label": "61 — Telecommunicatie"
+      },
+      {
+        "value": "62",
+        "label": "62 — IT / software / computer consultancy"
+      },
+      {
+        "value": "63",
+        "label": "63 — Dienstverlenende activiteiten informatie"
+      },
+      {
+        "value": "64",
+        "label": "64 — Financiële diensten"
+      },
+      {
+        "value": "65",
+        "label": "65 — Verzekeringen en pensioenfondsen"
+      },
+      {
+        "value": "66",
+        "label": "66 — Ondersteunende financiële diensten"
+      },
+      {
+        "value": "68",
+        "label": "68 — Immobiliën / vastgoed"
+      },
+      {
+        "value": "69",
+        "label": "69 — Juridische en boekhoudkundige activiteiten"
+      },
+      {
+        "value": "70",
+        "label": "70 — Hoofdkantoren en managementadvies"
+      },
+      {
+        "value": "71",
+        "label": "71 — Architecten, ingenieurs en technische tests"
+      },
+      {
+        "value": "72",
+        "label": "72 — Wetenschappelijk onderzoek en ontwikkeling"
+      },
+      {
+        "value": "73",
+        "label": "73 — Reclamewezen en marktonderzoek"
+      },
+      {
+        "value": "74",
+        "label": "74 — Overige professionele/wetenschappelijke diensten"
+      },
+      {
+        "value": "75",
+        "label": "75 — Veterinaire diensten"
+      },
+      {
+        "value": "77",
+        "label": "77 — Verhuur en lease"
+      },
+      {
+        "value": "78",
+        "label": "78 — Arbeidsbemiddeling en personeelsdiensten"
+      },
+      {
+        "value": "79",
+        "label": "79 — Reisbureaus en reisorganisatoren"
+      },
+      {
+        "value": "80",
+        "label": "80 — Beveiliging en opsporing"
+      },
+      {
+        "value": "81",
+        "label": "81 — Diensten aan gebouwen en landschap"
+      },
+      {
+        "value": "82",
+        "label": "82 — Administratieve en ondersteunende diensten"
+      },
+      {
+        "value": "84",
+        "label": "84 — Openbaar bestuur en defensie"
+      },
+      {
+        "value": "85",
+        "label": "85 — Onderwijs"
+      },
+      {
+        "value": "86",
+        "label": "86 — Gezondheidszorg"
+      },
+      {
+        "value": "87",
+        "label": "87 — Maatschappelijke dienstverlening met huisvesting"
+      },
+      {
+        "value": "88",
+        "label": "88 — Maatschappelijke dienstverlening zonder huisvesting"
+      },
+      {
+        "value": "90",
+        "label": "90 — Creatieve activiteiten, kunst en amusement"
+      },
+      {
+        "value": "91",
+        "label": "91 — Bibliotheken, archieven, musea"
+      },
+      {
+        "value": "92",
+        "label": "92 — Loterijen en kansspelen"
+      },
+      {
+        "value": "93",
+        "label": "93 — Sport, ontspanning en recreatie"
+      },
+      {
+        "value": "94",
+        "label": "94 — Verenigingen"
+      },
+      {
+        "value": "95",
+        "label": "95 — Reparatie computers en consumentenartikelen"
+      },
+      {
+        "value": "96",
+        "label": "96 — Overige persoonlijke diensten"
+      },
+      {
+        "value": "97",
+        "label": "97 — Huishoudens als werkgever"
+      },
+      {
+        "value": "98",
+        "label": "98 — Huishoudelijke productie voor eigen gebruik"
+      },
+      {
+        "value": "99",
+        "label": "99 — Extraterritoriale organisaties"
+      }
+    ],
+    "legal_forms": [
+      {
+        "value": "TYPE:1",
+        "label": "1 — Eenmanszaak / natuurlijke persoon"
+      },
+      {
+        "value": "TYPE:2",
+        "label": "2 — Rechtspersoon (alle rechtsvormen)"
+      },
+      {
+        "value": "001",
+        "label": "001 — Europese Coöperatieve Vennootschap"
+      },
+      {
+        "value": "002",
+        "label": "002 — Organisme voor de Financiering van Pensioenen"
+      },
+      {
+        "value": "003",
+        "label": "003 — BTW-eenheid"
+      },
+      {
+        "value": "006",
+        "label": "006 — Coöperatieve vennootschap met onbeperkte aansprakelijkheid"
+      },
+      {
+        "value": "007",
+        "label": "007 — Coöperatieve vennootschap met onbeperkte aansprakelijkheid, bij wijze van deelneming"
+      },
+      {
+        "value": "008",
+        "label": "008 — Coöperatieve vennootschap met beperkte aansprakelijkheid"
+      },
+      {
+        "value": "009",
+        "label": "009 — Coöperatieve vennootschap met beperkte aansprakelijkheid, bij wijze van deelneming"
+      },
+      {
+        "value": "011",
+        "label": "011 — Vennootschap onder firma"
+      },
+      {
+        "value": "012",
+        "label": "012 — Gewone commanditaire vennootschap"
+      },
+      {
+        "value": "013",
+        "label": "013 — Commanditaire vennootschap op aandelen"
+      },
+      {
+        "value": "014",
+        "label": "014 — NV — Naamloze vennootschap"
+      },
+      {
+        "value": "015",
+        "label": "015 — Besloten vennootschap met beperkte aansprakelijkheid"
+      },
+      {
+        "value": "016",
+        "label": "016 — Coöperatieve vennootschap (oud statuut)"
+      },
+      {
+        "value": "017",
+        "label": "017 — VZW — Vereniging zonder winstoogmerk"
+      },
+      {
+        "value": "018",
+        "label": "018 — Instelling van openbaar nut"
+      },
+      {
+        "value": "019",
+        "label": "019 — Ziekenfonds / Maatschappij van onderlinge bijstand / Landsbond van ziekenfondsen"
+      },
+      {
+        "value": "020",
+        "label": "020 — Beroepsvereniging"
+      },
+      {
+        "value": "021",
+        "label": "021 — Onderlinge verzekeringsvereniging / Gemeenschappelijke verzekeringskas van privaat recht"
+      },
+      {
+        "value": "022",
+        "label": "022 — Internationale wetenschappelijke organisatie van Belgisch recht"
+      },
+      {
+        "value": "023",
+        "label": "023 — Buitenlandse privaatrechtelijke vereniging met vestiging in België"
+      },
+      {
+        "value": "025",
+        "label": "025 — Landbouwvennootschap"
+      },
+      {
+        "value": "026",
+        "label": "026 — Private stichting"
+      },
+      {
+        "value": "027",
+        "label": "027 — Europese vennootschap (Societas Europaea)"
+      },
+      {
+        "value": "028",
+        "label": "028 — Instelling zonder winstoogmerk"
+      },
+      {
+        "value": "029",
+        "label": "029 — Stichting van openbaar nut"
+      },
+      {
+        "value": "030",
+        "label": "030 — Buitenlandse entiteit"
+      },
+      {
+        "value": "040",
+        "label": "040 — Kongolese vennootschap"
+      },
+      {
+        "value": "051",
+        "label": "051 — Andere privaatrechtelijke vorm met rechtspersoonlijkheid"
+      },
+      {
+        "value": "060",
+        "label": "060 — Economisch samenwerkingsverband"
+      },
+      {
+        "value": "065",
+        "label": "065 — Europees economisch samenwerkingsverband"
+      },
+      {
+        "value": "070",
+        "label": "070 — VME — Vereniging van mede-eigenaars"
+      },
+      {
+        "value": "108",
+        "label": "108 — Coöperatieve vennootschap met beperkte aansprakelijkheid van publiek recht"
+      },
+      {
+        "value": "110",
+        "label": "110 — Rijk, Provincie, Gewest, Gemeenschap"
+      },
+      {
+        "value": "114",
+        "label": "114 — Naamloze vennootschap van publiek recht"
+      },
+      {
+        "value": "116",
+        "label": "116 — Coöperatieve vennootschap van publiek recht (oud statuut)"
+      },
+      {
+        "value": "117",
+        "label": "117 — Vereniging zonder winstoogmerk van publiek recht"
+      },
+      {
+        "value": "123",
+        "label": "123 — Beroepsvereniging / Orde"
+      },
+      {
+        "value": "124",
+        "label": "124 — Openbare instelling"
+      },
+      {
+        "value": "125",
+        "label": "125 — Internationale vereniging zonder winstoogmerk"
+      },
+      {
+        "value": "127",
+        "label": "127 — Berg van Barmhartigheid"
+      },
+      {
+        "value": "129",
+        "label": "129 — Polder / Watering"
+      },
+      {
+        "value": "151",
+        "label": "151 — Andere rechtsvorm"
+      },
+      {
+        "value": "160",
+        "label": "160 — Buitenlandse of internationale publieke organisatie"
+      },
+      {
+        "value": "217",
+        "label": "217 — Europese politieke partij"
+      },
+      {
+        "value": "218",
+        "label": "218 — Europese politieke stichting"
+      },
+      {
+        "value": "230",
+        "label": "230 — Buitenlandse entiteit met onroerend goed in België (met rechtspersoonlijkheid)"
+      },
+      {
+        "value": "235",
+        "label": "235 — Buitenlandse entiteit zonder Belgische vestiging met vertegenwoordiger voor BTW"
+      },
+      {
+        "value": "265",
+        "label": "265 — Europees economisch samenwerkingsverband zonder zetel met vestiging in België (EESV)"
+      },
+      {
+        "value": "301",
+        "label": "301 — Federale overheidsdienst"
+      },
+      {
+        "value": "302",
+        "label": "302 — Programmatorische federale overheidsdienst"
+      },
+      {
+        "value": "303",
+        "label": "303 — Andere federale dienst"
+      },
+      {
+        "value": "310",
+        "label": "310 — Overheid van het Vlaamse Gewest en van de Vlaamse Gemeenschap"
+      },
+      {
+        "value": "320",
+        "label": "320 — Overheid van het Waalse Gewest"
+      },
+      {
+        "value": "325",
+        "label": "325 — Internationale vereniging zonder winstoogmerk van publiek recht"
+      },
+      {
+        "value": "330",
+        "label": "330 — Overheid van het Brusselse Hoofdstedelijke Gewest"
+      },
+      {
+        "value": "340",
+        "label": "340 — Overheid van de Franse Gemeenschap"
+      },
+      {
+        "value": "350",
+        "label": "350 — Overheid van de Duitstalige Gemeenschap"
+      },
+      {
+        "value": "370",
+        "label": "370 — Ministerie van Economische Zaken"
+      },
+      {
+        "value": "371",
+        "label": "371 — Ministerie van Buitenlandse Zaken, Buitenlandse handel en Ontwikkelingssamenwerking"
+      },
+      {
+        "value": "379",
+        "label": "379 — Ministerie van Binnenlandse Zaken"
+      },
+      {
+        "value": "380",
+        "label": "380 — Ministerie van Justitie"
+      },
+      {
+        "value": "385",
+        "label": "385 — Ministerie van de Vlaamse Gemeenschap"
+      },
+      {
+        "value": "386",
+        "label": "386 — Ministerie van de Franse Gemeenschap"
+      },
+      {
+        "value": "387",
+        "label": "387 — Ministerie van het Brusselse Hoofdstedelijke Gewest"
+      },
+      {
+        "value": "388",
+        "label": "388 — Ministerie van het Waalse Gewest"
+      },
+      {
+        "value": "393",
+        "label": "393 — Andere"
+      },
+      {
+        "value": "400",
+        "label": "400 — Provinciale overheid"
+      },
+      {
+        "value": "411",
+        "label": "411 — Stad / gemeente"
+      },
+      {
+        "value": "412",
+        "label": "412 — Openbaar centrum voor maatschappelijk welzijn"
+      },
+      {
+        "value": "413",
+        "label": "413 — Lokale politiezone"
+      },
+      {
+        "value": "414",
+        "label": "414 — Intercommunale"
+      },
+      {
+        "value": "415",
+        "label": "415 — Projectvereniging"
+      },
+      {
+        "value": "416",
+        "label": "416 — Dienstverlenende vereniging (Vlaams Gewest)"
+      },
+      {
+        "value": "417",
+        "label": "417 — Opdrachthoudende vereniging (Vlaams Gewest)"
+      },
+      {
+        "value": "418",
+        "label": "418 — Autonoom gemeentebedrijf"
+      },
+      {
+        "value": "419",
+        "label": "419 — Autonoom provinciebedrijf"
+      },
+      {
+        "value": "420",
+        "label": "420 — Vereniging van OCMW's"
+      },
+      {
+        "value": "422",
+        "label": "422 — Hulpverleningszone"
+      },
+      {
+        "value": "451",
+        "label": "451 — Organismen ingeschreven voor de R.V.P."
+      },
+      {
+        "value": "452",
+        "label": "452 — Organisme ingeschreven voor de Administratie van de Pensioenen"
+      },
+      {
+        "value": "453",
+        "label": "453 — Buitenlandse onderneming zonder Belgische vestiging genoteerd op de beurs"
+      },
+      {
+        "value": "454",
+        "label": "454 — Buitenlandse entiteit met onroerend goed in België (zonder rechtspersoonlijkheid)"
+      },
+      {
+        "value": "506",
+        "label": "506 — Coöperatieve vennootschap met onbeperkte aansprakelijkheid met een sociaal oogmerk"
+      },
+      {
+        "value": "508",
+        "label": "508 — Coöperatieve vennootschap met beperkte aansprakelijkheid met een sociaal oogmerk"
+      },
+      {
+        "value": "511",
+        "label": "511 — Vennootschap onder firma met een sociaal oogmerk"
+      },
+      {
+        "value": "512",
+        "label": "512 — Gewone commanditaire vennootschap met een sociaal oogmerk"
+      },
+      {
+        "value": "513",
+        "label": "513 — Commanditaire vennootschap op aandelen met een sociaal oogmerk"
+      },
+      {
+        "value": "514",
+        "label": "514 — Naamloze vennootschap met een sociaal oogmerk"
+      },
+      {
+        "value": "515",
+        "label": "515 — Besloten vennootschap met beperkte aansprakelijkheid met een sociaal oogmerk"
+      },
+      {
+        "value": "560",
+        "label": "560 — Economisch samenwerkingsverband met een sociaal oogmerk"
+      },
+      {
+        "value": "610",
+        "label": "610 — BV — Besloten Vennootschap"
+      },
+      {
+        "value": "612",
+        "label": "612 — Commanditaire vennootschap"
+      },
+      {
+        "value": "616",
+        "label": "616 — Besloten Vennootschap van publiek recht"
+      },
+      {
+        "value": "617",
+        "label": "617 — Commanditaire vennootschap van publiek recht"
+      },
+      {
+        "value": "651",
+        "label": "651 — Andere vorm met een sociaal oogmerk van publiek recht"
+      },
+      {
+        "value": "702",
+        "label": "702 — Maatschap"
+      },
+      {
+        "value": "706",
+        "label": "706 — CV — Coöperatieve vennootschap"
+      },
+      {
+        "value": "716",
+        "label": "716 — Coöperatieve vennootschap van publiek recht"
+      },
+      {
+        "value": "721",
+        "label": "721 — Vennootschap of vereniging zonder rechtspersoonlijkheid"
+      },
+      {
+        "value": "722",
+        "label": "722 — Tijdelijke vereniging"
+      },
+      {
+        "value": "790",
+        "label": "790 — Diversen zonder rechtspersoonlijkheid"
+      },
+      {
+        "value": "999",
+        "label": "999 — Ongekende rechtsvorm RSZ"
+      }
+    ]
+  },
+  "catalog": {
+    "source": "/xbrl/metrics/browse",
+    "page_size": 50,
+    "value_types": [
+      "",
+      "numeric",
+      "text"
+    ],
+    "hierarchy": [
+      "group",
+      "section",
+      "topic"
+    ]
+  },
+  "column_groups": {
+    "result_columns": [
+      {
+        "key": "name",
+        "label": "Bedrijf"
+      },
+      {
+        "key": "number",
+        "label": "Ondernemingsnummer"
+      },
+      {
+        "key": "city",
+        "label": "Gemeente"
+      },
+      {
+        "key": "postcode",
+        "label": "Postcode"
+      },
+      {
+        "key": "nace",
+        "label": "Activiteit"
+      },
+      {
+        "key": "status",
+        "label": "KBO-status"
+      },
+      {
+        "key": "legal_form",
+        "label": "Rechtsvorm"
+      },
+      {
+        "key": "revenue",
+        "label": "Omzet"
+      },
+      {
+        "key": "profit",
+        "label": "Resultaat"
+      },
+      {
+        "key": "fte",
+        "label": "Personeel (VTE)"
+      },
+      {
+        "key": "year",
+        "label": "Bronjaar"
+      }
+    ],
+    "default_selected": [
+      "name",
+      "city",
+      "revenue",
+      "profit",
+      "fte",
+      "year"
+    ]
+  },
+  "ui_methods": [
+    "account_action",
+    "ai",
+    "ai_usage",
+    "bootstrap",
+    "cancel_operation",
+    "company",
+    "compare_companies",
+    "export_columns",
+    "filters_apply",
+    "operation_status",
+    "relaxation_suggestions",
+    "search",
+    "search_history",
+    "set_ai_limit",
+    "similar_apply",
+    "similar_company",
+    "voice_cancel",
+    "voice_start",
+    "voice_status",
+    "voice_stop",
+    "workspace_data",
+    "workspace_save",
+    "xbrl_catalog"
+  ]
+}

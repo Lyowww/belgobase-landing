@@ -1,6 +1,7 @@
 "use client";
 
 import { Menu, Phone, X } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useThrottledScroll } from "@/hooks/useThrottledScroll";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
@@ -15,7 +16,7 @@ type HeaderProps = {
 };
 
 export function Header({ variant = "default" }: HeaderProps) {
-  const { t } = useTranslations();
+  const { t, locale } = useTranslations();
   const [mobileOpen, setMobileOpen] = useState(false);
   const scrolled = useThrottledScroll(40);
   const isComingSoon = variant === "comingSoon";
@@ -64,11 +65,13 @@ export function Header({ variant = "default" }: HeaderProps) {
       </nav>
 
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-4 sm:h-16 sm:gap-3 sm:px-6 lg:px-8">
-        <a
-          href="/"
+        <Link
+          href={`/${locale}`}
           onClick={(e) => {
-            e.preventDefault();
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            if (window.location.pathname.replace(/\/$/, "") === `/${locale}`) {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
           }}
           className="relative z-10 flex min-w-0 shrink items-center gap-2"
         >
@@ -78,10 +81,13 @@ export function Header({ variant = "default" }: HeaderProps) {
           <span className="truncate text-base font-semibold tracking-tight text-deep-navy sm:text-lg">
             BelgoBase
           </span>
-        </a>
+        </Link>
 
         {!isComingSoon && (
           <div className="relative z-10 hidden items-center gap-3 lg:flex">
+            <Link href={`/${locale}/app`} className="rounded-full border border-border px-4 py-2.5 text-sm font-semibold text-deep-navy transition-colors hover:border-primary hover:text-primary">
+              {locale === "nl" ? "Inloggen" : "Sign in"}
+            </Link>
             <a
               href={contactPhoneHref}
               className="inline-flex items-center justify-center rounded-full border border-border bg-surface-elevated p-2.5 text-deep-navy transition-colors hover:border-primary/30 hover:bg-surface-hover"
@@ -142,6 +148,9 @@ export function Header({ variant = "default" }: HeaderProps) {
             </a>
           ))}
           <div className="mt-3 space-y-3">
+            <Link href={`/${locale}/app`} onClick={() => setMobileOpen(false)} className="flex items-center justify-center rounded-full border border-primary px-4 py-3 text-sm font-semibold text-primary">
+              {locale === "nl" ? "BelgoBase openen" : "Open BelgoBase"}
+            </Link>
             <a
               href={contactPhoneHref}
               onClick={() => setMobileOpen(false)}
