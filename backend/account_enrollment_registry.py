@@ -21,14 +21,13 @@ from cryptography.hazmat.primitives import serialization
 from belgobase_account_registry_56a import (
     AcceptanceConflictError,
     AcceptanceValidationError,
-    COMMERCIAL_LEGAL_SET_ID,
-    COMMERCIAL_MANIFEST_FILE,
+    FIRST_USE_LEGAL_SET_ID,
     _b64encode,
     _canonical_json,
     _normal_text,
     _normalize_hash,
     _render_choice_texts,
-    _load_commercial_legal_bundle,
+    load_legal_bundle,
     load_signing_private_key,
     normalize_customer_number,
     normalize_email,
@@ -114,8 +113,7 @@ BEGIN SELECT RAISE(ABORT, 'web legal receipts are append-only'); END;
 
 
 def load_web_legal_bundle(legal_dir: Path) -> dict[str, Any]:
-    root = Path(legal_dir)
-    return _load_commercial_legal_bundle(root, root / COMMERCIAL_MANIFEST_FILE)
+    return load_legal_bundle(Path(legal_dir), legal_set_id=FIRST_USE_LEGAL_SET_ID)
 
 
 def trusted_public_key_from_signing_key(path: Path) -> str:
@@ -263,7 +261,7 @@ def _web_snapshot(
     legal_bundle: dict[str, Any],
     preflight_id: str,
 ) -> dict[str, Any]:
-    if legal_bundle.get("legal_set_id") != COMMERCIAL_LEGAL_SET_ID:
+    if legal_bundle.get("legal_set_id") != FIRST_USE_LEGAL_SET_ID:
         raise WebEnrollmentUnavailable("unsupported_web_legal_set")
     if set((legal_bundle.get("choices") or {})) != {
         "general_terms",
@@ -481,7 +479,7 @@ def complete_web_enrollment(
             customer["enterprise_number"] != enterprise
             or customer["legal_name"] != legal_name
             or customer["support_email"] != normalized_email
-            or snapshot["legal"]["legal_set_id"] != COMMERCIAL_LEGAL_SET_ID
+            or snapshot["legal"]["legal_set_id"] != FIRST_USE_LEGAL_SET_ID
             or snapshot["legal"]["manifest_sha256"] != legal_bundle.get("manifest_sha256")
             or choices != snapshot["legal"]["choice_texts"]
         ):

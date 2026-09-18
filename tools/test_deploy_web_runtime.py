@@ -4,6 +4,7 @@ import importlib.util
 import sqlite3
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 
@@ -23,6 +24,13 @@ remote = load("deploy_web_runtime_remote", ROOT / "tools" / "deploy_web_runtime_
 
 
 class DeploymentToolTests(unittest.TestCase):
+    def test_exiting_listener_is_rechecked_but_unknown_owner_still_fails(self):
+        with mock.patch.object(remote, 'listener_pids', side_effect=[[123], []]), mock.patch.object(remote, 'process_rows', return_value=[]):
+            self.assertIsNone(remote.verify_listener(8765, Path('service.py'), False))
+        with mock.patch.object(remote, 'listener_pids', return_value=[123]), mock.patch.object(remote, 'process_rows', return_value=[]):
+            with self.assertRaisesRegex(remote.DeployError, 'listener_process_missing'):
+                remote.verify_listener(8765, Path('service.py'), False)
+
     def test_bundle_is_manifest_bound_and_contains_only_deployable_files(self):
         raw, contract = local.build_bundle()
         self.assertEqual(len(raw), contract["bundle_size"])

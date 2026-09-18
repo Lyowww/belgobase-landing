@@ -8,6 +8,7 @@ import sqlite3
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 
@@ -28,6 +29,7 @@ from belgobase_device_registry_43a import initialize_device_registry  # noqa: E4
 from belgobase_license_registry_42a import create_license  # noqa: E402
 from backend.account_enrollment_registry import (  # noqa: E402
     complete_web_enrollment,
+    load_web_legal_bundle,
     prepare_web_enrollment,
     project_web_account,
     web_enrollment_preflight,
@@ -69,7 +71,7 @@ def legal_bundle() -> dict:
             "text_template_sha256": hashlib.sha256(text.encode()).hexdigest(),
         }
     return {
-        "legal_set_id": "belgobase-b2b-commercial-1.0",
+        "legal_set_id": "belgobase-b2b-commercial-text-first-use-1.0",
         "language": "nl-BE",
         "manifest_sha256": "a" * 64,
         "manifest_file": "commercial-manifest.json",
@@ -351,6 +353,17 @@ class AccountCandidateIntegrationTests(unittest.TestCase):
                 self.trusted_public_key,
                 database_path=self.database,
             )
+
+    def test_web_bundle_uses_existing_pinned_text_legal_set(self) -> None:
+        with mock.patch(
+            "backend.account_enrollment_registry.load_legal_bundle",
+            return_value=self.legal,
+        ) as loader:
+            result = load_web_legal_bundle(Path(self.temp.name))
+        self.assertIs(result, self.legal)
+        loader.assert_called_once_with(
+            Path(self.temp.name), legal_set_id="belgobase-b2b-commercial-text-first-use-1.0"
+        )
 
     def test_generated_account_api_dispatches_internal_flow_with_proof(self) -> None:
         candidate_temp = tempfile.TemporaryDirectory(dir=ROOT / "tools")

@@ -143,6 +143,8 @@ def verify_listener(port: int, script: Path, required: bool) -> int | None:
         return None
     need(len(pids) == 1, f"listener_count_invalid:{port}")
     row = next((item for item in process_rows() if item["pid"] == pids[0]), None)
+    if row is None and not required and not listener_pids(port):
+        return None  # Process exited between the socket and process snapshots.
     need(row is not None, f"listener_process_missing:{port}")
     need(os.path.normcase(str(PYTHON)) == os.path.normcase(row["exe"]), f"listener_python_drift:{port}")
     need(str(script).lower() in row["cmd"].lower(), f"listener_command_drift:{port}")
@@ -467,7 +469,7 @@ def canaries() -> dict:
     status, health = request(API_PORT, "GET", "/health")
     need(status == 200 and health.get("ok") is True, "api_health_canary_failed")
     status, web = request(API_PORT, "GET", "/web/auth/session")
-    need(status == 401 and web.get("error") == "session_missing", "web_runtime_canary_failed")
+    need(status == 401 and web.get("error") == "session_invalid", "web_runtime_canary_failed")
     return {
         "account": True,
         "account_web_extension": True,
@@ -532,10 +534,10 @@ def main() -> int:
         refreshed_stage = daily_stage(service)
         need(refreshed_stage["safe"], "daily_stage_changed_before_restart")
         need(sha(CUTOVER) == CUTOVER_PATCHED_SHA256, "daily_serialization_not_active")
-        stop_task(service, API_TASK, SERVER_WRAPPER, API_PORT, SERVER_ROOT / "30b_belgobase_windows_vps_api_server.py")
         api_stopped = True
-        stop_task(service, ACCOUNT_TASK, ACCOUNT_WRAPPER, ACCOUNT_PORT, ACCOUNT_ROOT / "run_account_service_production.py")
+        stop_task(service, API_TASK, SERVER_WRAPPER, API_PORT, SERVER_ROOT / "30b_belgobase_windows_vps_api_server.py")
         account_stopped = True
+        stop_task(service, ACCOUNT_TASK, ACCOUNT_WRAPPER, ACCOUNT_PORT, ACCOUNT_ROOT / "run_account_service_production.py")
         changed = True
         install(staged, contract)
         start_task(service, ACCOUNT_TASK, ACCOUNT_WRAPPER, ACCOUNT_PORT, ACCOUNT_ROOT / "run_account_service_production.py")

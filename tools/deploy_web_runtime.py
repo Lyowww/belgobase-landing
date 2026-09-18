@@ -19,7 +19,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 VPS_CANDIDATE = ROOT / "tools" / "generated_vps_candidate_release_ready_auth"
-ACCOUNT_CANDIDATE = ROOT / "tools" / "generated_account_enrollment_candidate_release_ready_schema_build100"
+ACCOUNT_CANDIDATE = ROOT / "tools" / "generated_account_enrollment_candidate_release_ready_firstuse"
 REMOTE_SCRIPT = ROOT / "tools" / "deploy_web_runtime_remote.py"
 CUTOVER_PREIMAGE = ROOT / ".local" / "daily_api_maintenance_dual_cutover.py"
 VPS_HELPER_ROOT = Path(
@@ -27,7 +27,7 @@ VPS_HELPER_ROOT = Path(
 )
 EXPECTED_MANIFESTS = {
     "vps": "899508d6c0b6fd6fd7b9aa592c1528ac513157c9cddf56c522531b8bfc99f962",
-    "account": "8c229ffe05926fafa2d5a2443ea83c963460055039e7d7f05cf0c1bc25b7ddf0",
+    "account": "a7ffe655f045cdfac8ab466ea53a9e708c6f04c3d3119821a2532716eb215e17",
 }
 EXPECTED_WRAPPERS = {
     "server": "a7a915e72edc0b49ab992219614f20e7460431f5fab61566a3569e2200edef99",
@@ -157,7 +157,7 @@ def remote_call(action: str) -> dict:
         result = next((item for item in reversed(events) if item.get("event") == "result"), None)
         failure = next((item for item in reversed(events) if item.get("event") == "error"), None)
         if code or failure or result is None:
-            detail = (failure or {}).get("message") or stderr.decode("utf-8", errors="replace")[:600]
+            detail = json.dumps(failure, ensure_ascii=False) if failure else stderr.decode("utf-8", errors="replace")[:600]
             raise RuntimeError(f"web runtime deployment failed: {detail}")
         return result
     finally:
