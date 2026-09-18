@@ -24,6 +24,25 @@ remote = load("deploy_web_runtime_remote", ROOT / "tools" / "deploy_web_runtime_
 
 
 class DeploymentToolTests(unittest.TestCase):
+    def test_full_runtime_rejects_stale_backend_before_remote_connection(self):
+        with mock.patch.object(local, 'build_bundle', return_value=(b'old', {'file_sha256': {'server/backend/web_core.py': '0' * 64}})):
+            with self.assertRaisesRegex(RuntimeError, 'historical runtime candidate differs'):
+                local.remote_call('deploy')
+
+    def test_current_backend_requires_matching_local_source(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'backend').mkdir()
+            source = root / 'backend/example.py'
+            source.write_bytes(b'current')
+            contract = {'file_sha256': {'server/backend/example.py': local.sha256(source)}}
+            local.validate_current_backend(contract, root)
+            source.write_bytes(b'newer')
+            with self.assertRaisesRegex(RuntimeError, 'historical runtime candidate differs'):
+                local.validate_current_backend(contract, root)
+        with self.assertRaisesRegex(RuntimeError, 'no backend provenance'):
+            local.validate_current_backend({'file_sha256': {}})
+
     def test_exiting_listener_is_rechecked_but_unknown_owner_still_fails(self):
         with mock.patch.object(remote, 'listener_pids', side_effect=[[123], []]), mock.patch.object(remote, 'process_rows', return_value=[]):
             self.assertIsNone(remote.verify_listener(8765, Path('service.py'), False))

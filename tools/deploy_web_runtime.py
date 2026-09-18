@@ -118,8 +118,22 @@ def build_bundle() -> tuple[bytes, dict]:
     }
 
 
+def validate_current_backend(contract: dict, root: Path = ROOT) -> None:
+    """Never let a historical full-runtime bundle undo newer backend fixes."""
+    files = contract.get("file_sha256", {})
+    backend = {name: digest for name, digest in files.items() if name.startswith("server/backend/")}
+    if not backend:
+        raise RuntimeError("runtime bundle has no backend provenance")
+    for name, expected in backend.items():
+        relative = Path(name).relative_to("server")
+        source = root / relative
+        if not source.is_file() or sha256(source) != expected:
+            raise RuntimeError(f"historical runtime candidate differs from current source: {relative}; prepare a newly reviewed candidate or use the current narrow patch route")
+
+
 def remote_call(action: str) -> dict:
     bundle, contract = build_bundle()
+    validate_current_backend(contract)
     if action == "preflight":
         bundle = b""
         contract["bundle_size"] = 0
