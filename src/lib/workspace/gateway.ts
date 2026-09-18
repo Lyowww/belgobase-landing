@@ -6,6 +6,7 @@ const bridgeMethods = new Set([
   "relaxation_suggestions", "compare_companies", "ai", "workspace_data",
   "filters_apply", "xbrl_catalog", "similar_company", "similar_apply",
   "export_columns", "ai_usage", "set_ai_limit", "account_action",
+  "ai_wallet", "set_language",
 ]);
 const authMethods = new Set(["start", "verify", "session", "logout", "logout-all", "sessions", "revoke"]);
 const enrollmentMethods = new Set(["start", "verify", "session", "autofill", "complete"]);

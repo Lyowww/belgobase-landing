@@ -193,6 +193,11 @@ const mock = http.createServer(async (request, response) => {
       const body = await readBody(request);
       state.bridgeCalls.push(body);
       if (body.method === "bootstrap") return json(response, 200, bootstrap());
+      if (body.method === "ai_wallet") return json(response, 200, { ok: true, wallet: { currency: "EUR", balance_eur: 12, available_eur: 10, reserved_eur: 1, spent_eur: 2, entries: [] } });
+      if (body.method === "set_language") {
+        if (!["nl", "fr", "en"].includes(body.payload.language)) return json(response, 400, { ok: false, error: "invalid_request" });
+        return json(response, 200, { ok: true, language: body.payload.language });
+      }
       if (body.method === "search") return json(response, 200, { ok: true, rows: [company().company], total: 1, page: 1, page_size: 50, filters: body.payload.filters || {} });
       if (body.method === "company") return json(response, 200, company());
       if (body.method === "export_results") return json(response, 200, { ok: true, download_url: "/api/web/download/mock-download-token", rows: 1, total: 1, message: "1 bedrijf opgeslagen." });
@@ -342,6 +347,19 @@ try {
   assert.match(release || "", /^[a-f0-9]{64}$/);
   const versionResponse = await page.request.get(`${appOrigin}/api/web/version`);
   assert.equal((await versionResponse.json()).version, release, "the version endpoint matches the active iframe release");
+  await frame.locator("#assistant-nav").click();
+  await frame.locator("#wallet-tab").click();
+  await frame.getByText("Saldo").waitFor();
+  assert.ok(state.bridgeCalls.some((call) => call.method === "ai_wallet"), "wallet reads the server snapshot through the bridge");
+  const languageRequest = page.waitForRequest((request) => request.url().endsWith("/api/web/bridge/set_language"));
+  const languageResponse = page.waitForResponse((response) => response.url().endsWith("/api/web/bridge/set_language"));
+  await frame.locator("#language-switch").selectOption("fr");
+  await languageRequest;
+  await languageResponse;
+  assert.equal(await frame.locator("#language-switch").inputValue(), "fr", "the selected workspace language changes immediately");
+  assert.ok(state.bridgeCalls.some((call) => call.method === "set_language" && call.payload.language === "fr"), "language preference is persisted through the bridge");
+  await frame.locator("#assistant-close").click();
+  await frame.locator("#query").waitFor();
 
   await frame.locator("#ai-mode").uncheck();
   await frame.locator("#query").fill("Voorbeeld Bouw");

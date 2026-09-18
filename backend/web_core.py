@@ -41,11 +41,13 @@ class WebCore:
     def __init__(self, main: Any, authorize: Callable[[AuthContext, str, Mapping[str, Any]], None],
                  download_root: str | Path, metadata: Mapping[str, Any] | None = None,
                  brand_logo_path: str | Path | None = None,
-                 account_projector: Callable[[AuthContext, dict[str, Any]], Mapping[str, Any]] | None = None):
+                 account_projector: Callable[[AuthContext, dict[str, Any]], Mapping[str, Any]] | None = None,
+                 wallet_reader: Callable[[AuthContext], Mapping[str, Any]] | None = None):
         self.main, self.authorize, self.metadata = main, authorize, dict(metadata or {})
         self.download_root = Path(download_root); self.download_root.mkdir(parents=True, exist_ok=True)
         self.brand_logo_path = Path(brand_logo_path) if brand_logo_path else None
         self.account_projector = account_projector
+        self.wallet_reader = wallet_reader
         self._downloads: dict[str, tuple[str, Path]] = {}
         self._similar: dict[str, dict[str, Any]] = {}
         self._similar_applied: dict[str, dict[str, tuple[Any, Any]]] = {}
@@ -55,7 +57,7 @@ class WebCore:
         return CoreCallbacks(**{name: getattr(self, name) for name in (
             'bootstrap', 'search', 'company', 'compare_companies', 'relaxation_suggestions',
             'ai', 'workspace_data', 'filters_apply', 'xbrl_catalog', 'similar_company',
-            'similar_apply', 'export_columns', 'account_action', 'export', 'ai_usage')})
+            'similar_apply', 'export_columns', 'account_action', 'export', 'ai_usage', 'ai_wallet')})
 
     def _allow(self, action: str, payload: dict[str, Any], auth: AuthContext) -> None:
         if not callable(self.authorize):
@@ -152,14 +154,28 @@ class WebCore:
         metrics = [{'key': output, 'label': label, 'value': self._financial_value(record,key), 'unit': unit, 'year': fact_year(key),
                     'note': ('Laatste financiële verrijking; geen historische jaarreeks. ' if key in {'ebitda','eigen_vermogen'} else '') + ' · '.join(str(v) for v in (record.get(key+'_status'),record.get(key+'_methode')) if v), 'explanation':explanation(key)} for output,label,key,unit in metric_specs]
         fields = [{'label': key.replace('_',' ').capitalize(), 'value': str(value), 'negative': False} for key,value in record.items() if key not in {spec[2] for spec in metric_specs}][:30]
-        history = {'years': [], 'series': {'revenue': [], 'profit': [], 'fte': [], 'assets': []}, 'label':'Financiële evolutie', 'note':'Geen historische bron beschikbaar.'}
-        if hasattr(self.main, 'read_company_history') and getattr(self.main, 'PREMIUM_HISTORY_SOURCE', None):
+        history = {'years': [], 'series': {'revenue': [], 'profit': [], 'fte': [], 'assets': []}, 'label':'Financiële evolutie', 'note':'Historische bron is niet geconfigureerd.'}
+        history_reader = getattr(self.main, 'read_company_history', None)
+        history_source = getattr(self.main, 'PREMIUM_HISTORY_SOURCE', None)
+        connect = getattr(self.main, 'request_duckdb_connect', None)
+        if callable(history_reader) and history_source and callable(connect):
             try:
-                raw = self.main.read_company_history(ondnr, self.main.PREMIUM_HISTORY_SOURCE, lambda: self.main.request_duckdb_connect(self.main.duckdb))
-                records = [r for r in (raw.get('records', []) if isinstance(raw, dict) else []) if isinstance(r, dict) and isinstance(r.get('jaar'), int)]
-                records.sort(key=lambda r:r['jaar']); years = [r['jaar'] for r in records]
-                history = {'years': years, 'series': {'revenue':[self._financial_value(r,'omzet') for r in records], 'profit':[self._financial_value(r,'winst_verlies') for r in records], 'fte':[self._financial_value(r,'personeel_vte') for r in records], 'assets':[self._financial_value(r,'balanstotaal') for r in records]}, 'label':'Financiële evolutie per bronjaar', 'note':'NBB-kerncijfers per bronjaar via BelgoBase. Ontbrekende cijfers blijven leeg.'}
-            except Exception: pass
+                raw = history_reader(ondnr, history_source, lambda: connect(self.main.duckdb))
+                if not isinstance(raw, Mapping):
+                    raise ValueError('historische bron gaf geen object terug')
+                if raw.get('available') is False or raw.get('complete') is False:
+                    reason = str(raw.get('reason') or 'onvolledige bron')
+                    history['note'] = 'Historische reeks is niet volledig beschikbaar: ' + reason + '.'
+                else:
+                    raw_records = raw.get('records')
+                    if not isinstance(raw_records, list) or any(not isinstance(item, Mapping) for item in raw_records):
+                        raise ValueError('historische bron gaf ongeldige records terug')
+                    records = [dict(item) for item in raw_records if isinstance(item.get('jaar'), int)]
+                    records.sort(key=lambda item: item['jaar'])
+                    years = [item['jaar'] for item in records]
+                    history = {'years': years, 'series': {'revenue':[self._financial_value(item,'omzet') for item in records], 'profit':[self._financial_value(item,'winst_verlies') for item in records], 'fte':[self._financial_value(item,'personeel_vte') for item in records], 'assets':[self._financial_value(item,'balanstotaal') for item in records]}, 'label':'Financiële evolutie per bronjaar', 'note':'NBB-kerncijfers per bronjaar via BelgoBase. Ontbrekende cijfers blijven leeg.'}
+            except Exception:
+                history['note'] = 'De historische reeks kon niet betrouwbaar worden geladen.'
         return {'company': row, 'fields': fields, 'metrics': metrics, 'history': history,
                 'financial': [{'label': label,'value':self._financial_value(record,key),'year':fact_year(key),'status':str(record.get(key+'_status') or 'Niet vermeld'),'source':str(record.get(key+'_methode') or 'Financiële verrijking'),'explanation':explanation(key)} for key,label in [('financial_omzet','Financiële omzet'),('financial_winst_verlies','Financieel resultaat'),('ebitda','EBITDA'),('brutomarge','Brutomarge'),('eigen_vermogen','Eigen vermogen')]]}
 
@@ -368,5 +384,26 @@ class WebCore:
         if value is None or value[0] != owner or not value[1].is_file(): raise WorkspaceError('Download niet beschikbaar.')
         return value[1]
 
+    def ai_wallet(self, payload: dict[str, Any], auth: AuthContext) -> dict[str, Any]:
+        self._allow('ai_wallet', payload, auth)
+        if payload:
+            raise WorkspaceError('Ongeldige tegoedaanvraag.')
+        if not callable(self.wallet_reader):
+            raise WorkspaceError('Je AI-tegoed kan momenteel niet worden opgehaald.')
+        try:
+            result = self.wallet_reader(auth)
+        except Exception as exc:
+            raise WorkspaceError('Je AI-tegoed kan momenteel niet worden opgehaald.') from exc
+        if not isinstance(result, Mapping) or result.get('ok') is not True or not isinstance(result.get('wallet'), Mapping):
+            raise WorkspaceError('Je AI-tegoed kan momenteel niet worden opgehaald.')
+        return {'wallet': dict(result['wallet'])}
+
     def ai_usage(self, payload: dict[str, Any], auth: AuthContext) -> dict[str, Any]:
-        self._allow('ai_usage', payload, auth); return {'usage':{'mode':'server','configurable':False,'message':'AI-gebruik wordt door BelgoBase beheerd.'}}
+        self._allow('ai_usage', payload, auth)
+        try:
+            wallet = self.ai_wallet({}, auth)['wallet']
+        except WorkspaceError:
+            return {'usage': {'mode':'server', 'configurable':False, 'message':'Je AI-tegoed is momenteel niet beschikbaar.'}}
+        return {'usage': {'mode':'server', 'configurable':False,
+                          'message':'Je AI-tegoed is gekoppeld aan je BelgoBase-licentie.',
+                          'wallet': wallet}}

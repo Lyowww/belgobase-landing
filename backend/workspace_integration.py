@@ -32,6 +32,8 @@ _STATIC_POLICIES: dict[str, frozenset[str]] = {
     "compare_companies": _DATA_READ,
     "similar_company": _DATA_READ,
     "ai_usage": _DATA_READ,
+    "ai_wallet": _DATA_READ,
+    "set_language": _DATA_READ,
     "set_ai_limit": _DATA_READ,
     "export_columns": _DATA_EXPORT,
     "xbrl_catalog": _XBRL_READ,

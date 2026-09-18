@@ -23,7 +23,8 @@ class Main:
     PREMIUM_HISTORY_SOURCE='history'
     duckdb=object()
     def request_duckdb_connect(self, value): return object()
-    def read_company_history(self, number, source, connect): return {'records':[{'jaar':2024,'omzet':0,'winst_verlies':None,'personeel_vte':2,'balanstotaal':5}]}
+    def read_company_history(self, number, source, connect):
+        return {'available':True,'complete':True,'records':[{'jaar':2024,'omzet':0,'winst_verlies':None,'personeel_vte':2,'balanstotaal':5}]}
     def xbrl_metric_browse(self, payload): return {'metrics':[{'xbrl_metric_key':'m1','human_display_label_nl':'Omzet','filter_value_type':'numeric','tree_group_label_nl':'G','tree_section_label_nl':'S','tree_topic_label_nl':'T'}],'total':1,'offset':0,'has_more':False}
     def run_export(self, filters, offset, preferences=None, postcodes=()):
         self.export_filters=dict(filters); return (['ondernemingsnummer'], [('0123456789',)] if offset == 0 else [], Path('index'))
@@ -98,6 +99,20 @@ class WebCoreTests(unittest.TestCase):
         self.core.account_projector=project
         self.assertEqual(self.core.account_action({'action':'refresh'},self.auth)['rows'][0]['value'],'Voorbeeld')
         self.assertIs(seen[0][0],self.auth)
+    def test_wallet_requires_injected_existing_reader_and_preserves_its_dto(self):
+        with self.assertRaisesRegex(Exception, 'AI-tegoed'):
+            self.core.ai_wallet({}, self.auth)
+        seen=[]
+        self.core.wallet_reader=lambda auth: seen.append(auth) or {'ok':True,'wallet':{'currency':'EUR','available_eur':12}}
+        result=self.core.ai_wallet({}, self.auth)
+        self.assertEqual(12,result['wallet']['available_eur']); self.assertIs(seen[0],self.auth)
+        self.assertEqual(result['wallet'],self.core.ai_usage({},self.auth)['usage']['wallet'])
+
+    def test_history_reader_failure_is_visible_in_dossier(self):
+        self.core.main.read_company_history=lambda *args: (_ for _ in ()).throw(RuntimeError('source broken'))
+        history=self.core.company({'number':'0123456789'},self.auth)['history']
+        self.assertEqual([],history['years']); self.assertIn('niet betrouwbaar',history['note'])
+
     def test_bootstrap_has_frozen_ui_catalog_and_data_uri(self):
         result=self.core.bootstrap({},self.auth)
         self.assertEqual(result['sectors'][0]['value'],''); self.assertEqual(result['legal_forms'][0]['label'],'1 — Eenmanszaak / natuurlijke persoon')

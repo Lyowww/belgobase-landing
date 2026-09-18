@@ -1,7 +1,7 @@
 {
   "provenance": {
-    "baseline": "BUILD98_UPDATE46_FINAL3",
-    "sha256": "9e7c6b54a74fa041f46011a2366fc9f930764aca21a10407f07042361f912ff9"
+    "baseline": "BUILD99_UPDATE47_FINAL_V2",
+    "sha256": "b8454e64a56f8995fc8de5714fc68fb179e169b95c6c2ff57be9e67ad14fca11"
   },
   "filter_labels": {
     "naam": "Bedrijfsnaam bevat",
@@ -2837,6 +2837,7 @@
     "account_action",
     "ai",
     "ai_usage",
+    "ai_wallet",
     "bootstrap",
     "cancel_operation",
     "company",
@@ -2847,7 +2848,7 @@
     "relaxation_suggestions",
     "search",
     "search_history",
-    "set_ai_limit",
+    "set_language",
     "similar_apply",
     "similar_company",
     "voice_cancel",

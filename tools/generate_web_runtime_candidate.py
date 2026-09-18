@@ -9,10 +9,10 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-PREIMAGE = ROOT / ".local" / "preimage"
+PREIMAGE = ROOT / ".local" / "preimage_current"
 DEFAULT_OUTPUT = ROOT / "tools" / "generated_vps_candidate"
 EXPECTED_SHA256 = {
-    "30b_belgobase_windows_vps_api_server.py": "6757d6de5972df7e43c4d81839f7879df12a10f8648497ffd9e4575548433961",
+    "30b_belgobase_windows_vps_api_server.py": "94aa714b1319bb6541563676269c2da582087ce9999dd57154b118760bcf16f1",
     "belgobase_authorization_45a.py": "3936e516e34c644a07785293aaac3a1dbe9f569766f1cee7c5939882b06caf7a",
     "belgobase_device_registry_43a.py": "ddd44fe12657f85bea0b84589849660ecf6684fb5a683e8b269595cc7d18bb22",
     "belgobase_license_registry_42a.py": "6a2c7822902994269cf0b270355f77fe5d5fdc3b6d3afaf017c04b462ee6820f",

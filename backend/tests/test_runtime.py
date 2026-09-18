@@ -14,6 +14,9 @@ from backend.runtime import (
     DisabledWebRuntime,
     RuntimeConfigurationError,
     WebRuntime,
+    _enrollment_company_lookup,
+    _interpret_premium_for_web,
+    _read_ai_wallet_for_web,
     build_web_runtime_from_environment,
     operation_binding,
 )
@@ -194,6 +197,68 @@ class RuntimeTests(unittest.TestCase):
         with self.assertRaises(RuntimeConfigurationError):
             build_web_runtime_from_environment(object(), env={"BELGOBASE_WEB_ENABLED": "yes"})
 
+    def test_web_ai_reuses_current_assistant_callbacks(self) -> None:
+        class Main:
+            normalize_premium_ai_filters = staticmethod(lambda value: value)
+            premium_ai_enum_values = staticmethod(lambda: {"enum": True})
+            premium_ai_metric_catalog = staticmethod(lambda: [{"metric": True}])
+            assistant_company_lookup = staticmethod(lambda query, limit=6: [query, limit])
+            assistant_count_search = staticmethod(lambda filters, regions=None, preferences=None: 7)
+            assistant_metric_lookup = staticmethod(lambda query, limit=20: [query, limit])
+
+        calls: list[dict[str, Any]] = []
+
+        def interpreter(payload, context, **kwargs):
+            calls.append({"payload": payload, "context": context, **kwargs})
+            return {"ok": True}
+
+        result = _interpret_premium_for_web(
+            Main(), interpreter, {"action": "ask"}, {"principal_type": "web"}
+        )
+        self.assertEqual({"ok": True}, result)
+        self.assertIs(calls[0]["company_lookup"], Main.assistant_company_lookup)
+        self.assertIs(calls[0]["count_search"], Main.assistant_count_search)
+        self.assertIs(calls[0]["metric_lookup"], Main.assistant_metric_lookup)
+        self.assertEqual({"enum": True}, calls[0]["enum_values"])
+        self.assertEqual([{"metric": True}], calls[0]["metric_catalog"])
+
+        _interpret_premium_for_web(
+            Main(), interpreter, {"action": "close"}, {"principal_type": "web"}
+        )
+        self.assertIsNone(calls[1]["enum_values"])
+        self.assertIsNone(calls[1]["metric_catalog"])
+
+    def test_enrollment_projects_current_kbo_company_fields(self) -> None:
+        class Main:
+            @staticmethod
+            def lookup_company(number):
+                return (
+                    "0123456789",
+                    {
+                        "naam": "Voorbeeld BV",
+                        "straat_nl": "Wetstraat",
+                        "straat_fr": "Rue de la Loi",
+                        "huisnummer": None,
+                        "kbo_postcode": "1000",
+                        "gemeente_nl": "Brussel",
+                        "gemeente_fr": "Bruxelles",
+                    },
+                    Path("index.parquet"),
+                )
+
+        company = _enrollment_company_lookup(Main(), "BE 0123.456.789")
+        self.assertEqual("0123456789", company["enterprise_number"])
+        self.assertEqual("Voorbeeld BV", company["legal_name"])
+        self.assertEqual(
+            {
+                "street": "Wetstraat",
+                "house_number": "",
+                "postal_code": "1000",
+                "municipality": "Brussel",
+            },
+            company["address"],
+        )
+
     def test_bridge_search_uses_canonical_permit_and_web_quota_subject(self) -> None:
         body = json.dumps({"method": "search", "payload": {"filters": {}}}).encode()
         handler = Handler("POST", "/web/bridge", self.headers(), body)
@@ -254,6 +319,40 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual("/leadsearch/export", binding.authorization_route)
         self.assertEqual("/web/bridge", binding.usage_route)
         self.assertFalse(binding.export)
+
+    def test_ai_wallet_reuses_interpret_route_and_trusted_context(self) -> None:
+        binding = operation_binding("ai_wallet", {})
+        self.assertEqual("/leadsearch/interpret", binding.authorization_route)
+        self.assertEqual("/leadsearch/interpret", binding.usage_route)
+
+        trusted = {"principal_type": "web", "license_id": "lic-1"}
+
+        class Auth:
+            @staticmethod
+            def authorization_context():
+                return dict(trusted)
+
+        class Main:
+            normalize_premium_ai_filters = staticmethod(lambda value: value)
+
+        calls: list[tuple[Any, ...]] = []
+
+        def interpreter(payload, context, **kwargs):
+            calls.append((payload, context, kwargs))
+            return {"ok": True, "wallet": {"available_neur": 123}}
+
+        result = _read_ai_wallet_for_web(Main(), interpreter, Auth())
+        self.assertEqual({"ok": True, "wallet": {"available_neur": 123}}, result)
+        self.assertEqual("belgobase-premium-v1", calls[0][0]["contract"])
+        self.assertEqual("wallet", calls[0][0]["action"])
+        self.assertRegex(calls[0][0]["request_id"], r"^[0-9a-f-]{36}$")
+        self.assertEqual(trusted, calls[0][1])
+        self.assertIs(calls[0][2]["normalize_callback"], Main.normalize_premium_ai_filters)
+
+        with self.assertRaisesRegex(RuntimeConfigurationError, "premium wallet response is invalid"):
+            _read_ai_wallet_for_web(
+                Main(), lambda *_args, **_kwargs: {"ok": True}, Auth()
+            )
 
     def test_account_deactivate_revokes_browser_and_clears_cookie(self) -> None:
         body = json.dumps(

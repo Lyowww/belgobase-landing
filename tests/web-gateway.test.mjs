@@ -28,6 +28,8 @@ function request(path,body,headers={}) {
 
 test('gateway routes only known functions and never arbitrary URLs or admin methods', () => {
   assert.equal(isAllowedRoute(['bridge','search'],'POST'),true);
+  assert.equal(isAllowedRoute(['bridge','ai_wallet'],'POST'),true);
+  assert.equal(isAllowedRoute(['bridge','set_language'],'POST'),true);
   assert.equal(isAllowedRoute(['bridge','admin_topup'],'POST'),false);
   assert.equal(isAllowedRoute(['https://elsewhere.test'],'POST'),false);
   assert.equal(isAllowedRoute(['auth','session'],'POST'),false);

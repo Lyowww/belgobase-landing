@@ -4,6 +4,7 @@ import json
 import os
 import re
 import threading
+import uuid
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -65,7 +66,7 @@ def operation_binding(method: str, payload: dict[str, Any]) -> OperationBinding:
         return OperationBinding("/company/lookup", "/company/lookup")
     if method == "relaxation_suggestions":
         return OperationBinding("/leadsearch/count", "/leadsearch/count")
-    if method == "ai":
+    if method in {"ai", "ai_wallet"}:
         return OperationBinding("/leadsearch/interpret", "/leadsearch/interpret")
     if method == "xbrl_catalog":
         return OperationBinding("/xbrl/metrics/browse", "/xbrl/metrics/browse")
@@ -447,6 +448,77 @@ def _read_secret(path_text: str, *, minimum: int = 32) -> bytes:
     return value
 
 
+def _interpret_premium_for_web(
+    main_module: Any,
+    interpreter: Callable[..., dict[str, Any]],
+    payload: dict[str, Any],
+    context: dict[str, Any],
+) -> dict[str, Any]:
+    """Use the same current assistant callbacks as the canonical API route."""
+
+    callbacks = {
+        "company_lookup": getattr(main_module, "assistant_company_lookup", None),
+        "count_search": getattr(main_module, "assistant_count_search", None),
+        "metric_lookup": getattr(main_module, "assistant_metric_lookup", None),
+    }
+    if any(not callable(value) for value in callbacks.values()):
+        raise RuntimeConfigurationError("premium assistant callbacks are unavailable")
+    new_session = payload.get("action") == "ask" and payload.get("session_id") is None
+    return interpreter(
+        payload,
+        context,
+        normalize_callback=main_module.normalize_premium_ai_filters,
+        enum_values=main_module.premium_ai_enum_values() if new_session else None,
+        metric_catalog=main_module.premium_ai_metric_catalog() if new_session else None,
+        **callbacks,
+    )
+
+
+def _enrollment_company_lookup(main_module: Any, number: str) -> dict[str, Any]:
+    """Project the current KBO-first company row into the enrollment DTO."""
+
+    normalized, company, _source = main_module.lookup_company(number)
+    legal_name = str(company.get("naam") or "").strip()
+    if not legal_name:
+        raise LookupError("company legal name is missing")
+    return {
+        "company_type": "business",
+        "enterprise_number": normalized,
+        "legal_name": legal_name,
+        "address": {
+            "street": str(company.get("straat_nl") or company.get("straat_fr") or "").strip(),
+            "house_number": str(company.get("huisnummer") or "").strip(),
+            "postal_code": str(company.get("kbo_postcode") or "").strip(),
+            "municipality": str(
+                company.get("gemeente_nl") or company.get("gemeente_fr") or ""
+            ).strip(),
+        },
+    }
+
+
+def _read_ai_wallet_for_web(
+    main_module: Any,
+    interpreter: Callable[..., dict[str, Any]],
+    auth: Any,
+) -> dict[str, Any]:
+    result = interpreter(
+        {
+            "contract": "belgobase-premium-v1",
+            "action": "wallet",
+            "request_id": str(uuid.uuid4()),
+        },
+        auth.authorization_context(),
+        normalize_callback=main_module.normalize_premium_ai_filters,
+    )
+    if (
+        not isinstance(result, Mapping)
+        or result.get("ok") is not True
+        or not isinstance(result.get("wallet"), Mapping)
+    ):
+        raise RuntimeConfigurationError("premium wallet response is invalid")
+    return {"ok": True, "wallet": dict(result["wallet"])}
+
+
 def build_web_runtime_from_environment(
     main_module: Any,
     *,
@@ -517,30 +589,13 @@ def build_web_runtime_from_environment(
         registry,
         mailer,
     )
-    def enrollment_company_lookup(number: str) -> dict[str, Any]:
-        normalized, company, _source = main_module.lookup_company(number)
-        legal_name = str(company.get("naam") or "").strip()
-        if not legal_name:
-            raise LookupError("company legal name is missing")
-        return {
-            "company_type": "business",
-            "enterprise_number": normalized,
-            "legal_name": legal_name,
-            "address": {
-                "street": str(company.get("straat") or "").strip(),
-                "house_number": str(company.get("huisnummer") or "").strip(),
-                "postal_code": str(company.get("postcode") or "").strip(),
-                "municipality": str(company.get("gemeente") or "").strip(),
-            },
-        }
-
     central_enrollment = AccountServiceEnrollmentClient(
         base_url=str(
             values.get("BELGOBASE_ACCOUNT_INTERNAL_URL")
             or "http://127.0.0.1:8765"
         ),
         proof_token=_read_secret(account_proof_file),
-        company_lookup=enrollment_company_lookup,
+        company_lookup=lambda number: _enrollment_company_lookup(main_module, number),
     )
     enrollment_service = WebEnrollmentService(
         auth_service, central_enrollment, mailer
@@ -583,6 +638,9 @@ def build_web_runtime_from_environment(
         account_projector=lambda auth, payload: central_enrollment.project_account(
             auth.authorization_context(), payload
         ),
+        wallet_reader=lambda auth: _read_ai_wallet_for_web(
+            main_module, interpret_premium, auth
+        ),
     )
     workspace = WorkspaceService(web_core.callbacks(), AtomicTenantStore(state_root), assets_dir)
 
@@ -596,13 +654,8 @@ def build_web_runtime_from_environment(
         return web_core.resolve_download(reference, auth)
 
     def interpret(payload: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
-        new_session = payload.get("session_id") is None
-        return interpret_premium(
-            payload,
-            context,
-            normalize_callback=main_module.normalize_premium_ai_filters,
-            enum_values=main_module.premium_ai_enum_values() if new_session else None,
-            metric_catalog=main_module.premium_ai_metric_catalog() if new_session else None,
+        return _interpret_premium_for_web(
+            main_module, interpret_premium, payload, context
         )
 
     def preauthorize(

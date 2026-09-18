@@ -103,7 +103,7 @@ class AtomicTenantStore:
         with self._lock:
             path = self._path(auth)
             if not path.exists():
-                return {"workspace": None, "workspace_revision": 0, "history": [], "downloads": {}}
+                return {"workspace": None, "workspace_revision": 0, "history": [], "downloads": {}, "language": "nl"}
             try:
                 value = json.loads(path.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError) as exc:
@@ -111,11 +111,11 @@ class AtomicTenantStore:
             if not isinstance(value, dict):
                 raise WorkspaceError("Je opgeslagen werkruimte is ongeldig.")
             return {"workspace": value.get("workspace"), "workspace_revision": value.get("workspace_revision", 0), "history": value.get("history", []),
-                    "downloads": value.get("downloads", {})}
+                    "downloads": value.get("downloads", {}), "language": value.get("language", "nl")}
 
     def save(self, auth: AuthContext, value: Mapping[str, Any]) -> None:
         safe = {"workspace": value.get("workspace"), "workspace_revision": value.get("workspace_revision", 0), "history": value.get("history", []),
-                "downloads": value.get("downloads", {})}
+                "downloads": value.get("downloads", {}), "language": value.get("language", "nl")}
         encoded = json.dumps(safe, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
         with self._lock:
             path = self._path(auth)
@@ -211,7 +211,7 @@ class WorkspaceService:
         state = self.storage.load(auth)
         meta = self._asset("workspace_metadata.json", {})
         bootstrap = self.core.call("bootstrap", {}, auth)
-        return {**bootstrap, "account": {"name": auth.display_name},
+        return {**bootstrap, "language": state["language"], "account": {"name": auth.display_name},
                 "workspace_revision": state["workspace_revision"],
                 "workspace": state["workspace"] or bootstrap.get("workspace") or {"lists": [], "searches": []},
                 "filter_labels": meta.get("filter_labels", bootstrap.get("filter_labels", {})),
@@ -258,6 +258,20 @@ class WorkspaceService:
     def _account_action(self, request: dict[str, Any], auth: AuthContext) -> dict[str, Any]:
         # The core endpoint must enforce license/device state.  This adapter has no device code.
         return self.core.call("account_action", request, auth)
+
+    def _set_language(self, request: dict[str, Any], auth: AuthContext) -> dict[str, Any]:
+        if set(request) != {"language"} or request.get("language") not in {"nl", "fr", "en"}:
+            raise WorkspaceError("Ongeldige taalkeuze.")
+        language = request["language"]
+        def change(state: dict[str, Any]) -> None:
+            state["language"] = language
+        self.storage.update(auth, change)
+        return {"language": language}
+
+    def _ai_wallet(self, request: dict[str, Any], auth: AuthContext) -> dict[str, Any]:
+        if request:
+            raise WorkspaceError("Ongeldige tegoedaanvraag.")
+        return self.core.call("ai_wallet", {}, auth)
 
     def _workspace_save(self, request: dict[str, Any], auth: AuthContext) -> dict[str, Any]:
         workspace = request.get("workspace")

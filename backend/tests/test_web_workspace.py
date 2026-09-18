@@ -47,6 +47,18 @@ class WorkspaceServiceTests(unittest.TestCase):
     def test_export_returns_session_owned_url_and_no_path(self):
         r=self.service.execute('export_results',{'filters':{}},self.a)
         self.assertTrue(r['ok']); self.assertRegex(r['download_url'],r'^/api/web/download/[0-9a-f]+$'); self.assertNotIn('output_path',r)
+    def test_language_is_tenant_persisted_and_wallet_uses_explicit_core_callback(self):
+        self.service.core=CoreCallbacks(
+            bootstrap=lambda p,a:{'version':'test'},
+            ai_wallet=lambda p,a:{'wallet':{'currency':'EUR','available_eur':4}},
+        )
+        self.assertEqual('fr',self.service.execute('set_language',{'language':'fr'},self.a)['language'])
+        self.assertEqual('fr',self.service.execute('bootstrap',{},self.a)['language'])
+        self.assertEqual('nl',self.service.execute('bootstrap',{},self.b)['language'])
+        wallet=self.service.execute('ai_wallet',{},self.a)
+        self.assertTrue(wallet['ok']); self.assertEqual(4,wallet['wallet']['available_eur'])
+        self.assertFalse(self.service.execute('set_language',{'language':'de'},self.a)['ok'])
+
     def test_missing_core_fails_closed(self):
         r=self.service.execute('company',{'number':'BE1'},self.a)
         self.assertFalse(r['ok']); self.assertIn('Core integration ontbreekt',r['error'])
