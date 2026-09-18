@@ -85,7 +85,7 @@ export default function Home() {
           <FinalCTA />
         </div>
       </main>
-      <Footer />
+      <Footer reserveStickyCta />
     </>
   );
 }

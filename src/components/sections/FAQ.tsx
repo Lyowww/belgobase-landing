@@ -16,6 +16,7 @@ function FAQItem({
   onToggle,
   isLast,
   liteAnimation,
+  answerId,
 }: {
   question: string;
   answer: string;
@@ -23,6 +24,7 @@ function FAQItem({
   onToggle: () => void;
   isLast: boolean;
   liteAnimation: boolean;
+  answerId: string;
 }) {
   return (
     <div className={cn("border-t border-border", isLast && "border-b")}>
@@ -31,6 +33,7 @@ function FAQItem({
         onClick={onToggle}
         className="flex w-full items-start justify-between gap-4 py-5 text-left touch-manipulation sm:items-center sm:gap-6 sm:py-6"
         aria-expanded={isOpen}
+        aria-controls={answerId}
       >
         <span className="min-w-0 flex-1 text-base font-medium text-balance text-deep-navy sm:text-lg">
           {question}
@@ -45,7 +48,7 @@ function FAQItem({
       </button>
       {liteAnimation ? (
         isOpen && (
-          <p className="pb-5 text-sm leading-relaxed text-muted sm:pb-6 sm:text-base">
+          <p id={answerId} className="pb-5 text-sm leading-relaxed text-muted sm:pb-6 sm:text-base">
             {answer}
           </p>
         )
@@ -59,7 +62,7 @@ function FAQItem({
               transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
               className="overflow-hidden"
             >
-              <p className="pb-5 text-sm leading-relaxed text-muted sm:pb-6 sm:text-base">
+              <p id={answerId} className="pb-5 text-sm leading-relaxed text-muted sm:pb-6 sm:text-base">
                 {answer}
               </p>
             </m.div>
@@ -122,6 +125,7 @@ export function FAQ() {
                   onToggle={() => setOpenIndex(openIndex === i ? null : i)}
                   isLast={i === faqs.length - 1}
                   liteAnimation={isMobile}
+                  answerId={`faq-answer-${i}`}
                 />
               ))}
             </div>

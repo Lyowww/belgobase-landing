@@ -1,4 +1,5 @@
 import { Download, ExternalLink } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { Footer } from "@/components/layout/Footer";
@@ -180,8 +181,8 @@ export function LegalPage({ locale, kind }: { locale: Locale; kind: LegalKind })
     <>
       <header className="border-b border-border bg-surface/95">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-          <Link href={`/${locale}`} className="flex items-center gap-2 text-lg font-semibold text-deep-navy">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-white">B</span>
+          <Link href={`/${locale}`} aria-label="BelgoBase" className="flex items-center gap-2 text-lg font-semibold text-deep-navy">
+            <Image src="/brand/belgobase-bb-logo.png" alt="" aria-hidden="true" width={32} height={32} className="h-8 w-8 rounded-lg" />
             BelgoBase
           </Link>
           <LanguageSwitcher />

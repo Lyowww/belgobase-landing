@@ -15,7 +15,8 @@
     "openMenu": "Menu openen",
     "closeMenu": "Menu sluiten",
     "signIn": "Aanmelden",
-    "openApp": "BelgoBase openen"
+    "openApp": "BelgoBase openen",
+    "mainNavigation": "Hoofdnavigatie"
   },
   "hero": {
     "badge": "Belgische bedrijfsinformatie in één werkruimte",
@@ -332,7 +333,8 @@
     "vizLabel": "KBO Engine",
     "vizStatus": "Uw bedrijfsintelligentieplatform wordt voorbereid",
     "metadataTitle": "BelgoBase — Binnenkort beschikbaar",
-    "metadataDescription": "BelgoBase komt binnenkort. Belgische B2B-bedrijfsintelligentie met KBO- en NBB-data voor high-value prospectieteams."
+    "metadataDescription": "BelgoBase komt binnenkort. Belgische B2B-bedrijfsintelligentie met KBO- en NBB-data voor high-value prospectieteams.",
+    "title": "BelgoBase is binnenkort beschikbaar"
   },
   "theme": {
     "light": "Lichte modus",
@@ -341,5 +343,8 @@
   },
   "language": {
     "select": "Taal kiezen"
+  },
+  "toolbar": {
+    "sitePreferences": "Weergave-instellingen"
   }
 }

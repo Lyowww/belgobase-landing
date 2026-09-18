@@ -103,7 +103,8 @@ class AtomicTenantStore:
         with self._lock:
             path = self._path(auth)
             if not path.exists():
-                return {"workspace": None, "workspace_revision": 0, "history": [], "downloads": {}, "language": "nl"}
+                return {"workspace": None, "workspace_revision": 0, "history": [], "downloads": {}, "language": "nl",
+                        "export_columns": None, "default_export_columns": None}
             try:
                 value = json.loads(path.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError) as exc:
@@ -111,11 +112,13 @@ class AtomicTenantStore:
             if not isinstance(value, dict):
                 raise WorkspaceError("Je opgeslagen werkruimte is ongeldig.")
             return {"workspace": value.get("workspace"), "workspace_revision": value.get("workspace_revision", 0), "history": value.get("history", []),
-                    "downloads": value.get("downloads", {}), "language": value.get("language", "nl")}
+                    "downloads": value.get("downloads", {}), "language": value.get("language", "nl"),
+                    "export_columns": value.get("export_columns"), "default_export_columns": value.get("default_export_columns")}
 
     def save(self, auth: AuthContext, value: Mapping[str, Any]) -> None:
         safe = {"workspace": value.get("workspace"), "workspace_revision": value.get("workspace_revision", 0), "history": value.get("history", []),
-                "downloads": value.get("downloads", {}), "language": value.get("language", "nl")}
+                "downloads": value.get("downloads", {}), "language": value.get("language", "nl"),
+                "export_columns": value.get("export_columns"), "default_export_columns": value.get("default_export_columns")}
         encoded = json.dumps(safe, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
         with self._lock:
             path = self._path(auth)
@@ -238,6 +241,8 @@ class WorkspaceService:
         return self.core.call("ai", request, auth)
 
     def _workspace_data(self, request: dict[str, Any], auth: AuthContext) -> dict[str, Any]:
+        if request.get("section") == "export_columns":
+            return self._export_columns({"action": "current"}, auth)
         return self.core.call("workspace_data", request, auth)
 
     def _filters_apply(self, request: dict[str, Any], auth: AuthContext) -> dict[str, Any]:
@@ -253,7 +258,33 @@ class WorkspaceService:
         return self.core.call("similar_apply", request, auth)
 
     def _export_columns(self, request: dict[str, Any], auth: AuthContext) -> dict[str, Any]:
-        return self.core.call("export_columns", request, auth)
+        action = request.get("action")
+        if action is None:
+            action = "save_default" if request.get("save_default") is True else "apply" if "columns" in request else "current"
+        if action not in {"current", "load_default", "apply", "save_default"}:
+            raise WorkspaceError("Deze exportkolomactie wordt niet ondersteund.")
+        state = self.storage.load(auth)
+        if action in {"current", "load_default"}:
+            selected = (state.get("default_export_columns") if action == "load_default"
+                        else state.get("export_columns") or state.get("default_export_columns"))
+            result = self.core.call("export_columns", {"columns": selected} if isinstance(selected, list) and selected else {}, auth)
+            if action == "load_default":
+                result["message"] = "Je opgeslagen standaardkolommen zijn geladen."
+            return result
+        if not isinstance(request.get("columns"), list) or not request["columns"]:
+            raise WorkspaceError("Kies minstens één exportkolom.")
+        validation = dict(request)
+        validation.pop("action", None); validation.pop("save_default", None)
+        result = self.core.call("export_columns", validation, auth)
+        selected = copy.deepcopy(result.get("selected"))
+        if not isinstance(selected, list) or not selected:
+            raise CoreNotConfiguredError("Core integration gaf geen geldige exportkolommen.")
+        def change(value: dict[str, Any]) -> None:
+            value["export_columns"] = copy.deepcopy(selected)
+            if action == "save_default":
+                value["default_export_columns"] = copy.deepcopy(selected)
+        self.storage.update(auth, change)
+        return result
 
     def _account_action(self, request: dict[str, Any], auth: AuthContext) -> dict[str, Any]:
         # The core endpoint must enforce license/device state.  This adapter has no device code.
@@ -329,6 +360,11 @@ class WorkspaceService:
     def _export(self, request: dict[str, Any], auth: AuthContext) -> dict[str, Any]:
         """Create a session-owned job. The gateway serves its download URL."""
         self._operation(request, "Excel voorbereiden", auth)
+        request = copy.deepcopy(request)
+        state = self.storage.load(auth)
+        selected = state.get("export_columns") or state.get("default_export_columns")
+        if "columns" not in request and isinstance(selected, list) and selected:
+            request["columns"] = copy.deepcopy(selected)
         result = self.core.call("export", request, auth)
         job_id = uuid.uuid4().hex
         # Core returns an opaque gateway-owned download reference, never a local filesystem path.
@@ -341,7 +377,8 @@ class WorkspaceService:
             state["downloads"] = downloads
         self.storage.update(auth, change)
         return {"download_url": f"/api/web/download/{job_id}", "rows": result.get("rows"),
-                "total": result.get("total"), "message": result.get("message", "Excel is voorbereid.")}
+                "total": result.get("total"), "limited": result.get("limited", False),
+                "message": result.get("message", "Excel is voorbereid.")}
 
     def _ai_usage(self, request: dict[str, Any], auth: AuthContext) -> dict[str, Any]:
         return self.core.call("ai_usage", {}, auth)

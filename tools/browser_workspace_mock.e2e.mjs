@@ -8,7 +8,7 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
-import { access, mkdir, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, rm, writeFile, readFile } from "node:fs/promises";
 import http from "node:http";
 import path from "node:path";
 import { spawn } from "node:child_process";
@@ -29,8 +29,13 @@ const chromiumExecutable = "C:/Program Files/Google/Chrome/Application/chrome.ex
 const runtimeRequire = createRequire(path.join(runtimeNodeModules, "playwright", "package.json"));
 const { chromium } = runtimeRequire("playwright");
 
+const metadata = JSON.parse(await readFile(path.join(root,"backend/workspace_assets/workspace_metadata.json"),"utf8"));
+// Mirror the core schema enrichment; backend regression verifies its source contract.
+metadata.filter_schema.fields.find(f=>f.key==="regions").options=[{value:"vlaanderen",label:"Vlaanderen"},{value:"wallonie",label:"Wallonië"},{value:"brussel",label:"Brussel"}];
 const state = {
   bridgeCalls: [],
+  workspaceRevision: 0,
+  unhandledMethods: [],
   claimCalls: [],
   loginCalls: [],
   enrollmentCalls: [],
@@ -99,6 +104,7 @@ function bootstrap() {
     account: { name: "Mock BelgoBase" },
     brand_logo: logo,
     version: "Mock web 1.0",
+    workspace_revision: state.workspaceRevision,
     sectors: [{ value: "56", label: "Horeca" }],
     legal_forms: [{ value: "BV", label: "Besloten vennootschap" }],
     statuses: [{ value: "", label: "Alle statussen" }, { value: "AC", label: "Actief" }],
@@ -201,11 +207,19 @@ const mock = http.createServer(async (request, response) => {
         if (!["nl", "fr", "en"].includes(body.payload.language)) return json(response, 400, { ok: false, error: "invalid_request" });
         return json(response, 200, { ok: true, language: body.payload.language });
       }
+      if (body.method === "workspace_save") return json(response,200,{ok:true,workspace:body.payload.workspace,workspace_revision:++state.workspaceRevision});
+      if (body.method === "workspace_data") return json(response,200,{ok:true,schema:metadata.filter_schema,filters:body.payload.filters||{},criteria:[],columns:metadata.column_groups.result_columns,selected:["name"]});
+      if (body.method === "export_columns") return json(response,200,{ok:true,columns:metadata.column_groups.result_columns,selected:body.payload.columns||["name"]});
+      if (body.method === "filters_apply") return json(response,200,{ok:true,filters:body.payload.filters});
+      if (body.method === "xbrl_catalog") return json(response,200,{ok:true,metrics:[],total:0,offset:0,has_more:false});
+      if (body.method === "similar_company") return json(response,200,{ok:true,company:company().company,criteria:[]});
       if (body.method === "search") return json(response, 200, { ok: true, rows: [company().company], total: 1, page: 1, page_size: 50, filters: body.payload.filters || {} });
       if (body.method === "company") return json(response, 200, company());
-      if (body.method === "export_results") return json(response, 200, { ok: true, download_url: "/api/web/download/mock-download-token", rows: 1, total: 1, message: "1 bedrijf opgeslagen." });
+      if (["export_results","export_selection"].includes(body.method)) return json(response, 200, { ok: true, download_url: "/api/web/download/mock-download-token", rows: 1, total: 1, message: "1 bedrijf opgeslagen." });
       if (body.method === "operation_status") return json(response, 200, { ok: true });
-      return json(response, 200, { ok: true });
+      if (body.method === "search_history") return json(response,200,{ok:true,history:[]});
+      state.unhandledMethods.push(body.method);
+      return json(response, 400, {ok:false,error:"Unhandled mock method"});
     }
     if (url.pathname === "/download/mock-download-token" && request.method === "GET") {
       response.writeHead(200, { "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "content-disposition": "attachment; filename=BelgoBase_mock.xlsx" });
@@ -315,7 +329,11 @@ try {
     await legalButtons.nth(index).click();
     await page.getByRole("dialog").getByText("Mock juridische tekst voor").waitFor();
     if (index === 0) await page.screenshot({ path: documentScreenshotPath, fullPage: true });
-    await page.getByRole("dialog").getByRole("button", { name: "Sluiten" }).click();
+    if (index === 0) {
+      assert.equal(await page.getByRole("dialog").getByRole("button", { name: "Sluiten" }).evaluate(el => el === document.activeElement), true, "legal dialog receives keyboard focus");
+      await page.getByRole("dialog").press("Escape");
+      assert.equal(await page.getByRole("dialog").count(), 0, "Escape closes the legal document");
+    } else await page.getByRole("dialog").getByRole("button", { name: "Sluiten" }).click();
   }
   assert.equal(state.requests.filter((request) => request.startsWith("GET /enrollment/legal/mock-preflight-id/")).length, 3, "each displayed document uses its returned legal route");
   await page.screenshot({ path: enrollmentScreenshotPath, fullPage: true });
@@ -346,6 +364,10 @@ try {
   } catch (error) {
     throw new Error(`OTP did not render: ${await page.locator("body").innerText()}; mock requests: ${state.requests.join(", ")}; app: ${state.appLog.join("")}`, { cause: error });
   }
+  await codeField.fill("000000");
+  await page.getByRole("button", { name: "Aanmelden" }).click();
+  await page.getByRole("alert").getByText("De code is ongeldig of verlopen.").waitFor();
+  assert.equal(await page.locator('iframe').count(), 0, "invalid code gives no workspace");
   await codeField.fill("123456");
   await page.getByRole("button", { name: "Aanmelden" }).click();
   const iframe = page.locator('iframe[title="BelgoBase workspace"]');
@@ -395,8 +417,61 @@ try {
   await frame.locator("#ai-mode").uncheck();
   await frame.locator("#query").fill("Voorbeeld Bouw");
   await frame.locator("#search-form").press("Enter");
-  await frame.getByText("Voorbeeld Bouw BV").waitFor();
+  await frame.locator('button[data-company="0123456789"]').first().waitFor();
   assert.ok(state.bridgeCalls.some((call) => call.method === "search"), "search reached the bridge");
+  await frame.getByRole("button", {name:"Alle filters openen",exact:true}).click();
+  await frame.locator("#filter-finder").waitFor();
+  const renderedFields = await frame.locator("[data-workspace-field]").evaluateAll(els => [...new Set(els.map(e=>e.dataset.workspaceField))]);
+  const omittedFields = metadata.filter_schema.fields.filter(f=>!renderedFields.includes(f.key));
+  assert.deepEqual(omittedFields, [], "every server filter renders a usable control");
+  const postcodeInput = frame.locator('[data-workspace-field="kbo_postcode"]');
+  await frame.locator("#filter-finder").fill("Postcode");
+  const manyPostcodes = Array.from({length:300},(_,i)=>String(1000+i)).join("; ");
+  await postcodeInput.fill(manyPostcodes);
+  assert.equal(await postcodeInput.inputValue(),manyPostcodes,"300 postcode values are not truncated");
+  await frame.locator("#tools-back").click();
+  await frame.getByRole("button",{name:"Jaarrekeningen",exact:true}).click();
+  await frame.locator("#catalog-query").waitFor();
+  await frame.locator("#catalog-query").fill("bezoldigingen");
+  await frame.locator("#catalog-form").press("Enter");
+  await page.waitForFunction(() => !document.querySelector('iframe').contentDocument.querySelector('#tools-back').disabled);
+  await frame.locator("#tools-back").click();
+  await frame.getByRole("button",{name:"Vergelijkbaar",exact:true}).click();
+  await frame.locator("#similar-number").fill("0123456789");
+  await frame.locator("#similar-form").press("Enter");
+  await frame.locator("#similar-criteria").getByRole("heading",{name:"Voorbeeld Bouw BV"}).waitFor();
+  await frame.locator("#tools-back").click();
+  const saveResponse = page.waitForResponse(r=>r.url().endsWith("/api/web/bridge/workspace_save"));
+  await frame.locator('[data-save="0123456789"]').click();
+  await saveResponse;
+  await frame.getByRole("button",{name:"Bewaard 1",exact:true}).click();
+  await frame.locator('button[data-company="0123456789"]').first().waitFor();
+  await frame.getByRole("button",{name:"Bedrijven",exact:true}).first().click();
+  await frame.locator("#save-search").click();
+  await frame.locator("#workspace-name").fill("Joël testselectie");
+  await frame.locator('[data-dialog="submit"]').click();
+  await frame.locator("#workspace-dialog").waitFor({state:"hidden"});
+  await frame.locator("#open-searches").click();
+  await frame.getByText("Joël testselectie",{exact:true}).waitFor();
+  await frame.locator("#dialog-close").click();
+  await frame.locator("#filter-toggle").click();
+  await frame.locator("#f-postcode").fill("9000");
+  const postcodeResponse = page.waitForResponse(r => r.url().endsWith("/api/web/bridge/search"));
+  await frame.locator("#apply-filters").click();
+  await postcodeResponse;
+  await frame.locator('button[data-company="0123456789"]').first().waitFor();
+  await page.waitForFunction(() => !document.querySelector('iframe').contentDocument.querySelector('#search-button').disabled);
+  assert.equal(state.bridgeCalls.filter(c => c.method === "search").at(-1).payload.filters.kbo_postcode, "9000", "postcode reaches backend");
+  const regionResponse = page.waitForResponse(r => r.url().endsWith("/api/web/bridge/search"));
+  await frame.locator('[data-region="vlaanderen"]').click();
+  await regionResponse;
+  await page.waitForFunction(() => !document.querySelector('iframe').contentDocument.querySelector('#search-button').disabled);
+  assert.ok(state.bridgeCalls.filter(c => c.method === "search").at(-1).payload.filters.regions.includes("vlaanderen"), "regional selection reaches backend");
+  await frame.locator("#new-search").click();
+  assert.equal(await frame.locator("#query").inputValue(), "", "new search clears query");
+  await frame.locator("#query").fill("Voorbeeld Bouw");
+  await frame.locator("#search-form").press("Enter");
+  await frame.locator('button[data-company="0123456789"]').first().waitFor();
   await frame.locator('button[data-company="0123456789"]').first().click();
   await frame.getByRole("heading", { name: "Voorbeeld Bouw BV" }).waitFor();
   assert.ok(state.bridgeCalls.some((call) => call.method === "company"), "company detail reached the bridge");
@@ -420,6 +495,14 @@ try {
 
 
   await frame.locator("#back").click();
+  await frame.getByRole("button",{name:"Exportkolommen instellen",exact:true}).click();
+  await frame.locator('[data-tool="columns-none"]').click();
+  await frame.locator('[data-export-column="name"]').check();
+  await frame.locator('[data-export-column="revenue"]').check();
+  const columnsResponse = page.waitForResponse(r=>r.url().endsWith("/api/web/bridge/export_columns"));
+  await frame.locator('[data-tool="columns-apply"]').click();
+  await columnsResponse;
+  assert.deepEqual(state.bridgeCalls.filter(c=>c.method==="export_columns").at(-1).payload.columns.sort(),["name","revenue"],"chosen export columns reach the service");
   const downloadPromise = page.waitForEvent("download");
   await frame.locator("#export").click();
   const download = await downloadPromise;
@@ -448,6 +531,16 @@ try {
   await page.getByRole("button", { name: "Aanmelden" }).click();
   await page.locator('iframe[title="BelgoBase workspace"]').waitFor();
   assert.equal(state.loginCalls.length, 2, "both sign-ins use email only login");
+  await page.route("**/api/web/auth/sessions", route => route.fulfill({status:401,contentType:"application/json",body:'{"ok":false,"error":"session_invalid"}'}));
+  await page.getByRole("button", { name: "Account", exact:true }).click();
+  await page.getByRole("heading", { name: "Inloggen" }).waitFor();
+  assert.equal(await page.locator('iframe').count(),0,"expired account listing removes workspace");
+  await page.unroute("**/api/web/auth/sessions");
+  await page.getByLabel("E-mailadres", { exact:true }).fill("owner@example.test");
+  await page.getByRole("button", { name:"Code per e-mail ontvangen" }).click();
+  await page.getByLabel("Beveiligingscode").fill("123456");
+  await page.getByRole("button", { name:"Aanmelden", exact:true }).click();
+  await page.locator('iframe[title="BelgoBase workspace"]').waitFor();
   await page.getByRole("button", { name: "Afmelden" }).click();
   await page.getByRole("heading", { name: "Inloggen" }).waitFor();
   assert.equal(state.logoutCsrf, csrf, "logout carries the session CSRF token");
@@ -464,6 +557,14 @@ try {
     assert.doesNotMatch(await page.locator('main').innerText(), /Lorem ipsum|Dolor sit amet/);
     await page.setViewportSize({width:390,height:844});
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'marketing mobile width '+language);
+    const menuToggle = page.locator('button[aria-controls="site-navigation-mobile"]');
+    assert.equal(await page.locator('#site-navigation-mobile').evaluate(el=>el.parentElement.inert),true,"closed mobile menu is not keyboard-focusable");
+    await menuToggle.click();
+    assert.equal(await menuToggle.getAttribute('aria-expanded'),'true');
+    await page.locator('#site-navigation-mobile a[href="#contact"]').click();
+    assert.equal(await menuToggle.getAttribute('aria-expanded'),'false',"contact CTA closes mobile menu");
+    assert.equal(new URL(page.url()).hash,'#contact');
+    await page.evaluate(()=>window.scrollTo(0,0));
     await page.screenshot({path:path.join(artifactDirectory,'marketing-'+language+'-mobile.png')});
     await page.setViewportSize({width:1440,height:900});
     await page.screenshot({path:path.join(artifactDirectory,'marketing-'+language+'-desktop.png')});
@@ -471,6 +572,7 @@ try {
 
   await writeFile(path.join(artifactDirectory,"marketing-errors.json"),JSON.stringify(marketingErrors,null,2));
   assert.equal(marketingErrors.length,0,"marketing renders without browser errors; see marketing-errors.json");
+  assert.deepEqual(state.unhandledMethods,[],"the browser never receives fake success for an unimplemented mock route");
   console.log(JSON.stringify({ ok: true, enrollmentScreenshot: enrollmentScreenshotPath, documentScreenshot: documentScreenshotPath, screenshot: screenshotPath, bridgeMethods: state.bridgeCalls.map((call) => call.method), version: release }, null, 2));
   await context.close();
 } finally {

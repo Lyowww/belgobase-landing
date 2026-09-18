@@ -11,7 +11,6 @@ export function useMousePosition() {
     const coarse = window.matchMedia("(pointer: coarse)").matches;
     if (reduced || coarse) return;
 
-    setEnabled(true);
     let raf = 0;
     let latest = { x: 0, y: 0 };
 
@@ -19,6 +18,7 @@ export function useMousePosition() {
       latest = { x: e.clientX, y: e.clientY };
       if (!raf) {
         raf = requestAnimationFrame(() => {
+          setEnabled(true);
           setPosition(latest);
           raf = 0;
         });

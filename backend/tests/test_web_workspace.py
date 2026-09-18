@@ -6,9 +6,18 @@ from web_workspace import AtomicTenantStore, AuthContext, CoreCallbacks, Workspa
 class WorkspaceServiceTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(); root = Path(self.temp.name)
-        self.calls=[]
+        self.calls=[]; self.export_calls=[]
         def search(payload, auth): self.calls.append((payload, auth)); return {'rows':[{'number':'BE1'}],'total':1,'page':1,'page_size':50,'filters':payload['filters']}
-        self.service=WorkspaceService(CoreCallbacks(bootstrap=lambda p,a:{'version':'test'}, search=search, export=lambda p,a:{'download_reference':'opaque','rows':2}), AtomicTenantStore(root/'store'), root/'assets')
+        column_options=[{'key':'name','label':'Naam'},{'key':'city','label':'Gemeente'},{'key':'profit','label':'Resultaat'}]
+        def export_columns(payload, auth):
+            selected=payload.get('columns') or ['name']
+            if not isinstance(selected,list) or not selected or any(item not in {'name','city','profit'} for item in selected):
+                raise ValueError('ongeldige kolommen')
+            return {'columns':column_options,'selected':list(selected)}
+        def export(payload, auth):
+            self.export_calls.append((payload,auth)); return {'download_reference':'opaque','rows':2,'total':3,'limited':True,'message':'2 van 3 bedrijven opgeslagen.'}
+        self.service=WorkspaceService(CoreCallbacks(bootstrap=lambda p,a:{'version':'test'}, search=search, export=export,
+            export_columns=export_columns), AtomicTenantStore(root/'store'), root/'assets')
         self.a=AuthContext('lic-a','user-a','A'); self.b=AuthContext('lic-b','user-b','B')
     def tearDown(self): self.temp.cleanup()
     def test_search_preserves_ui_dto_and_is_core_backed(self):
@@ -47,6 +56,25 @@ class WorkspaceServiceTests(unittest.TestCase):
     def test_export_returns_session_owned_url_and_no_path(self):
         r=self.service.execute('export_results',{'filters':{}},self.a)
         self.assertTrue(r['ok']); self.assertRegex(r['download_url'],r'^/api/web/download/[0-9a-f]+$'); self.assertNotIn('output_path',r)
+        self.assertEqual((r['rows'],r['total'],r['limited']),(2,3,True))
+    def test_export_columns_are_tenant_persisted_and_applied_to_later_export(self):
+        initial=self.service.execute('workspace_data',{'section':'export_columns'},self.a)
+        self.assertEqual(initial['selected'],['name'])
+        applied=self.service.execute('export_columns',{'action':'apply','columns':['city']},self.a)
+        self.assertTrue(applied['ok']); self.assertEqual(applied['selected'],['city'])
+        same_account=AuthContext('lic-a','user-a','A on laptop')
+        reopened=self.service.execute('workspace_data',{'section':'export_columns'},same_account)
+        self.assertEqual(reopened['selected'],['city'])
+        self.service.execute('export_results',{'filters':{},'query':'Voorbeeld'},same_account)
+        self.assertEqual(self.export_calls[-1][0]['columns'],['city'])
+        self.assertEqual(self.service.execute('workspace_data',{'section':'export_columns'},self.b)['selected'],['name'])
+    def test_saved_default_load_does_not_replace_active_columns_until_apply(self):
+        self.assertTrue(self.service.execute('export_columns',{'columns':['profit'],'save_default':True},self.a)['ok'])
+        self.assertTrue(self.service.execute('export_columns',{'columns':['city'],'save_default':False},self.a)['ok'])
+        loaded=self.service.execute('export_columns',{'action':'load_default'},self.a)
+        self.assertEqual(loaded['selected'],['profit'])
+        self.service.execute('export_results',{'filters':{}},self.a)
+        self.assertEqual(self.export_calls[-1][0]['columns'],['city'])
     def test_language_is_tenant_persisted_and_wallet_uses_explicit_core_callback(self):
         self.service.core=CoreCallbacks(
             bootstrap=lambda p,a:{'version':'test'},

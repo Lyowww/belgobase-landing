@@ -12,13 +12,26 @@ class Main:
     def premium_ai_enum_values(self): return {'nace_prefix':[('Sector','70')], 'juridical_form':[('BV','001')]}
     def normalize_filters(self, value): return dict(value)
     def extract_selection(self, filters, payload): self.selected=dict(filters); return (dict(filters), (), (), ())
-    def run_count(self, filters, regions=()): return (2, Path('index'))
-    def run_results(self, payload): return ([{'ondernemingsnummer':'0123456789','naam':'Voorbeeld','gemeente_nl':'Brussel','omzet':12}],0,50,False)
+    def run_count(self, filters, regions=()): return (getattr(self,'count_total',2), Path('index'))
+    def _projected_result(self, payload):
+        source={'ondernemingsnummer':'0123456789','naam':'Voorbeeld','kbo_postcode':'1000','gemeente_nl':'Brussel',
+                'nace_code':'70200','kbo_status':'AC','juridical_form':'001','omzet':12,
+                'winst_verlies':242467.21,'personeel_vte':15.8,'jaar':2025,
+                'omzet_status':'exact','winst_verlies_status':'exact','personeel_status':'exact'}
+        defaults=['ondernemingsnummer','naam','kbo_postcode','gemeente_nl','nace_code','kbo_status','juridical_form']
+        requested=list(payload.get('selected_output_cols') or [])
+        status={'omzet':'omzet_status','winst_verlies':'winst_verlies_status','personeel_vte':'personeel_status'}
+        columns=list(dict.fromkeys(defaults+requested+[status[key] for key in requested if key in status]))
+        return {key:source.get(key) for key in columns}
+    def run_results(self, payload):
+        self.results_payload=dict(payload); return ([self._projected_result(payload)],0,50,False)
     def run_xbrl_count(self, payload):
         assert payload['xbrl_metric_filters']; self.xbrl_count_payload=dict(payload); return (1, [])
     def run_xbrl_results(self, payload):
-        assert payload['xbrl_metric_filters']; self.xbrl_results_payload=dict(payload); return ([{'ondernemingsnummer':'0123456789','naam':'Voorbeeld'}],0,50,False)
-    def lookup_company(self, number): return ('0123456789', {'ondernemingsnummer':'0123456789','naam':'Voorbeeld','omzet':12,'kbo_postcode':'1000','nace_code':'70200','kbo_status':'AC'}, Path('index'))
+        assert payload['xbrl_metric_filters']; self.xbrl_results_payload=dict(payload); return ([self._projected_result(payload)],0,50,False)
+    def lookup_company(self, number): return ('0123456789', {'ondernemingsnummer':'0123456789','naam':'Voorbeeld','omzet':12,
+        'winst_verlies':242467.21,'personeel_vte':15.8,'jaar':2025,'kbo_postcode':'1000','gemeente_nl':'Brussel',
+        'nace_code':'70200','kbo_status':'AC','juridical_form':'001'}, Path('index'))
     def build_autofill_filters(self, record): return {'min_omzet':'6'}
     PREMIUM_HISTORY_SOURCE='history'
     duckdb=object()
@@ -27,9 +40,12 @@ class Main:
         return {'available':True,'complete':True,'records':[{'jaar':2024,'omzet':0,'winst_verlies':None,'personeel_vte':2,'balanstotaal':5}]}
     def xbrl_metric_browse(self, payload): return {'metrics':[{'xbrl_metric_key':'m1','human_display_label_nl':'Omzet','filter_value_type':'numeric','tree_group_label_nl':'G','tree_section_label_nl':'S','tree_topic_label_nl':'T'}],'total':1,'offset':0,'has_more':False}
     def run_export(self, filters, offset, preferences=None, postcodes=()):
-        self.export_filters=dict(filters); return (['ondernemingsnummer'], [('0123456789',)] if offset == 0 else [], Path('index'))
+        self.export_filters=dict(filters)
+        total=getattr(self,'export_total',1); size=max(0,min(int(filters.get('max_rows') or 5000),total-offset))
+        return (['ondernemingsnummer'], [('0123456789',)]*size, Path('index'))
     def run_xbrl_export(self, payload, page_offset=0, deterministic_results_order=False, preferences=None):
-        assert payload['xbrl_metric_filters']; self.xbrl_export_payload=dict(payload); return (['ondernemingsnummer'], [('0123456789',)] if page_offset == 0 else [], [])
+        assert payload['xbrl_metric_filters']; self.xbrl_export_payload=dict(payload); self.xbrl_deterministic=deterministic_results_order
+        return (['ondernemingsnummer'], [('0123456789',)] if page_offset == 0 else [], [])
     def write_xlsx_bytes(self, columns, rows): return b'xlsx'
 
 class WebCoreTests(unittest.TestCase):
@@ -43,7 +59,12 @@ class WebCoreTests(unittest.TestCase):
     def test_search_and_company_use_real_core_shapes(self):
         result=self.core.search({'filters':{},'query':'','page':1},self.auth)
         self.assertEqual(result['rows'][0]['name'],'Voorbeeld'); self.assertEqual(result['total'],2)
-        self.assertEqual(self.core.company({'number':'0123456789'},self.auth)['company']['number'],'0123456789')
+        self.assertEqual(self.core.main.results_payload['selected_output_cols'],['omzet','winst_verlies','personeel_vte','jaar'])
+        self.assertEqual((result['rows'][0]['profit'],result['rows'][0]['fte'],result['rows'][0]['year']),(242467.21,15.8,2025))
+        company=self.core.company({'number':'0123456789'},self.auth)['company']
+        self.assertEqual(company['number'],'0123456789')
+        self.assertEqual((result['rows'][0]['profit'],result['rows'][0]['fte'],result['rows'][0]['year']),
+                         (company['profit'],company['fte'],company['year']))
     def test_frozen_financial_rules_keep_missing_distinct_from_zero(self):
         self.assertIsNone(self.core._financial_value({'omzet': 44, 'omzet_status':'missing'},'omzet'))
         self.assertEqual(self.core._financial_value({'omzet': 0, 'omzet_status':'exact'},'omzet'),0.0)
@@ -67,15 +88,31 @@ class WebCoreTests(unittest.TestCase):
         filters={'xbrl_metric_filters':[{'xbrl_metric_key':'m1','numeric_min':1}]}
         result=self.core.search({'filters':filters,'page':1},self.auth)
         self.assertEqual(result['total'],1); self.assertIn('xbrl_metric_filters',self.core.main.xbrl_count_payload)
+        self.assertEqual(self.core.main.xbrl_results_payload['selected_output_cols'],['omzet','winst_verlies','personeel_vte','jaar'])
+        self.assertEqual((result['rows'][0]['profit'],result['rows'][0]['fte'],result['rows'][0]['year']),(242467.21,15.8,2025))
         self.core.export({'filters':dict(filters, max_rows=2)},self.auth)
         self.assertIn('xbrl_metric_filters',self.core.main.xbrl_export_payload)
+        self.assertTrue(self.core.main.xbrl_deterministic)
     def test_export_selection_uses_number_selection_not_unbounded_filters(self):
-        self.core.export({'numbers':['0123456789']},self.auth)
+        self.core.export({'numbers':['0123456789'],'query':'Volledig andere naam'},self.auth)
         self.assertEqual(self.core.main.selected['ondernemingsnummers'],['0123456789'])
+        self.assertNotIn('naam',self.core.main.export_filters); self.assertNotIn('ondernemingsnummer',self.core.main.export_filters)
         self.assertEqual(self.core.main.export_filters['max_rows'],1)
     def test_export_preserves_ui_column_choice_as_existing_server_column(self):
         self.core.export({'filters':{'max_rows':2},'columns':['number','revenue']},self.auth)
         self.assertEqual(self.core.main.export_filters['selected_output_cols'],['ondernemingsnummer','omzet'])
+    def test_export_applies_same_name_and_vat_query_contract_as_search(self):
+        self.core.export({'filters':{'max_rows':2},'query':'Be Company'},self.auth)
+        self.assertEqual(self.core.main.export_filters['naam'],'Be Company')
+        self.assertNotIn('ondernemingsnummer',self.core.main.export_filters)
+        self.core.export({'filters':{'max_rows':2},'query':'be 0534.969.351'},self.auth)
+        self.assertEqual(self.core.main.export_filters['ondernemingsnummer'],'be 0534.969.351')
+        self.assertNotIn('naam',self.core.main.export_filters)
+    def test_export_reports_canonical_default_limit_without_masking_total(self):
+        self.core.main.count_total=5002; self.core.main.export_total=5002
+        result=self.core.export({'filters':{}},self.auth)
+        self.assertEqual((result['rows'],result['total'],result['limited']),(5000,5002,True))
+        self.assertIn('5000 van 5002',result['message'])
     def test_similar_ports_frozen_icp_seed_and_apply(self):
         data=self.core.similar_company({'number':'0123456789'},self.auth)
         postcode=next(item for item in data['criteria'] if item['key']=='postcode')
@@ -121,8 +158,27 @@ class WebCoreTests(unittest.TestCase):
         schema=self.core.workspace_data({'section':'filters','filters':{}},self.auth)['schema']
         types={f['key']:f['type'] for f in schema['fields']}
         self.assertEqual(types['min_omzet'],'number'); self.assertEqual(types['start_date_min'],'date'); self.assertEqual(types['latest_only'],'boolean')
+    def test_filter_schema_enriches_regions_without_mutating_frozen_metadata(self):
+        frozen=json.loads(json.dumps(self.core.metadata['filter_schema']))
+        schema=self.core.workspace_data({'section':'filters','filters':{}},self.auth)['schema']
+        regions=next(field for field in schema['fields'] if field['key']=='regions')
+        self.assertTrue(regions['multiple'])
+        self.assertEqual([(item['value'],item['label']) for item in regions['options']],
+                         [('vlaanderen','Vlaanderen'),('wallonie','Wallonië'),('brussel','Brussel')])
+        self.assertEqual(self.core.metadata['filter_schema'],frozen)
+        regions['options'].append({'value':'mutatie','label':'Mutatie'})
+        self.assertEqual(self.core.metadata['filter_schema'],frozen)
     def test_query_and_selection_metadata_are_not_lost_before_core_query(self):
         self.core.search({'filters':{'regions':['vlaanderen']},'query':'Voorbeeld','page':1},self.auth)
         self.assertEqual(self.core.main.selected['naam'],'Voorbeeld'); self.assertEqual(self.core.main.selected['regions'],['vlaanderen'])
+    def test_vat_query_recognition_is_case_insensitive_without_claiming_names(self):
+        for query in ('BE 0534.969.351','be 0534.969.351','Be0534-969-351','0534969351'):
+            with self.subTest(query=query):
+                self.core.search({'filters':{},'query':query,'page':1},self.auth)
+                self.assertEqual(self.core.main.selected['ondernemingsnummer'],query)
+                self.assertNotIn('naam',self.core.main.selected)
+        self.core.search({'filters':{},'query':'Be Company','page':1},self.auth)
+        self.assertEqual(self.core.main.selected['naam'],'Be Company')
+        self.assertNotIn('ondernemingsnummer',self.core.main.selected)
 
 if __name__ == '__main__': unittest.main()

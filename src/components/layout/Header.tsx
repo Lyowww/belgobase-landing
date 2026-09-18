@@ -48,7 +48,7 @@ export function Header({ variant = "default" }: HeaderProps) {
       )}
     >
       <nav
-        aria-label="Main"
+        aria-label={t("nav.mainNavigation")}
         className={cn(
           "pointer-events-none absolute top-1/2 left-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-6 lg:flex lg:gap-8",
           isComingSoon && "lg:hidden",
@@ -126,6 +126,7 @@ export function Header({ variant = "default" }: HeaderProps) {
               className="shrink-0 rounded-xl p-2 transition-colors hover:bg-surface-hover touch-manipulation"
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label={mobileOpen ? t("nav.closeMenu") : t("nav.openMenu")}
+              aria-controls="site-navigation-mobile"
               aria-expanded={mobileOpen}
             >
               {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -135,6 +136,8 @@ export function Header({ variant = "default" }: HeaderProps) {
       </div>
 
       <div
+        inert={!mobileOpen}
+        aria-hidden={!mobileOpen}
         className={cn(
           "overflow-hidden border-t border-border bg-surface/98 mobile-backdrop-none backdrop-blur-xl transition-[max-height,opacity] duration-300 lg:hidden",
           isComingSoon && "hidden",
@@ -143,7 +146,7 @@ export function Header({ variant = "default" }: HeaderProps) {
             : "max-h-0 border-transparent opacity-0",
         )}
       >
-        <nav className="flex max-h-[min(28rem,calc(100dvh-4rem))] flex-col gap-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
+        <nav id="site-navigation-mobile" className="flex max-h-[min(28rem,calc(100dvh-4rem))] flex-col gap-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
           {navLinks.map((link) => (
             <a
               key={link.href}
@@ -166,7 +169,7 @@ export function Header({ variant = "default" }: HeaderProps) {
               <Phone className="h-4 w-4 text-primary" />
               {t("nav.questions")}
             </a>
-            <MagneticButton href="#contact" className="w-full">
+            <MagneticButton href="#contact" onClick={() => setMobileOpen(false)} className="w-full">
               {t("nav.getFreeLeads")}
             </MagneticButton>
           </div>

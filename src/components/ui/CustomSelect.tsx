@@ -32,21 +32,17 @@ export function CustomSelect({
     const handleClick = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);
+        setHighlightedIndex(-1);
       }
     };
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  useEffect(() => {
-    if (!open) {
-      setHighlightedIndex(-1);
-    }
-  }, [open]);
-
   const selectOption = (option: string) => {
     onChange(option);
     setOpen(false);
+    setHighlightedIndex(-1);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -54,6 +50,7 @@ export function CustomSelect({
 
     if (e.key === "Escape") {
       setOpen(false);
+      setHighlightedIndex(-1);
       return;
     }
 
@@ -86,7 +83,7 @@ export function CustomSelect({
         id={id}
         type="button"
         disabled={disabled}
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => { setOpen((prev) => !prev); setHighlightedIndex(-1); }}
         onKeyDown={handleKeyDown}
         aria-haspopup="listbox"
         aria-expanded={open}

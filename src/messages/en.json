@@ -15,7 +15,8 @@
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "signIn": "Sign in",
-    "openApp": "Open BelgoBase"
+    "openApp": "Open BelgoBase",
+    "mainNavigation": "Main navigation"
   },
   "hero": {
     "badge": "Belgian company information in one workspace",
@@ -332,7 +333,8 @@
     "vizLabel": "KBO Engine",
     "vizStatus": "Preparing your company intelligence platform",
     "metadataTitle": "BelgoBase — Coming Soon",
-    "metadataDescription": "BelgoBase is launching soon. Belgian B2B company intelligence with KBO and NBB data for high-value prospecting teams."
+    "metadataDescription": "BelgoBase is launching soon. Belgian B2B company intelligence with KBO and NBB data for high-value prospecting teams.",
+    "title": "BelgoBase is launching soon"
   },
   "theme": {
     "light": "Light mode",
@@ -341,5 +343,8 @@
   },
   "language": {
     "select": "Select language"
+  },
+  "toolbar": {
+    "sitePreferences": "Display settings"
   }
 }

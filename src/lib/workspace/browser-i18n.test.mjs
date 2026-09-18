@@ -5,10 +5,10 @@ import test from "node:test";
 
 const source = await readFile(new URL("./browser-i18n.js", import.meta.url), "utf8");
 
-function load(language = "fr") {
+function load(language = "fr", messages = {}) {
   const listeners = new Map();
   const window = {
-    BelgoBaseI18n: { language, apply() {} },
+    BelgoBaseI18n: { language, messages, apply() {} },
     addEventListener(name, callback) { listeners.set(name, callback); },
   };
   class MutationObserver { observe() {} }
@@ -16,6 +16,14 @@ function load(language = "fr") {
   vm.runInNewContext(source, { window, document, MutationObserver, queueMicrotask: callback => callback(), structuredClone: value => JSON.parse(JSON.stringify(value)), Array, Object, Set, String });
   return window;
 }
+
+test("uses account-workspace wording for web saves without changing frozen desktop text", () => {
+  const messages = { "dialog.localWorkspace": { nl: "Bewaard in je lokale BelgoBase-werkruimte.", fr: "Enregistré dans votre espace de travail BelgoBase local.", en: "Saved in your local BelgoBase workspace." } };
+  load("nl", messages);
+  assert.equal(messages["dialog.localWorkspace"].nl, "Opgeslagen in je BelgoBase-accountwerkruimte.");
+  assert.equal(messages["dialog.localWorkspace"].fr, "Enregistré dans l’espace de travail de votre compte BelgoBase.");
+  assert.equal(messages["dialog.localWorkspace"].en, "Saved in your BelgoBase account workspace.");
+});
 
 test("company metadata has readable labels without exposing missing-value sentinels", () => {
   const original={fields:[{label:"Straat nl",value:"Kerkstraat"},{label:"Bus",value:"None"},{label:"Naam",value:"None"},{label:"Kbo postcode",value:"2640"}],metrics:[{value:0}]};
@@ -71,4 +79,34 @@ test("enriches only fixed bootstrap and workspace presentation labels", () => {
   assert.equal(workspace.schema.fields[1].label, "NV onbekend");
   assert.equal(workspace.company.name, "Personeel BV");
   assert.equal(workspace.user_question, "Personeel");
+});
+
+
+test("localises saved-row statuses while preserving counters and source payload", () => {
+  const source = {
+    message: "12 van 40 bedrijven opgeslagen (ingestelde exportlimiet).",
+    error: "3 bedrijven opgeslagen.",
+    company: { name: "Bedrijven opgeslagen BV" },
+  };
+  const fr = load("fr").BelgoBaseWebI18n.enrich("workspace_save", source);
+  const en = load("en").BelgoBaseWebI18n.enrich("workspace_save", source);
+  const nl = load("nl").BelgoBaseWebI18n.enrich("workspace_save", source);
+  assert.equal(fr.message, "12 entreprises sur 40 enregistrées (limite d’export configurée).");
+  assert.equal(fr.error, "3 entreprises enregistrées.");
+  assert.equal(en.message, "12 of 40 companies saved (configured export limit).");
+  assert.equal(en.error, "3 companies saved.");
+  assert.equal(nl.message, source.message);
+  assert.equal(nl.error, source.error);
+  assert.equal(fr.company, source.company, "non-status customer data remains untouched");
+  assert.deepEqual(source, {
+    message: "12 van 40 bedrijven opgeslagen (ingestelde exportlimiet).",
+    error: "3 bedrijven opgeslagen.",
+    company: { name: "Bedrijven opgeslagen BV" },
+  }, "enrich must not mutate the server payload");
+});
+
+test("does not translate unrelated dynamic messages", () => {
+  const source = { message: "Bedrijven opgeslagen BV vraagt een terugbelverzoek." };
+  const result = load("en").BelgoBaseWebI18n.enrich("workspace_save", source);
+  assert.equal(result.message, source.message);
 });

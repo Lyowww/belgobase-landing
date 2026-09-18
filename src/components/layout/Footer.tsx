@@ -43,7 +43,7 @@ function FooterLinkList({
   );
 }
 
-export function Footer() {
+export function Footer({ reserveStickyCta = false }: { reserveStickyCta?: boolean }) {
   const { locale, t } = useTranslations();
   const footerLinks = {
     product: [
@@ -61,7 +61,9 @@ export function Footer() {
   };
 
   return (
-    <footer className="border-t border-border bg-surface pt-12 pb-sticky-cta sm:pt-16">
+    <footer className={`border-t border-border bg-surface pt-12 sm:pt-16 ${
+      reserveStickyCta ? "pb-sticky-cta" : "pb-12 sm:pb-16"
+    }`}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,minmax(0,1fr))] lg:gap-12">
           <div className="sm:col-span-2 lg:col-span-1">

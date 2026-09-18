@@ -78,6 +78,16 @@ class WebCore:
         return {**normalized, **selection}
 
     @staticmethod
+    def _query_filter(query: Any) -> dict[str, str]:
+        if not isinstance(query, str) or len(query) > 500:
+            raise WorkspaceError('De zoektekst is ongeldig.')
+        query = query.strip()
+        if not query:
+            return {}
+        number_candidate = query.upper().replace(' ', '').replace('.', '').replace('-', '').removeprefix('BE')
+        return {'ondernemingsnummer' if number_candidate.isdigit() else 'naam': query}
+
+    @staticmethod
     def _finite(value: Any) -> float | None:
         if value is None or isinstance(value, bool): return None
         try: value=float(value)
@@ -121,13 +131,17 @@ class WebCore:
 
     def search(self, payload: dict[str, Any], auth: AuthContext) -> dict[str, Any]:
         self._allow('search', payload, auth); filters = self._normal(payload.get('filters', {}))
-        query = payload.get('query', '')
-        if not isinstance(query, str) or len(query) > 500: raise WorkspaceError('De zoektekst is ongeldig.')
-        if query.strip():
-            filters['ondernemingsnummer' if query.strip().replace(' ', '').replace('.', '').replace('-', '').removeprefix('BE').isdigit() else 'naam'] = query.strip()
+        query_filter = self._query_filter(payload.get('query', ''))
+        if query_filter:
+            filters.pop('naam', None); filters.pop('ondernemingsnummer', None); filters.update(query_filter)
         page = payload.get('page', 1)
         if type(page) is not int or page < 1: raise WorkspaceError('Ongeldig paginanummer.')
-        request = {'filters': filters, 'offset': (page - 1) * 50, 'page_size': 50}
+        # The 30b results endpoint deliberately returns only identity columns
+        # unless callers opt in to additional output columns.  These four
+        # values are part of the browser result-row contract, so request them
+        # before a user opens the company dossier.
+        request = {'filters': filters, 'offset': (page - 1) * 50, 'page_size': 50,
+                   'selected_output_cols': ['omzet', 'winst_verlies', 'personeel_vte', 'jaar']}
         try:
             if filters.get('xbrl_metric_filters'):
                 # 30b reads XBRL criteria at the request top level, while the
@@ -221,7 +235,17 @@ class WebCore:
         """Server-derived field list; validation is still normalize_premium_ai_filters."""
         frozen = self.metadata.get('filter_schema')
         if isinstance(frozen, dict) and isinstance(frozen.get('fields'), list) and isinstance(frozen.get('groups'), list):
-            return copy.deepcopy(frozen)
+            schema = copy.deepcopy(frozen)
+            for field in schema['fields']:
+                if isinstance(field, dict) and field.get('key') == 'regions':
+                    field['options'] = [
+                        {'value': 'vlaanderen', 'label': 'Vlaanderen'},
+                        {'value': 'wallonie', 'label': 'Wallonië'},
+                        {'value': 'brussel', 'label': 'Brussel'},
+                    ]
+                    field['multiple'] = True
+                    break
+            return schema
         labels = self.metadata.get('filter_labels', {})
         known = list(getattr(self.main, 'FILTER_KEYS', ())) + ['gemeente_nl_match','gemeente_fr_match','regions','preferences','xbrl_metric_filters']
         numeric = set(getattr(self.main, 'FLOAT_KEYS', ())) | set(getattr(self.main, 'INT_KEYS', ()))
@@ -341,6 +365,11 @@ class WebCore:
             # selection is never silently cut to an unrelated default.
             raw_filters={'ondernemingsnummers':payload['numbers'],'max_rows':len(payload['numbers']),'latest_only':True}
         if not isinstance(raw_filters, dict): raise WorkspaceError('De filters moeten een object zijn.')
+        raw_filters = dict(raw_filters)
+        if 'numbers' not in payload:
+            query_filter = self._query_filter(payload.get('query', ''))
+            if query_filter:
+                raw_filters.pop('naam', None); raw_filters.pop('ondernemingsnummer', None); raw_filters.update(query_filter)
         ui_to_core={'name':'naam','number':'ondernemingsnummer','city':'gemeente_nl','postcode':'kbo_postcode','nace':'nace_code','status':'kbo_status','legal_form':'juridical_form','revenue':'omzet','profit':'winst_verlies','fte':'personeel_vte','year':'jaar'}
         requested=payload.get('columns', raw_filters.get('selected_output_cols'))
         if requested is None: requested=self.metadata.get('column_groups',{}).get('default_selected',[])
@@ -348,10 +377,15 @@ class WebCore:
         try: selected=[ui_to_core.get(value, value) for value in requested]
         except TypeError as exc: raise WorkspaceError('De exportkolommen zijn ongeldig.') from exc
         if any(not isinstance(value,str) or not value for value in selected) or len(set(selected)) != len(selected): raise WorkspaceError('De exportkolommen zijn ongeldig.')
-        raw_filters=dict(raw_filters); raw_filters['selected_output_cols']=selected
+        raw_filters['selected_output_cols']=selected
         filters=self._normal(raw_filters); limit=int(filters.get('max_rows') or 5000); offset=0; all_rows=[]; columns=[]
         try:
             clean, _regions, preferences, postcodes = self.main.extract_selection(filters, {'filters':filters})
+            if filters.get('xbrl_metric_filters'):
+                total, _ = self.main.run_xbrl_count({'filters':filters, 'xbrl_metric_filters':filters['xbrl_metric_filters']})
+            else:
+                total, _ = self.main.run_count(self.main.normalize_filters(clean), postcodes)
+            total = int(total)
             while len(all_rows) < limit:
                 page_filters=dict(filters); page_filters['max_rows']=min(1000,limit-len(all_rows))
                 # Reuse the canonical writer/query and page through every
@@ -359,7 +393,8 @@ class WebCore:
                 if filters.get('xbrl_metric_filters'):
                     xbrl_request = {'filters': page_filters, 'xbrl_metric_filters': filters['xbrl_metric_filters'],
                                     'selected_output_cols': selected, 'max_rows': page_filters['max_rows']}
-                    page_columns, rows, _ = self.main.run_xbrl_export(xbrl_request, offset, preferences=preferences)
+                    page_columns, rows, _ = self.main.run_xbrl_export(
+                        xbrl_request, offset, deterministic_results_order=True, preferences=preferences)
                 else:
                     normal = self.main.normalize_filters(clean)
                     normal['max_rows'] = page_filters['max_rows']
@@ -376,7 +411,10 @@ class WebCore:
         finally:
             if os.path.exists(tmp): os.unlink(tmp)
         with self._lock: self._downloads[job]=(hashlib.sha256((auth.license_id+'\x1f'+auth.user_id).encode()).hexdigest(),path)
-        return {'download_reference':job,'rows':len(all_rows),'total':len(all_rows),'message':f'{len(all_rows)} bedrijven opgeslagen.'}
+        total=max(total,len(all_rows)); limited=len(all_rows)<total
+        message=(f'{len(all_rows)} van {total} bedrijven opgeslagen (ingestelde exportlimiet).'
+                 if limited else f'{len(all_rows)} bedrijven opgeslagen.')
+        return {'download_reference':job,'rows':len(all_rows),'total':total,'limited':limited,'message':message}
 
     def resolve_download(self, reference: str, auth: AuthContext) -> Path:
         owner=hashlib.sha256((auth.license_id+'\x1f'+auth.user_id).encode()).hexdigest()

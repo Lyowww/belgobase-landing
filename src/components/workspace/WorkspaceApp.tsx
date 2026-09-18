@@ -85,6 +85,7 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
   const [browserSessions, setBrowserSessions] = useState<BrowserSession[]>([]);
   const [accountBusy, setAccountBusy] = useState(false);
   const frame = useRef<HTMLIFrameElement>(null);
+  const documentCloseButton = useRef<HTMLButtonElement>(null);
   const clearEnrollment = useCallback(() => {
     setEnrollmentCsrf(""); setEnterprise(""); setCompany(""); setAcceptantName(""); setAcceptantFunction(""); setDetails(undefined); setDeclarations(initialDeclarations);
   }, []);
@@ -124,6 +125,12 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
     window.addEventListener("focus", check); document.addEventListener("visibilitychange", check); void check();
     return () => { cancelled = true; window.clearInterval(timer); window.removeEventListener("focus", check); document.removeEventListener("visibilitychange", check); };
   }, [loadedVersion, phase]);
+  useEffect(() => {
+    if (!documentView) return;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
+    const timer = window.setTimeout(() => documentCloseButton.current?.focus(), 0);
+    return () => { window.clearTimeout(timer); previousFocus?.focus(); };
+  }, [documentView]);
 
   async function request(path: string, body: object, csrfToken?: string) {
     const response = await fetch(path, { method: "POST", headers: { "content-type": "application/json", ...(csrfToken ? { "X-BelgoBase-CSRF": csrfToken } : {}) }, credentials: "same-origin", body: JSON.stringify(body) });
@@ -191,6 +198,7 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
     try {
       const response = await fetch("/api/web/auth/sessions", { cache: "no-store", credentials: "same-origin" });
       const result = await json(response);
+      if (response.status === 401) { setAccount(undefined); setCsrf(""); setAccountOpen(false); setBrowserSessions([]); setError(t.expired); setPhase("login"); return; }
       if (!response.ok || !result.ok || !Array.isArray(result.sessions)) throw new Error(errorMessage(result.error, t));
       setBrowserSessions(result.sessions);
     } catch (reason) { setError(reason instanceof Error ? reason.message : t.generic); } finally { setAccountBusy(false); }
@@ -201,6 +209,7 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
     setAccountBusy(true); setError("");
     try {
       const { response, result } = await request("/api/web/auth/revoke", { browser_id: browser.browser_id }, csrf);
+      if (response.status === 401) { setAccount(undefined); setCsrf(""); setAccountOpen(false); setBrowserSessions([]); setError(t.expired); setPhase("login"); return; }
       if (!response.ok || !result.ok) throw new Error(errorMessage(result.error, t));
       if (result.current_session_revoked || browser.current) {
         setAccount(undefined); setCsrf(""); setAccountOpen(false); setBrowserSessions([]); setError(t.loggedOut); setPhase("login");
@@ -275,6 +284,6 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
       </form>
       {phase === "login" ? <p className={styles.createAccount}>{t.noAccount} <button type="button" onClick={() => { setError(""); setLicenseCode(""); setPhase("enroll"); }}>{t.createAccount}</button></p> : null}
     </> : null}
-    {documentView ? <div className={styles.modalBackdrop} role="presentation"><section aria-label={documentView.title} aria-modal="true" className={styles.documentModal} role="dialog"><div className={styles.documentHeader}><h2>{documentView.title}</h2><button type="button" onClick={() => setDocumentView(undefined)}>{t.close}</button></div><article className={styles.documentText}>{documentView.text}</article></section></div> : null}
+    {documentView ? <div className={styles.modalBackdrop} role="presentation"><section aria-label={documentView.title} aria-modal="true" className={styles.documentModal} role="dialog" onKeyDown={(event) => { if (event.key === "Escape") setDocumentView(undefined); if (event.key === "Tab") { event.preventDefault(); documentCloseButton.current?.focus(); } }}><div className={styles.documentHeader}><h2>{documentView.title}</h2><button ref={documentCloseButton} type="button" onClick={() => setDocumentView(undefined)}>{t.close}</button></div><article className={styles.documentText}>{documentView.text}</article></section></div> : null}
   </section></main>;
 }
