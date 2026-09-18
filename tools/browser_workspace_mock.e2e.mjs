@@ -113,8 +113,8 @@ function company() {
     ok: true,
     company: { number: "0123456789", name: "Voorbeeld Bouw BV", city: "Gent", postcode: "9000", nace: "41201", status: "AC", legal_form: "BV", revenue: 1250000, profit: 145000, fte: 12, year: 2024 },
     fields: [{ label: "Adres", value: "Voorbeeldstraat 1, 9000 Gent" }, { label: "Activiteit", value: "Algemene bouwwerken" }],
-    metrics: [{ key: "revenue", label: "Omzet", value: 1250000, unit: "€", year: 2024, note: "reported" }, { key: "profit", label: "Resultaat", value: 145000, unit: "€", year: 2024, note: "reported" }, { key: "fte", label: "Personeel", value: 12, unit: "VTE", year: 2024, note: "reported" }],
-    history: { years: [2023, 2024], series: { revenue: [980000, 1250000], profit: [100000, 145000], fte: [10, 12], assets: [400000, 510000] }, label: "Financiële evolutie", note: "Mock bronjaren." },
+    metrics: [{ key: "revenue", label: "Omzet", value: 1250000, unit: "ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬", year: 2024, note: "reported" }, { key: "profit", label: "Resultaat", value: 145000, unit: "ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬", year: 2024, note: "reported" }, { key: "fte", label: "Personeel", value: 12, unit: "VTE", year: 2024, note: "reported" }],
+    history: { years: [2023, 2024], series: { revenue: [980000, 1250000], profit: [100000, 145000], fte: [10, 12], assets: [400000, 510000] }, label: "FinanciÃƒÆ’Ã‚Â«le evolutie", note: "Mock bronjaren." },
     financial: [{ label: "Omzet", value: 1250000, year: 2024, status: "reported", source: "Mock bron", explanation: "" }],
   };
 }
@@ -126,6 +126,9 @@ const mock = http.createServer(async (request, response) => {
     if (url.pathname === "/version" && request.method === "GET") {
       state.versionCalls += 1;
       return json(response, 200, { ok: true, version: "Mock web 1.0", latest: true });
+    }
+    if (url.pathname === "/auth/sessions" && request.method === "GET") {
+      return hasSession(request) ? json(response, 200, { ok: true, sessions: [{browser_id:"test-browser", label:"Testbrowser", current:true, last_seen_at:"2026-09-18T17:00:00Z"}] }) : json(response, 401, {ok:false});
     }
     if (url.pathname === "/auth/session" && request.method === "GET") {
       return hasSession(request)
@@ -273,6 +276,12 @@ try {
   });
   await page.goto(`${appOrigin}/nl/app`, { waitUntil: "networkidle" });
   await page.getByLabel("E-mailadres", { exact: true }).waitFor();
+  assert.equal((await page.request.get(appOrigin + "/api/web/desktop-download", { maxRedirects: 0 })).status(), 401, "desktop account download requires login");
+  await page.getByLabel("E-mailadres", { exact: true }).fill("draft@example.test");
+  await page.getByLabel("Taal / Language / Langue", { exact: true }).selectOption("fr");
+  assert.equal(await page.getByLabel("Adresse e-mail", { exact: true }).inputValue(), "draft@example.test", "language switch retains form input");
+  await page.getByLabel("Taal / Language / Langue", { exact: true }).selectOption("nl");
+
   await page.getByRole("button", { name: "Maak een account aan" }).click();
   const enrollmentEmail = page.getByLabel("E-mailadres", { exact: true });
   try {
@@ -321,7 +330,7 @@ try {
   await page.getByLabel("E-mailadres", { exact: true }).waitFor();
   const emailField = page.getByLabel("E-mailadres", { exact: true });
   await emailField.fill("owner@example.test");
-  await page.getByLabel("Licentiecode (optioneel)").fill("MOCK-LICENSE");
+  assert.equal(await page.getByLabel("Licentiecode (optioneel)").count(), 0, "login no longer asks for registration license");
   await page.getByRole("button", { name: "Code per e-mail ontvangen" }).click();
   const codeField = page.getByLabel("Beveiligingscode");
   try {
@@ -336,10 +345,19 @@ try {
   const frame = await loadedWorkspaceFrame(page);
   await frame.locator("#query").waitFor();
   await frame.locator("#account-name").getByText("Mock BelgoBase").waitFor();
-  assert.equal(state.claimCalls.length, 1, "first sign-in uses claim");
-  assert.equal(state.claimCalls[0].license_code, "MOCK-LICENSE");
-  assert.equal(state.claimCalls[0].remember_browser, true);
+  assert.equal(state.claimCalls.length, 0, "registered customer signs in by verified email");
+  assert.equal(state.loginCalls[0].remember_browser, true);
   assert.ok(state.bridgeCalls.some((call) => call.method === "bootstrap"), "frozen bootstrap reached the bridge");
+  await page.getByRole("button", { name: "Account", exact: true }).click();
+  await page.getByText("Testbrowser", { exact: false }).waitFor();
+  const installerLink = page.getByRole("link", { name: "BelgoBase voor Windows downloaden" });
+  assert.equal(await installerLink.getAttribute("href"), "/api/web/desktop-download");
+  await page.getByText("Alleen voor Windows.", { exact: true }).waitFor();
+  const installerResponse = await page.request.get(appOrigin + "/api/web/desktop-download", { maxRedirects: 0 });
+  assert.equal(installerResponse.status(), 307);
+  assert.match(installerResponse.headers().location, /^https:\/\/api\.belgobase\.be\/client-updates\/download\/BelgoBase_CloudClient_Setup_BUILD\d+_UPDATE\d+\.exe$/);
+  await page.getByRole("button", { name: "Account", exact: true }).click();
+
   assert.equal(await iframe.getAttribute("allow"), "microphone");
   assert.match(await frame.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute("content"), /connect-src 'self'/);
   assert.match(workspaceResponses.at(-1).headers()["permissions-policy"] || "", /microphone=\(self\)/);
@@ -358,6 +376,11 @@ try {
   await languageResponse;
   assert.equal(await frame.locator("#language-switch").inputValue(), "fr", "the selected workspace language changes immediately");
   assert.ok(state.bridgeCalls.some((call) => call.method === "set_language" && call.payload.language === "fr"), "language preference is persisted through the bridge");
+  assert.notEqual(await frame.locator("#new-search").innerText(), "Nieuwe zoekopdracht", "French changes visible labels, not just the dropdown");
+  await frame.locator("#language-switch").selectOption("en");
+  await frame.locator("#new-search").getByText("New search", { exact: true }).waitFor();
+  await frame.locator("#language-switch").selectOption("nl");
+  await frame.locator("#new-search").getByText("Nieuwe zoekopdracht", { exact: true }).waitFor();
   await frame.locator("#assistant-close").click();
   await frame.locator("#query").waitFor();
 
@@ -369,6 +392,11 @@ try {
   await frame.locator('button[data-company="0123456789"]').first().click();
   await frame.getByRole("heading", { name: "Voorbeeld Bouw BV" }).waitFor();
   assert.ok(state.bridgeCalls.some((call) => call.method === "company"), "company detail reached the bridge");
+  for (const [language, revenue] of [["fr", "Chiffre d’affaires"], ["en", "Revenue"], ["nl", "Omzet"]]) {
+    await frame.locator("#language-switch").selectOption(language);
+    assert.equal(await frame.locator('[data-metric="revenue"]').innerText(), revenue, "financial chart labels follow selected language");
+    assert.equal(await frame.getByRole("heading", { name: "Voorbeeld Bouw BV" }).count(), 1, "company identity is never translated");
+  }
   await page.screenshot({ path: screenshotPath, fullPage: true });
 
   await frame.locator("#back").click();
@@ -399,7 +427,7 @@ try {
   await page.getByLabel("Beveiligingscode").fill("123456");
   await page.getByRole("button", { name: "Aanmelden" }).click();
   await page.locator('iframe[title="BelgoBase workspace"]').waitFor();
-  assert.equal(state.loginCalls.length, 1, "later sign-in uses email only login");
+  assert.equal(state.loginCalls.length, 2, "both sign-ins use email only login");
   await page.getByRole("button", { name: "Afmelden" }).click();
   await page.getByRole("heading", { name: "Inloggen" }).waitFor();
   assert.equal(state.logoutCsrf, csrf, "logout carries the session CSRF token");

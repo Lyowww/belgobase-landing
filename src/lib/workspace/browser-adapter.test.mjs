@@ -10,6 +10,7 @@ function adapterHarness(replies) {
   const messages = [];
   const links = [];
   let processor;
+  let timeout;
   const tracks = [{ stopped: false, stop() { this.stopped = true; } }];
   const document = {
     body: { append(node) { links.push(node); } },
@@ -29,7 +30,7 @@ function adapterHarness(replies) {
     isSecureContext: true,
     AudioContext,
     addEventListener() {},
-    setTimeout() { return 1; },
+    setTimeout(callback) { timeout = callback; return 1; },
     clearTimeout() {},
   };
   const fetch = async (url, options = {}) => {
@@ -44,11 +45,11 @@ function adapterHarness(replies) {
   };
   const context = vm.createContext({
     window, document, fetch, navigator: { mediaDevices: { getUserMedia: async () => ({ getTracks: () => tracks }) } },
-    URL, Proxy, Uint8Array, Int16Array, Float32Array, DataView, AbortController,
+    URL, Proxy, Promise, Uint8Array, Int16Array, Float32Array, DataView, AbortController,
     performance: { now: () => 1_000 }, btoa: (value) => Buffer.from(value, "binary").toString("base64"),
   });
   vm.runInContext(source, context);
-  return { api: window.pywebview.api, calls, links, messages, getProcessor: () => processor, tracks };
+  return { api: window.pywebview.api, calls, links, messages, getProcessor: () => processor, fireTimeout: () => timeout(), tracks };
 }
 
 test("bridge forwards an authenticated method and starts a same-origin download", async () => {
@@ -130,4 +131,52 @@ test("the login component retains the public auth contract", async () => {
   assert.match(component, /\/api\/web\/auth\/verify/);
   assert.match(component, /one-time-code/);
   assert.match(component, /X-BelgoBase-CSRF/);
+});
+
+
+test("logout sends valid JSON and never claims success on a server failure", async () => {
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "c".repeat(32) } },
+    { status: 503, body: { ok: false } },
+  ]);
+  await assert.rejects(h.api.account_action({ action: "deactivate" }), /Afmelden/);
+  assert.equal(h.calls[1].options.headers["content-type"], "application/json");
+  assert.equal(h.calls[1].options.body, "{}");
+  assert.equal(h.messages.length, 0);
+});
+
+test("automatic voice completion releases recording for the next request", async () => {
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "v".repeat(32) } },
+    { body: { ok: true, text: "Gent" } },
+  ]);
+  await h.api.voice_start();
+  h.getProcessor().onaudioprocess({ inputBuffer: { getChannelData: () => new Float32Array(24_000).fill(.1) } });
+  h.fireTimeout();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal((await h.api.voice_status()).text, "Gent");
+  await h.api.voice_start();
+  await h.api.voice_cancel();
+});
+
+test("automatic recording error becomes visible and allows retry", async () => {
+  const h = adapterHarness([]);
+  await h.api.voice_start();
+  h.fireTimeout();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.match((await h.api.voice_status()).error, /te kort/);
+  await h.api.voice_start();
+  await h.api.voice_cancel();
+});
+
+test("manual stop while automatic transcription runs shares the same result", async () => {
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "v".repeat(32) } },
+    { body: { ok: true, text: "Antwerpen" } },
+  ]);
+  await h.api.voice_start();
+  h.getProcessor().onaudioprocess({ inputBuffer: { getChannelData: () => new Float32Array(24_000).fill(.1) } });
+  h.fireTimeout();
+  assert.equal((await h.api.voice_stop()).text, "Antwerpen");
+  assert.equal(h.calls.filter(call => call.url === "/api/web/voice").length, 1);
 });

@@ -170,6 +170,20 @@ class WebAuthTests(unittest.TestCase):
         result, otp = self.claim(remember=remember)
         return self.service.verify_code(result["challenge_id"], otp)
 
+    def test_unregistered_email_cannot_login_or_create_membership(self) -> None:
+        started = self.service.start_login(
+            "not-a-customer@example.test", remember_browser=False, source="198.51.100.9"
+        )
+        self.assertEqual([], self.mailer.messages)
+        with self.assertRaisesRegex(AuthError, "code_invalid"):
+            self.service.verify_code(started["challenge_id"], "123456")
+        connection = sqlite3.connect(self.database)
+        try:
+            self.assertEqual(0, connection.execute("SELECT COUNT(*) FROM web_memberships").fetchone()[0])
+            self.assertEqual(0, connection.execute("SELECT COUNT(*) FROM web_sessions").fetchone()[0])
+        finally:
+            connection.close()
+
     def test_wrong_email_is_generic_and_sends_no_code(self) -> None:
         response = self.service.start_claim(
             "wrong@example.test", "CODE-1", remember_browser=False, source="198.51.100.1"

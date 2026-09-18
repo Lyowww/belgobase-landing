@@ -120,7 +120,10 @@
     }
     triggerDownload(data.download_url);
     if ((method === "bootstrap" || method === "workspace_save") && Number.isInteger(data.workspace_revision)) workspaceRevision = data.workspace_revision;
-    return data;
+    if ((method === "set_language" || method === "bootstrap") && ["nl", "fr", "en"].includes(data.language)) {
+      window.parent.postMessage({ type: "belgobase-web-language", language: data.language }, window.location.origin);
+    }
+    return typeof window.BelgoBaseWebI18n?.enrich === "function" ? window.BelgoBaseWebI18n.enrich(method, data) : data;
   }
 
   function destroyVoice() {
@@ -210,12 +213,18 @@
     processor.connect(silent);
     silent.connect(context.destination);
     await context.resume();
-    active.timer = window.setTimeout(() => { void finishVoice(active); }, MAX_SECONDS * 1000);
+    active.timer = window.setTimeout(() => { void finishVoice(active).catch((error) => { active.error = messageFor(error); active.state = "error"; }); }, MAX_SECONDS * 1000);
     voice = active;
     return { ok: true };
   }
 
-  async function finishVoice(active) {
+  function finishVoice(active) {
+    if (!active) return Promise.resolve({ ok: true, cancelled: true });
+    if (!active.completion) active.completion = transcribeVoice(active);
+    return active.completion;
+  }
+
+  async function transcribeVoice(active) {
     if (!active || active.cancelled || active.state !== "recording") return active?.result || { ok: true, cancelled: true };
     active.state = "transcribing";
     if (active.timer) window.clearTimeout(active.timer);
@@ -263,8 +272,8 @@
     if (!active) return { ok: true, state: "idle", level: 0, elapsed: 0, max_seconds: MAX_SECONDS };
     const elapsed = Math.min(MAX_SECONDS, Math.max(0, (performance.now() - active.started) / 1000));
     if (active.state === "recording" && elapsed >= MAX_SECONDS) void finishVoice(active).catch((error) => { active.error = messageFor(error); active.state = "error"; });
-    if (active.state === "complete") return active.result;
-    if (active.state === "error") return { ok: true, state: "idle", error: active.error };
+    if (active.state === "complete") { voice = null; return active.result; }
+    if (active.state === "error") { voice = null; return { ok: true, state: "idle", error: active.error }; }
     return { ok: true, state: active.state, level: active.state === "recording" ? active.level : 0, elapsed, max_seconds: MAX_SECONDS };
   }
 
@@ -278,10 +287,17 @@
     const response = await fetch(`${API_ROOT}/auth/logout`, {
       method: "POST",
       credentials: "same-origin",
-      headers: { "X-BelgoBase-CSRF": token },
+      headers: { "content-type": "application/json", "X-BelgoBase-CSRF": token },
+      body: JSON.stringify({}),
     });
     if (response.status === 401) authExpired();
-    else notifyAuth("belgobase-web-logout");
+    else {
+      const data = await json(response);
+      if (!response.ok || data.ok !== true) throw new Error("Afmelden is niet gelukt. Probeer opnieuw.");
+      destroyVoice();
+      csrf = "";
+      notifyAuth("belgobase-web-logout");
+    }
     return { ok: true, deactivated: true };
   }
 
@@ -299,6 +315,14 @@
     },
   });
 
+  window.addEventListener("message", event => {
+    if (event.origin !== window.location.origin || event.source !== window.parent || event.data?.type !== "belgobase-web-language" || !["nl", "fr", "en"].includes(event.data.language)) return;
+    const select = document.getElementById("language-switch");
+    if (select && select.value !== event.data.language) {
+      select.value = event.data.language;
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  });
   window.pywebview = { api };
   window.addEventListener("pagehide", destroyVoice, { once: true });
 })();

@@ -5,11 +5,13 @@ import type { Locale } from "@/i18n/config";
 import styles from "./WorkspaceApp.module.css";
 
 type Session = { authenticated?: boolean; csrf?: string; account?: { name?: string; email?: string } };
+type ShellLanguage = "nl" | "fr" | "en";
+type BrowserSession = { browser_id: string; label: string; created_at: string; last_seen_at: string; expires_at: string; current: boolean };
 type Phase = "checking" | "login" | "loginCode" | "enroll" | "enrollCode" | "profile" | "workspace";
 type Declaration = "terms_accepted" | "usage_terms_accepted" | "privacy_acknowledged" | "authority_declared";
 type LegalDocument = { document_id: string; title: string; role: "contractual_terms" | "acceptable_use_terms" | "privacy_notice"; version: string; view_url: string; download_url?: string; sha256: string };
 type Details = { company?: { company_type?: string; enterprise_number?: string; legal_name?: string; address?: { street?: string; house_number?: string; postal_code?: string; municipality?: string } }; legal?: { documents?: LegalDocument[]; choice_texts?: Partial<Record<"general_terms" | "usage_terms" | "privacy_notice" | "business_authority", string>> }; preflight_id?: string; preflight_fingerprint?: string };
-type Result = { ok?: boolean; error?: string; challenge_id?: string; csrf?: string; enrollment_verified?: boolean; title?: string; text?: string; sha256?: string } & Session & Details;
+type Result = { ok?: boolean; error?: string; challenge_id?: string; csrf?: string; enrollment_verified?: boolean; title?: string; text?: string; sha256?: string; sessions?: BrowserSession[]; current_session_revoked?: boolean } & Session & Details;
 
 const initialDeclarations: Record<Declaration, boolean> = { terms_accepted: false, usage_terms_accepted: false, privacy_acknowledged: false, authority_declared: false };
 const declarationByRole: Record<LegalDocument["role"], Declaration> = { contractual_terms: "terms_accepted", acceptable_use_terms: "usage_terms_accepted", privacy_notice: "privacy_acknowledged" };
@@ -17,20 +19,29 @@ const text = {
   nl: {
     title: "BelgoBase online", existing: "Inloggen", existingHelp: "Meld je aan met het e-mailadres van je account.", new: "Nieuw bij BelgoBase", newHelp: "Schrijf je zakelijke account veilig in.", noAccount: "Nog geen account?", createAccount: "Maak een account aan",
     email: "E-mailadres", license: "Licentiecode (optioneel)", enrollmentLicense: "BelgoBase-licentiecode", licenseHelp: "Heb je al een BelgoBase-account? Dan volstaat je geregistreerde e-mailadres.", remember: "Op dit apparaat aangemeld blijven", send: "Code per e-mail ontvangen",
-    codeTitle: "Controleer je e-mail", codeHelp: "Voer de beveiligingscode uit je e-mail in.", code: "Beveiligingscode", login: "Aanmelden", verify: "E-mailadres bevestigen", back: "Terug", otherEmail: "Gebruik een ander e-mailadres",
+    codeTitle: "Controleer je e-mail", loginCodeHelp: "Als dit e-mailadres aan een actief account gekoppeld is, ontvang je een code. Controleer ook ongewenste e-mail.", enrollmentCodeHelp: "Voer de beveiligingscode uit je e-mail in.", code: "Beveiligingscode", login: "Aanmelden", verify: "E-mailadres bevestigen", back: "Terug", otherEmail: "Gebruik een ander e-mailadres",
     profileTitle: "Bevestig je bedrijfsgegevens", profileHelp: "BelgoBase is momenteel beschikbaar voor professionele gebruikers. Zoek je onderneming op en controleer de gegevens voordat je inschrijving wordt voltooid.",
     enterprise: "Ondernemingsnummer (KBO)", find: "Bedrijfsgegevens ophalen", company: "Wettelijke bedrijfsnaam", address: "Adres", name: "Naam van de aanvaarder", function: "Functie van de aanvaarder", read: "Lees document", close: "Sluiten", finish: "Zakelijke inschrijving voltooien",
-    consumer: "Particuliere inschrijving is nog niet beschikbaar. BelgoBase online is momenteel voor professionele gebruikers.", logout: "Afmelden", loading: "Je veilige werkomgeving wordt geladen…", expired: "Je sessie is verlopen. Meld je opnieuw aan.",
-    generic: "Dit kon niet worden afgerond. Controleer je gegevens en probeer opnieuw.", invalid: "Controleer de ingevulde gegevens.", invalidCode: "De code is ongeldig of verlopen.", enrollmentInvalid: "Je inschrijving is niet meer geldig. Begin opnieuw.", companyMissing: "Deze onderneming werd niet gevonden. Controleer het ondernemingsnummer.", conflict: "Deze licentie is al gekoppeld. Meld je aan met het bestaande e-mailadres.", legal: "Bevestig alle verplichte documenten en gegevens.", devices: "Het maximum aantal actieve apparaten is bereikt.", unavailable: "Aanmelden is tijdelijk niet beschikbaar. Probeer later opnieuw.",
+    consumer: "Particuliere inschrijving is nog niet beschikbaar. BelgoBase online is momenteel voor professionele gebruikers.", logout: "Afmelden", loggedOut: "Je bent afgemeld.", loading: "Je veilige werkomgeving wordt geladenâ€¦", expired: "Je sessie is verlopen. Meld je opnieuw aan.",
+    generic: "Dit kon niet worden afgerond. Controleer je gegevens en probeer opnieuw.", invalid: "Controleer de ingevulde gegevens.", invalidCode: "De code is ongeldig of verlopen.", enrollmentInvalid: "Je inschrijving is niet meer geldig. Begin opnieuw.", companyMissing: "Deze onderneming werd niet gevonden. Controleer het ondernemingsnummer.", conflict: "Deze licentie is al gekoppeld. Meld je aan met het bestaande e-mailadres.", legal: "Bevestig alle verplichte documenten en gegevens.", devices: "Het maximum aantal actieve apparaten is bereikt. Meld een browser af op een ander apparaat; plaatsen op Windows tellen ook mee.", unavailable: "Aanmelden is tijdelijk niet beschikbaar. Probeer later opnieuw.", rateLimited: "Wacht even voordat je opnieuw een code aanvraagt.", resend: "Code opnieuw versturen", resendIn: "Opnieuw versturen over {seconds}s", account: "Account", accountIntro: "Beheer je aangemelde browsers. Windows-plaatsen tellen mee voor je apparaatlimiet.", windowsDownload: "BelgoBase voor Windows downloaden", windowsOnly: "Alleen voor Windows.", activeBrowsers: "Aangemelde browsers", currentBrowser: "Deze browser", revoke: "Browser afmelden", revokeConfirm: "Deze browser afmelden?", lastSeen: "Laatst gebruikt", noBrowsers: "Geen actieve browsers gevonden.", closeAccount: "Account sluiten",
   },
   en: {
     title: "BelgoBase online", existing: "Sign in", existingHelp: "Sign in with the email address on your account.", new: "New to BelgoBase", newHelp: "Set up your professional account securely.", noAccount: "No account yet?", createAccount: "Create an account",
     email: "Email address", license: "License code (optional)", enrollmentLicense: "BelgoBase license code", licenseHelp: "Already have a BelgoBase account? Your registered email address is enough.", remember: "Keep me signed in on this device", send: "Send email code",
-    codeTitle: "Check your email", codeHelp: "Enter the security code from your email.", code: "Security code", login: "Sign in", verify: "Confirm email address", back: "Back", otherEmail: "Use a different email address",
+    codeTitle: "Check your email", loginCodeHelp: "If this email address is linked to an active account, you will receive a code. Please check your junk email too.", enrollmentCodeHelp: "Enter the security code from your email.", code: "Security code", login: "Sign in", verify: "Confirm email address", back: "Back", otherEmail: "Use a different email address",
     profileTitle: "Confirm your company details", profileHelp: "BelgoBase is currently available to professional users. Find your company and check the details before completing enrolment.",
     enterprise: "Company number (CBE)", find: "Get company details", company: "Legal company name", address: "Address", name: "Name of the person accepting", function: "Role of the person accepting", read: "Read document", close: "Close", finish: "Complete professional enrolment",
-    consumer: "Consumer enrolment is not available yet. BelgoBase online is currently for professional users.", logout: "Sign out", loading: "Loading your secure workspace…", expired: "Your session has expired. Please sign in again.",
-    generic: "This could not be completed. Check your details and try again.", invalid: "Check the details you entered.", invalidCode: "The code is invalid or expired.", enrollmentInvalid: "Your enrolment is no longer valid. Please start again.", companyMissing: "This company could not be found. Check the company number.", conflict: "This license is already linked. Sign in with the existing email address.", legal: "Confirm all required documents and details.", devices: "The maximum number of active devices has been reached.", unavailable: "Sign-in is temporarily unavailable. Please try again later.",
+    consumer: "Consumer enrolment is not available yet. BelgoBase online is currently for professional users.", logout: "Sign out", loggedOut: "You have been signed out.", loading: "Loading your secure workspaceâ€¦", expired: "Your session has expired. Please sign in again.",
+    generic: "This could not be completed. Check your details and try again.", invalid: "Check the details you entered.", invalidCode: "The code is invalid or expired.", enrollmentInvalid: "Your enrolment is no longer valid. Please start again.", companyMissing: "This company could not be found. Check the company number.", conflict: "This license is already linked. Sign in with the existing email address.", legal: "Confirm all required documents and details.", devices: "The maximum number of active devices has been reached. Sign out a browser on another device; Windows seats also count.", unavailable: "Sign-in is temporarily unavailable. Please try again later.", rateLimited: "Please wait before requesting another code.", resend: "Resend code", resendIn: "Resend in {seconds}s", account: "Account", accountIntro: "Manage your signed-in browsers. Windows seats also count towards your device limit.", windowsDownload: "Download BelgoBase for Windows", windowsOnly: "Windows only.", activeBrowsers: "Signed-in browsers", currentBrowser: "This browser", revoke: "Sign out browser", revokeConfirm: "Sign out this browser?", lastSeen: "Last used", noBrowsers: "No active browsers found.", closeAccount: "Close account",
+  },
+  fr: {
+    title: "BelgoBase en ligne", existing: "Se connecter", existingHelp: "Connectez-vous avec lâ€™adresse e-mail de votre compte.", new: "Nouveau sur BelgoBase", newHelp: "CrÃ©ez votre compte professionnel de maniÃ¨re sÃ©curisÃ©e.", noAccount: "Pas encore de compte ?", createAccount: "CrÃ©er un compte",
+    email: "Adresse e-mail", license: "Code de licence (facultatif)", enrollmentLicense: "Code de licence BelgoBase", licenseHelp: "Vous avez dÃ©jÃ  un compte BelgoBase ? Votre adresse e-mail enregistrÃ©e suffit.", remember: "Rester connectÃ© sur cet appareil", send: "Recevoir un code par e-mail",
+    codeTitle: "VÃ©rifiez vos e-mails", loginCodeHelp: "Si cette adresse e-mail est liÃ©e Ã  un compte actif, vous recevrez un code. VÃ©rifiez aussi vos courriers indÃ©sirables.", enrollmentCodeHelp: "Saisissez le code de sÃ©curitÃ© reÃ§u par e-mail.", code: "Code de sÃ©curitÃ©", login: "Se connecter", verify: "Confirmer lâ€™adresse e-mail", back: "Retour", otherEmail: "Utiliser une autre adresse e-mail",
+    profileTitle: "Confirmez les donnÃ©es de votre entreprise", profileHelp: "BelgoBase est actuellement disponible pour les utilisateurs professionnels. Recherchez votre entreprise et vÃ©rifiez les donnÃ©es avant de terminer lâ€™inscription.",
+    enterprise: "NumÃ©ro dâ€™entreprise (BCE)", find: "RÃ©cupÃ©rer les donnÃ©es de lâ€™entreprise", company: "DÃ©nomination lÃ©gale", address: "Adresse", name: "Nom de la personne qui accepte", function: "Fonction de la personne qui accepte", read: "Lire le document", close: "Fermer", finish: "Terminer lâ€™inscription professionnelle",
+    consumer: "Lâ€™inscription pour les particuliers nâ€™est pas encore disponible. BelgoBase en ligne est actuellement rÃ©servÃ© aux professionnels.", logout: "Se dÃ©connecter", loggedOut: "Vous Ãªtes dÃ©connectÃ©.", loading: "Chargement de votre espace sÃ©curisÃ©â€¦", expired: "Votre session a expirÃ©. Connectez-vous Ã  nouveau.",
+    generic: "Cette opÃ©ration nâ€™a pas pu Ãªtre terminÃ©e. VÃ©rifiez vos donnÃ©es et rÃ©essayez.", invalid: "VÃ©rifiez les donnÃ©es saisies.", invalidCode: "Le code est invalide ou a expirÃ©.", enrollmentInvalid: "Votre inscription nâ€™est plus valide. Recommencez.", companyMissing: "Cette entreprise est introuvable. VÃ©rifiez le numÃ©ro dâ€™entreprise.", conflict: "Cette licence est dÃ©jÃ  liÃ©e. Connectez-vous avec lâ€™adresse e-mail existante.", legal: "Confirmez tous les documents et renseignements obligatoires.", devices: "Le nombre maximal dâ€™appareils actifs est atteint. DÃ©connectez un navigateur sur un autre appareil ; les places Windows comptent aussi.", unavailable: "La connexion est temporairement indisponible. RÃ©essayez plus tard.", rateLimited: "Patientez avant de demander un autre code.", resend: "Renvoyer le code", resendIn: "Renvoyer dans {seconds}s", account: "Compte", accountIntro: "GÃ©rez vos navigateurs connectÃ©s. Les places Windows comptent aussi dans votre limite dâ€™appareils.", windowsDownload: "TÃ©lÃ©charger BelgoBase pour Windows", windowsOnly: "Windows uniquement.", activeBrowsers: "Navigateurs connectÃ©s", currentBrowser: "Ce navigateur", revoke: "DÃ©connecter le navigateur", revokeConfirm: "DÃ©connecter ce navigateur ?", lastSeen: "DerniÃ¨re utilisation", noBrowsers: "Aucun navigateur actif trouvÃ©.", closeAccount: "Fermer le compte",
   },
 } as const;
 
@@ -41,18 +52,20 @@ function addressLine(value: { street?: string; house_number?: string; postal_cod
   const address = value as { street?: string; house_number?: string; postal_code?: string; municipality?: string };
   return [([address.street, address.house_number].filter(Boolean).join(" ")), ([address.postal_code, address.municipality].filter(Boolean).join(" "))].filter(Boolean).join(", ");
 }
-function errorMessage(code: string | undefined, t: (typeof text)[Locale]) {
-  return ({ invalid_request: t.invalid, code_invalid: t.invalidCode, otp_invalid: t.invalidCode, enrollment_invalid: t.enrollmentInvalid, enrollment_expired: t.enrollmentInvalid, company_not_found: t.companyMissing, binding_conflict: t.conflict, legal_acceptance_invalid: t.legal, browser_limit_reached: t.devices, temporarily_unavailable: t.unavailable, consumer_registration_unavailable: t.consumer } as Record<string, string>)[code || ""] || t.generic;
+function errorMessage(code: string | undefined, t: (typeof text)[ShellLanguage]) {
+  return ({ invalid_request: t.invalid, code_invalid: t.invalidCode, otp_invalid: t.invalidCode, rate_limited: t.rateLimited, enrollment_invalid: t.enrollmentInvalid, enrollment_expired: t.enrollmentInvalid, company_not_found: t.companyMissing, binding_conflict: t.conflict, legal_acceptance_invalid: t.legal, browser_limit_reached: t.devices, temporarily_unavailable: t.unavailable, consumer_registration_unavailable: t.consumer } as Record<string, string>)[code || ""] || t.generic;
 }
 
 export function WorkspaceApp({ locale }: { locale: Locale }) {
-  const t = text[locale];
+  const [shellLanguage, setShellLanguage] = useState<ShellLanguage>(locale);
+  const t = text[shellLanguage];
   const [phase, setPhase] = useState<Phase>("checking");
   const [email, setEmail] = useState("");
   const [licenseCode, setLicenseCode] = useState("");
   const [remember, setRemember] = useState(true);
   const [challengeId, setChallengeId] = useState("");
   const [code, setCode] = useState("");
+  const [resendIn, setResendIn] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [account, setAccount] = useState<Session["account"]>();
@@ -68,6 +81,9 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
   const [documentLoading, setDocumentLoading] = useState(false);
   const [loadedVersion, setLoadedVersion] = useState("");
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [browserSessions, setBrowserSessions] = useState<BrowserSession[]>([]);
+  const [accountBusy, setAccountBusy] = useState(false);
   const frame = useRef<HTMLIFrameElement>(null);
   const clearEnrollment = useCallback(() => {
     setEnrollmentCsrf(""); setEnterprise(""); setCompany(""); setAcceptantName(""); setAcceptantFunction(""); setDetails(undefined); setDeclarations(initialDeclarations);
@@ -80,18 +96,26 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
     setCsrf(""); setPhase("login");
   }, []);
   useEffect(() => {
-    const timer = window.setTimeout(() => void loadSession().catch(() => { setError(t.generic); setPhase("login"); }), 0);
+    const timer = window.setTimeout(() => void loadSession().catch(() => { setError(text[locale].generic); setPhase("login"); }), 0);
     return () => window.clearTimeout(timer);
-  }, [loadSession, t.generic]);
+  }, [loadSession, locale]);
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin || event.source !== frame.current?.contentWindow) return;
+      if (event.data?.type === "belgobase-web-language" && ["nl", "fr", "en"].includes(event.data.language)) {
+        setShellLanguage(event.data.language as ShellLanguage);
+      }
       if (event.data?.type === "belgobase-web-auth-expired" || event.data?.type === "belgobase-web-logout") {
-        setAccount(undefined); setLicenseCode(""); setChallengeId(""); setCode(""); clearEnrollment(); setError(t.expired); setPhase("login");
+        setAccount(undefined); setLicenseCode(""); setChallengeId(""); setCode(""); setAccountOpen(false); clearEnrollment(); setError(event.data.type === "belgobase-web-auth-expired" ? t.expired : t.loggedOut); setPhase("login");
       }
     };
     window.addEventListener("message", onMessage); return () => window.removeEventListener("message", onMessage);
-  }, [clearEnrollment, t.expired]);
+  }, [clearEnrollment, t.expired, t.loggedOut]);
+  useEffect(() => {
+    if ((phase !== "loginCode" && phase !== "enrollCode") || resendIn <= 0) return;
+    const timer = window.setInterval(() => setResendIn((current) => Math.max(0, current - 1)), 1_000);
+    return () => window.clearInterval(timer);
+  }, [phase, resendIn]);
   useEffect(() => {
     if (!loadedVersion || phase !== "workspace") return;
     let cancelled = false;
@@ -105,9 +129,16 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
     const response = await fetch(path, { method: "POST", headers: { "content-type": "application/json", ...(csrfToken ? { "X-BelgoBase-CSRF": csrfToken } : {}) }, credentials: "same-origin", body: JSON.stringify(body) });
     return { response, result: await json(response) };
   }
+  async function sendLoginCode() {
+    setBusy(true); setError("");
+    try { const { response, result } = await request("/api/web/auth/start", { email: email.trim(), remember }); if (!response.ok || !result.ok || !result.challenge_id) throw new Error(errorMessage(result.error, t)); setChallengeId(result.challenge_id); setCode(""); setResendIn(30); setPhase("loginCode"); } catch (reason) { setError(reason instanceof Error ? reason.message : t.generic); } finally { setBusy(false); }
+  }
   async function startLogin(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setBusy(true); setError("");
-    try { const payload: Record<string, string | boolean> = { email: email.trim(), remember }; if (licenseCode.trim()) payload.license_code = licenseCode.trim(); const { response, result } = await request("/api/web/auth/start", payload); if (!response.ok || !result.ok || !result.challenge_id) throw new Error(errorMessage(result.error, t)); setChallengeId(result.challenge_id); setCode(""); setPhase("loginCode"); } catch (reason) { setError(reason instanceof Error ? reason.message : t.generic); } finally { setBusy(false); }
+    event.preventDefault(); await sendLoginCode();
+  }
+  async function resendLoginCode() {
+    if (busy || resendIn > 0) return;
+    await sendLoginCode();
   }
   async function verifyLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy(true); setError("");
@@ -115,7 +146,12 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
   }
   async function startEnrollment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy(true); setError("");
-    try { const { response, result } = await request("/api/web/enrollment/start", { license_code: licenseCode.trim(), email: email.trim(), remember_browser: remember }); if (!response.ok || !result.ok || !result.challenge_id) throw new Error(errorMessage(result.error, t)); setChallengeId(result.challenge_id); setCode(""); setPhase("enrollCode"); } catch (reason) { setError(reason instanceof Error ? reason.message : t.generic); } finally { setBusy(false); }
+    try { const { response, result } = await request("/api/web/enrollment/start", { license_code: licenseCode.trim(), email: email.trim(), remember_browser: remember }); if (!response.ok || !result.ok || !result.challenge_id) throw new Error(errorMessage(result.error, t)); setChallengeId(result.challenge_id); setCode(""); setResendIn(30); setPhase("enrollCode"); } catch (reason) { setError(reason instanceof Error ? reason.message : t.generic); } finally { setBusy(false); }
+  }
+  async function resendEnrollmentCode() {
+    if (busy || resendIn > 0) return;
+    setBusy(true); setError("");
+    try { const { response, result } = await request("/api/web/enrollment/start", { license_code: licenseCode.trim(), email: email.trim(), remember_browser: remember }); if (!response.ok || !result.ok || !result.challenge_id) throw new Error(errorMessage(result.error, t)); setChallengeId(result.challenge_id); setCode(""); setResendIn(30); } catch (reason) { setError(reason instanceof Error ? reason.message : t.generic); } finally { setBusy(false); }
   }
   async function verifyEnrollment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy(true); setError("");
@@ -150,22 +186,65 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
     setBusy(true);
     try { const { response } = await request("/api/web/auth/logout", {}, csrf); if (!response.ok && response.status !== 401) throw new Error(); setAccount(undefined); setLicenseCode(""); setCsrf(""); setChallengeId(""); setCode(""); clearEnrollment(); setPhase("login"); } catch { setError(t.generic); } finally { setBusy(false); }
   }
-  const back = () => { setError(""); setChallengeId(""); setCode(""); clearEnrollment(); setPhase("login"); };
+  async function loadBrowserSessions() {
+    setAccountBusy(true); setError("");
+    try {
+      const response = await fetch("/api/web/auth/sessions", { cache: "no-store", credentials: "same-origin" });
+      const result = await json(response);
+      if (!response.ok || !result.ok || !Array.isArray(result.sessions)) throw new Error(errorMessage(result.error, t));
+      setBrowserSessions(result.sessions);
+    } catch (reason) { setError(reason instanceof Error ? reason.message : t.generic); } finally { setAccountBusy(false); }
+  }
+  function openAccount() { setAccountOpen(true); void loadBrowserSessions(); }
+  async function revokeBrowser(browser: BrowserSession) {
+    if (!window.confirm(t.revokeConfirm)) return;
+    setAccountBusy(true); setError("");
+    try {
+      const { response, result } = await request("/api/web/auth/revoke", { browser_id: browser.browser_id }, csrf);
+      if (!response.ok || !result.ok) throw new Error(errorMessage(result.error, t));
+      if (result.current_session_revoked || browser.current) {
+        setAccount(undefined); setCsrf(""); setAccountOpen(false); setBrowserSessions([]); setError(t.loggedOut); setPhase("login");
+      } else {
+        await loadBrowserSessions();
+      }
+    } catch (reason) { setError(reason instanceof Error ? reason.message : t.generic); } finally { setAccountBusy(false); }
+  }
+  function selectShellLanguage(language: ShellLanguage) {
+    setShellLanguage(language);
+    frame.current?.contentWindow?.postMessage({ type: "belgobase-web-language", language }, window.location.origin);
+  }
+  const back = () => { setError(""); setChallengeId(""); setCode(""); setResendIn(0); clearEnrollment(); setPhase("login"); };
   const documents = details?.legal?.documents || [];
   const choices = details?.legal?.choice_texts || {};
   const legalReady = documents.length === 3 && ["general_terms", "usage_terms", "privacy_notice", "business_authority"].every((key) => typeof choices[key as keyof typeof choices] === "string" && choices[key as keyof typeof choices]?.trim());
 
-  if (phase === "workspace") return <main className={styles.workspace}>
-    <div className={styles.workspaceBar}><span>{account?.name || account?.email || "BelgoBase"}</span><button type="button" onClick={() => void logout()} disabled={busy}>{t.logout}</button></div>
+  if (phase === "workspace") return <main className={styles.workspace} lang={shellLanguage}>
+    <div className={styles.workspaceBar}>
+      <span className={styles.workspaceIdentity}>{account?.name || account?.email || "BelgoBase"}</span>
+      <div className={styles.workspaceActions}>
+        <label className={styles.languagePicker}><span className={styles.visuallyHidden}>Taal / Language / Langue</span><select aria-label="Taal / Language / Langue" value={shellLanguage} onChange={(event) => selectShellLanguage(event.target.value as ShellLanguage)}><option value="nl">NL</option><option value="fr">FR</option><option value="en">EN</option></select></label>
+        <button type="button" onClick={openAccount} disabled={accountBusy}>{t.account}</button>
+        <button type="button" onClick={() => void logout()} disabled={busy}>{t.logout}</button>
+      </div>
+    </div>
     {error ? <p role="alert" className={styles.error}>{error}</p> : null}
-    {updateAvailable ? <div className={styles.workspaceBar} role="status"><span>{locale === "nl" ? "Een nieuwe versie van BelgoBase staat klaar. Rond je huidige werk af en vernieuw." : "A new BelgoBase version is ready. Finish your current work, then refresh."}</span><button type="button" onClick={() => { if (window.confirm(locale === "nl" ? "Heb je je werk opgeslagen en je opname afgerond? BelgoBase wordt opnieuw geopend." : "Have you saved your work and finished recording? BelgoBase will reopen.")) window.location.reload(); }}>{locale === "nl" ? "Nieuwe versie openen" : "Open new version"}</button></div> : null}
+    {accountOpen ? <section className={styles.accountPanel} aria-label={t.account}>
+      <div className={styles.accountPanelHeader}><div><h2>{t.account}</h2><p>{t.accountIntro}</p></div><button className={styles.secondary} type="button" onClick={() => setAccountOpen(false)}>{t.closeAccount}</button></div>
+      <p className={styles.windowsDownload}><a download href="/api/web/desktop-download">{t.windowsDownload}</a><span>{t.windowsOnly}</span></p>
+      <h3>{t.activeBrowsers}</h3>
+      {accountBusy ? <p className={styles.readonly}>{t.loading}</p> : null}
+      {!accountBusy && browserSessions.length === 0 ? <p className={styles.readonly}>{t.noBrowsers}</p> : null}
+      {!accountBusy && browserSessions.length > 0 ? <ul className={styles.browserSessions}>{browserSessions.map((browser) => <li key={browser.browser_id}><div><strong>{browser.label}{browser.current ? ` â€” ${t.currentBrowser}` : ""}</strong><span>{t.lastSeen}: {new Date(browser.last_seen_at).toLocaleString(shellLanguage)}</span></div><button type="button" onClick={() => void revokeBrowser(browser)}>{t.revoke}</button></li>)}</ul> : null}
+    </section> : null}
+    {updateAvailable ? <div className={styles.workspaceBar} role="status"><span>{shellLanguage === "nl" ? "Een nieuwe versie van BelgoBase staat klaar. Rond je huidige werk af en vernieuw." : shellLanguage === "fr" ? "Une nouvelle version de BelgoBase est prÃªte. Terminez votre travail puis actualisez." : "A new BelgoBase version is ready. Finish your current work, then refresh."}</span><button type="button" onClick={() => { const message = shellLanguage === "nl" ? "Heb je je werk opgeslagen en je opname afgerond? BelgoBase wordt opnieuw geopend." : shellLanguage === "fr" ? "Avez-vous enregistrÃ© votre travail et terminÃ© votre enregistrement ? BelgoBase va sâ€™actualiser." : "Have you saved your work and finished recording? BelgoBase will reopen."; if (window.confirm(message)) window.location.reload(); }}>{shellLanguage === "nl" ? "Nieuwe versie openen" : shellLanguage === "fr" ? "Ouvrir la nouvelle version" : "Open new version"}</button></div> : null}
     <iframe ref={frame} onLoad={() => { const version = frame.current?.contentDocument?.querySelector('meta[name="belgobase-release"]')?.getAttribute("content"); if (version) { setLoadedVersion(version); setUpdateAvailable(false); } }} className={styles.frame} title="BelgoBase workspace" src="/api/web/workspace" allow="microphone" />
   </main>;
   if (phase === "checking") return <main className={styles.loading}>{t.loading}</main>;
   const codePhase = phase === "loginCode" || phase === "enrollCode";
-  return <main className={styles.page}><section className={styles.card} aria-labelledby="app-title">
+  return <main className={styles.page} lang={shellLanguage}><section className={styles.card} aria-labelledby="app-title">
     <p className={styles.brand}>BelgoBase</p>
-    {codePhase ? <><h1 id="app-title">{t.codeTitle}</h1><p className={styles.intro}>{t.codeHelp}</p>{error ? <p role="alert" className={styles.error}>{error}</p> : null}<form className={styles.form} onSubmit={phase === "loginCode" ? verifyLogin : verifyEnrollment}><label>{t.code}<input autoComplete="one-time-code" inputMode="numeric" maxLength={12} required value={code} onChange={(event) => setCode(event.target.value)} /></label><button disabled={busy} type="submit">{phase === "loginCode" ? t.login : t.verify}</button><button className={styles.secondary} disabled={busy} type="button" onClick={back}>{t.otherEmail}</button></form></> : null}
+    <div className={styles.formLanguage}><label><span className={styles.visuallyHidden}>Taal / Language / Langue</span><select aria-label="Taal / Language / Langue" value={shellLanguage} onChange={(event) => selectShellLanguage(event.target.value as ShellLanguage)}><option value="nl">NL</option><option value="fr">FR</option><option value="en">EN</option></select></label></div>
+    {codePhase ? <><h1 id="app-title">{t.codeTitle}</h1><p className={styles.intro}>{phase === "loginCode" ? t.loginCodeHelp : t.enrollmentCodeHelp}</p>{error ? <p role="alert" className={styles.error}>{error}</p> : null}<form className={styles.form} onSubmit={phase === "loginCode" ? verifyLogin : verifyEnrollment}><label>{t.code}<input autoComplete="one-time-code" inputMode="numeric" maxLength={12} required value={code} onChange={(event) => setCode(event.target.value)} /></label><button disabled={busy} type="submit">{phase === "loginCode" ? t.login : t.verify}</button><button className={styles.secondary} disabled={busy || resendIn > 0} type="button" onClick={() => void (phase === "loginCode" ? resendLoginCode() : resendEnrollmentCode())}>{resendIn > 0 ? t.resendIn.replace("{seconds}", String(resendIn)) : t.resend}</button><button className={styles.secondary} disabled={busy} type="button" onClick={back}>{t.otherEmail}</button></form></> : null}
     {phase === "profile" ? <>
       <h1 id="app-title">{t.profileTitle}</h1><p className={styles.intro}>{t.profileHelp}</p>{error ? <p role="alert" className={styles.error}>{error}</p> : null}
       <form className={styles.form} onSubmit={autofill}><label>{t.enterprise}<input autoComplete="off" inputMode="numeric" maxLength={10} required value={enterprise} onChange={(event) => setEnterprise(event.target.value)} /></label><button disabled={busy} type="submit">{t.find}</button></form>
@@ -188,7 +267,7 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
       <h1 id="app-title">{phase === "login" ? t.existing : t.new}</h1><p className={styles.intro}>{phase === "login" ? t.existingHelp : t.newHelp}</p>{error ? <p role="alert" className={styles.error}>{error}</p> : null}
       <form className={styles.form} onSubmit={phase === "login" ? startLogin : startEnrollment}>
         <label>{t.email}<input autoComplete="email" required type="email" value={email} onChange={(event) => setEmail(event.target.value)} /></label>
-        <label>{phase === "login" ? t.license : t.enrollmentLicense}<input autoComplete="off" required={phase === "enroll"} value={licenseCode} onChange={(event) => setLicenseCode(event.target.value)} />{phase === "login" ? <small>{t.licenseHelp}</small> : null}</label>
+        {phase === "enroll" ? <label>{t.enrollmentLicense}<input autoComplete="off" required value={licenseCode} onChange={(event) => setLicenseCode(event.target.value)} /></label> : null}
         <label className={styles.checkbox}><input checked={remember} type="checkbox" onChange={(event) => setRemember(event.target.checked)} />{t.remember}</label>
         <button disabled={busy} type="submit">{t.send}</button>
         {phase === "enroll" ? <button className={styles.secondary} disabled={busy} type="button" onClick={back}>{t.back}</button> : null}

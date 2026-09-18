@@ -7,6 +7,8 @@ export async function workspaceRelease() {
   const root = path.join(process.cwd(), "src/lib/workspace");
   const files = await Promise.all([
     readFile(path.join(root, "assets/frozen-ui.html")),
+    readFile(path.join(root, "assets/premium_i18n.js")),
+    readFile(path.join(root, "browser-i18n.js")),
     readFile(path.join(root, "browser-adapter.js")),
   ]);
   const hash = createHash("sha256");
