@@ -283,6 +283,14 @@ try {
   await page.getByLabel("Taal / Language / Langue", { exact: true }).selectOption("nl");
 
   await page.getByRole("button", { name: "Maak een account aan" }).click();
+  for (const [language, label] of [["nl", "Toegang aanvragen"], ["fr", "Demander un accès"], ["en", "Request access"]]) {
+    await page.getByRole("combobox", { name: "Taal / Language / Langue", exact: true }).selectOption(language);
+    const requestLink = page.getByRole("link", { name: label, exact: true });
+    const href = await requestLink.getAttribute("href");
+    assert.ok(href.startsWith("mailto:david@belgobase.be?"), "license requests go to David in every language");
+    assert.ok(new URL(href).searchParams.get("subject"), "request has a clear subject");
+  }
+  await page.getByRole("combobox", { name: "Taal / Language / Langue", exact: true }).selectOption("nl");
   const enrollmentEmail = page.getByLabel("E-mailadres", { exact: true });
   try {
     await enrollmentEmail.waitFor({ timeout: 10_000 });

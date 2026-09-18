@@ -39,7 +39,7 @@ Create a `.env.local` file in the project root (never commit this file):
 | `RESEND_FROM_EMAIL` | Optional | Legacy alias for `FROM_EMAIL` |
 | `NEXT_PUBLIC_SITE_URL` | Optional | Canonical site URL for SEO metadata (defaults to the value in `src/lib/site.ts`) |
 
-Without `RESEND_API_KEY`, the contact form returns an error. Admin recipient defaults to the site contact email (`hello@belgoleads.com`) when `ADMIN_EMAIL` / `CONTACT_EMAIL` are unset. Do **not** set the recipient to `noreply@belgobase.be` — that address is send-only. See `.env.example`.
+Without `RESEND_API_KEY`, the contact form returns an error. Admin recipient defaults to the site contact email (`legal@belgobase.be`) when `ADMIN_EMAIL` / `CONTACT_EMAIL` are unset. Do **not** set the recipient to `noreply@belgobase.be` — that address is send-only. See `.env.example`.
 
 ---
 
@@ -305,3 +305,5 @@ Change contact details here; they propagate to the Header, Footer, and structure
 ## License
 
 Private — © 2026 BelgoBase.
+
+License requests from web registration open the customer’s email app addressed to `david@belgobase.be`. The customer must send that email; opening the link does not submit a request or create an account. This dedicated route does not change the general contact-form recipient.
