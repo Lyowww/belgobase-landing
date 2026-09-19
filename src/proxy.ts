@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { i18n, isLocale, type Locale } from "@/i18n/config";
 import { PATHNAME_HEADER } from "@/lib/seo/metadata";
-import { publicPageSecurityHeaders } from "@/lib/security-headers";
+import {
+  publicPageSecurityHeaders,
+  workspaceShellSecurityHeaders,
+} from "@/lib/security-headers";
 
-function withSecurityHeaders(response: NextResponse) {
-  for (const [name, value] of Object.entries(publicPageSecurityHeaders)) {
+function withSecurityHeaders(response: NextResponse, pathname: string) {
+  const isWorkspaceShell = i18n.locales.some(
+    (locale) => pathname === `/${locale}/app` || pathname === `/${locale}/app/`,
+  );
+  const securityHeaders = isWorkspaceShell
+    ? workspaceShellSecurityHeaders
+    : publicPageSecurityHeaders;
+  for (const [name, value] of Object.entries(securityHeaders)) {
     response.headers.set(name, value);
   }
   return response;
@@ -15,6 +24,7 @@ function withPathnameHeader(request: NextRequest, pathname: string) {
   requestHeaders.set(PATHNAME_HEADER, pathname);
   return withSecurityHeaders(
     NextResponse.next({ request: { headers: requestHeaders } }),
+    pathname,
   );
 }
 
@@ -44,7 +54,7 @@ export function proxy(request: NextRequest) {
   const locale = getPreferredLocale(request);
   const url = request.nextUrl.clone();
   url.pathname = `/${locale}${pathname === "/" ? "" : pathname}`;
-  return withSecurityHeaders(NextResponse.redirect(url));
+  return withSecurityHeaders(NextResponse.redirect(url), url.pathname);
 }
 
 export const config = {

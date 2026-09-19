@@ -25,6 +25,11 @@ export const publicPageSecurityHeaders = {
   "X-Frame-Options": "DENY",
 } as const;
 
+export const workspaceShellSecurityHeaders = {
+  ...publicPageSecurityHeaders,
+  "Permissions-Policy": "camera=(), geolocation=(), microphone=(self)",
+} as const;
+
 export const workspaceSecurityHeaders = {
   "Content-Security-Policy": [
     "default-src 'none'",

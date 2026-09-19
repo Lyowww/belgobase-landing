@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
   publicPageSecurityHeaders,
+  workspaceShellSecurityHeaders,
   workspaceSecurityHeaders,
 } from "../src/lib/security-headers.ts";
 
@@ -20,9 +22,35 @@ test("public pages deny framing and restrict active content", () => {
   assert.equal(publicPageSecurityHeaders["X-Frame-Options"], "DENY");
   assert.equal(publicPageSecurityHeaders["X-Content-Type-Options"], "nosniff");
   assert.ok(publicPageSecurityHeaders["Referrer-Policy"]);
+  assert.equal(
+    publicPageSecurityHeaders["Permissions-Policy"],
+    "camera=(), geolocation=(), microphone=()",
+  );
 });
 
-test("authenticated workspace remains same-origin frameable with a complete CSP", () => {
+test("workspace shell can delegate microphone only to its same-origin iframe", async () => {
+  assert.equal(
+    workspaceShellSecurityHeaders["Permissions-Policy"],
+    "camera=(), geolocation=(), microphone=(self)",
+  );
+  assert.equal(workspaceShellSecurityHeaders["X-Frame-Options"], "DENY");
+
+  const [component, route] = await Promise.all([
+    readFile(
+      new URL("../src/components/workspace/WorkspaceApp.tsx", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL("../src/app/api/web/workspace/route.ts", import.meta.url),
+      "utf8",
+    ),
+  ]);
+  assert.match(component, /src="\/api\/web\/workspace"/);
+  assert.match(component, /allow="microphone"/);
+  assert.match(route, /\.\.\.workspaceSecurityHeaders/);
+});
+
+test("authenticated workspace iframe remains same-origin frameable with a complete CSP", () => {
   const csp = workspaceSecurityHeaders["Content-Security-Policy"];
   assert.match(csp, /default-src 'none'/);
   assert.match(csp, /connect-src 'self'/);
