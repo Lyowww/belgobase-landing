@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { i18n, isLocale, type Locale } from "@/i18n/config";
 import { PATHNAME_HEADER } from "@/lib/seo/metadata";
+import { publicPageSecurityHeaders } from "@/lib/security-headers";
+
+function withSecurityHeaders(response: NextResponse) {
+  for (const [name, value] of Object.entries(publicPageSecurityHeaders)) {
+    response.headers.set(name, value);
+  }
+  return response;
+}
 
 function withPathnameHeader(request: NextRequest, pathname: string) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set(PATHNAME_HEADER, pathname);
-  return NextResponse.next({ request: { headers: requestHeaders } });
+  return withSecurityHeaders(
+    NextResponse.next({ request: { headers: requestHeaders } }),
+  );
 }
 
 function getPreferredLocale(request: NextRequest): Locale {
@@ -34,7 +44,7 @@ export function proxy(request: NextRequest) {
   const locale = getPreferredLocale(request);
   const url = request.nextUrl.clone();
   url.pathname = `/${locale}${pathname === "/" ? "" : pathname}`;
-  return NextResponse.redirect(url);
+  return withSecurityHeaders(NextResponse.redirect(url));
 }
 
 export const config = {

@@ -1,11 +1,9 @@
 "use server";
 
-import { sendDemoRequestEmails } from "@/lib/email/resend";
+import { sendDemoRequestEmail } from "@/lib/email/resend";
 import {
   adminNotificationSubject,
   buildAdminNotificationHtml,
-  buildCustomerConfirmationHtml,
-  customerConfirmationSubject,
 } from "@/lib/email/templates";
 import {
   contactFormSchema,
@@ -15,8 +13,6 @@ import {
 export type ContactFormState = {
   success: boolean;
   message: string;
-  /** Sanitized provider/server error for Network + browser console debugging. */
-  errorDetail?: string;
   errors?: Partial<Record<keyof ContactFormData, string>>;
 };
 
@@ -60,21 +56,17 @@ export async function submitContactForm(
     requestType: data.requestType,
   };
 
-  const result = await sendDemoRequestEmails({
+  const result = await sendDemoRequestEmail({
     customerEmail: data.email,
     adminSubject: adminNotificationSubject(data.requestType, data.company),
     adminHtml: buildAdminNotificationHtml(fields),
-    customerSubject: customerConfirmationSubject(data.requestType),
-    customerHtml: buildCustomerConfirmationHtml(fields),
   });
 
   if (!result.ok) {
-    // errorDetail is safe for logs/devtools (no API keys); keep the user message generic.
-    console.error("[contact] Failed to send emails:", result.errorDetail);
+    console.error("[contact] Failed to send admin notification:", result.errorDetail);
     return {
       success: false,
       message: "errorMessage",
-      errorDetail: result.errorDetail,
     };
   }
 

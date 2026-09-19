@@ -3,6 +3,7 @@ import path from "node:path";
 import { NextRequest } from "next/server";
 import { privateHeaders, proxyWebRequest, webError } from "@/lib/workspace/gateway";
 import { workspaceRelease } from "@/lib/workspace/release";
+import { workspaceSecurityHeaders } from "@/lib/security-headers";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,7 +32,6 @@ export async function GET(request: NextRequest) {
     .replace("connect-src 'none'", "connect-src 'self'")
     .replace("</head>", `<style>${polish}</style><meta name="belgobase-release" content="${await workspaceRelease()}"></head>`);
   return new Response(html, { headers: { ...privateHeaders, "Content-Type": "text/html; charset=utf-8",
-    "Content-Security-Policy": "frame-ancestors 'self'; object-src 'none'; base-uri 'none'",
-    "Permissions-Policy": "microphone=(self), camera=(), geolocation=()",
+    ...workspaceSecurityHeaders,
   }});
 }

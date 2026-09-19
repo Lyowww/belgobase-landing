@@ -1,6 +1,10 @@
 import { Resend } from "resend";
 import { contactEmail as defaultRecipientEmail } from "@/lib/site";
 import { emailSchema } from "@/lib/validations/contact";
+import {
+  contactDeliveryKey,
+  isIdempotencyConflict,
+} from "@/lib/email/contact-abuse";
 
 /** Default verified sender identity — not a mailbox. Never use as `to`. */
 export const DEFAULT_FROM_EMAIL = "BelgoBase <noreply@belgobase.be>";
@@ -13,7 +17,7 @@ const NON_RECEIVING_LOCAL_PARTS = new Set([
 ]);
 
 export type SendEmailResult =
-  | { ok: true }
+  | { ok: true; delivered: boolean }
   | { ok: false; errorDetail: string };
 
 /** @deprecated Prefer SendEmailResult */
@@ -24,13 +28,6 @@ export type SendAdminNotificationInput = {
   html: string;
   /** Customer's email — used as Reply-To so admin can reply directly. */
   replyTo: string;
-};
-
-export type SendCustomerConfirmationInput = {
-  /** Customer's submitted email — the To recipient. */
-  to: string;
-  subject: string;
-  html: string;
 };
 
 function extractAddress(value: string): string {
@@ -176,20 +173,29 @@ async function sendViaResend(input: {
   replyTo: string;
   subject: string;
   html: string;
+  idempotencyKey: string;
 }): Promise<SendEmailResult> {
   const clientResult = getResendClient();
   if (!clientResult.ok) return clientResult;
 
   try {
-    const { data, error } = await clientResult.client.emails.send({
-      from: input.from,
-      to: input.to,
-      replyTo: input.replyTo,
-      subject: input.subject,
-      html: input.html,
-    });
+    const { data, error } = await clientResult.client.emails.send(
+      {
+        from: input.from,
+        to: input.to,
+        replyTo: input.replyTo,
+        subject: input.subject,
+        html: input.html,
+      },
+      { idempotencyKey: input.idempotencyKey },
+    );
 
     if (error) {
+      if (isIdempotencyConflict(error)) {
+        const errorDetail = "Contact delivery budget reached for the current window";
+        console.warn("[email]", errorDetail);
+        return { ok: false, errorDetail };
+      }
       const errorDetail = formatEmailError(error);
       console.error("[email] Resend API error:", errorDetail);
       return { ok: false, errorDetail };
@@ -201,8 +207,13 @@ async function sendViaResend(input: {
       return { ok: false, errorDetail };
     }
 
-    return { ok: true };
+    return { ok: true, delivered: true };
   } catch (error) {
+    if (isIdempotencyConflict(error)) {
+      const errorDetail = "Contact delivery budget reached for the current window";
+      console.warn("[email]", errorDetail);
+      return { ok: false, errorDetail };
+    }
     const errorDetail = formatEmailError(error);
     console.error("[email] Resend request failed:", errorDetail);
     return { ok: false, errorDetail };
@@ -244,96 +255,24 @@ export async function sendAdminNotificationEmail(
     replyTo: customer.email,
     subject: input.subject,
     html: input.html,
+    idempotencyKey: contactDeliveryKey(customer.email),
   });
 }
 
 /**
- * Customer confirmation via Resend.
- * From = verified sender · To = customer · Reply-To = company/admin contact.
+ * Send one internal notification. The public form never sends mail to the
+ * caller-controlled address, so it cannot be used as a third-party mail relay.
  */
-export async function sendCustomerConfirmationEmail(
-  input: SendCustomerConfirmationInput,
-): Promise<SendEmailResult> {
-  const customer = validateRecipientEmail(input.to);
-  if (!customer.ok) return customer;
-
-  const admin = resolveAdminEmail();
-  if (!admin.ok) return admin;
-
-  const from = resolveFromEmail();
-  const fromAddress = extractAddress(from);
-
-  if (fromAddress === customer.email) {
-    return {
-      ok: false,
-      errorDetail:
-        "Customer email must differ from the From address (noreply is send-only)",
-    };
-  }
-
-  return sendViaResend({
-    from,
-    to: customer.email,
-    replyTo: admin.email,
-    subject: input.subject,
-    html: input.html,
-  });
-}
-
-/**
- * Send both the admin notification and the customer confirmation.
- * Attempts both even if one fails; returns the first failure detail.
- */
-export async function sendDemoRequestEmails(input: {
+export async function sendDemoRequestEmail(input: {
   customerEmail: string;
   adminSubject: string;
   adminHtml: string;
-  customerSubject: string;
-  customerHtml: string;
 }): Promise<SendEmailResult> {
-  const [adminResult, customerResult] = await Promise.all([
-    sendAdminNotificationEmail({
-      replyTo: input.customerEmail,
-      subject: input.adminSubject,
-      html: input.adminHtml,
-    }),
-    sendCustomerConfirmationEmail({
-      to: input.customerEmail,
-      subject: input.customerSubject,
-      html: input.customerHtml,
-    }),
-  ]);
-
-  if (!adminResult.ok && !customerResult.ok) {
-    return {
-      ok: false,
-      errorDetail: `Admin: ${adminResult.errorDetail}; Customer: ${customerResult.errorDetail}`,
-    };
-  }
-
-  if (!adminResult.ok) {
-    console.error(
-      "[email] Admin notification failed after customer send attempt:",
-      adminResult.errorDetail,
-    );
-    return {
-      ok: false,
-      errorDetail: `Admin notification failed: ${adminResult.errorDetail}`,
-    };
-  }
-
-  if (!customerResult.ok) {
-    console.error(
-      "[email] Customer confirmation failed (admin notification sent):",
-      customerResult.errorDetail,
-    );
-    return {
-      ok: false,
-      errorDetail: `Customer confirmation failed: ${customerResult.errorDetail}`,
-    };
-  }
-
-  return { ok: true };
+  return sendAdminNotificationEmail({
+    replyTo: input.customerEmail,
+    subject: input.adminSubject,
+    html: input.adminHtml,
+  });
 }
 
 /** @deprecated Use sendAdminNotificationEmail */

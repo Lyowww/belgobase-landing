@@ -7,7 +7,10 @@ import { submitContactForm, type ContactFormState } from "@/app/actions/contact"
 import { MagneticButton } from "@/components/ui/MagneticButton";
 import { useTranslations } from "@/providers/TranslationsProvider";
 import { cn } from "@/lib/utils";
-import { emailSchema } from "@/lib/validations/contact";
+import {
+  CONTACT_FIELD_LIMITS,
+  emailSchema,
+} from "@/lib/validations/contact";
 
 const initialState: ContactFormState = {
   success: false,
@@ -62,12 +65,6 @@ export function ProgressiveContactForm({
     });
     return () => window.cancelAnimationFrame(frame);
   }, [state.success]);
-
-  useEffect(() => {
-    if (!state.success && state.errorDetail) {
-      console.error("[contact form]", state.errorDetail);
-    }
-  }, [state.success, state.errorDetail]);
 
   const update = (field: keyof FormValues, value: string | boolean) => {
     setValues((prev) => ({ ...prev, [field]: value }));
@@ -181,6 +178,7 @@ export function ProgressiveContactForm({
             id={`${variant}-name`}
             type="text"
             autoComplete="name"
+            maxLength={CONTACT_FIELD_LIMITS.name}
             value={values.name}
             onChange={(e) => update("name", e.target.value)}
             className={cn(
@@ -199,6 +197,7 @@ export function ProgressiveContactForm({
             id={`${variant}-company`}
             type="text"
             autoComplete="organization"
+            maxLength={CONTACT_FIELD_LIMITS.company}
             value={values.company}
             onChange={(e) => update("company", e.target.value)}
             className={cn(
@@ -217,6 +216,7 @@ export function ProgressiveContactForm({
             id={`${variant}-email`}
             type="email"
             autoComplete="email"
+            maxLength={CONTACT_FIELD_LIMITS.email}
             value={values.email}
             onChange={(e) => update("email", e.target.value)}
             className={cn(
@@ -235,6 +235,7 @@ export function ProgressiveContactForm({
             id={`${variant}-phone`}
             type="tel"
             autoComplete="tel"
+            maxLength={CONTACT_FIELD_LIMITS.phone}
             value={values.phone}
             onChange={(e) => update("phone", e.target.value)}
             className="form-input w-full rounded-xl px-3 py-2.5 text-base sm:px-4 sm:text-sm"
@@ -290,7 +291,7 @@ export function ProgressiveContactForm({
 
       {!state.success && state.message && !state.errors && (
         <p className="mt-3 text-sm text-red-500" role="alert">
-          {state.errorDetail ?? translateError(state.message)}
+          {translateError(state.message)}
         </p>
       )}
 

@@ -313,8 +313,12 @@
   "validation": {
     "emailRequired": "Voer uw e-mailadres in",
     "emailInvalid": "Voer een geldig e-mailadres in",
+    "emailMax": "E-mailadres is te lang",
     "nameMin": "Naam moet minstens 2 tekens bevatten",
+    "nameMax": "Naam is te lang",
     "companyRequired": "Bedrijfsnaam is verplicht",
+    "companyMax": "Bedrijfsnaam is te lang",
+    "phoneMax": "Telefoonnummer is te lang",
     "criteriaRequired": "Beschrijf welke bedrijven u zoekt",
     "packageRequired": "Selecteer het BelgoBase-pakket",
     "timelineRequired": "Selecteer een tijdlijn",

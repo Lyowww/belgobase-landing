@@ -313,8 +313,12 @@
   "validation": {
     "emailRequired": "Please enter your email address",
     "emailInvalid": "Please enter a valid email address",
+    "emailMax": "Email address is too long",
     "nameMin": "Name must be at least 2 characters",
+    "nameMax": "Name is too long",
     "companyRequired": "Company name is required",
+    "companyMax": "Company name is too long",
+    "phoneMax": "Phone number is too long",
     "criteriaRequired": "Please describe which companies you're looking for",
     "packageRequired": "Please select the BelgoBase package",
     "timelineRequired": "Please select a timeline",

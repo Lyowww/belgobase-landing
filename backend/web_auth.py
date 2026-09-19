@@ -44,6 +44,11 @@ class WebAuthConfig:
     # default and may only be enabled when ``source`` is the direct peer address.
     source_rate_count: int | None = None
     global_start_rate_count: int = 300
+    verification_rate_count: int = 30
+    verification_rate_minutes: int = 24 * 60
+    # This limit is intentionally optional. A trusted direct peer can use it,
+    # while a shared BFF address must not be allowed to block other customers.
+    verification_source_rate_count: int | None = None
 
     def __post_init__(self) -> None:
         if len(self.secret) < 32:
@@ -56,6 +61,8 @@ class WebAuthConfig:
             self.start_rate_count,
             self.start_rate_minutes,
             self.global_start_rate_count,
+            self.verification_rate_count,
+            self.verification_rate_minutes,
         )
         if any(type(value) is not int or value <= 0 for value in positive):
             raise ValueError("web authentication limits must be positive integers")
@@ -63,6 +70,11 @@ class WebAuthConfig:
             type(self.source_rate_count) is not int or self.source_rate_count <= 0
         ):
             raise ValueError("source rate limit must be a positive integer or None")
+        if self.verification_source_rate_count is not None and (
+            type(self.verification_source_rate_count) is not int
+            or self.verification_source_rate_count <= 0
+        ):
+            raise ValueError("verification source rate limit must be a positive integer or None")
         if self.challenge_minutes > 10:
             raise ValueError("mail relay accepts challenges for at most 10 minutes")
 
@@ -271,6 +283,41 @@ class WebAuthService:
                 window_minutes=self.config.start_rate_minutes,
             )
         return source_hash
+
+    def _consume_verification_budget(
+        self, connection: sqlite3.Connection, row: sqlite3.Row
+    ) -> None:
+        """Limit OTP verification attempts across challenges without an oracle.
+
+        This must run before comparing the submitted secret: limiting only
+        known-wrong codes lets an attacker continue guesses after the limit
+        until they happen to find the right OTP.  The account bucket is keyed
+        from the server-side licence identifier; the optional source bucket
+        uses the network-derived source hash recorded when the challenge was
+        created.  A cooldown therefore also rejects a correct code with the
+        same generic response.
+        """
+        try:
+            self._rate_event(
+                connection,
+                "verify_account",
+                self._digest("verify-account", str(row["license_id"])),
+                limit=self.config.verification_rate_count,
+                window_minutes=self.config.verification_rate_minutes,
+            )
+            if self.config.verification_source_rate_count is not None:
+                self._rate_event(
+                    connection,
+                    "verify_source",
+                    str(row["source_hash"]),
+                    limit=self.config.verification_source_rate_count,
+                    window_minutes=self.config.verification_rate_minutes,
+                )
+        except AuthError as exc:
+            if exc.code == "rate_limited":
+                # Verification must remain indistinguishable from a wrong OTP.
+                raise AuthError("code_invalid", 401) from exc
+            raise
 
     def _dummy_start(self) -> dict[str, Any]:
         return {
@@ -509,6 +556,7 @@ class WebAuthService:
                 or int(row["failed_attempts"]) >= self.config.max_failed_codes
             ):
                 raise AuthError("code_invalid", 401)
+            self._consume_verification_budget(connection, row)
             supplied = self._digest("otp:" + challenge, otp)
             if not hmac.compare_digest(str(row["otp_hash"]), supplied):
                 connection.execute(

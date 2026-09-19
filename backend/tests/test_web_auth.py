@@ -227,6 +227,89 @@ class WebAuthTests(unittest.TestCase):
                 "wrong@example.test", "BAD", remember_browser=False, source="198.51.100.2"
             )
 
+    def test_verification_budget_blocks_correct_otp_until_window_resets(self) -> None:
+        service = WebAuthService(
+            WebAuthConfig(
+                state_database=self.database,
+                secret=b"s" * 32,
+                start_rate_count=10,
+                verification_rate_count=3,
+            ),
+            self.registry,
+            self.mailer,
+            clock=self.clock,
+        )
+        valid_before_limit = service.start_claim(
+            "owner@example.test", "CODE-1", remember_browser=False, source="198.51.100.2"
+        )
+        grant = service.verify_code(
+            valid_before_limit["challenge_id"], self.mailer.messages[-1]["code"]
+        )
+        self.assertEqual("lic-1", grant.context.license_id)
+        challenges = [
+            service.start_claim(
+                "owner@example.test", "CODE-1", remember_browser=False, source="198.51.100.2"
+            )
+            for _ in range(3)
+        ]
+        for started in challenges[:2]:
+            with self.assertRaisesRegex(AuthError, "code_invalid"):
+                service.verify_code(started["challenge_id"], "000000")
+        # The exhausted account-day budget generically rejects even the actual
+        # OTP.  Otherwise an attacker can keep guessing until the right value.
+        with self.assertRaisesRegex(AuthError, "code_invalid"):
+            service.verify_code(challenges[2]["challenge_id"], self.mailer.messages[-1]["code"])
+        connection = sqlite3.connect(self.database)
+        try:
+            self.assertEqual(
+                3,
+                connection.execute(
+                    "SELECT COUNT(*) FROM web_auth_rate_events WHERE bucket='verify_account'"
+                ).fetchone()[0],
+            )
+        finally:
+            connection.close()
+        self.clock.advance(minutes=24 * 60 + 1)
+        after_reset = service.start_claim(
+            "owner@example.test", "CODE-1", remember_browser=False, source="198.51.100.2"
+        )
+        grant = service.verify_code(after_reset["challenge_id"], self.mailer.messages[-1]["code"])
+        self.assertEqual("lic-1", grant.context.license_id)
+
+    def test_optional_wrong_otp_source_budget_uses_recorded_trusted_source(self) -> None:
+        service = WebAuthService(
+            WebAuthConfig(
+                state_database=self.database,
+                secret=b"s" * 32,
+                start_rate_count=10,
+                verification_rate_count=10,
+                verification_source_rate_count=1,
+            ),
+            self.registry,
+            self.mailer,
+            clock=self.clock,
+        )
+        first = service.start_claim(
+            "owner@example.test", "CODE-1", remember_browser=False, source="198.51.100.8"
+        )
+        with self.assertRaisesRegex(AuthError, "code_invalid"):
+            service.verify_code(first["challenge_id"], "000000")
+        second = service.start_claim(
+            "owner@example.test", "CODE-1", remember_browser=False, source="198.51.100.8"
+        )
+        with self.assertRaisesRegex(AuthError, "code_invalid"):
+            service.verify_code(second["challenge_id"], "000000")
+        connection = sqlite3.connect(self.database)
+        try:
+            self.assertEqual(
+                1,
+                connection.execute(
+                    "SELECT COUNT(*) FROM web_auth_rate_events WHERE bucket='verify_source'"
+                ).fetchone()[0],
+            )
+        finally:
+            connection.close()
+
     def test_unique_active_central_profile_creates_first_web_membership_after_otp(self) -> None:
         # This uses the actual registry query shape: the central profile, the
         # licence record and the web-auth state deliberately share one DB.

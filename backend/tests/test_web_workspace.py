@@ -87,6 +87,24 @@ class WorkspaceServiceTests(unittest.TestCase):
         self.assertTrue(wallet['ok']); self.assertEqual(4,wallet['wallet']['available_eur'])
         self.assertFalse(self.service.execute('set_language',{'language':'de'},self.a)['ok'])
 
+    def test_private_history_wallet_and_download_state_are_isolated_per_account(self):
+        seen=[]
+        self.service.core=CoreCallbacks(
+            bootstrap=lambda p,a:{'version':'test'},
+            export=lambda p,a:{'download_reference':'opaque-'+a.license_id,'rows':1,'total':1,'limited':False},
+            ai_wallet=lambda p,a: seen.append(a.license_id) or {'wallet':{'available_eur': 7 if a.license_id=='lic-a' else 3}},
+        )
+        self.assertTrue(self.service.execute(
+            'search_history', {'action':'record','query':'privé zoekopdracht','filters':{},'total':1}, self.a
+        )['ok'])
+        self.assertEqual([], self.service.execute('search_history',{'action':'list'},self.b)['history'])
+        self.assertEqual(7, self.service.execute('ai_wallet',{},self.a)['wallet']['available_eur'])
+        self.assertEqual(3, self.service.execute('ai_wallet',{},self.b)['wallet']['available_eur'])
+        export=self.service.execute('export_results',{'filters':{}},self.a)
+        self.assertTrue(export['ok'])
+        self.assertEqual({}, self.service.storage.load(self.b)['downloads'])
+        self.assertEqual(['lic-a','lic-b'], seen)
+
     def test_missing_core_fails_closed(self):
         r=self.service.execute('company',{'number':'BE1'},self.a)
         self.assertFalse(r['ok']); self.assertIn('Core integration ontbreekt',r['error'])
