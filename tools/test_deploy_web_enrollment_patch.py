@@ -96,8 +96,8 @@ class RemotePatchHarness:
                 raise RuntimeError("simulated start failure without listener")
 
         def request(_port, method, path):
-            if method == "GET" and path == "/health":
-                return 200, {"ok": True}
+            if method == "GET" and path == "/account/me":
+                return 401, {"error": "device_auth_invalid"}
             if method == "GET" and path == "/web/auth/session":
                 return 401, {"error": "session_invalid"}
             raise AssertionError(f"unexpected request {method} {path}")

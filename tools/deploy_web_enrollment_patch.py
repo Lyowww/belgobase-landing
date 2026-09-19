@@ -72,8 +72,8 @@ else:
             need(sha(item['target']) == hashlib.sha256(item['raw']).hexdigest(), 'installed_hash_invalid:' + name)
         start_task(service, ACCOUNT_TASK, ACCOUNT_WRAPPER, ACCOUNT_PORT, ACCOUNT_ROOT / 'run_account_service_production.py')
         stopped = False
-        status, health = request(ACCOUNT_PORT, 'GET', '/health')
-        need(status == 200 and health.get('ok') is True, 'health_failed')
+        status, health = request(ACCOUNT_PORT, 'GET', '/account/me')
+        need(status == 401 and health.get('error') == 'device_auth_invalid', 'health_failed')
         result = {'status':'DEPLOYED','changed':True,'hashes':{name:sha(item['target']) for name,item in items.items()},'backup':str(folder),'health':True}
         (folder/'result.json').write_text(json.dumps(result),encoding='utf-8')
         print(json.dumps(result))
@@ -87,8 +87,8 @@ else:
         if (changed or stopped) and task(service, ACCOUNT_TASK, ACCOUNT_WRAPPER).State == 3:
             start_task(service, ACCOUNT_TASK, ACCOUNT_WRAPPER, ACCOUNT_PORT, ACCOUNT_ROOT / 'run_account_service_production.py')
         if changed or stopped:
-            status, health = request(ACCOUNT_PORT, 'GET', '/health')
-            need(status == 200 and health.get('ok') is True, 'rollback_health_failed')
+            status, health = request(ACCOUNT_PORT, 'GET', '/account/me')
+            need(status == 401 and health.get('error') == 'device_auth_invalid', 'rollback_health_failed')
         raise
     finally:
         if acquired: win32event.ReleaseMutex(mutex)
