@@ -38,7 +38,7 @@ from tools.generate_account_enrollment_candidate import generate  # noqa: E402
 from backend.workspace_integration import workspace_auth_context
 
 
-def legal_bundle() -> dict:
+def legal_bundle(*, include_legacy_authority: bool = False) -> dict:
     documents = []
     for key, role, title in (
         ("terms", "contractual_terms", "Algemene voorwaarden"),
@@ -59,12 +59,16 @@ def legal_bundle() -> dict:
             }
         )
     choices = {}
-    for key, kind, text in (
+    choice_rows = [
         ("general_terms", "acceptance", "Ik aanvaard de voorwaarden voor [WETTELIJKE KLANTNAAM]."),
         ("usage_terms", "acceptance", "Ik aanvaard het gebruik voor [WETTELIJKE KLANTNAAM]."),
         ("privacy_notice", "acknowledgement", "Ik las de privacyverklaring voor [WETTELIJKE KLANTNAAM]."),
-        ("business_authority", "declaration", "Ik mag [WETTELIJKE KLANTNAAM] vertegenwoordigen."),
-    ):
+    ]
+    if include_legacy_authority:
+        choice_rows.append(
+            ("business_authority", "declaration", "Ik mag [WETTELIJKE KLANTNAAM] vertegenwoordigen.")
+        )
+    for key, kind, text in choice_rows:
         choices[key] = {
             "kind": kind,
             "text_template": text,
@@ -147,6 +151,20 @@ class AccountCandidateIntegrationTests(unittest.TestCase):
             self.legal,
             database_path=self.database,
         )
+        self.assertEqual(
+            {"general_terms", "usage_terms", "privacy_notice"},
+            set(preflight["legal"]["choice_texts"]),
+        )
+        authority = preflight["legal"]["authority_declaration"]
+        self.assertEqual("web-business-authority-1", authority["version"])
+        self.assertEqual(
+            "Ik verklaar dat ik bevoegd ben om Example BV te vertegenwoordigen.",
+            authority["text"],
+        )
+        self.assertEqual(
+            hashlib.sha256(authority["text"].encode("utf-8")).hexdigest(),
+            authority["sha256"],
+        )
         request = {
             "company_type": "business",
             "enterprise_number": "0123456789",
@@ -202,6 +220,12 @@ class AccountCandidateIntegrationTests(unittest.TestCase):
         self.assertTrue(receipt["signature_b64"])
         self.assertNotIn("device", receipt["canonical_receipt_json"])
         self.assertNotIn("installer", receipt["canonical_receipt_json"])
+        signed_receipt = json.loads(receipt["canonical_receipt_json"])
+        self.assertEqual(authority, signed_receipt["authority_declaration"])
+        self.assertEqual(
+            {"general_terms", "usage_terms", "privacy_notice"},
+            set(signed_receipt["choice_confirmations"]),
+        )
         auth_context = {
             "principal_type": "web",
             "license_id": self.license["license_id"],
@@ -353,6 +377,199 @@ class AccountCandidateIntegrationTests(unittest.TestCase):
                 self.trusted_public_key,
                 database_path=self.database,
             )
+
+    def test_two_licenses_can_complete_for_same_enterprise_with_own_device_limits(self) -> None:
+        second_license, second_code = create_license(
+            "customer-2",
+            "Example BV",
+            "contract-2",
+            "full",
+            rights={"data_access": "all_current", "exports": True, "xbrl": True},
+            max_devices=1,
+            issued_credential="BB2-" + "B" * 43,
+            database_path=self.database,
+            pepper_path=self.pepper,
+            actor="candidate-test",
+            reason="Synthetic second web enrollment integration test",
+        )
+
+        def complete(license_code: str, email: str) -> dict:
+            prepared = prepare_web_enrollment(
+                license_code,
+                email,
+                database_path=self.database,
+                pepper_path=self.pepper,
+            )
+            preflight = web_enrollment_preflight(
+                prepared["claim_id"],
+                prepared["email"],
+                {
+                    "company_type": "business",
+                    "enterprise_number": "BE 1006.303.437",
+                    "legal_name": "NovaVenture Group",
+                    "address": {"municipality": "Brussel"},
+                },
+                self.legal,
+                database_path=self.database,
+            )
+            return complete_web_enrollment(
+                prepared["claim_id"],
+                prepared["email"],
+                {
+                    "company_type": "business",
+                    "enterprise_number": "1006303437",
+                    "legal_name": "NovaVenture Group",
+                    "acceptant": {"name": "Ada Example", "function": "Bestuurder"},
+                    "declarations": {
+                        "terms_accepted": True,
+                        "usage_terms_accepted": True,
+                        "privacy_acknowledged": True,
+                        "authority_declared": True,
+                    },
+                    "choice_texts": preflight["legal"]["choice_texts"],
+                    "preflight_id": preflight["preflight_id"],
+                    "preflight_fingerprint": preflight["preflight_fingerprint"],
+                },
+                self.legal,
+                self.private_key,
+                database_path=self.database,
+            )
+
+        first = complete(self.code, "first@example.test")
+        second = complete(second_code, "second@example.test")
+        self.assertEqual(self.license["license_id"], first["license_id"])
+        self.assertEqual(second_license["license_id"], second["license_id"])
+
+        connection = sqlite3.connect(self.database)
+        connection.row_factory = sqlite3.Row
+        try:
+            rows = connection.execute(
+                """SELECT p.license_id,p.enterprise_number,l.max_devices
+                   FROM license_customer_profiles AS p
+                   JOIN licenses AS l ON l.license_id=p.license_id
+                   WHERE p.enterprise_number=?
+                   ORDER BY l.max_devices DESC""",
+                ("1006303437",),
+            ).fetchall()
+            receipt_count = connection.execute(
+                "SELECT COUNT(*) FROM web_legal_acceptance_receipts WHERE enterprise_number=?",
+                ("1006303437",),
+            ).fetchone()[0]
+        finally:
+            connection.close()
+        self.assertEqual(2, receipt_count)
+        self.assertEqual(
+            [
+                (self.license["license_id"], "1006303437", 3),
+                (second_license["license_id"], "1006303437", 1),
+            ],
+            [(row["license_id"], row["enterprise_number"], row["max_devices"]) for row in rows],
+        )
+
+    def test_missing_required_legal_choice_is_rejected(self) -> None:
+        prepared = prepare_web_enrollment(
+            self.code,
+            "new@example.test",
+            database_path=self.database,
+            pepper_path=self.pepper,
+        )
+        incomplete = legal_bundle()
+        del incomplete["choices"]["privacy_notice"]
+        with self.assertRaisesRegex(AcceptanceValidationError, "unsupported_web_legal_set"):
+            web_enrollment_preflight(
+                prepared["claim_id"],
+                prepared["email"],
+                {
+                    "company_type": "business",
+                    "enterprise_number": "1006303437",
+                    "legal_name": "NovaVenture Group",
+                    "address": {},
+                },
+                incomplete,
+                database_path=self.database,
+            )
+
+    def test_false_authority_declaration_is_rejected_without_binding(self) -> None:
+        prepared = prepare_web_enrollment(
+            self.code,
+            "new@example.test",
+            database_path=self.database,
+            pepper_path=self.pepper,
+        )
+        preflight = web_enrollment_preflight(
+            prepared["claim_id"],
+            prepared["email"],
+            {
+                "company_type": "business",
+                "enterprise_number": "1006303437",
+                "legal_name": "NovaVenture Group",
+                "address": {},
+            },
+            self.legal,
+            database_path=self.database,
+        )
+        with self.assertRaisesRegex(AcceptanceValidationError, "legal_acceptance_invalid"):
+            complete_web_enrollment(
+                prepared["claim_id"],
+                prepared["email"],
+                {
+                    "company_type": "business",
+                    "enterprise_number": "1006303437",
+                    "legal_name": "NovaVenture Group",
+                    "acceptant": {"name": "Ada Example", "function": "Bestuurder"},
+                    "declarations": {
+                        "terms_accepted": True,
+                        "usage_terms_accepted": True,
+                        "privacy_acknowledged": True,
+                        "authority_declared": False,
+                    },
+                    "choice_texts": preflight["legal"]["choice_texts"],
+                    "preflight_id": preflight["preflight_id"],
+                    "preflight_fingerprint": preflight["preflight_fingerprint"],
+                },
+                self.legal,
+                self.private_key,
+                database_path=self.database,
+            )
+        connection = sqlite3.connect(self.database)
+        try:
+            profile_count = connection.execute(
+                "SELECT COUNT(*) FROM license_customer_profiles WHERE license_id=?",
+                (self.license["license_id"],),
+            ).fetchone()[0]
+            receipt_count = connection.execute(
+                "SELECT COUNT(*) FROM web_legal_acceptance_receipts WHERE license_id=?",
+                (self.license["license_id"],),
+            ).fetchone()[0]
+        finally:
+            connection.close()
+        self.assertEqual(0, profile_count)
+        self.assertEqual(0, receipt_count)
+
+    def test_legacy_four_choice_bundle_remains_supported(self) -> None:
+        prepared = prepare_web_enrollment(
+            self.code,
+            "new@example.test",
+            database_path=self.database,
+            pepper_path=self.pepper,
+        )
+        preflight = web_enrollment_preflight(
+            prepared["claim_id"],
+            prepared["email"],
+            {
+                "company_type": "business",
+                "enterprise_number": "1006303437",
+                "legal_name": "NovaVenture Group",
+                "address": {},
+            },
+            legal_bundle(include_legacy_authority=True),
+            database_path=self.database,
+        )
+        self.assertIn("business_authority", preflight["legal"]["choice_texts"])
+        self.assertEqual(
+            "web-business-authority-1",
+            preflight["legal"]["authority_declaration"]["version"],
+        )
 
     def test_web_bundle_uses_existing_pinned_text_legal_set(self) -> None:
         with mock.patch(

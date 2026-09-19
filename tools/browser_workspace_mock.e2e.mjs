@@ -86,11 +86,11 @@ function enrollmentAutofill() {
         { document_id: "use-v1", title: "Gebruiksvoorwaarden", role: "acceptable_use_terms", version: "1.1", view_url: "/api/web/enrollment/legal/mock-preflight-id/use-v1", sha256: "b".repeat(64) },
         { document_id: "privacy-v1", title: "Privacyverklaring", role: "privacy_notice", version: "1.1", view_url: "/api/web/enrollment/legal/mock-preflight-id/privacy-v1", sha256: "c".repeat(64) },
       ],
+      authority_declaration: { text: "Ik ben bevoegd deze onderneming te vertegenwoordigen." },
       choice_texts: {
         general_terms: "Ik aanvaard de algemene voorwaarden B2B.",
         usage_terms: "Ik aanvaard de gebruiksvoorwaarden.",
         privacy_notice: "Ik heb de privacyverklaring gelezen.",
-        business_authority: "Ik ben bevoegd deze onderneming te vertegenwoordigen.",
       },
     },
     preflight_id: "mock-preflight-id",
@@ -318,6 +318,7 @@ try {
   await page.getByLabel("Beveiligingscode").fill("123456");
   await page.getByRole("button", { name: "E-mailadres bevestigen" }).click();
   await page.getByRole("heading", { name: "Bevestig je bedrijfsgegevens" }).waitFor();
+  assert.match(await page.locator("#enterprise-help").innerText(), /met of zonder BE/);
   await page.getByLabel("Ondernemingsnummer (KBO)").fill("BE 0123.456.789");
   await page.getByRole("button", { name: "Bedrijfsgegevens ophalen" }).click();
   await page.getByLabel("Wettelijke bedrijfsnaam").waitFor();

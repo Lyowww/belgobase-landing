@@ -263,15 +263,18 @@ def _web_snapshot(
 ) -> dict[str, Any]:
     if legal_bundle.get("legal_set_id") != FIRST_USE_LEGAL_SET_ID:
         raise WebEnrollmentUnavailable("unsupported_web_legal_set")
-    if set((legal_bundle.get("choices") or {})) != {
-        "general_terms",
-        "usage_terms",
-        "privacy_notice",
-        "business_authority",
-    }:
+    choice_ids = set(legal_bundle.get("choices") or {})
+    required_choices = {"general_terms", "usage_terms", "privacy_notice"}
+    if choice_ids not in (required_choices, required_choices | {"business_authority"}):
         raise WebEnrollmentUnavailable("unsupported_web_legal_set")
     legal_name = _normal_text(company.get("legal_name"), "wettelijke klantnaam", 300)
     enterprise = normalize_enterprise_number(company.get("enterprise_number"))
+    authority_text = f"Ik verklaar dat ik bevoegd ben om {legal_name} te vertegenwoordigen."
+    authority = {
+        "version": "web-business-authority-1",
+        "text": authority_text,
+        "sha256": hashlib.sha256(authority_text.encode("utf-8")).hexdigest(),
+    }
     documents = []
     for item in legal_bundle.get("document_items") or []:
         document_id = _normal_text(item.get("document_id"), "document-ID", 150)
@@ -312,6 +315,7 @@ def _web_snapshot(
             "manifest_sha256": legal_bundle["manifest_sha256"],
             "documents": documents,
             "choice_texts": _render_choice_texts(legal_bundle, legal_name),
+            "authority_declaration": authority,
         },
     }
 
@@ -523,6 +527,7 @@ def complete_web_enrollment(
                 "function": acceptant_function,
             },
             "declarations": dict(declarations),
+            "authority_declaration": snapshot["legal"].get("authority_declaration"),
             "choice_confirmations": choice_confirmations,
             "documents": snapshot["legal"]["documents"],
         }
