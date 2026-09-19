@@ -1,7 +1,7 @@
 {
   "provenance": {
     "baseline": "BUILD102_UPDATE50_LEGAL_1_2",
-    "sha256": "cf3141fdfcc5d36855ad4b5827c7fe03f925cfe42dd8184553a5243154a9a1fa"
+    "sha256": "717f1bbc4606dbe10b01ab509f38a45006cedef5d07ae312f89ccdc1dc64858f"
   },
   "filter_labels": {
     "naam": "Bedrijfsnaam bevat",
@@ -2844,6 +2844,7 @@
     "compare_companies",
     "export_columns",
     "filters_apply",
+    "open_public_legal",
     "operation_status",
     "relaxation_suggestions",
     "search",
