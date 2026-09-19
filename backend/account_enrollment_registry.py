@@ -47,6 +47,10 @@ from belgobase_license_registry_42a import (
 WEB_RECEIPT_SCHEMA = "belgobase-web-legal-acceptance-receipt-v1"
 CLAIM_TTL_SECONDS = 70 * 60
 PREFLIGHT_TTL_SECONDS = 15 * 60
+WEB_CURRENT_LEGAL_SET_ID = "belgobase-commercial-legal-v1.2-20260919"
+WEB_CURRENT_MANIFEST_FILE = "05_BELGOBASE_COMMERCIELE_EERSTE_GEBRUIK_MANIFEST_V1.2.json"
+WEB_CURRENT_MANIFEST_SCHEMA = "belgobase-legal-text-first-use-manifest-v1"
+WEB_CURRENT_MANIFEST_SHA256 = "4609918a391402fa2dfc5299bf28847896c1f5ad7a81675e52f0eb6de7eed75d"
 
 
 class WebEnrollmentUnavailable(AcceptanceValidationError):
@@ -112,8 +116,159 @@ BEGIN SELECT RAISE(ABORT, 'web legal receipts are append-only'); END;
 """
 
 
+def _load_current_web_legal_bundle(legal_dir: Path) -> dict[str, Any]:
+    root = Path(legal_dir)
+    manifest_path = root / WEB_CURRENT_MANIFEST_FILE
+    manifest_bytes = manifest_path.read_bytes()
+    manifest_sha256 = hashlib.sha256(manifest_bytes).hexdigest()
+    if manifest_sha256 != WEB_CURRENT_MANIFEST_SHA256:
+        raise AcceptanceValidationError("Webmanifest is niet de officieel gepinde productieset.")
+    manifest = json.loads(manifest_bytes.decode("utf-8-sig"))
+    if (
+        manifest.get("schema") != WEB_CURRENT_MANIFEST_SCHEMA
+        or manifest.get("contractset_id") != WEB_CURRENT_LEGAL_SET_ID
+        or manifest.get("manifest_version") != "1.2-first-use"
+        or manifest.get("base_contractset_id") != "belgobase-b2b-commercial-1.2"
+        or manifest.get("language") != "nl-BE"
+        or manifest.get("document_date") != "2026-09-19"
+    ):
+        raise AcceptanceValidationError("Webmanifest bevat ongeldige setmetadata.")
+    flow = manifest.get("acceptance_flow")
+    required_flow_flags = {
+        "all_choices_default_unchecked",
+        "all_choices_required_before_first_use",
+        "central_positive_record_required_before_first_use",
+        "fail_closed_when_recording_fails",
+    }
+    if (
+        not isinstance(flow, dict)
+        or flow.get("version") != "3.0-three-text-pages-first-use"
+        or any(flow.get(flag) is not True for flag in required_flow_flags)
+    ):
+        raise AcceptanceValidationError("Webmanifest bevat een ongeldige acceptatieflow.")
+
+    role_keys = {
+        "contractual_terms": "terms",
+        "acceptable_use_terms": "usage_terms",
+        "privacy_notice": "privacy",
+    }
+    expected_documents = {
+        "terms": ("BB-AV-B2B-NL-1.2", "01_BELGOBASE_ALGEMENE_VOORWAARDEN_B2B_V1.2.txt"),
+        "usage_terms": ("BB-GV-B2B-NL-1.2", "02_BELGOBASE_GEBRUIKSVOORWAARDEN_V1.2.txt"),
+        "privacy": ("BB-PRIVACY-NL-1.2", "03_BELGOBASE_PRIVACYVERKLARING_V1.2.txt"),
+    }
+    documents: dict[str, dict[str, Any]] = {}
+    document_items: list[dict[str, Any]] = []
+    for entry in manifest.get("documents") or []:
+        if not isinstance(entry, dict) or entry.get("role") not in role_keys:
+            raise AcceptanceValidationError("Webmanifest bevat een ongeldig document.")
+        key = role_keys[str(entry["role"])]
+        if key in documents or not isinstance(entry.get("canonical_text"), dict):
+            raise AcceptanceValidationError("Webmanifest bevat dubbele of onvolledige documenten.")
+        canonical = entry["canonical_text"]
+        file_name = _normal_text(canonical.get("file"), f"tekstbestand voor {key}", 200)
+        document_id = _normal_text(entry.get("document_id"), "document-ID", 150)
+        if (
+            Path(file_name).name != file_name
+            or (document_id, file_name) != expected_documents[key]
+            or entry.get("version") != "1.2"
+        ):
+            raise AcceptanceValidationError("Webmanifest bevat ongeldige documentmetadata.")
+        raw = (root / file_name).read_bytes()
+        expected_size = canonical.get("bytes")
+        expected_hash = _normalize_hash(canonical.get("sha256"), f"teksthash voor {key}")
+        if type(expected_size) is not int or len(raw) != expected_size or hashlib.sha256(raw).hexdigest() != expected_hash:
+            raise AcceptanceValidationError(f"Webdocument {key} wijkt af.")
+        item = {
+            "key": key,
+            "document_id": document_id,
+            "title": _normal_text(entry.get("title"), "documenttitel", 200),
+            "role": str(entry["role"]),
+            "version": _normal_text(entry.get("version"), "documentversie", 50),
+            "text_file": file_name,
+            "text_sha256": expected_hash,
+        }
+        documents[key] = item
+        document_items.append(item)
+    if set(documents) != {"terms", "usage_terms", "privacy"}:
+        raise AcceptanceValidationError("Webmanifest mist een verplicht document.")
+
+    choices: dict[str, dict[str, str]] = {}
+    document_ids = {item["document_id"] for item in document_items}
+    expected_choices = {
+        "general_terms": ("active_acceptance", "BB-AV-B2B-NL-1.2", "Algemene voorwaarden gelezen en goedgekeurd."),
+        "usage_terms": ("active_acceptance", "BB-GV-B2B-NL-1.2", "Gebruiksvoorwaarden gelezen en goedgekeurd."),
+        "privacy_notice": ("acknowledgement_not_consent", "BB-PRIVACY-NL-1.2", "Privacyverklaring ontvangen en gelezen."),
+    }
+    for choice in flow.get("choices") or []:
+        if not isinstance(choice, dict) or choice.get("document_id") not in document_ids:
+            raise AcceptanceValidationError("Webmanifest bevat een ongeldige acceptatiekeuze.")
+        choice_id = _normal_text(choice.get("id"), "keuze-ID", 100)
+        template = _normal_text(choice.get("text_template"), "keuzetekst", 1000)
+        template_hash = _normalize_hash(choice.get("text_template_sha256"), "keuzeteksthash")
+        if (
+            choice_id in choices
+            or choice_id not in expected_choices
+            or (choice.get("kind"), choice.get("document_id"), template) != expected_choices[choice_id]
+            or hashlib.sha256(template.encode("utf-8")).hexdigest() != template_hash
+        ):
+            raise AcceptanceValidationError("Webmanifest bevat een afwijkende acceptatiekeuze.")
+        choices[choice_id] = {
+            "kind": _normal_text(choice.get("kind"), "keuzetype", 100),
+            "text_template": template,
+            "text_template_sha256": template_hash,
+        }
+    if set(choices) != {"general_terms", "usage_terms", "privacy_notice"}:
+        raise AcceptanceValidationError("Webmanifest mist een verplichte acceptatiekeuze.")
+    return {
+        "manifest_schema": WEB_CURRENT_MANIFEST_SCHEMA,
+        "manifest_file": WEB_CURRENT_MANIFEST_FILE,
+        "manifest_sha256": manifest_sha256,
+        "legal_set_id": WEB_CURRENT_LEGAL_SET_ID,
+        "language": "nl-BE",
+        "effective_date": _normal_text(manifest.get("document_date"), "documentdatum", 30),
+        "acceptance_flow_version": str(flow["version"]),
+        "terms_version": documents["terms"]["version"],
+        "usage_terms_version": documents["usage_terms"]["version"],
+        "privacy_version": documents["privacy"]["version"],
+        "terms_text_sha256": documents["terms"]["text_sha256"],
+        "usage_terms_text_sha256": documents["usage_terms"]["text_sha256"],
+        "privacy_text_sha256": documents["privacy"]["text_sha256"],
+        "documents": documents,
+        "document_items": document_items,
+        "choices": choices,
+    }
+
+
+def _bundle_key(legal_set_id: Any, manifest_sha256: Any) -> str:
+    return f"{str(legal_set_id or '')}:{str(manifest_sha256 or '').lower()}"
+
+
+def _compatible_web_bundle(
+    legal_bundle: dict[str, Any], legal_set_id: Any, manifest_sha256: Any
+) -> dict[str, Any]:
+    key = _bundle_key(legal_set_id, manifest_sha256)
+    if key == _bundle_key(legal_bundle.get("legal_set_id"), legal_bundle.get("manifest_sha256")):
+        return legal_bundle
+    compatible = legal_bundle.get("_compatible_web_bundles")
+    result = compatible.get(key) if isinstance(compatible, dict) else None
+    if not isinstance(result, dict):
+        raise WebEnrollmentUnavailable("unsupported_web_legal_set")
+    return result
+
+
 def load_web_legal_bundle(legal_dir: Path) -> dict[str, Any]:
-    return load_legal_bundle(Path(legal_dir), legal_set_id=FIRST_USE_LEGAL_SET_ID)
+    root = Path(legal_dir)
+    previous = load_legal_bundle(root, legal_set_id=FIRST_USE_LEGAL_SET_ID)
+    if not (root / WEB_CURRENT_MANIFEST_FILE).is_file():
+        return previous
+    current = _load_current_web_legal_bundle(root)
+    result = dict(current)
+    result["_compatible_web_bundles"] = {
+        _bundle_key(previous["legal_set_id"], previous["manifest_sha256"]): previous,
+        _bundle_key(current["legal_set_id"], current["manifest_sha256"]): current,
+    }
+    return result
 
 
 def trusted_public_key_from_signing_key(path: Path) -> str:
@@ -261,7 +416,10 @@ def _web_snapshot(
     legal_bundle: dict[str, Any],
     preflight_id: str,
 ) -> dict[str, Any]:
-    if legal_bundle.get("legal_set_id") != FIRST_USE_LEGAL_SET_ID:
+    if legal_bundle.get("legal_set_id") not in {
+        WEB_CURRENT_LEGAL_SET_ID,
+        FIRST_USE_LEGAL_SET_ID,
+    }:
         raise WebEnrollmentUnavailable("unsupported_web_legal_set")
     choice_ids = set(legal_bundle.get("choices") or {})
     required_choices = {"general_terms", "usage_terms", "privacy_notice"}
@@ -479,12 +637,15 @@ def complete_web_enrollment(
             raise AcceptanceValidationError("legal_acceptance_invalid")
         snapshot = json.loads(preflight["snapshot_json"])
         customer = snapshot["customer"]
+        snapshot_bundle = _compatible_web_bundle(
+            legal_bundle,
+            snapshot.get("legal", {}).get("legal_set_id"),
+            snapshot.get("legal", {}).get("manifest_sha256"),
+        )
         if (
             customer["enterprise_number"] != enterprise
             or customer["legal_name"] != legal_name
             or customer["support_email"] != normalized_email
-            or snapshot["legal"]["legal_set_id"] != FIRST_USE_LEGAL_SET_ID
-            or snapshot["legal"]["manifest_sha256"] != legal_bundle.get("manifest_sha256")
             or choices != snapshot["legal"]["choice_texts"]
         ):
             raise AcceptanceValidationError("legal_acceptance_invalid")
@@ -497,9 +658,9 @@ def complete_web_enrollment(
         acceptance_id = str(uuid.uuid4())
         choice_confirmations = {
             choice_id: {
-                "kind": legal_bundle["choices"][choice_id]["kind"],
+                "kind": snapshot_bundle["choices"][choice_id]["kind"],
                 "text": text,
-                "text_template_sha256": legal_bundle["choices"][choice_id][
+                "text_template_sha256": snapshot_bundle["choices"][choice_id][
                     "text_template_sha256"
                 ],
                 "rendered_text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
@@ -641,6 +802,11 @@ def web_enrollment_document(
     if row is None or row["expires_at_utc"] <= now_text:
         raise WebEnrollmentUnavailable("enrollment_expired")
     snapshot = json.loads(row["snapshot_json"])
+    snapshot_bundle = _compatible_web_bundle(
+        legal_bundle,
+        snapshot.get("legal", {}).get("legal_set_id"),
+        snapshot.get("legal", {}).get("manifest_sha256"),
+    )
     allowed = {
         item["document_id"]: item
         for item in snapshot.get("legal", {}).get("documents", [])
@@ -650,7 +816,7 @@ def web_enrollment_document(
     source = next(
         (
             item
-            for item in legal_bundle.get("document_items") or []
+            for item in snapshot_bundle.get("document_items") or []
             if item.get("document_id") == document_id
         ),
         None,
@@ -733,6 +899,16 @@ def project_web_account(
     if receipt_row is None:
         raise AcceptanceValidationError("account_not_ready")
     receipt = json.loads(receipt_row["canonical_receipt_json"])
+    try:
+        receipt_bundle = _compatible_web_bundle(
+            legal_bundle,
+            receipt.get("legal_set_id"),
+            receipt.get("manifest_sha256"),
+        )
+    except WebEnrollmentUnavailable:
+        if receipt.get("channel") == "web":
+            raise
+        receipt_bundle = None
     envelope = {
         "receipt": receipt,
         "signature": {
@@ -768,13 +944,11 @@ def project_web_account(
     documents = (
         [
             {"key": item["document_id"], "label": item["title"]}
-            for item in legal_bundle.get("document_items") or []
+            for item in receipt_bundle.get("document_items") or []
             if isinstance(item, dict)
             and isinstance(item.get("document_id"), str)
             and isinstance(item.get("title"), str)
-        ]
-        if receipt.get("manifest_sha256") == legal_bundle.get("manifest_sha256")
-        else []
+        ] if isinstance(receipt_bundle, dict) else []
     )
     if action == "refresh":
         return {
@@ -820,7 +994,14 @@ def project_web_account(
             ),
         }
     key = str(payload.get("key") or "")
-    item = next((item for item in legal_bundle.get("document_items") or [] if item.get("document_id") == key), None)
+    item = next(
+        (
+            item
+            for item in receipt_bundle.get("document_items") or []
+            if item.get("document_id") == key
+        ),
+        None,
+    ) if isinstance(receipt_bundle, dict) else None
     if item is None or key not in {entry["key"] for entry in documents}:
         raise AcceptanceValidationError("document_not_found")
     path = Path(legal_dir) / str(item["text_file"])
