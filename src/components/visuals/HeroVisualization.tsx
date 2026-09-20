@@ -28,7 +28,7 @@ export function HeroVisualization() {
         };
 
   return (
-    <figure className="w-full min-w-0">
+    <figure id="product-demonstration" className="w-full min-w-0 scroll-mt-24">
       <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#07152f] shadow-[0_28px_80px_-32px_rgba(5,18,45,0.7)] sm:rounded-3xl">
         <div className="flex items-center justify-between gap-4 border-b border-white/10 bg-[#0a1b3a] px-4 py-3 sm:px-5">
           <div className="flex items-center gap-1.5" aria-hidden="true">

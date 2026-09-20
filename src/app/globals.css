@@ -249,6 +249,13 @@ section[id] {
   border-bottom: 1px solid var(--border);
 }
 
+.glass-nav.site-menu-open {
+  background: var(--surface);
+  opacity: 1;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
 .glass-control {
   background: color-mix(in srgb, var(--surface-elevated) 80%, transparent);
   backdrop-filter: blur(12px);

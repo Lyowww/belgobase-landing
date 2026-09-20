@@ -52,7 +52,7 @@ export function Hero() {
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </a>
               <a
-                href="#lead-preview"
+                href="#product-demonstration"
                 className="inline-flex min-h-12 items-center justify-center rounded-full border border-border bg-surface px-7 py-3.5 text-sm font-semibold text-deep-navy transition-colors hover:border-primary/40 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:text-base"
               >
                 {t("hero.secondaryCta")}

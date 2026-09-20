@@ -23,6 +23,20 @@ export function Header({ variant = "default" }: HeaderProps) {
   const isComingSoon = variant === "comingSoon";
 
   useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileOpen(false);
+    };
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    const closeOnDesktop = () => { if (desktop.matches) setMobileOpen(false); };
+    document.addEventListener("keydown", closeOnEscape);
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => {
+      document.removeEventListener("keydown", closeOnEscape);
+      desktop.removeEventListener("change", closeOnDesktop);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!mobileOpen) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -41,10 +55,11 @@ export function Header({ variant = "default" }: HeaderProps) {
   return (
     <header
       className={cn(
-        "glass-nav relative fixed top-0 right-0 left-0 z-50 pt-safe transition-[opacity,box-shadow] duration-500",
-        scrolled
+        "glass-nav fixed top-0 right-0 left-0 z-[60] pt-safe transition-shadow duration-300",
+        mobileOpen && "site-menu-open",
+        scrolled || mobileOpen
           ? "opacity-100 shadow-lg shadow-black/5 dark:shadow-black/20"
-          : "opacity-[0.88]",
+          : "opacity-100",
       )}
     >
       <nav
@@ -69,6 +84,7 @@ export function Header({ variant = "default" }: HeaderProps) {
         <Link
           href={`/${locale}`}
           onClick={(e) => {
+            setMobileOpen(false);
             if (window.location.pathname.replace(/\/$/, "") === `/${locale}`) {
               e.preventDefault();
               window.scrollTo({ top: 0, behavior: "smooth" });
@@ -139,14 +155,14 @@ export function Header({ variant = "default" }: HeaderProps) {
         inert={!mobileOpen}
         aria-hidden={!mobileOpen}
         className={cn(
-          "overflow-hidden border-t border-border bg-surface/98 mobile-backdrop-none backdrop-blur-xl transition-[max-height,opacity] duration-300 lg:hidden",
+          "overflow-hidden border-t border-border bg-surface lg:hidden",
           isComingSoon && "hidden",
           mobileOpen
-            ? "max-h-[28rem] opacity-100"
+            ? "h-[calc(100dvh-3.5rem-env(safe-area-inset-top,0px))] sm:h-[calc(100dvh-4rem-env(safe-area-inset-top,0px))] opacity-100"
             : "max-h-0 border-transparent opacity-0",
         )}
       >
-        <nav id="site-navigation-mobile" className="flex max-h-[min(28rem,calc(100dvh-4rem))] flex-col gap-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
+        <nav id="site-navigation-mobile" aria-label={t("nav.mainNavigation")} className="flex h-full flex-col gap-1 overflow-y-auto overscroll-contain px-4 py-4 pb-8 sm:px-6">
           {navLinks.map((link) => (
             <a
               key={link.href}
@@ -158,20 +174,16 @@ export function Header({ variant = "default" }: HeaderProps) {
             </a>
           ))}
           <div className="mt-3 space-y-3">
-            <Link href={`/${locale}/app`} onClick={() => setMobileOpen(false)} className="flex items-center justify-center rounded-full border border-primary px-4 py-3 text-sm font-semibold text-primary">
-              {t("nav.openApp")}
+            <Link href={`/${locale}/app`} onClick={() => setMobileOpen(false)} className="flex items-center justify-center rounded-full bg-primary px-4 py-3 text-sm font-semibold text-white">
+              {t("nav.signIn")}
             </Link>
             <a
-              href={contactPhoneHref}
+              href="#contact"
               onClick={() => setMobileOpen(false)}
-              className="flex items-center justify-center gap-2 rounded-full border border-border bg-surface-elevated px-4 py-3 text-sm font-medium text-deep-navy transition-colors hover:bg-surface-hover"
+              className="flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-deep-navy transition-colors hover:bg-surface-hover"
             >
-              <Phone className="h-4 w-4 text-primary" />
-              {t("nav.questions")}
+              {t("footer.contact")}
             </a>
-            <MagneticButton href="#contact" onClick={() => setMobileOpen(false)} className="w-full">
-              {t("nav.getFreeLeads")}
-            </MagneticButton>
           </div>
         </nav>
       </div>
