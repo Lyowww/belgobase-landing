@@ -26,6 +26,7 @@ from backend.registry import LicenseRecord
 from backend.web_auth import AuthError, WebAuthConfig, WebAuthService
 import belgobase_device_protocol_43a as protocol
 import belgobase_license_registry_42a as licenses
+import belgobase_session_policy_1a as session_policy
 
 
 def load_candidate(name: str):
@@ -177,6 +178,41 @@ class SessionTakeoverTest(unittest.TestCase):
                 finally:
                     connection.close()
                 self.assertEqual(1, count)
+
+    def test_pending_policy_marker_rolls_back_web_takeover_without_revoking_windows_token(self) -> None:
+        devices = load_candidate("server_devices.py")
+        record, code, web_record = self.create_license("P")
+        identity = Identity("P")
+        first = devices.activate_device(self.activation(code, identity, "first"), self.database,
+                                        self.pepper, now=self.now, token_ttl_seconds=3600)
+        old_token = first["access_token"]
+        web, mailbox = self.web_service(web_record)
+        challenge = web.start_login(web_record.support_email, remember_browser=False, source="test")
+
+        original_file = session_policy.__file__
+        simulated_policy = self.root / "belgobase_session_policy_1a.py"
+        pending = simulated_policy.with_suffix(".pending")
+        simulated_policy.write_text("# test-only policy location\n", encoding="utf-8")
+        pending.write_text("pending", encoding="ascii")
+        session_policy.__file__ = str(simulated_policy)
+        try:
+            with self.assertRaisesRegex(RuntimeError, "temporarily unavailable"):
+                web.verify_code(challenge["challenge_id"], mailbox.code, browser_label="Blocked browser")
+        finally:
+            session_policy.__file__ = original_file
+            pending.unlink(missing_ok=True)
+
+        # The transaction must roll back the inserted browser/session as well as the takeover updates.
+        devices.validate_access_token(old_token, self.database, self.pepper, now=self.now)
+        connection = licenses.connect_database(self.database)
+        try:
+            self.assertEqual(0, connection.execute("SELECT COUNT(*) FROM web_sessions").fetchone()[0])
+            token = connection.execute(
+                "SELECT revoked_at FROM device_access_tokens WHERE token_hash IS NOT NULL"
+            ).fetchone()
+            self.assertIsNone(token["revoked_at"])
+        finally:
+            connection.close()
 
 
 if __name__ == "__main__":
