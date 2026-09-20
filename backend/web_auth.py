@@ -14,7 +14,7 @@ from typing import Any, Callable
 
 from .mailer import LoginCodeMailer, MailDeliveryError
 from .registry import LicenseRecord, LicenseRegistry
-from .seat_policy import count_web_allocated
+from belgobase_session_policy_1a import permitted, takeover
 
 
 EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
@@ -511,13 +511,7 @@ class WebAuthService:
         expires_at: dt.datetime,
         label: str,
     ) -> str:
-        windows = self.registry.count_windows_allocated(
-            license_record.license_id, connection=connection
-        )
-        web = count_web_allocated(
-            connection, license_record.license_id, self._iso(self._now())
-        )
-        if windows + web >= license_record.max_devices:
+        if license_record.max_devices < 1:
             raise AuthError("browser_limit_reached", 409)
         browser_id = str(uuid.uuid4())
         now_text = self._iso(self._now())
@@ -527,6 +521,7 @@ class WebAuthService:
                ) VALUES(?,?,?,'active',?,?,?)""",
             (browser_id, membership_id, label[:100], now_text, now_text, self._iso(expires_at)),
         )
+        takeover(connection, license_record.license_id, 'web:' + browser_id, now_text)
         return browser_id
 
     def verify_code(
@@ -973,6 +968,8 @@ class WebAuthService:
                 or self._parse(row["session_expires"]) <= now
                 or self._parse(row["browser_expires"]) <= now
             ):
+                raise AuthError("session_invalid", 401)
+            if not permitted(connection, str(row["license_id"]), 'web:' + str(row["browser_id"])):
                 raise AuthError("session_invalid", 401)
             record = self.registry.get_license(str(row["license_id"]), now)
             if not record.is_active(now):

@@ -5,6 +5,7 @@ import json
 import sqlite3
 import tempfile
 import unittest
+from contextlib import closing
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
@@ -440,7 +441,9 @@ class WebAuthTests(unittest.TestCase):
         )
         self.assertEqual(first.context.user_id, second.context.user_id)
         self.assertNotEqual(first.context.browser_id, second.context.browser_id)
-        self.assertEqual(2, len(self.service.list_browsers(first.token)))
+        with self.assertRaisesRegex(AuthError, "session_invalid"):
+            self.service.validate_session(first.token)
+        self.assertEqual(1, len(self.service.list_browsers(second.token)))
         self.service.logout_all(second.token)
         for token in (first.token, second.token):
             with self.assertRaisesRegex(AuthError, "session_invalid"):
@@ -468,7 +471,7 @@ class WebAuthTests(unittest.TestCase):
         with self.assertRaisesRegex(AuthError, "code_invalid"):
             self.service.verify_code(claim["challenge_id"], "000000")
 
-    def test_windows_and_browser_share_max_devices(self) -> None:
+    def test_verified_login_replaces_windows_session_without_extra_seat(self) -> None:
         limited = replace(self.registry.by_id["lic-1"], max_devices=1)
         self.registry.by_id["lic-1"] = limited
         self.registry.by_code["CODE-1"] = limited
@@ -477,8 +480,31 @@ class WebAuthTests(unittest.TestCase):
         connection.commit()
         connection.close()
         result, otp = self.claim()
-        with self.assertRaisesRegex(AuthError, "browser_limit_reached"):
-            self.service.verify_code(result["challenge_id"], otp)
+        grant = self.service.verify_code(result["challenge_id"], otp)
+        self.assertEqual("lic-1", self.service.validate_session(grant.token).license_id)
+        from belgobase_session_policy_1a import permitted
+        with closing(sqlite3.connect(self.database)) as connection:
+            self.assertFalse(permitted(connection, "lic-1", "device:pc-1"))
+
+    def test_request_and_wrong_code_leave_old_session_active(self) -> None:
+        first = self.grant()
+        login = self.service.start_login("owner@example.test", remember_browser=True, source="test")
+        self.service.validate_session(first.token)
+        otp = str(self.mailer.messages[-1]["code"])
+        wrong = "000000" if otp != "000000" else "111111"
+        with self.assertRaisesRegex(AuthError, "code_invalid"):
+            self.service.verify_code(login["challenge_id"], wrong)
+        self.service.validate_session(first.token)
+
+    def test_failed_new_session_creation_rolls_back_takeover(self) -> None:
+        first = self.grant()
+        login = self.service.start_login("owner@example.test", remember_browser=True, source="test")
+        with closing(sqlite3.connect(self.database)) as connection:
+            connection.execute("CREATE TRIGGER fail_new_session BEFORE INSERT ON web_sessions BEGIN SELECT RAISE(ABORT, 'test failure'); END")
+            connection.commit()
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.service.verify_code(login["challenge_id"], str(self.mailer.messages[-1]["code"]))
+        self.service.validate_session(first.token)
 
     def test_http_cookie_csrf_and_server_context(self) -> None:
         captured: list[dict[str, Any]] = []
