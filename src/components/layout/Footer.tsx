@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Image from "next/image";
-import { contactEmail, contactPhone, contactPhoneHref } from "@/lib/site";
+import { salesContactEmail, contactPhone, contactPhoneHref } from "@/lib/site";
 import { useTranslations } from "@/providers/TranslationsProvider";
 
 function FooterColumn({
@@ -100,10 +100,10 @@ export function Footer({ reserveStickyCta = false }: { reserveStickyCta?: boolea
                     {contactPhone}
                   </a>
                   <a
-                    href={`mailto:${contactEmail}`}
+                    href={`mailto:${salesContactEmail}`}
                     className="text-sm text-muted transition-colors hover:text-deep-navy"
                   >
-                    {contactEmail}
+                    {salesContactEmail}
                   </a>
                 </div>
               </li>

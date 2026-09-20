@@ -1,7 +1,7 @@
 "use client";
 
 import { m } from "framer-motion";
-import { Rocket, Briefcase, Building, X } from "lucide-react";
+import { Rocket, Briefcase, Building, Info } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { SectionReveal } from "@/components/ui/SectionReveal";
 import { useTranslations } from "@/providers/TranslationsProvider";
@@ -79,10 +79,10 @@ export function Industries() {
         </div>
 
         <SectionReveal>
-          <div className="premium-card rounded-2xl border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-orange-500/5 p-5 sm:p-8 md:p-10">
+          <div className="premium-card rounded-2xl border-border bg-light-bg p-5 sm:p-8 md:p-10">
             <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/10">
-                <X className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                <Info className="h-5 w-5 text-primary" />
               </div>
               <h3 className="text-lg font-semibold text-deep-navy">
                 {t("industries.notFitTitle")}
@@ -94,7 +94,7 @@ export function Industries() {
                   key={item}
                   className="flex items-start gap-3 text-sm text-muted"
                 >
-                  <X className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   {item}
                 </li>
               ))}

@@ -1,7 +1,7 @@
 "use client";
 
 import { m } from "framer-motion";
-import { Building2, BarChart3, Mail, Sparkles } from "lucide-react";
+import { Building2, BarChart3, FileSpreadsheet, Sparkles } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { SectionReveal } from "@/components/ui/SectionReveal";
 import { StaggerItem, StaggerReveal } from "@/components/ui/StaggerReveal";
@@ -24,7 +24,7 @@ export function LeadPreview() {
       description: t("leadPreview.sectorDataDesc"),
     },
     {
-      icon: Mail,
+      icon: FileSpreadsheet,
       title: t("leadPreview.contactDetailsTitle"),
       description: t("leadPreview.contactDetailsDesc"),
     },
@@ -38,22 +38,16 @@ export function LeadPreview() {
   return (
     <section
       id="lead-preview"
-      className="section-alt noise-overlay relative overflow-hidden py-16 sm:py-24 md:py-32"
+      className="section-alt relative overflow-hidden py-16 sm:py-24 md:py-28"
     >
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute top-[8%] left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-primary/6 blur-3xl" />
-        <div className="absolute top-[35%] -left-16 h-56 w-56 rounded-full bg-accent/6 blur-3xl" />
-        <div className="absolute right-0 bottom-[20%] h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
-      </div>
-
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow={t("leadPreview.eyebrow")}
           title={t("leadPreview.title")}
           description={t("leadPreview.description")}
         />
 
-        <SectionReveal className="mx-auto mb-10 max-w-5xl sm:mb-14">
+        <SectionReveal className="mx-auto mb-10 max-w-6xl sm:mb-14">
           <LeadExplorerVisualization />
         </SectionReveal>
 
@@ -63,15 +57,15 @@ export function LeadPreview() {
               {t("leadPreview.includedTitle")}
             </h3>
           </div>
-          <StaggerReveal className="mx-auto grid max-w-4xl grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+          <StaggerReveal className="mx-auto grid max-w-6xl grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
             {included.map((item) => (
               <StaggerItem key={item.title}>
                 <m.div
                   whileHover={hoverLiftSubtle}
-                  className="premium-card flex h-full flex-col items-center rounded-xl p-4 text-center sm:p-5"
+                  className="flex h-full flex-col items-start rounded-xl border border-border bg-surface p-5 text-left shadow-[0_12px_32px_-28px_rgba(15,35,70,0.55)]"
                 >
                   <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/12 to-accent/8 ring-1 ring-primary/10">
-                    <item.icon className="h-4 w-4 text-primary" />
+                    <item.icon className="h-4 w-4 text-primary" aria-hidden="true" />
                   </div>
                   <h4 className="mb-1 text-sm font-semibold text-deep-navy">{item.title}</h4>
                   <p className="text-xs leading-relaxed text-muted">{item.description}</p>

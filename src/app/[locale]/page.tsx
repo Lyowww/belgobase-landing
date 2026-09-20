@@ -52,7 +52,7 @@ export default function Home() {
   }
 
   return (
-    <>
+    <div className="marketing-site">
       <ScrollRestoration />
       <ScrollProgress />
       <Header />
@@ -63,14 +63,14 @@ export default function Home() {
         <div className="section-lazy section-lazy--social">
           <SocialProof />
         </div>
+        <div className="section-lazy section-lazy--default">
+          <LeadPreview />
+        </div>
         <div className="section-lazy section-lazy--process">
           <Process />
         </div>
         <div className="section-lazy section-lazy--default">
           <Industries />
-        </div>
-        <div className="section-lazy section-lazy--default">
-          <LeadPreview />
         </div>
         <div className="section-lazy section-lazy--default">
           <Results />
@@ -86,6 +86,6 @@ export default function Home() {
         </div>
       </main>
       <Footer reserveStickyCta />
-    </>
+    </div>
   );
 }

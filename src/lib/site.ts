@@ -17,3 +17,6 @@ export const comingSoonEnabled = false;
 export const contactPhone = "+32 488 13 96 64";
 export const contactPhoneHref = "tel:+32488139664";
 export const contactEmail = "legal@belgobase.be";
+
+/** Commercial enquiries; legal notices retain the dedicated legal address. */
+export const salesContactEmail = "david@belgobase.be";

@@ -37,7 +37,6 @@ export function getLocalizedRouteSuffixes(): string[] {
 
 export type SitemapEntry = {
   url: string;
-  lastModified: Date;
   changeFrequency: "weekly";
   priority: number;
   alternates: {
@@ -62,7 +61,6 @@ export function buildSitemapEntries(): SitemapEntry[] {
 
       entries.push({
         url,
-        lastModified: new Date(),
         changeFrequency: "weekly",
         priority: suffix === "" ? 1 : 0.8,
         alternates: { languages },

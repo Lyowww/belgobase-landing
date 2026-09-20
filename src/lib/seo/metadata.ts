@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import type { Metadata } from "next";
 import { isLocale, type Locale } from "@/i18n/config";
 import { siteUrl } from "@/lib/site";
+import { getDictionary } from "@/i18n/dictionaries";
 
 /** Set by proxy on every document request for runtime pathname resolution. */
 export const PATHNAME_HEADER = "x-pathname";
@@ -45,7 +46,9 @@ export function buildLanguageAlternates(pathWithoutLocale = ""): Record<string, 
   return {
     en: `${siteUrl}/en${suffix}`,
     nl: `${siteUrl}/nl${suffix}`,
-    "x-default": pathWithoutLocale ? `${siteUrl}${suffix}` : siteUrl,
+    // The root redirect varies with a visitor's language preferences. Use the
+    // configured default locale as the deterministic fallback for search engines.
+    "x-default": `${siteUrl}/en${suffix}`,
   };
 }
 
@@ -71,6 +74,15 @@ export function createLocalizedPageMetadata(pathWithoutLocale = "") {
     if (!isLocale(locale)) return {};
 
     const pathname = buildLocalizedPath(locale, pathWithoutLocale);
+    const dictionary = pathWithoutLocale ? null : await getDictionary(locale);
+    const productImage = {
+      url: `${siteUrl}/product/belgobase-financial.webp`,
+      width: 1600,
+      height: 1000,
+      alt: locale === "nl"
+        ? "BelgoBase: financiële bedrijfsanalyse met fictieve voorbeeldgegevens"
+        : "BelgoBase financial analysis with fictional example data",
+    };
 
     return {
       alternates: {
@@ -79,7 +91,21 @@ export function createLocalizedPageMetadata(pathWithoutLocale = "") {
       },
       openGraph: {
         url: buildCanonicalUrl(pathname),
+        ...(dictionary ? {
+          title: dictionary.metadata.title,
+          description: dictionary.metadata.description,
+          type: "website" as const,
+          locale: locale === "nl" ? "nl_BE" : "en_BE",
+          siteName: "BelgoBase",
+          images: [productImage],
+        } : {}),
       },
+      ...(dictionary ? { twitter: {
+        card: "summary_large_image" as const,
+        title: dictionary.metadata.title,
+        description: dictionary.metadata.description,
+        images: [productImage.url],
+      } } : {}),
     };
   };
 }

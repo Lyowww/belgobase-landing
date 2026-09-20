@@ -10,6 +10,12 @@ type JsonLdProps = {
 
 export async function JsonLd({ locale, title, description }: JsonLdProps) {
   const pathname = await getRequestPathname(buildLocalizedPath(locale));
+
+  // The layout renders this component for every localized route. Page-specific
+  // structured data belongs on the route it describes, so keep this homepage
+  // graph off legal pages and the private workspace.
+  if (pathname !== buildLocalizedPath(locale)) return null;
+
   const url = buildCanonicalUrl(pathname);
 
   const schema = {
@@ -47,10 +53,12 @@ export async function JsonLd({ locale, title, description }: JsonLdProps) {
     ],
   };
 
+  const serializedSchema = JSON.stringify(schema).replace(/</g, "\\u003c");
+
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializedSchema }}
     />
   );
 }

@@ -617,3 +617,8 @@ section[id] {
     contain-intrinsic-size: auto;
   }
 }
+
+/* Public marketing palette: match the current product without changing its UI. */
+.marketing-site { --primary-blue: #2859df; --dark-blue: #1946ba; --accent-blue: #5784ef; --deep-navy: #15233a; --muted: #536278; --light-bg: #f5f6f9; }
+.dark .marketing-site { --primary-blue: #4a8bf5; --dark-blue: #3478e3; --accent-blue: #8cb4ff; --deep-navy: #f1f5f9; --muted: #a7b6cc; --light-bg: #0c1222; }
+.marketing-site .noise-overlay::before { display: none; }

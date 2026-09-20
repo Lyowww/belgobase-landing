@@ -1,175 +1,80 @@
 "use client";
 
-import { m } from "framer-motion";
-import { ArrowRight, UserCheck, RefreshCw, MapPin } from "lucide-react";
-import dynamic from "next/dynamic";
-import { AmbientGlow, AnimatedGrid } from "@/components/visuals/AmbientBackground";
-import { MagneticButton } from "@/components/ui/MagneticButton";
+import { ArrowRight, Database, FileSpreadsheet, MapPin } from "lucide-react";
+import { HeroVisualization } from "@/components/visuals/HeroVisualization";
 import { useTranslations } from "@/providers/TranslationsProvider";
-import { useMousePosition } from "@/hooks/useMousePosition";
-
-const HeroVisualization = dynamic(
-  () =>
-    import("@/components/visuals/HeroVisualization").then((m) => ({
-      default: m.HeroVisualization,
-    })),
-  {
-    loading: () => (
-      <div
-        className="min-h-[320px] w-full animate-pulse rounded-2xl bg-border/30 sm:min-h-[420px] md:min-h-[480px] lg:min-h-[580px]"
-        aria-hidden="true"
-      />
-    ),
-  },
-);
-
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.12, delayChildren: 0.1 },
-  },
-};
-
-const item = {
-  hidden: { opacity: 0, y: 24 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const },
-  },
-};
 
 export function Hero() {
   const { t } = useTranslations();
-  const { x, y, enabled } = useMousePosition();
 
   const trustIndicators = [
-    {
-      icon: UserCheck,
-      label: t("hero.trustNoSignup"),
-      sub: t("hero.trustNoSignupSub"),
-    },
-    {
-      icon: RefreshCw,
-      label: t("hero.trustUpdated"),
-      sub: t("hero.trustUpdatedSub"),
-    },
-    {
-      icon: MapPin,
-      label: t("hero.trustBelgium"),
-      sub: t("hero.trustBelgiumSub"),
-    },
+    { icon: Database, label: t("hero.trustNoSignup"), sub: t("hero.trustNoSignupSub") },
+    { icon: FileSpreadsheet, label: t("hero.trustUpdated"), sub: t("hero.trustUpdatedSub") },
+    { icon: MapPin, label: t("hero.trustBelgium"), sub: t("hero.trustBelgiumSub") },
   ];
 
   return (
-    <section className="noise-overlay mesh-hero relative overflow-hidden pt-[calc(5.5rem+env(safe-area-inset-top,0px))] pb-12 sm:pt-28 sm:pb-20 md:pt-36 md:pb-28">
-      <AnimatedGrid />
-      <AmbientGlow className="left-[5%] top-[12%] h-[min(280px,70vw)] w-[min(280px,70vw)] sm:left-[10%] sm:h-[min(400px,55vw)] sm:w-[min(400px,55vw)]" color="accent" />
-      <AmbientGlow
-        className="right-[2%] top-[5%] hidden h-[min(240px,60vw)] w-[min(240px,60vw)] sm:right-[5%] sm:block sm:h-[min(350px,50vw)] sm:w-[min(350px,50vw)]"
-        color="primary"
+    <section className="relative overflow-hidden bg-[#f7f8f4] pb-16 pt-[calc(6.5rem+env(safe-area-inset-top,0px))] dark:bg-[#071124] sm:pb-24 sm:pt-32 lg:pb-28 lg:pt-32">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[linear-gradient(180deg,rgba(37,99,235,0.08),transparent)] dark:bg-[linear-gradient(180deg,rgba(50,107,255,0.10),transparent)]"
       />
 
-      {enabled && (
-        <m.div
-          className="pointer-events-none absolute h-[300px] w-[300px] rounded-full bg-accent/8 blur-[80px] will-change-transform sm:h-[500px] sm:w-[500px] sm:blur-[100px]"
-          animate={{ x: x * 0.02 - 150, y: y * 0.02 - 150 }}
-          transition={{ type: "spring", stiffness: 50, damping: 30 }}
-        />
-      )}
+      <div className="relative mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-8">
+        <div className="grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-12 xl:gap-12">
+          <div className="max-w-2xl">
+            <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/[0.07] px-3.5 py-2 text-xs font-semibold text-primary sm:text-sm">
+              <span className="h-2 w-2 rounded-full bg-primary" aria-hidden="true" />
+              {t("hero.badge")}
+            </span>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid min-w-0 items-stretch gap-8 sm:gap-12 lg:grid-cols-2 lg:gap-16">
-          <m.div
-            variants={container}
-            initial="hidden"
-            animate="show"
-            className="min-w-0"
-          >
-            <m.div variants={item}>
-              <span className="glass inline-flex max-w-full items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium text-primary shadow-sm sm:px-4 sm:text-sm">
-                <span className="relative flex h-2 w-2 shrink-0">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-40" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-                </span>
-                <span className="truncate">{t("hero.badge")}</span>
-              </span>
-            </m.div>
-
-            <m.h1
-              variants={item}
-              className="mt-5 text-[1.625rem] font-semibold leading-[1.12] tracking-tight text-balance text-deep-navy sm:mt-8 sm:text-4xl sm:leading-[1.08] md:text-5xl lg:text-6xl"
-            >
+            <h1 className="mt-6 text-[2.35rem] font-semibold leading-[1.02] tracking-[-0.04em] text-deep-navy text-balance sm:text-5xl lg:text-[3.1rem] xl:text-[3.65rem]">
               {t("hero.titleLine1")}
               {t("hero.titleHighlight") ? (
                 <>
                   {" "}
-                  <span className="text-gradient-accent">{t("hero.titleHighlight")}</span>
+                  <span className="text-primary">{t("hero.titleHighlight")}</span>
                 </>
               ) : null}
-              {t("hero.titleLine2") ? (
-                <>
-                  <br className="hidden sm:block" />
-                  <span className="sm:hidden"> </span>
-                  {t("hero.titleLine2")}
-                </>
-              ) : null}
-            </m.h1>
+              {t("hero.titleLine2") ? <span className="block">{t("hero.titleLine2")}</span> : null}
+            </h1>
 
-            <m.p
-              variants={item}
-              className="mt-4 max-w-xl text-base leading-relaxed text-muted sm:mt-6 sm:text-lg md:text-xl"
-            >
+            <p className="mt-6 max-w-xl text-base leading-7 text-muted sm:text-lg sm:leading-8">
               {t("hero.description")}
-            </m.p>
+            </p>
 
-            <m.div variants={item} className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:items-center">
-              <MagneticButton
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <a
                 href="#contact"
-                className="w-full !min-w-0 !px-6 !py-3.5 !text-sm sm:w-auto sm:!min-w-[15rem] sm:!px-10 sm:!text-base"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-primary px-7 py-3.5 text-sm font-semibold text-white shadow-[0_14px_30px_-14px_rgba(10,102,194,0.85)] transition-colors hover:bg-primary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:text-base"
               >
                 {t("hero.primaryCta")}
-                <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
-              </MagneticButton>
-              <MagneticButton
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </a>
+              <a
                 href="#lead-preview"
-                variant="secondary"
-                className="w-full !min-w-0 !px-6 !py-3.5 !text-sm sm:w-auto sm:!min-w-[15rem] sm:!px-10 sm:!text-base"
+                className="inline-flex min-h-12 items-center justify-center rounded-full border border-border bg-surface px-7 py-3.5 text-sm font-semibold text-deep-navy transition-colors hover:border-primary/40 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:text-base"
               >
                 {t("hero.secondaryCta")}
-              </MagneticButton>
-            </m.div>
+              </a>
+            </div>
+          </div>
 
-            <m.div
-              variants={item}
-              className="mt-8 grid gap-3 sm:mt-12 sm:grid-cols-3 sm:gap-4"
-            >
-              {trustIndicators.map((indicator) => (
-                <div
-                  key={indicator.label}
-                  className="glass premium-card flex items-start gap-3 p-3 sm:p-4"
-                >
-                  <indicator.icon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-deep-navy">
-                      {indicator.label}
-                    </p>
-                    <p className="text-xs leading-relaxed text-muted">{indicator.sub}</p>
-                  </div>
-                </div>
-              ))}
-            </m.div>
-          </m.div>
-
-          <m.div
-            initial={{ opacity: 0, scale: 0.96, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.9, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="flex min-w-0"
-          >
+          <div className="min-w-0">
             <HeroVisualization />
-          </m.div>
+          </div>
+        </div>
+
+        <div className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-3 lg:mt-14">
+          {trustIndicators.map((indicator) => (
+            <div key={indicator.label} className="flex items-start gap-3 bg-surface px-5 py-4 sm:px-6 sm:py-5">
+              <indicator.icon className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-deep-navy">{indicator.label}</p>
+                <p className="mt-1 text-xs leading-5 text-muted">{indicator.sub}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>

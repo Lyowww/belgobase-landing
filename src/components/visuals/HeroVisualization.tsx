@@ -1,335 +1,96 @@
 "use client";
 
-import { m } from "framer-motion";
-import { Building2, FileSpreadsheet, Landmark, MapPin, Radar, Zap } from "lucide-react";
-import { useActiveInView } from "@/hooks/useActiveInView";
-import { usePerformanceMode } from "@/hooks/usePerformanceMode";
+import Image from "next/image";
+import { useState } from "react";
 import { useTranslations } from "@/providers/TranslationsProvider";
 
-const cities = [
-  { name: "Antwerp", x: 58, y: 16 },
-  { name: "Bruges", x: 20, y: 22 },
-  { name: "Ghent", x: 32, y: 34 },
-  { name: "Brussels", x: 48, y: 44, hub: true },
-  { name: "Liège", x: 78, y: 36 },
-  { name: "Charleroi", x: 50, y: 64 },
-];
-
-const connections: [number, number][] = [
-  [0, 3],
-  [1, 2],
-  [2, 3],
-  [3, 4],
-  [3, 5],
-  [0, 2],
-  [4, 5],
-];
-
 export function HeroVisualization() {
-  const { t } = useTranslations();
-  const { ref, active } = useActiveInView();
-  const { reduceMotionEffects, reduceVisualEffects } = usePerformanceMode();
-  const leadCards = [
-    {
-      delay: 0.6,
-      position: "top-[8%] right-[4%] sm:right-[6%]",
-      name: t("hero.vizCard1Name"),
-      sector: t("hero.vizCard1Sector"),
-      location: t("hero.vizCard1Location"),
-    },
-    {
-      delay: 1,
-      position: "top-[38%] left-[2%] sm:left-[4%]",
-      hideOnMobile: true,
-      name: t("hero.vizCard2Name"),
-      sector: t("hero.vizCard2Sector"),
-      location: t("hero.vizCard2Location"),
-    },
-    {
-      delay: 1.4,
-      position: "bottom-[22%] right-[8%] sm:right-[10%]",
-      name: t("hero.vizCard3Name"),
-      sector: t("hero.vizCard3Sector"),
-      location: t("hero.vizCard3Location"),
-    },
-  ];
-
-  const stats = [
-    { label: t("hero.vizCompanies"), value: "KBO", icon: Building2 },
-    { label: t("hero.vizMatchRate"), value: "NBB", icon: Landmark },
-    { label: t("hero.vizContacts"), value: "Excel", icon: FileSpreadsheet },
-  ];
+  const [demoOpen, setDemoOpen] = useState(false);
+  const { locale } = useTranslations();
+  const copy =
+    locale === "nl"
+      ? {
+          caption: "Echte BelgoBase-interface met duidelijk fictieve voorbeeldgegevens.",
+          demo: "Bekijk de korte productdemo",
+          closeDemo: "Sluit de productdemo",
+          transcript:
+            "Demo: zoeken naar een onderneming, het bedrijfsprofiel openen, grafieken bekijken en de financiële tabel raadplegen.",
+          fallback: "Download de productdemo",
+        }
+      : {
+          caption:
+            "Genuine BelgoBase interface with clearly fictional example data; interface shown in Dutch.",
+          demo: "Watch the short product demo",
+          closeDemo: "Close the product demo",
+          transcript:
+            "Demo: search for a company, open its profile, review charts and inspect the financial table.",
+          fallback: "Download the product demo",
+        };
 
   return (
-    <div
-      ref={ref}
-      className="viz-container relative flex h-full min-h-[320px] w-full min-w-0 sm:min-h-[420px] md:min-h-[480px] lg:min-h-[580px]"
-    >
-      <div className="gradient-border relative flex h-full w-full flex-col overflow-hidden rounded-2xl sm:rounded-3xl">
-        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl sm:rounded-3xl">
-          <div
-            className={`absolute -right-16 -top-16 h-56 w-56 rounded-full bg-accent/15 ${
-              reduceVisualEffects ? "mobile-blur-soft opacity-60" : "blur-3xl"
-            }`}
-          />
-          <div
-            className={`absolute -bottom-12 -left-12 h-48 w-48 rounded-full bg-primary/15 ${
-              reduceVisualEffects ? "mobile-blur-soft opacity-60" : "blur-3xl"
-            }`}
-          />
-          {!reduceVisualEffects && (
-            <div className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-3xl" />
-          )}
+    <figure className="w-full min-w-0">
+      <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#07152f] shadow-[0_28px_80px_-32px_rgba(5,18,45,0.7)] sm:rounded-3xl">
+        <div className="flex items-center justify-between gap-4 border-b border-white/10 bg-[#0a1b3a] px-4 py-3 sm:px-5">
+          <div className="flex items-center gap-1.5" aria-hidden="true">
+            <span className="h-2.5 w-2.5 rounded-full bg-white/25" />
+            <span className="h-2.5 w-2.5 rounded-full bg-white/25" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#3978ff]" />
+          </div>
+          <span className="truncate text-[11px] font-medium tracking-wide text-white/70 sm:text-xs">
+            BelgoBase
+          </span>
         </div>
 
-        <div className="relative flex min-h-0 flex-1 flex-col p-4 sm:p-5 lg:p-6">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="relative flex h-2 w-2 shrink-0">
-                {!reduceMotionEffects && (
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-50" />
-                )}
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-              </span>
-              <span className="truncate text-xs font-medium text-muted sm:text-sm">
-                {t("hero.vizLive")}
-              </span>
-            </div>
-            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-semibold text-primary sm:px-3 sm:text-xs">
-              <Radar className="h-3 w-3" />
-              {t("hero.vizEngine")}
-            </span>
-          </div>
-
-          <div className="relative min-h-0 flex-1 overflow-hidden rounded-xl border border-border/50 bg-light-bg/60 sm:rounded-2xl">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,color-mix(in_srgb,var(--primary-blue)_8%,transparent),transparent_65%)]" />
-
-            <svg
-              className="absolute inset-0 h-full w-full"
-              viewBox="0 0 100 100"
-              preserveAspectRatio="xMidYMid meet"
+        {demoOpen ? (
+          <div id="hero-product-demo" className="bg-black p-1.5 sm:p-2">
+            <video
+              controls
+              playsInline
+              preload="none"
+              poster="/product/belgobase-workspace.webp"
+              width={1600}
+              height={1000}
+              className="aspect-[8/5] h-auto w-full rounded-lg bg-black"
+              aria-describedby="hero-demo-transcript"
             >
-              <defs>
-                <linearGradient id="heroLineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="var(--accent-blue)" stopOpacity="0.6" />
-                  <stop offset="100%" stopColor="var(--primary-blue)" stopOpacity="0.9" />
-                </linearGradient>
-                <radialGradient id="heroHubGrad">
-                  <stop offset="0%" stopColor="var(--accent-blue)" stopOpacity="0.9" />
-                  <stop offset="100%" stopColor="var(--primary-blue)" stopOpacity="0.4" />
-                </radialGradient>
-              </defs>
-
-              <m.ellipse
-                cx="48"
-                cy="44"
-                rx="28"
-                ry="22"
-                fill="none"
-                stroke="url(#heroLineGrad)"
-                strokeWidth="0.3"
-                strokeDasharray="2 2"
-                initial={{ opacity: 0, rotate: 0 }}
-                animate={
-                  active
-                    ? { opacity: 0.35, rotate: 360 }
-                    : { opacity: 0.35, rotate: 0 }
-                }
-                transition={{
-                  opacity: { duration: 1 },
-                  rotate: active
-                    ? { duration: 40, repeat: Infinity, ease: "linear" }
-                    : { duration: 0 },
-                }}
-              />
-
-              {connections.map(([from, to], i) => {
-                const a = cities[from];
-                const b = cities[to];
-                return (
-                  <m.line
-                    key={`${from}-${to}`}
-                    x1={a.x}
-                    y1={a.y}
-                    x2={b.x}
-                    y2={b.y}
-                    stroke="url(#heroLineGrad)"
-                    strokeWidth="0.35"
-                    initial={{ pathLength: 0, opacity: 0 }}
-                    animate={{ pathLength: 1, opacity: 0.45 }}
-                    transition={{ duration: 1.2, delay: 0.2 + i * 0.1 }}
-                  />
-                );
-              })}
-
-              {cities.map((city, i) => (
-                <g key={city.name}>
-                  {city.hub && (
-                    <>
-                      <m.circle
-                        cx={city.x}
-                        cy={city.y}
-                        r="6"
-                        fill="none"
-                        stroke="var(--primary-blue)"
-                        strokeWidth="0.3"
-                        initial={{ scale: 0.5, opacity: 0 }}
-                        animate={
-                          active
-                            ? { scale: [1, 1.6, 1], opacity: [0.5, 0, 0.5] }
-                            : { scale: 1, opacity: 0.25 }
-                        }
-                        transition={
-                          active
-                            ? { duration: 3, repeat: Infinity, ease: "easeOut" }
-                            : { duration: 0.3 }
-                        }
-                      />
-                      <m.circle
-                        cx={city.x}
-                        cy={city.y}
-                        r="3.5"
-                        fill="url(#heroHubGrad)"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
-                      />
-                    </>
-                  )}
-                  {!city.hub && (
-                    <m.circle
-                      cx={city.x}
-                      cy={city.y}
-                      r="1.8"
-                      fill="var(--primary-blue)"
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 0.85 }}
-                      transition={{ delay: 0.3 + i * 0.08, type: "spring" }}
-                    />
-                  )}
-                  <m.text
-                    x={city.x}
-                    y={city.y + (city.hub ? 6.5 : 5)}
-                    textAnchor="middle"
-                    className="fill-deep-navy text-[2.8px] font-medium opacity-70 sm:text-[2.5px]"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 0.7 }}
-                    transition={{ delay: 0.8 + i * 0.05 }}
-                  >
-                    {city.name}
-                  </m.text>
-                </g>
-              ))}
-
-              {active &&
-                connections.slice(0, reduceMotionEffects ? 2 : 4).map(([from, to], i) => {
-                  const a = cities[from];
-                  const b = cities[to];
-                  return (
-                    <m.circle
-                      key={`pulse-${from}-${to}`}
-                      cx={a.x}
-                      cy={a.y}
-                      r="0.8"
-                      fill="var(--accent-blue)"
-                      initial={{ cx: a.x, cy: a.y, opacity: 0 }}
-                      animate={{
-                        cx: [a.x, b.x],
-                        cy: [a.y, b.y],
-                        opacity: [0, 1, 1, 0],
-                      }}
-                      transition={{
-                        duration: 2.5,
-                        delay: 1.5 + i * 0.6,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                      }}
-                    />
-                  );
-                })}
-            </svg>
-
-            <m.div
-              className={`absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full px-3 py-1.5 shadow-lg sm:px-4 sm:py-2 ${
-                reduceVisualEffects ? "border border-border/60 bg-surface/95" : "glass"
-              }`}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5, duration: 0.6 }}
+              <source src="/product/belgobase-demo.webm" type="video/webm" />
+              <a href="/product/belgobase-demo.webm" download>
+                {copy.fallback}
+              </a>
+            </video>
+            <p
+              id="hero-demo-transcript"
+              className="px-3 py-3 text-xs leading-5 text-white/70 sm:text-sm"
             >
-              <Zap className="h-3.5 w-3.5 text-primary sm:h-4 sm:w-4" />
-              <span className="whitespace-nowrap text-[10px] font-semibold text-deep-navy sm:text-xs">
-                {t("hero.vizScanning")}
-              </span>
-            </m.div>
-
-            {leadCards.map((card, index) => (
-              <m.div
-                key={`${card.position}-${index}`}
-                className={`absolute max-w-[calc(100%-1.5rem)] rounded-xl p-2.5 shadow-xl sm:max-w-none sm:p-3 ${
-                  reduceVisualEffects
-                    ? "border border-border/60 bg-surface/95"
-                    : "glass"
-                } ${
-                  card.hideOnMobile ? "hidden sm:block" : ""
-                } w-[140px] sm:w-[168px] ${card.position}`}
-                initial={{ opacity: 0, y: 16 }}
-                animate={
-                  active
-                    ? { opacity: 1, y: [0, -5, 0] }
-                    : { opacity: 1, y: 0 }
-                }
-                transition={{
-                  opacity: { delay: card.delay, duration: 0.6 },
-                  y: active
-                    ? {
-                        delay: card.delay + 1,
-                        duration: 4.5,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                      }
-                    : { duration: 0.3 },
-                }}
-              >
-                <div className="flex items-start gap-2">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                    <Building2 className="h-3.5 w-3.5 text-primary" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-[11px] font-semibold text-deep-navy sm:text-xs">
-                      {card.name}
-                    </p>
-                    <p className="truncate text-[10px] text-muted">{card.sector}</p>
-                  </div>
-                </div>
-                <div className="mt-2 flex items-center justify-between gap-1 text-[10px]">
-                  <span className="flex min-w-0 items-center gap-0.5 truncate text-muted">
-                    <MapPin className="h-2.5 w-2.5 shrink-0" />
-                    <span className="truncate">{card.location}</span>
-                  </span>
-                  <span className="shrink-0 font-semibold text-primary">{t("hero.vizExample")}</span>
-                </div>
-              </m.div>
-            ))}
+              {copy.transcript}
+            </p>
           </div>
-
-          <div className="mt-4 grid grid-cols-3 gap-2 sm:mt-5 sm:gap-3">
-            {stats.map((stat, i) => (
-              <m.div
-                key={stat.label}
-                className="premium-card rounded-xl px-2 py-2.5 text-center sm:px-3 sm:py-3"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.2 + i * 0.1, duration: 0.5 }}
-              >
-                <stat.icon className="mx-auto mb-1 h-3.5 w-3.5 text-primary sm:h-4 sm:w-4" />
-                <p className="text-sm font-bold text-deep-navy sm:text-base">{stat.value}</p>
-                <p className="truncate text-[10px] text-muted sm:text-xs">{stat.label}</p>
-              </m.div>
-            ))}
+        ) : (
+          <div id="hero-product-demo" className="bg-[#e8edf4] p-1.5 sm:p-2">
+            <Image
+              src="/product/belgobase-workspace.webp"
+              alt={locale === "nl" ? "BelgoBase-zoekresultaten met regiofilters en Excel-export; fictieve voorbeeldbedrijven" : "BelgoBase company search with regional filters and Excel export; fictional example companies"}
+              width={1600}
+              height={1000}
+              preload
+              sizes="(min-width: 1280px) 720px, (min-width: 1024px) 56vw, 94vw"
+              className="h-auto w-full rounded-lg"
+            />
           </div>
-        </div>
+        )}
+        <button
+          type="button"
+          aria-expanded={demoOpen}
+          aria-controls="hero-product-demo"
+          onClick={() => setDemoOpen((open) => !open)}
+          className="flex w-full cursor-pointer items-center justify-center border-t border-white/10 bg-[#0a1b3a] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#10264e] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-white/80"
+        >
+          {demoOpen ? copy.closeDemo : copy.demo}
+        </button>
       </div>
-    </div>
+      <figcaption className="mt-3 text-center text-xs leading-relaxed text-muted sm:text-sm">
+        {copy.caption}
+      </figcaption>
+    </figure>
   );
 }
