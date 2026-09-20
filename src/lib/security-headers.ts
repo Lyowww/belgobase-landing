@@ -18,7 +18,9 @@ const publicPageCsp = [
 
 export const publicPageSecurityHeaders = {
   "Content-Security-Policy": publicPageCsp,
-  "Permissions-Policy": "camera=(), geolocation=(), microphone=()",
+  // Client-side navigation to /app retains this document's permissions policy.
+  // Permit same-origin requests; the browser still requires user consent.
+  "Permissions-Policy": "camera=(), geolocation=(), microphone=(self)",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
   "X-Content-Type-Options": "nosniff",

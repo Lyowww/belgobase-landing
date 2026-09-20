@@ -5,7 +5,7 @@ import vm from "node:vm";
 
 const source = await readFile(new URL("./browser-adapter.js", import.meta.url), "utf8");
 
-function adapterHarness(replies) {
+function adapterHarness(replies, mediaError, language = "nl") {
   const calls = [];
   const messages = [];
   const links = [];
@@ -13,6 +13,7 @@ function adapterHarness(replies) {
   let timeout;
   const tracks = [{ stopped: false, stop() { this.stopped = true; } }];
   const document = {
+    documentElement: { lang: language },
     body: { append(node) { links.push(node); } },
     createElement() { return { style: {}, click() { this.clicked = true; }, remove() { this.removed = true; } }; },
   };
@@ -44,13 +45,27 @@ function adapterHarness(replies) {
     };
   };
   const context = vm.createContext({
-    window, document, fetch, navigator: { mediaDevices: { getUserMedia: async () => ({ getTracks: () => tracks }) } },
+    window, document, fetch, navigator: { mediaDevices: { getUserMedia: async () => { if (mediaError) throw mediaError; return { getTracks: () => tracks }; } } },
     URL, Proxy, Promise, Uint8Array, Int16Array, Float32Array, DataView, AbortController,
     performance: { now: () => 1_000 }, btoa: (value) => Buffer.from(value, "binary").toString("base64"),
   });
   vm.runInContext(source, context);
   return { api: window.pywebview.api, calls, links, messages, getProcessor: () => processor, fireTimeout: () => timeout(), tracks };
 }
+
+test("microphone failures explain permission recovery, missing hardware and busy input", async () => {
+  for (const [name, language, expected] of [
+    ["NotAllowedError", "nl", /instellingenicoon/],
+    ["NotAllowedError", "fr", /Microphone bloqué/],
+    ["NotAllowedError", "en", /Microphone blocked/],
+    ["NotFoundError", "nl", /Geen microfoon/],
+    ["NotReadableError", "nl", /andere opname/],
+  ]) {
+    const h = adapterHarness([], { name }, language);
+    await assert.rejects(h.api.voice_start(), expected);
+    assert.equal(h.calls.length, 0);
+  }
+});
 
 test("bridge forwards an authenticated method and starts a same-origin download", async () => {
   const h = adapterHarness([

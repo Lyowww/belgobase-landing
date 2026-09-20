@@ -24,8 +24,12 @@ test("public pages deny framing and restrict active content", () => {
   assert.ok(publicPageSecurityHeaders["Referrer-Policy"]);
   assert.equal(
     publicPageSecurityHeaders["Permissions-Policy"],
-    "camera=(), geolocation=(), microphone=()",
+    "camera=(), geolocation=(), microphone=(self)",
   );
+});
+
+test("client-side login navigation inherits a microphone-capable document", () => {
+  assert.equal(publicPageSecurityHeaders["Permissions-Policy"], workspaceShellSecurityHeaders["Permissions-Policy"]);
 });
 
 test("workspace shell can delegate microphone only to its same-origin iframe", async () => {

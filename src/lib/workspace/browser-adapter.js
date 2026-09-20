@@ -184,8 +184,19 @@
     let stream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1 } });
-    } catch {
-      throw new Error("BelgoBase heeft geen toegang tot je microfoon. Sta de microfoon toe en probeer opnieuw.");
+    } catch (error) {
+      const language = document.getElementById?.("language-switch")?.value || document.documentElement?.lang || "nl";
+      const messages = {
+        denied: {
+          nl: "Microfoon geblokkeerd. Open het instellingenicoon naast het webadres en zet Microfoon op Toestaan. Controleer ook de microfoontoegang van je browser in de telefooninstellingen. Vernieuw daarna deze pagina en tik opnieuw op de microfoon.",
+          fr: "Microphone bloqué. Ouvrez les paramètres à côté de l’adresse du site et autorisez le microphone. Vérifiez aussi l’accès au microphone du navigateur dans les paramètres du téléphone. Actualisez la page et réessayez.",
+          en: "Microphone blocked. Open the settings icon beside the web address and allow Microphone. Also check your browser’s microphone access in your phone settings. Reload this page and tap the microphone again.",
+        },
+        missing: { nl: "Geen microfoon gevonden. Sluit een microfoon aan en probeer opnieuw.", fr: "Aucun microphone détecté. Branchez un microphone et réessayez.", en: "No microphone found. Connect a microphone and try again." },
+        busy: { nl: "De microfoon kon niet starten. Sluit een andere opname of een gesprek en probeer opnieuw.", fr: "Le microphone ne démarre pas. Fermez tout autre enregistrement ou appel et réessayez.", en: "The microphone could not start. Close any other recording or call and try again." },
+      };
+      const reason = ["NotAllowedError", "SecurityError"].includes(error?.name) ? "denied" : error?.name === "NotFoundError" ? "missing" : "busy";
+      throw new Error(messages[reason][language] || messages[reason].nl);
     }
     const Audio = window.AudioContext || window.webkitAudioContext;
     if (!Audio) {
