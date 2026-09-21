@@ -98,6 +98,84 @@ test("round-trips the rendered dossier status after repeated language switches",
   }
 });
 
+test("localises fixed finance copy during loading and live language switches", () => {
+  const financeCopy = {
+    assets: ["Activa", "Actifs", "Assets"],
+    note: [
+      "NBB-kerncijfers per bronjaar via BelgoBase. Ontbrekende cijfers blijven leeg.",
+      "Chiffres clés BNB par année source via BelgoBase. Les chiffres manquants restent vides.",
+      "NBB key figures by source year via BelgoBase. Missing figures remain empty.",
+    ],
+    explanation: [
+      "Geen bruikbare waarde in de gebruikte bron. Ontbrekend betekent niet nul.",
+      "Aucune valeur exploitable dans la source utilisée. Une valeur manquante ne signifie pas zéro.",
+      "No usable value in the source used. Missing does not mean zero.",
+    ],
+    status: ["Overgenomen uit de bron", "Repris de la source", "Taken from the source"],
+  };
+  const languages = ["nl", "fr", "en"];
+  for (const [index, language] of languages.entries()) {
+    const window = load(language);
+    const i18n = window.BelgoBasePresentationI18n;
+    assert.equal(i18n.translate(financeCopy.assets[0]), financeCopy.assets[index]);
+    assert.equal(i18n.translate(financeCopy.note[0]), financeCopy.note[index]);
+    assert.equal(i18n.translate(financeCopy.explanation[0]), financeCopy.explanation[index]);
+    assert.equal(i18n.translate(financeCopy.status[0]), financeCopy.status[index]);
+    assert.equal(i18n.translate("Officiële NBB-rubriek 10/20"), "Officiële NBB-rubriek 10/20");
+  }
+
+  const nodes = Object.fromEntries(Object.entries(financeCopy).map(([key, values]) => [key, { nodeType: 3, nodeValue: values[0] }]));
+  const sourceLabel = { nodeType: 3, nodeValue: "Officiële NBB-rubriek 10/20" };
+  const window = load("nl", {}, [
+    { selector: ".chart-head .segment button", elements: [{ childNodes: [nodes.assets] }] },
+    { selector: "#chart-note", elements: [{ childNodes: [nodes.note] }] },
+    { selector: ".value-explanation", elements: [{ childNodes: [nodes.explanation] }, { childNodes: [sourceLabel] }] },
+    { selector: "#financial-rows td:nth-child(4)", elements: [{ childNodes: [nodes.status] }] },
+  ]);
+  for (const [index, language] of languages.entries()) {
+    window.BelgoBaseI18n.language = language;
+    window.BelgoBasePresentationI18n.apply();
+    for (const [key, values] of Object.entries(financeCopy)) assert.equal(nodes[key].nodeValue, values[index]);
+    assert.equal(sourceLabel.nodeValue, "Officiële NBB-rubriek 10/20");
+  }
+});
+
+test("formats only known account status and dates while retaining account identifiers and plan", () => {
+  const source = { rows: [
+    { label: "Licentiestatus", value: "active" },
+    { label: "Licentie geldig vanaf", value: "2026-09-14T19:54:36.337249Z" },
+    { label: "Licentie geldig tot", value: "2027-09-14T21:54:36+02:00" },
+    { label: "Licentieplan", value: "internal-full" },
+    { label: "Licentie-ID", value: "licence-public-reference" },
+  ] };
+  const expectedStatus = { nl: "Actief", fr: "Actif", en: "Active" };
+  for (const language of ["nl", "fr", "en"]) {
+    const result = load(language).BelgoBaseWebI18n.enrich("workspace_data", source);
+    assert.equal(result.rows[0].value, expectedStatus[language]);
+    assert.equal(result.rows[1].value, "14/09/2026 19:54 UTC");
+    assert.equal(result.rows[2].value, "14/09/2027 19:54 UTC");
+    assert.equal(result.rows[3].value, "internal-full");
+    assert.equal(result.rows[4].value, "licence-public-reference");
+  }
+  assert.equal(source.rows[0].value, "active", "account source payload stays intact");
+  assert.equal(source.rows[1].value, "2026-09-14T19:54:36.337249Z");
+});
+
+test("uses singular company wording only for an exact count of one", () => {
+  const resultText = { nodeType: 3, nodeValue: "1 Bedrijven" };
+  const window = load("nl", {}, [{ selector: "#result-total", elements: [{ childNodes: [resultText] }] }]);
+  const expected = { nl: "1 bedrijf", fr: "1 entreprise", en: "1 company" };
+  for (const language of ["nl", "fr", "en"]) {
+    window.BelgoBaseI18n.language = language;
+    window.BelgoBasePresentationI18n.apply();
+    assert.equal(resultText.nodeValue, expected[language]);
+  }
+  assert.equal(load("nl").BelgoBaseWebI18n.enrich("workspace_save", { message: "1 bedrijven opgeslagen." }).message, "Excel met 1 bedrijf is voorbereid; de browserdownload is gestart.");
+  assert.equal(load("fr").BelgoBaseWebI18n.enrich("workspace_save", { message: "1 bedrijven opgeslagen." }).message, "Le fichier Excel contenant 1 entreprise est prêt ; le téléchargement dans le navigateur a démarré.");
+  assert.equal(load("en").BelgoBaseWebI18n.enrich("workspace_save", { message: "1 bedrijven opgeslagen." }).message, "The Excel file with 1 company is ready; the browser download has started.");
+  assert.equal(load("nl").BelgoBaseWebI18n.enrich("workspace_save", { message: "2 bedrijven opgeslagen." }).message, "Excel met 2 bedrijven is voorbereid; de browserdownload is gestart.");
+});
+
 test("keeps source provenance in the delivered browser layer", () => {
   assert.match(source, /BUILD100_FINAL_V1 input\/premium_translations\.py/);
   assert.match(source, /source sha256: [a-f0-9]{64}/);
@@ -157,12 +235,12 @@ test("localises saved-row statuses while preserving counters and source payload"
   const fr = load("fr").BelgoBaseWebI18n.enrich("workspace_save", source);
   const en = load("en").BelgoBaseWebI18n.enrich("workspace_save", source);
   const nl = load("nl").BelgoBaseWebI18n.enrich("workspace_save", source);
-  assert.equal(fr.message, "12 entreprises sur 40 enregistrées (limite d’export configurée).");
-  assert.equal(fr.error, "3 entreprises enregistrées.");
-  assert.equal(en.message, "12 of 40 companies saved (configured export limit).");
-  assert.equal(en.error, "3 companies saved.");
-  assert.equal(nl.message, source.message);
-  assert.equal(nl.error, source.error);
+  assert.equal(fr.message, "Le fichier Excel contenant 12 entreprises sur 40 est prêt ; le téléchargement dans le navigateur a démarré (limite d’export configurée).");
+  assert.equal(fr.error, "Le fichier Excel contenant 3 entreprises est prêt ; le téléchargement dans le navigateur a démarré.");
+  assert.equal(en.message, "The Excel file with 12 of 40 companies is ready; the browser download has started (configured export limit).");
+  assert.equal(en.error, "The Excel file with 3 companies is ready; the browser download has started.");
+  assert.equal(nl.message, "Excel met 12 van 40 bedrijven is voorbereid; de browserdownload is gestart (ingestelde exportlimiet).");
+  assert.equal(nl.error, "Excel met 3 bedrijven is voorbereid; de browserdownload is gestart.");
   assert.equal(fr.company, source.company, "non-status customer data remains untouched");
   assert.deepEqual(source, {
     message: "12 van 40 bedrijven opgeslagen (ingestelde exportlimiet).",

@@ -199,6 +199,67 @@ test("a rejected AI proposal search leaves the proposal and visible query unchan
   assert.equal(renderCount, 0);
 });
 
+test("opening Wallet preserves normal search mode and an explicit assistant tab enables AI mode", () => {
+  const classList = () => ({ add() {}, remove() {}, toggle() {} });
+  const node = () => ({ hidden: false, checked: false, classList: classList(), setAttribute() {}, append() {}, focus() {} });
+  const nodes = Object.fromEntries([
+    "#search-form", "#search-modes", "#ai-scope", "#voice-info", "#ai-conversation", "#ai-panel",
+    "#assistant-tab", "#wallet-tab", "#assistant-dock-body", "#wallet-panel", "#assistant-dock",
+    "#assistant-nav", "#ai-mode", "#query", "#assistant-home-slot",
+  ].map(selector => [selector, node()]));
+  const shell = node();
+  const returnFocus = { focusCalls: 0, focus() { this.focusCalls += 1; } };
+  let composerRenders = 0;
+  const selector = selector => selector === ".shell" ? shell : nodes[selector];
+  const loaded = loadFunctions(
+    ["setAssistantTab", "openAssistant", "closeAssistant"],
+    {
+      assistantUi: { open: false, tab: "assistant", returnFocus: null },
+      document: { activeElement: returnFocus },
+      $: selector,
+      assistantNodes: () => ["#search-form", "#search-modes", "#ai-scope", "#voice-info", "#ai-conversation", "#ai-panel"].map(selector),
+      work: { wallet: {} },
+      renderWallet() {}, loadWallet() {}, renderAssistantContext() {}, renderAssistantCredit() {},
+      renderComposer() { composerRenders += 1; },
+    },
+  );
+
+  loaded.openAssistant("wallet");
+  assert.equal(nodes["#ai-mode"].checked, false);
+  loaded.closeAssistant();
+  assert.equal(nodes["#ai-mode"].checked, false);
+  loaded.openAssistant("wallet");
+  loaded.setAssistantTab("assistant", true);
+  assert.equal(nodes["#ai-mode"].checked, true);
+  assert.ok(composerRenders > 0, "explicit assistant selection refreshes the composer controls");
+});
+
+test("similar-company seed values format money and FTE without changing their numeric values", () => {
+  const target = { innerHTML: "" };
+  const criteria = [
+    { key: "rest_na_schulden", label: "Rest na schulden", kind: "number", value: 638209.8200000001, tolerance: 50, selected: false, mode: "seed" },
+    { key: "personeel", label: "Personeel VTE", kind: "number", value: 12.5, tolerance: 30, selected: false, mode: "seed" },
+  ];
+  const before = structuredClone(criteria);
+  const formatter = new Intl.NumberFormat("nl-BE", { maximumFractionDigits: 2 });
+  const { renderSimilarCriteria } = loadFunctions(["renderSimilarCriteria"], {
+    $: selector => { assert.equal(selector, "#similar-criteria"); return target; },
+    work: { similar: { company: { name: "DEKOMPANIE", number: "0123456789" } }, criteria },
+    esc: value => String(value),
+    t: (_key, fallback) => fallback,
+    filterValueLabels: {},
+    number: value => typeof value === "number" && Number.isFinite(value),
+    money: value => `€ ${formatter.format(value)}`,
+    fmt: value => formatter.format(value),
+    display: value => value == null || value === "" ? "—" : String(value),
+    controls() {},
+  });
+  renderSimilarCriteria();
+  assert.match(target.innerHTML, /€ 638\.209,82/);
+  assert.match(target.innerHTML, /12,5 VTE/);
+  assert.deepEqual(criteria, before, "formatting must not change the seed or submitted values");
+});
+
 test("annual latest-only filter stays visible and selected exports state exact scope", () => {
   assert.doesNotMatch(functionSource("renderChips"), /latest_only/);
   assert.doesNotMatch(functionSource("renderAiChanges"), /latest_only/);
