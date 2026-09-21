@@ -270,3 +270,16 @@ test("does not translate unrelated dynamic messages", () => {
   const result = load("en").BelgoBaseWebI18n.enrich("workspace_save", source);
   assert.equal(result.message, source.message);
 });
+
+
+test("fixed finance aliases and account credit copy follow the selected language", () => {
+  const messages={};
+  const win=load("fr",messages);
+  assert.equal(messages["account.walletLinked"].fr,"Votre crédit IA est lié à votre licence BelgoBase.");
+  assert.equal(win.BelgoBasePresentationI18n.translate("Resultaat boekjaar"),"Résultat de l’exercice");
+  assert.equal(win.BelgoBasePresentationI18n.translate("Bronjaar kerncijfers"),"Année source des chiffres clés");
+  win.BelgoBaseI18n.language="en";
+  assert.equal(win.BelgoBasePresentationI18n.translate("Resultaat boekjaar"),"Financial-year result");
+  assert.equal(win.BelgoBasePresentationI18n.translate("Bronjaar kerncijfers"),"Key figures source year");
+  assert.equal(messages["account.walletLinked"].en,"Your AI balance is linked to your BelgoBase licence.");
+});

@@ -248,6 +248,7 @@ test("similar-company seed values format money and FTE without changing their nu
     esc: value => String(value),
     t: (_key, fallback) => fallback,
     filterValueLabels: {},
+    present: value => value,
     number: value => typeof value === "number" && Number.isFinite(value),
     money: value => `€ ${formatter.format(value)}`,
     fmt: value => formatter.format(value),
@@ -510,4 +511,23 @@ test("voice cancel releases the UI even while the browser permission prompt is u
   await cancelled;
   assert.equal(voice.phase,"idle");
   assert.equal(input.value,"bestaande tekst");
+});
+
+
+test("metric staff units and account credit copy are rendered in each language without changing values", () => {
+  for(const [language,unit] of [["nl","VTE"],["fr","ETP"],["en","FTE"]]) {
+    const metric={value:0.3,unit:"VTE"};
+    const card={innerHTML:""};
+    const work={usage:{mode:"server",message:"Je AI-tegoed is gekoppeld aan je BelgoBase-licentie.",wallet:{balance_eur:0,available_eur:0,reserved_eur:0,currency:"EUR"}}};
+    const {metricValue,renderUsage}=loadFunctions(["metricValue","renderUsage"],{
+      work,$:()=>card,number:Number.isFinite,esc:String,display:String,fmt:String,short:String,euro:String,fieldRows:()=>"",controls(){},
+      t:(key,fallback)=>key==="column.fte"?unit:key==="account.walletLinked"?`credit-${language}`:fallback,
+    });
+    assert.equal(metricValue(metric),`0.3 ${unit}`);
+    assert.equal(metric.unit,"VTE");
+    assert.equal(metric.value,0.3);
+    renderUsage();
+    assert.ok(card.innerHTML.includes(`credit-${language}`));
+    assert.equal(work.usage.message,"Je AI-tegoed is gekoppeld aan je BelgoBase-licentie.");
+  }
 });
