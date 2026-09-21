@@ -265,6 +265,7 @@
     if (!response.ok || data.ok !== true) {
       const language = document.getElementById?.("language-switch")?.value || document.documentElement?.lang || "nl";
       const errors = {
+        insufficient_balance: { nl: "Onvoldoende AI-tegoed voor deze opname. Laat je AI-tegoed aanvullen en probeer opnieuw. Je kunt je zoekvraag ook typen.", fr: "Votre solde IA est insuffisant pour cet enregistrement. Faites recharger votre solde et réessayez. Vous pouvez aussi saisir votre recherche.", en: "There is not enough AI balance for this recording. Have your balance topped up and try again. You can also type your search." },
         voice_invalid_audio: { nl: "De opname kon niet worden gelezen. Neem opnieuw op, maximaal 60 seconden.", fr: "L’enregistrement est illisible. Réessayez pendant 60 secondes maximum.", en: "The recording could not be read. Record again for up to 60 seconds." },
         no_speech: { nl: "Geen spraak herkend. Spreek duidelijk en probeer opnieuw.", fr: "Aucune parole reconnue. Parlez clairement et réessayez.", en: "No speech recognised. Speak clearly and try again." },
         voice_timeout: { nl: "Het omzetten duurde te lang. Probeer opnieuw; je tekst is behouden.", fr: "La transcription a pris trop de temps. Réessayez ; votre texte est conservé.", en: "Transcription took too long. Try again; your text has been kept." },

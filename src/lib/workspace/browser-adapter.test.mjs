@@ -122,6 +122,17 @@ test("rejected audio shows recovery advice rather than an internal error code", 
   await h.api.voice_cancel();
 });
 
+test("insufficient voice balance names the actual reason without claiming bad audio", async () => {
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "b".repeat(32) } },
+    { status: 402, body: { error: "insufficient_balance" } },
+  ]);
+  await h.api.voice_start();
+  h.getProcessor().onaudioprocess({ inputBuffer: { getChannelData: () => new Float32Array(24_000).fill(0.1) } });
+  await assert.rejects(h.api.voice_stop(), /Onvoldoende AI-tegoed/);
+  assert.equal(h.tracks[0].stopped, true);
+});
+
 test("workspace deactivation logs out the web session rather than a Windows device", async () => {
   const h = adapterHarness([
     { body: { authenticated: true, csrf: "c".repeat(32) } },
