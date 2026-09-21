@@ -531,3 +531,31 @@ test("metric staff units and account credit copy are rendered in each language w
     assert.equal(work.usage.message,"Je AI-tegoed is gekoppeld aan je BelgoBase-licentie.");
   }
 });
+
+
+test("account language changes redraw already loaded usage without another request", () => {
+  const card={innerHTML:""}, selector={value:"nl"}, i18n={language:"nl",locales:{nl:"nl-BE",fr:"fr-BE",en:"en-GB"},setLanguage(value){this.language=value;}};
+  const usage={mode:"server",message:"Je AI-tegoed is gekoppeld aan je BelgoBase-licentie.",wallet:{balance_eur:12.34,available_eur:10,reserved_eur:2.34,currency:"EUR"}};
+  const work={section:"account",data:{rows:[]},usage,wallet:null};
+  const original=structuredClone(work);
+  const {refreshLanguage}=loadFunctions(["refreshLanguage","renderUsage"],{
+    i18n,locale:"nl-BE",nf:new Intl.NumberFormat("nl-BE"),compact:new Intl.NumberFormat("nl-BE"),
+    state:{ready:true,view:"tools",filters:{}},filterDraft:null,work,assistantUi:{tab:"assistant"},
+    $: key=>key==="#language-switch"?selector:key==="#dossier-view"?{hidden:true}:card,$$:()=>[],
+    configureQuickCity(){},renderAssistantContext(){},renderConversation(){},renderRows(){},workspaceTitles:()=>({}),renderAssistantCredit(){},
+    renderAccount(){card.innerHTML="Loading usage";},controls(){},esc:String,euro:String,
+    fieldRows:rows=>rows.map(row=>row.value).join("|"),
+    t:(key,fallback)=>key==="account.walletLinked"?`credit-${i18n.language}`:fallback,
+    bridge(){throw new Error("language redraw must not fetch usage");},
+  });
+  for(const language of ["fr","en","nl"]){
+    refreshLanguage(language);
+    assert.ok(card.innerHTML.includes(`credit-${language}`));
+    assert.ok(card.innerHTML.includes("12.34|10|2.34"));
+    assert.ok(!card.innerHTML.includes("Loading usage"));
+    assert.deepEqual(work,original);
+  }
+  work.usage=null;
+  refreshLanguage("en");
+  assert.equal(card.innerHTML,"Loading usage","pending initial usage remains pending");
+});
