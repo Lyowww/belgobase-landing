@@ -7,6 +7,8 @@
  *   node tools/browser_workspace_mock.e2e.mjs
  */
 import assert from "node:assert/strict";
+import { auditPublicSite } from './public_site_flows.mjs';
+import { auditAccountFinal } from './account_final_flows.mjs';
 import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { access, mkdir, mkdtemp, rm, writeFile, readFile } from "node:fs/promises";
@@ -146,6 +148,9 @@ const mock = https.createServer({key:await readFile(path.join(tlsDirectory,"key.
       return hasSession(request) ? json(response, 200, { ok: true, sessions: [{browser_id:"test-browser", label:"Testbrowser", current:true, last_seen_at:"2026-09-18T17:00:00Z"}] }) : json(response, 401, {ok:false});
     }
     if (url.pathname === "/auth/session" && request.method === "GET") {
+      if (state.rawSession !== undefined) {
+        response.writeHead(200,{"content-type":"application/json"});response.end(state.rawSession);return;
+      }
       return hasSession(request)
         ? json(response, 200, { ok: true, authenticated: true, account: { name: "Mock BelgoBase", email: "owner@example.test" }, csrf })
         : json(response, 401, { ok: false, error: "session_invalid" });
@@ -214,6 +219,8 @@ const mock = https.createServer({key:await readFile(path.join(tlsDirectory,"key.
       if (body.method === "ai_wallet") return state.walletUnavailable?json(response,503,{ok:false,error:"temporarily_unavailable"}):json(response,200,{ok:true,wallet:state.wallet});
       if (body.method === "account_action" && body.payload.action === "refresh") return json(response,200,{ok:true,rows:[{label:"Klantnummer",value:"KL-MOCK-001"},{label:"Licentie-ID",value:"LIC-MOCK-001"},{label:"Onderneming",value:"Mock BelgoBase"}],documents:[]});
       if (body.method === "ai_usage") return json(response,200,{ok:true,usage:{mode:"server",wallet:state.wallet}});
+      if (body.method === "cancel_operation") return json(response,200,{ok:true,cancelled:true});
+      if (body.method === "ai" && state.aiGate) await state.aiGate;
       if (body.method === "ai") return json(response,200,{ok:true,wallet:state.wallet,proposal:body.payload.selected_codes?{status:"ready",assistant_message:"Ik stel bouwbedrijven in Gent voor.",filters:{kbo_postcode:"9000",nace_prefix:"41"},summary:["Bouwbedrijven in Gent"]}:{status:"clarify",assistant_message:"Welke activiteit bedoel je?",choices:[{value:"41",label:"Bouwbedrijven"}]}});
       if (body.method === "set_language") {
         if (!["nl", "fr", "en"].includes(body.payload.language)) return json(response, 400, { ok: false, error: "invalid_request" });
@@ -305,6 +312,15 @@ app.stderr.on("data", (chunk) => state.appLog.push(String(chunk)));
 let browser;
 try {
   await waitForServer(`${appOrigin}/nl/app`);
+  for(const [raw,status] of [['{"authenticated":"false"}',401],['null',401],['{bad-json',503]]) {
+    state.rawSession=raw;
+    for(const endpoint of ['/api/web/workspace','/api/web/desktop-download?format=json']){
+      const response=await fetch(appOrigin+endpoint);
+      assert.equal(response.status,status,'malformed session fails closed at '+endpoint);
+      assert.equal((await response.json()).ok,false);
+    }
+  }
+  delete state.rawSession;
   browser = await chromium.launch({ headless: true, executablePath: chromiumExecutable });
   const context = await browser.newContext({ acceptDownloads: true, viewport: { width: 1440, height: 960 } });
   await context.route('**/*',route=>{
@@ -585,6 +601,13 @@ try {
   await frame.locator('#answer-ai').click();
   await frame.locator('#notice').getByText('Vink minstens één activiteit aan.').waitFor();
   await frame.locator('[data-choice="41"]').check();
+  for(const [language,title,role] of [['fr','Précisez votre recherche','Vous'],['en','Clarify your search','You'],['nl','Maak je zoekopdracht concreet','Jij']]){
+    await page.getByRole('combobox',{name:'Taal / Language / Langue',exact:true}).selectOption(language);
+    await frame.locator('#ai-title').getByText(title,{exact:true}).waitFor();
+    assert.equal(await frame.locator('[data-choice="41"]').isChecked(),true,'language switch retains pending activity choice');
+    assert.equal(await frame.locator('#ai-turns li.user strong').last().innerText(),role);
+  }
+
   await frame.locator('#answer-ai').click();
   await frame.locator('#apply-ai').waitFor();
   const beforeFailedAi=await visibleSelection();
@@ -596,6 +619,19 @@ try {
   await frame.locator('#apply-ai').click();
   await frame.locator('#ai-panel').waitFor({state:'hidden'});
   assert.equal(state.bridgeCalls.filter(c=>c.method==='search').at(-1).payload.filters.nace_prefix,'41');
+  const priorConversation=await frame.locator('#ai-turns').innerText();
+  let releaseAi;
+  state.aiGate=new Promise(resolve=>{releaseAi=resolve;});
+  await frame.locator('#query').fill('Behoud mijn vorige gesprek');
+  const lateAiResponse=page.waitForResponse(r=>r.url().endsWith('/api/web/bridge/ai'));
+  const aiRequest=page.waitForRequest(r=>r.url().endsWith('/api/web/bridge/ai'));
+  await frame.locator('#search-form').press('Enter');await aiRequest;
+  await frame.locator('#cancel-request').click();
+  releaseAi();state.aiGate=null;await lateAiResponse;
+  await page.waitForFunction(()=>!document.querySelector('iframe').contentDocument.querySelector('#query').disabled);
+  assert.equal(await frame.locator('#query').inputValue(),'Behoud mijn vorige gesprek');
+  assert.equal(await frame.locator('#ai-turns').innerText(),priorConversation,'cancelled follow-up keeps prior conversation and ignores late response');
+
   await frame.locator('#ai-mode').uncheck();
   await frame.getByRole('button',{name:'Alle filters openen',exact:true}).click();
   await frame.locator('#filter-finder').waitFor();
@@ -653,6 +689,11 @@ try {
   await frame.locator('button[data-company="0123456789"]').first().waitFor();
   await frame.getByRole("button",{name:"Bedrijven",exact:true}).first().click();
   await frame.locator("#save-search").click();
+  await page.waitForFunction(()=>document.querySelector('iframe').contentDocument.activeElement?.id==='workspace-name');
+  await frame.locator('#workspace-name').press('Escape');
+  await frame.locator('#workspace-dialog').waitFor({state:'hidden'});
+  assert.equal(await frame.locator('#save-search').evaluate(element=>element.ownerDocument.activeElement===element),true,'closing a workspace dialog restores keyboard focus');
+  await frame.locator('#save-search').click();
   await frame.locator("#workspace-name").fill("Joël testselectie");
   await frame.locator('[data-dialog="submit"]').click();
   await frame.locator("#workspace-dialog").waitFor({state:"hidden"});
@@ -766,8 +807,10 @@ try {
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, "English tablet sign-in has no horizontal overflow");
 
   const marketingErrors=[];
-  page.on('pageerror', error=>marketingErrors.push(error.message));
-  page.on('console', message=>{if(message.type()==='error') marketingErrors.push(message.text());});
+  const marketingPageError=error=>marketingErrors.push(error.message);
+  const marketingConsoleError=message=>{if(message.type()==='error') marketingErrors.push(message.text());};
+  page.on('pageerror', marketingPageError);
+  page.on('console', marketingConsoleError);
   for (const language of ['nl','en']) {
     await page.goto(appOrigin + '/' + language, {waitUntil: 'networkidle'});
     assert.doesNotMatch(await page.locator('main').innerText(), /Lorem ipsum|Dolor sit amet/);
@@ -786,8 +829,12 @@ try {
     await page.screenshot({path:path.join(artifactDirectory,'marketing-'+language+'-desktop.png')});
   }
 
+  await auditPublicSite({page, context, appOrigin, artifactDirectory});
+  page.off('pageerror',marketingPageError);
+  page.off('console',marketingConsoleError);
   await writeFile(path.join(artifactDirectory,"marketing-errors.json"),JSON.stringify(marketingErrors,null,2));
   assert.equal(marketingErrors.length,0,"marketing renders without browser errors; see marketing-errors.json");
+  await auditAccountFinal({page, context, appOrigin, state, artifactDirectory});
   assert.deepEqual(runtimeErrors,[],"all authenticated and public flows finish without uncaught browser errors");
   assert.deepEqual(state.unhandledMethods,[],"the browser never receives fake success for an unimplemented mock route");
   const report = { ok: true, checkedAt: new Date().toISOString(), network: "loopback mocks only; synthetic installer", enrollmentScreenshot: enrollmentScreenshotPath, documentScreenshot: documentScreenshotPath, screenshot: screenshotPath, bridgeMethods: state.bridgeCalls.map((call) => call.method), version: release };

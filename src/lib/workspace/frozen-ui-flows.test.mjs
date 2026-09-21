@@ -378,6 +378,7 @@ test("language rerender restores the active dossier tab after rebuilding its cha
     $$: () => [],
     configureQuickCity: () => {},
     renderAssistantContext: () => {},
+    renderConversation: () => {},
     renderRows: () => {},
     renderDetail: () => { calls.push("render"); },
     setTab: tab => { calls.push(`tab:${tab}`); },
@@ -403,4 +404,17 @@ test("company activity labels require the record NACE edition, never a guessed c
   assert.equal(activityLabel({nace:"12345",nace_version:"2008"}),"Historische activiteit");
   assert.equal(activityLabel({nace:"12345",activity_label:"Bronlabel"}),"Bronlabel");
   assert.equal(activityLabel({nace:"12345"}),"12345");
+});
+
+test("voice cancel releases the UI even while the browser permission prompt is unanswered", async () => {
+  const input={value:"",focus(){}};
+  const voice={phase:"starting",revision:1,draft:"bestaande tekst",startPromise:new Promise(()=>{})};
+  const calls=[];
+  const {cancelVoice}=loadFunctions(["cancelVoice"],{voice,$:()=>input,stopVoiceTimer(){},renderVoiceLevel(){},controls(){},notice(){},t:(_key,fallback)=>fallback,bridge:async method=>{calls.push(method);return {ok:true};},endVoice(){voice.phase="idle";}});
+  const cancelled=cancelVoice();
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.deepEqual(calls,["voice_cancel"]);
+  await cancelled;
+  assert.equal(voice.phase,"idle");
+  assert.equal(input.value,"bestaande tekst");
 });

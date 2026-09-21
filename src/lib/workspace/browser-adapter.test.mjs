@@ -54,8 +54,73 @@ function adapterHarness(replies, mediaError, language = "nl", enrich) {
     performance: { now: () => 1_000 }, btoa: (value) => Buffer.from(value, "binary").toString("base64"),
   });
   vm.runInContext(source, context);
-  return { api: window.pywebview.api, calls, links, messages, getProcessor: () => processor, fireTimeout: () => timeout(), tracks };
+  return { api: window.pywebview.api, calls, links, messages, window, context, getProcessor: () => processor, fireTimeout: () => timeout(), tracks };
 }
+
+test("a failed audio engine releases the microphone and permits retry", async () => {
+  const h = adapterHarness([]);
+  let closed = 0;
+  h.window.AudioContext.prototype.resume = async () => { throw new Error("audio engine failure"); };
+  h.window.AudioContext.prototype.close = async () => { closed++; };
+  await assert.rejects(h.api.voice_start());
+  assert.equal(h.tracks[0].stopped, true, "failed start must release hardware");
+  assert.equal(closed, 1, "failed audio context must close");
+  h.window.AudioContext.prototype.resume = async () => {};
+  await h.api.voice_start();
+  await h.api.voice_cancel();
+});
+
+test("cancelling while permission is pending never starts a late recording", async () => {
+  const h = adapterHarness([]);
+  let grant;
+  h.context.navigator.mediaDevices.getUserMedia = () => new Promise(resolve => { grant = resolve; });
+  const starting = h.api.voice_start();
+  await h.api.voice_cancel();
+  grant({getTracks:()=>h.tracks});
+  await starting;
+  assert.equal(h.tracks[0].stopped, true);
+  assert.equal((await h.api.voice_status()).state, "idle");
+  assert.equal(h.calls.length, 0);
+});
+
+test("cancellation during session lookup never submits a transcription", async () => {
+  const h=adapterHarness([]);
+  let release;
+  h.context.fetch=async url=>{
+    h.calls.push({url});
+    assert.equal(url,"/api/web/auth/session");
+    await new Promise(resolve=>{release=resolve;});
+    return {ok:true,status:200,json:async()=>({authenticated:true,csrf:"c".repeat(32)})};
+  };
+  await h.api.voice_start();
+  h.getProcessor().onaudioprocess({inputBuffer:{getChannelData:()=>new Float32Array(24000).fill(.1)}});
+  const stopping=h.api.voice_stop();
+  await new Promise(resolve=>setImmediate(resolve));
+  await h.api.voice_cancel();
+  release();
+  assert.equal((await stopping).cancelled,true);
+  assert.equal(h.calls.length,1);
+});
+
+test("exports without a valid same-origin file never report success", async () => {
+  for(const url of [undefined,"https://outside.example/file.xlsx","http://[","/api/web/download/file#fragment"]){
+    const h=adapterHarness([{body:{authenticated:true,csrf:"d".repeat(32)}},{body:{ok:true,...(url===undefined?{}:{download_url:url})}}]);
+    await assert.rejects(h.api.export_results({}),/opnieuw/);
+    assert.equal(h.links.length,0);
+  }
+});
+
+test("a malformed successful transcription becomes a recoverable error rather than endless processing", async () => {
+  const h=adapterHarness([{body:{authenticated:true,csrf:"v".repeat(32)}},{body:{ok:true}}]);
+  await h.api.voice_start();
+  h.getProcessor().onaudioprocess({inputBuffer:{getChannelData:()=>new Float32Array(24000).fill(.1)}});
+  h.fireTimeout();
+  await new Promise(resolve=>setImmediate(resolve));
+  const status=await h.api.voice_status();
+  assert.equal(status.state,"idle");
+  assert.match(status.error,/opnieuw/);
+  await h.api.voice_start();await h.api.voice_cancel();
+});
 
 test("microphone failures explain permission recovery, missing hardware and busy input", async () => {
   for (const [name, language, expected] of [
@@ -234,7 +299,7 @@ test("the login component retains the public auth contract", async () => {
   assert.match(component, /if \(response\.ok\) \{ setAccount\(undefined\); setCsrf\(""\); setError\(""\); setSessionRetryAvailable\(false\); setPhase\("login"\); return; \}/);
   assert.match(component, /setSessionRetryAvailable\(true\); throw reason;/);
   assert.match(component, /retrySession\(true\)/);
-  assert.match(component, /disabled=\{sessionRetryAvailable\}/);
+  assert.match(component, /disabled=\{codeInputLocked\}/);
   assert.match(component, /accountIntro: "Manage your account and signed-in browsers\."/);
 });
 

@@ -11,8 +11,11 @@ export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest) {
   const sessionResponse = await proxyWebRequest(request, ["auth", "session"]);
   if (!sessionResponse.ok) return webError("Meld je aan om BelgoBase te openen.", sessionResponse.status);
-  const session = await sessionResponse.json();
-  if (!session.authenticated) return webError("Meld je aan om BelgoBase te openen.", 401);
+  let session: { authenticated?: unknown } | null;
+  try { session = await sessionResponse.json(); }
+  catch { return webError("De werkruimte kon niet worden geladen. Probeer opnieuw.", 503); }
+  if (session?.authenticated !== true) return webError("Meld je aan om BelgoBase te openen.", 401);
+  try {
   const root = path.join(process.cwd(), "src/lib/workspace");
   const [original, desktopI18n, presentationI18n, adapter, polish] = await Promise.all([
     readFile(path.join(root, "assets/frozen-ui.html"), "utf8"),
@@ -34,4 +37,7 @@ export async function GET(request: NextRequest) {
   return new Response(html, { headers: { ...privateHeaders, "Content-Type": "text/html; charset=utf-8",
     ...workspaceSecurityHeaders,
   }});
+  } catch {
+    return webError("De werkruimte kon niet worden geladen. Probeer opnieuw.", 503);
+  }
 }

@@ -17,9 +17,17 @@
   let csrf = "";
   let csrfLoad = null;
   let voice = null;
+  let voiceGeneration = 0;
+  let voiceStarting = 0;
   let workspaceRevision = null;
   let workspaceSaveQueue = Promise.resolve();
   const adapterMessages = Object.freeze({
+    recordingActive: { nl: "Er loopt al een opname.", fr: "Un enregistrement est déjà en cours.", en: "A recording is already in progress." },
+    secureAudio: { nl: "Microfoonopname vereist een beveiligde browserverbinding.", fr: "L’enregistrement nécessite une connexion sécurisée.", en: "Microphone recording requires a secure browser connection." },
+    unsupportedAudio: { nl: "Deze browser ondersteunt geen microfoonopname.", fr: "Ce navigateur ne prend pas en charge l’enregistrement audio.", en: "This browser does not support microphone recording." },
+    audioStartFailed: { nl: "De microfoon kon niet starten. Sluit een andere opname of een gesprek en probeer opnieuw.", fr: "Le microphone ne démarre pas. Fermez tout autre enregistrement ou appel et réessayez.", en: "The microphone could not start. Close any other recording or call and try again." },
+    recordingShort: { nl: "De opname is te kort. Je getypte tekst is behouden.", fr: "L’enregistrement est trop court. Votre texte saisi est conservé.", en: "The recording is too short. Your typed text has been kept." },
+    recordingAbsent: { nl: "Er loopt geen opname.", fr: "Aucun enregistrement en cours.", en: "No recording is in progress." },
     sessionExpired: { nl: "Je sessie is verlopen. Meld je opnieuw aan.", fr: "Votre session a expiré. Reconnectez-vous.", en: "Your session has expired. Sign in again." },
     unavailable: { nl: "BelgoBase is tijdelijk niet beschikbaar. Probeer het later opnieuw.", fr: "BelgoBase est temporairement indisponible. Réessayez plus tard.", en: "BelgoBase is temporarily unavailable. Try again later." },
     denied: { nl: "Deze actie is niet beschikbaar voor je account. Vernieuw de pagina of neem contact op met BelgoBase.", fr: "Cette action n’est pas disponible pour votre compte. Actualisez la page ou contactez BelgoBase.", en: "This action is not available for your account. Refresh the page or contact BelgoBase." },
@@ -95,14 +103,17 @@
 
   function assertDownloadUrl(value) {
     if (typeof value !== "string") return null;
-    const url = new URL(value, window.location.origin);
-    if (url.origin !== window.location.origin || !DOWNLOAD_PATH.test(url.pathname + url.search)) return null;
-    return url;
+    try {
+      const url = new URL(value, window.location.origin);
+      if (url.origin !== window.location.origin || !DOWNLOAD_PATH.test(url.pathname + url.search) || url.hash || url.username || url.password) return null;
+      return url;
+    } catch { return null; }
   }
 
-  function triggerDownload(value) {
+  function triggerDownload(value, required = false) {
+    if (value == null && !required) return;
     const url = assertDownloadUrl(value);
-    if (!url) return;
+    if (!url) throw new Error(adapterMessage("retry"));
     const link = document.createElement("a");
     link.href = url.href;
     link.download = "";
@@ -150,7 +161,7 @@
     if (!response.ok || localized.ok !== true) {
       throw new Error(bridgeFailure(response.status, localized));
     }
-    triggerDownload(localized.download_url);
+    triggerDownload(localized.download_url, ["export_results", "export_selection"].includes(method));
     if ((method === "bootstrap" || method === "workspace_save") && Number.isInteger(localized.workspace_revision)) workspaceRevision = localized.workspace_revision;
     if ((method === "set_language" || method === "bootstrap") && ["nl", "fr", "en"].includes(localized.language)) {
       window.parent.postMessage({ type: "belgobase-web-language", language: localized.language }, window.location.origin);
@@ -159,6 +170,7 @@
   }
 
   function destroyVoice() {
+    voiceGeneration++;
     if (!voice) return;
     const active = voice;
     voice = null;
@@ -169,7 +181,7 @@
     try { active.source.disconnect(); } catch {}
     try { active.silent.disconnect(); } catch {}
     for (const track of active.stream.getTracks()) track.stop();
-    void active.context.close().catch(() => {});
+    try { void active.context?.close().catch(() => {}); } catch {}
   }
 
   function linearResample(chunks, inputRate) {
@@ -209,14 +221,18 @@
   }
 
   async function startVoice() {
-    if (voice) throw new Error("Er loopt al een opname.");
+    if (voice || (voiceStarting && voiceStarting === voiceGeneration)) throw new Error(adapterMessage("recordingActive"));
     if (!navigator.mediaDevices?.getUserMedia || !window.isSecureContext) {
-      throw new Error("Microfoonopname vereist een beveiligde browserverbinding.");
+      throw new Error(adapterMessage("secureAudio"));
     }
+    const generation = ++voiceGeneration;
+    voiceStarting = generation;
+    try {
     let stream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1 } });
     } catch (error) {
+      if (generation !== voiceGeneration) return { ok: true, cancelled: true };
       const language = document.getElementById?.("language-switch")?.value || document.documentElement?.lang || "nl";
       const messages = {
         denied: {
@@ -230,18 +246,23 @@
       const reason = ["NotAllowedError", "SecurityError"].includes(error?.name) ? "denied" : error?.name === "NotFoundError" ? "missing" : "busy";
       throw new Error(messages[reason][language] || messages[reason].nl);
     }
+    if (generation !== voiceGeneration) {
+      for (const track of stream.getTracks()) track.stop();
+      return { ok: true, cancelled: true };
+    }
     const Audio = window.AudioContext || window.webkitAudioContext;
     if (!Audio) {
       for (const track of stream.getTracks()) track.stop();
-      throw new Error("Deze browser ondersteunt geen microfoonopname.");
+      throw new Error(adapterMessage("unsupportedAudio"));
     }
-    const context = new Audio();
-    const source = context.createMediaStreamSource(stream);
-    const processor = context.createScriptProcessor(4096, 1, 1);
-    const silent = context.createGain();
+    const active = { stream, context: null, source: null, processor: null, silent: null, chunks: [], started: performance.now(), level: 0, state: "starting", timer: 0, request: null, cancelled: false, result: null, error: "" };
+    voice = active;
+    try {
+    const context = active.context = new Audio();
+    const source = active.source = context.createMediaStreamSource(stream);
+    const processor = active.processor = context.createScriptProcessor(4096, 1, 1);
+    const silent = active.silent = context.createGain();
     silent.gain.value = 0;
-    const started = performance.now();
-    const active = { stream, context, source, processor, silent, chunks: [], started, level: 0, state: "recording", timer: 0, request: null, cancelled: false, result: null, error: "" };
     processor.onaudioprocess = (event) => {
       if (active.cancelled || active.state !== "recording") return;
       const channel = event.inputBuffer.getChannelData(0);
@@ -256,9 +277,18 @@
     processor.connect(silent);
     silent.connect(context.destination);
     await context.resume();
+    if (generation !== voiceGeneration || active.cancelled) return { ok: true, cancelled: true };
+    active.started = performance.now();
+    active.state = "recording";
     active.timer = window.setTimeout(() => { void finishVoice(active).catch((error) => { active.error = messageFor(error); active.state = "error"; }); }, MAX_SECONDS * 1000);
-    voice = active;
     return { ok: true };
+    } catch {
+      if (voice === active) destroyVoice();
+      throw new Error(adapterMessage("audioStartFailed"));
+    }
+    } finally {
+      if (voiceStarting === generation) voiceStarting = 0;
+    }
   }
 
   function finishVoice(active) {
@@ -277,10 +307,11 @@
     for (const track of active.stream.getTracks()) track.stop();
     const samples = linearResample(active.chunks, active.context.sampleRate);
     await active.context.close().catch(() => {});
-    if (samples.length < TARGET_RATE / 2) throw new Error("De opname is te kort. Je getypte tekst is behouden.");
+    if (samples.length < TARGET_RATE / 2) throw new Error(adapterMessage("recordingShort"));
     const controller = new AbortController();
     active.request = controller;
     const token = await ensureCsrf();
+    if (active.cancelled) return { ok: true, cancelled: true };
     const response = await fetch(`${API_ROOT}/voice`, {
       method: "POST",
       credentials: "same-origin",
@@ -292,7 +323,7 @@
     if (active.cancelled) return { ok: true, cancelled: true };
     if (response.status === 401) {
       authExpired();
-      throw new Error("Je sessie is verlopen. Meld je opnieuw aan.");
+      throw new Error(adapterMessage("sessionExpired"));
     }
     if (!response.ok || data.ok !== true) {
       const language = document.getElementById?.("language-switch")?.value || document.documentElement?.lang || "nl";
@@ -306,13 +337,14 @@
       const message = errors[data.error] || fallback;
       throw new Error(message[language] || message.nl);
     }
+    if (typeof data.text !== "string") throw new Error(adapterMessage("retry"));
     active.result = data;
     active.state = "complete";
     return data;
   }
 
   async function voiceStop() {
-    if (!voice) throw new Error("Er loopt geen opname.");
+    if (!voice) throw new Error(adapterMessage("recordingAbsent"));
     const active = voice;
     try {
       return await finishVoice(active);
@@ -378,5 +410,5 @@
     }
   });
   window.pywebview = { api };
-  window.addEventListener("pagehide", destroyVoice, { once: true });
+  window.addEventListener("pagehide", destroyVoice);
 })();

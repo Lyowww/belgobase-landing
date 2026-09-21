@@ -10,7 +10,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const title = locale === "nl" ? "Wettelijke vermeldingen | BelgoBase" : "Legal Notice | BelgoBase";
   const description = locale === "nl"
     ? "Juridische informatie over de BelgoBase-website, de aanbieder en de toepasselijke voorwaarden."
-    : "Read or download the current legal notice for the BelgoBase website. The published document is available in Dutch.";
+    : "Read or download the current BelgoBase legal notice in Dutch, French or English.";
   return {
     title,
     description,

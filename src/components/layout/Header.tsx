@@ -3,7 +3,7 @@
 import { Menu, Phone, X } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useThrottledScroll } from "@/hooks/useThrottledScroll";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
@@ -19,12 +19,16 @@ type HeaderProps = {
 export function Header({ variant = "default" }: HeaderProps) {
   const { t, locale } = useTranslations();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
   const scrolled = useThrottledScroll(40);
   const isComingSoon = variant === "comingSoon";
 
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMobileOpen(false);
+      if (event.key === "Escape" && mobileOpen) {
+        setMobileOpen(false);
+        mobileMenuButtonRef.current?.focus();
+      }
     };
     const desktop = window.matchMedia("(min-width: 1024px)");
     const closeOnDesktop = () => { if (desktop.matches) setMobileOpen(false); };
@@ -34,7 +38,7 @@ export function Header({ variant = "default" }: HeaderProps) {
       document.removeEventListener("keydown", closeOnEscape);
       desktop.removeEventListener("change", closeOnDesktop);
     };
-  }, []);
+  }, [mobileOpen]);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -138,6 +142,7 @@ export function Header({ variant = "default" }: HeaderProps) {
           <ThemeToggle />
           {!isComingSoon && (
             <button
+              ref={mobileMenuButtonRef}
               type="button"
               className="shrink-0 rounded-xl p-2 transition-colors hover:bg-surface-hover touch-manipulation"
               onClick={() => setMobileOpen(!mobileOpen)}

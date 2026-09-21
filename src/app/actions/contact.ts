@@ -9,6 +9,7 @@ import {
   contactFormSchema,
   type ContactFormData,
 } from "@/lib/validations/contact";
+import { contactDeliveryState } from "@/lib/contact-state";
 
 export type ContactFormState = {
   success: boolean;
@@ -64,14 +65,8 @@ export async function submitContactForm(
 
   if (!result.ok) {
     console.error("[contact] Failed to send admin notification:", result.errorDetail);
-    return {
-      success: false,
-      message: "errorMessage",
-    };
+    return contactDeliveryState(false);
   }
 
-  return {
-    success: true,
-    message: "successMessage",
-  };
+  return contactDeliveryState(true);
 }

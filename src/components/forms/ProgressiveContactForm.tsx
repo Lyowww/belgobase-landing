@@ -90,6 +90,11 @@ export function ProgressiveContactForm({
       setFormError(translateError(key));
       return false;
     }
+    if (values.phone.trim().length > CONTACT_FIELD_LIMITS.phone) {
+      setErrorField("phone");
+      setFormError(translateError("phoneMax"));
+      return false;
+    }
     if (!values.gdprConfirm) {
       setErrorField("gdprConfirm");
       setFormError(translateError("gdprRequired"));
@@ -141,6 +146,8 @@ export function ProgressiveContactForm({
         ? translateError(state.errors.email)
         : state.errors?.company
           ? translateError(state.errors.company)
+          : state.errors?.phone
+            ? translateError(state.errors.phone)
           : state.errors?.gdprConfirm
             ? translateError(state.errors.gdprConfirm)
             : null);
@@ -238,7 +245,10 @@ export function ProgressiveContactForm({
             maxLength={CONTACT_FIELD_LIMITS.phone}
             value={values.phone}
             onChange={(e) => update("phone", e.target.value)}
-            className="form-input w-full rounded-xl px-3 py-2.5 text-base sm:px-4 sm:text-sm"
+            className={cn(
+              "form-input w-full rounded-xl px-3 py-2.5 text-base sm:px-4 sm:text-sm",
+              (errorField === "phone" || state.errors?.phone) && "border-red-400/60",
+            )}
             placeholder={t("form.phonePlaceholder")}
           />
         </div>

@@ -10,7 +10,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const title = locale === "nl" ? "Privacyverklaring | BelgoBase" : "Privacy Notice | BelgoBase";
   const description = locale === "nl"
     ? "Hoe NovaVenture Group BV, handelend onder de naam BelgoBase, persoonsgegevens verwerkt en welke rechten betrokkenen hebben."
-    : "Read or download the current BelgoBase privacy notice. The published document is available in Dutch.";
+    : "Read or download the current BelgoBase privacy notice in Dutch, French or English.";
   return {
     title,
     description,

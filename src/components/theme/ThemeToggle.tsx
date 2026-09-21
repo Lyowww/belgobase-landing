@@ -25,6 +25,7 @@ export function ThemeToggle({
   const { t } = useTranslations();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -36,6 +37,17 @@ export function ThemeToggle({
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      triggerRef.current?.focus();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
+
   const displayTheme = mounted ? theme : DEFAULT_THEME;
   const ActiveIcon =
     options.find((o) => o.value === displayTheme)?.icon ?? Monitor;
@@ -43,6 +55,7 @@ export function ThemeToggle({
   return (
     <div ref={ref} className={cn("relative", className)}>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen(!open)}
         className={cn(
@@ -80,6 +93,7 @@ export function ThemeToggle({
                 onClick={() => {
                   setTheme(option.value);
                   setOpen(false);
+                  window.requestAnimationFrame(() => triggerRef.current?.focus());
                 }}
                 className={cn(
                   "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",

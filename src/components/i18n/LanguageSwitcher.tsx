@@ -9,20 +9,10 @@ import {
   i18n,
   localeFlags,
   localeNames,
-  type Locale,
 } from "@/i18n/config";
 import { useTranslations } from "@/providers/TranslationsProvider";
+import { getLocalizedBrowserHref, getLocalizedPath } from "@/lib/locale-path";
 import { cn } from "@/lib/utils";
-
-function getLocalizedPath(pathname: string, locale: Locale) {
-  const segments = pathname.split("/").filter(Boolean);
-  if (segments.length > 0 && i18n.locales.includes(segments[0] as Locale)) {
-    segments[0] = locale;
-  } else {
-    segments.unshift(locale);
-  }
-  return `/${segments.join("/")}`;
-}
 
 export function LanguageSwitcher({
   className,
@@ -35,6 +25,7 @@ export function LanguageSwitcher({
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -46,9 +37,21 @@ export function LanguageSwitcher({
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      triggerRef.current?.focus();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
+
   return (
     <div ref={ref} className={cn("relative", className)}>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen(!open)}
         className={cn(
@@ -98,10 +101,21 @@ export function LanguageSwitcher({
                 href={getLocalizedPath(pathname, loc)}
                 role="option"
                 aria-selected={locale === loc}
-                onClick={() => {
+                onClick={(event) => {
                   const secure = window.location.protocol === "https:" ? ";Secure" : "";
                   document.cookie = `NEXT_LOCALE=${loc};path=/;max-age=15552000;SameSite=Lax${secure}`;
                   setOpen(false);
+                  if (window.location.search || window.location.hash) {
+                    event.preventDefault();
+                    window.location.assign(
+                      getLocalizedBrowserHref(
+                        pathname,
+                        loc,
+                        window.location.search,
+                        window.location.hash,
+                      ),
+                    );
+                  }
                 }}
                 className={cn(
                   "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",

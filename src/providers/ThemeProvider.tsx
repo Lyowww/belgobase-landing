@@ -12,6 +12,7 @@ import {
 import {
   DEFAULT_THEME,
   THEME_COOKIE,
+  buildThemePreferenceCookie,
   resolveTheme,
   type ResolvedTheme,
   type Theme,
@@ -51,14 +52,10 @@ function readStoredTheme(): Theme {
 }
 
 function persistThemePreference(theme: Theme) {
-  const secure = window.location.protocol === "https:" ? ";Secure" : "";
-  if (theme === "system") {
-    document.cookie = `${THEME_COOKIE}=;path=/;max-age=0;SameSite=Lax${secure}`;
-    return;
-  }
-
-  const maxAge = 60 * 60 * 24 * 180;
-  document.cookie = `${THEME_COOKIE}=${theme};path=/;max-age=${maxAge};SameSite=Lax${secure}`;
+  document.cookie = buildThemePreferenceCookie(
+    theme,
+    window.location.protocol === "https:",
+  );
 }
 
 type ThemeProviderProps = {

@@ -17,7 +17,10 @@ export async function GET(request: NextRequest) {
   const text = messages[language];
   const session = await proxyWebRequest(request, ["auth", "session"]);
   if (!session.ok) return webError(session.status === 401 ? text.signIn : text.unavailable, session.status);
-  if (!(await session.json()).authenticated) return webError(text.signIn, 401);
+  let sessionData: unknown;
+  try { sessionData = await session.json(); }
+  catch { return webError(text.unavailable, 503); }
+  if (!sessionData || typeof sessionData !== "object" || (sessionData as { authenticated?: unknown }).authenticated !== true) return webError(text.signIn, 401);
   try {
     const response = await fetch("https://api.belgobase.be/client-updates/manifest", { cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15000) });
     if (!response.ok) throw new Error("Release unavailable");
