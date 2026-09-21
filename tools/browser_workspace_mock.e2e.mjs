@@ -322,7 +322,8 @@ try {
   await page.getByLabel("Ondernemingsnummer (KBO)").fill("BE 0123.456.789");
   await page.getByRole("button", { name: "Bedrijfsgegevens ophalen" }).click();
   await page.getByLabel("Wettelijke bedrijfsnaam").waitFor();
-  assert.equal(await page.getByLabel("Wettelijke bedrijfsnaam").inputValue(), "Voorbeeld Bouw BV", "KBO autofill remains editable");
+  assert.equal(await page.getByLabel("Wettelijke bedrijfsnaam").inputValue(), "Voorbeeld Bouw BV", "KBO autofill matches the verified company");
+  assert.equal(await page.getByLabel("Wettelijke bedrijfsnaam").getAttribute("readonly"), "", "verified legal name cannot diverge from the signed snapshot");
   assert.equal(await page.getByText("Ik aanvaard de algemene voorwaarden B2B.").count(), 1, "server legal text is displayed");
   const legalButtons = page.getByRole("button", { name: "Lees document" });
   assert.equal(await legalButtons.count(), 3, "the three server document links are available");
@@ -348,6 +349,22 @@ try {
   for (let index = 0; index < 4; index += 1) await enrollmentChecks.nth(index).check();
   await page.getByLabel("Naam van de aanvaarder").fill("Nieuw Account");
   await page.getByLabel("Functie van de aanvaarder").fill("Bestuurder");
+  await page.route("**/api/web/enrollment/complete", route => route.fulfill({status:409,contentType:"application/json",body:JSON.stringify({ok:false,error:"legal_preflight_expired"})}));
+  await page.getByRole("button", { name: "Zakelijke inschrijving voltooien" }).click();
+  await page.getByRole("alert").getByText("Deze controle is verlopen.", {exact:false}).waitFor();
+  for (const [language, message] of [["fr", "Cette vérification a expiré."], ["en", "This check has expired."], ["nl", "Deze controle is verlopen."]]) {
+    await page.getByLabel("Taal / Language / Langue", {exact:true}).selectOption(language);
+    assert.ok((await page.locator('p[role="alert"]').innerText()).startsWith(message), "existing error follows current language");
+  }
+  await page.unroute("**/api/web/enrollment/complete");
+  await page.getByRole("button", { name: "Bedrijfsgegevens ophalen" }).click();
+  await page.getByLabel("Naam van de aanvaarder").waitFor();
+  assert.equal(await page.getByLabel("Naam van de aanvaarder").inputValue(), "Nieuw Account");
+  assert.equal(await page.getByLabel("Functie van de aanvaarder").inputValue(), "Bestuurder");
+  for (let index = 0; index < 4; index += 1) {
+    assert.equal(await enrollmentChecks.nth(index).isChecked(), false, "refreshed documents require fresh confirmation");
+    await enrollmentChecks.nth(index).check();
+  }
   await page.getByRole("button", { name: "Zakelijke inschrijving voltooien" }).click();
   await page.locator('iframe[title="BelgoBase workspace"]').waitFor();
   assert.equal(state.enrollmentCalls[0].body.remember_browser, true, "enrollment preserves the remember choice");
