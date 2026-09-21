@@ -5,14 +5,20 @@ import test from "node:test";
 
 const source = await readFile(new URL("./browser-i18n.js", import.meta.url), "utf8");
 
-function load(language = "fr", messages = {}) {
+function load(language = "fr", messages = {}, domSlots = []) {
   const listeners = new Map();
   const window = {
     BelgoBaseI18n: { language, messages, apply() {} },
     addEventListener(name, callback) { listeners.set(name, callback); },
   };
   class MutationObserver { observe() {} }
-  const document = { documentElement: {}, body: null };
+  const document = {
+    documentElement: {}, body: null,
+    querySelectorAll(selector) {
+      const selectors = new Set(selector.split(","));
+      return domSlots.filter(slot => selectors.has(slot.selector)).flatMap(slot => slot.elements);
+    },
+  };
   vm.runInNewContext(source, { window, document, MutationObserver, queueMicrotask: callback => callback(), structuredClone: value => JSON.parse(JSON.stringify(value)), Array, Object, Set, String });
   return window;
 }
@@ -23,6 +29,20 @@ test("uses account-workspace wording for web saves without changing frozen deskt
   assert.equal(messages["dialog.localWorkspace"].nl, "Opgeslagen in je BelgoBase-accountwerkruimte.");
   assert.equal(messages["dialog.localWorkspace"].fr, "Enregistré dans l’espace de travail de votre compte BelgoBase.");
   assert.equal(messages["dialog.localWorkspace"].en, "Saved in your BelgoBase account workspace.");
+});
+
+test("web sign-out wording describes the browser session rather than a device", () => {
+  const messages = {
+    "account.deactivate": { nl: "Dit apparaat afmelden", fr: "Désenregistrer cet appareil", en: "Unregister this device" },
+    "account.deactivatedTitle": { nl: "Dit apparaat is afgemeld.", fr: "Cet appareil est désenregistré.", en: "This device is unregistered." },
+  };
+  load("en", messages);
+  assert.equal(messages["account.deactivate"].nl, "Deze browser afmelden");
+  assert.equal(messages["account.deactivate"].fr, "Déconnecter ce navigateur");
+  assert.equal(messages["account.deactivate"].en, "Sign out this browser");
+  assert.equal(messages["account.deactivatedTitle"].nl, "Deze browser is afgemeld.");
+  assert.equal(messages["account.deactivatedTitle"].fr, "Ce navigateur est déconnecté.");
+  assert.equal(messages["account.deactivatedTitle"].en, "This browser is signed out.");
 });
 
 test("company metadata has readable labels without exposing missing-value sentinels", () => {
@@ -59,6 +79,23 @@ test("round-trips known presentation text between French, English and Dutch", ()
   assert.equal(french, "Chiffre d’affaires");
   assert.equal(english, "Revenue");
   assert.equal(i18n.translate(english), "Omzet");
+});
+
+test("round-trips the rendered dossier status after repeated language switches", () => {
+  const optionText = { nodeType: 3, nodeValue: "Actief" };
+  const dossierText = { nodeType: 3, nodeValue: "Actief" };
+  const window = load("nl", {}, [
+    { selector: "#f-status option", elements: [{ childNodes: [optionText] }] },
+    { selector: "#dossier-meta > span:last-child", elements: [{ childNodes: [dossierText] }] },
+  ]);
+  const i18n = window.BelgoBasePresentationI18n;
+  const expected = { fr: "Actif", en: "Active", nl: "Actief" };
+  for (const language of ["fr", "en", "nl"]) {
+    window.BelgoBaseI18n.language = language;
+    i18n.apply();
+    assert.equal(optionText.nodeValue, expected[language]);
+    assert.equal(dossierText.nodeValue, expected[language]);
+  }
 });
 
 test("keeps source provenance in the delivered browser layer", () => {

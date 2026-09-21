@@ -1,10 +1,11 @@
 import { Resend } from "resend";
-import { contactEmail as defaultRecipientEmail } from "@/lib/site";
+import { salesContactEmail as defaultRecipientEmail } from "@/lib/site";
 import { emailSchema } from "@/lib/validations/contact";
 import {
   contactDeliveryKey,
   isIdempotencyConflict,
 } from "@/lib/email/contact-abuse";
+import { resolveAdminEmailCandidate } from "@/lib/email/admin-recipient";
 
 /** Default verified sender identity — not a mailbox. Never use as `to`. */
 export const DEFAULT_FROM_EMAIL = "BelgoBase <noreply@belgobase.be>";
@@ -75,10 +76,7 @@ export function validateRecipientEmail(
 export function resolveAdminEmail():
   | { ok: true; email: string }
   | { ok: false; errorDetail: string } {
-  const candidate =
-    process.env.ADMIN_EMAIL?.trim() ||
-    process.env.CONTACT_EMAIL?.trim() ||
-    defaultRecipientEmail;
+  const candidate = resolveAdminEmailCandidate(defaultRecipientEmail);
 
   const address = extractAddress(candidate);
 

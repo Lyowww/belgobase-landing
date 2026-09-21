@@ -19,6 +19,24 @@
   let voice = null;
   let workspaceRevision = null;
   let workspaceSaveQueue = Promise.resolve();
+  const adapterMessages = Object.freeze({
+    sessionExpired: { nl: "Je sessie is verlopen. Meld je opnieuw aan.", fr: "Votre session a expiré. Reconnectez-vous.", en: "Your session has expired. Sign in again." },
+    unavailable: { nl: "BelgoBase is tijdelijk niet beschikbaar. Probeer het later opnieuw.", fr: "BelgoBase est temporairement indisponible. Réessayez plus tard.", en: "BelgoBase is temporarily unavailable. Try again later." },
+    denied: { nl: "Deze actie is niet beschikbaar voor je account. Vernieuw de pagina of neem contact op met BelgoBase.", fr: "Cette action n’est pas disponible pour votre compte. Actualisez la page ou contactez BelgoBase.", en: "This action is not available for your account. Refresh the page or contact BelgoBase." },
+    retry: { nl: "Deze actie kon niet worden afgerond. Probeer het opnieuw.", fr: "Cette action n’a pas pu être terminée. Réessayez.", en: "This action could not be completed. Try again." },
+  });
+  function adapterLanguage() {
+    const value = document.documentElement?.lang?.toLowerCase();
+    return ["nl", "fr", "en"].includes(value) ? value : "nl";
+  }
+  const adapterMessage = key => adapterMessages[key][adapterLanguage()];
+  const protocolCode = value => typeof value === "string" && /^[a-z][a-z0-9_]*$/.test(value);
+  function bridgeFailure(status, data) {
+    if (status === 403) return adapterMessage("denied");
+    if (status >= 500) return adapterMessage("unavailable");
+    const message = typeof data?.error === "string" && !protocolCode(data.error) ? data.error : null;
+    return message || adapterMessage("retry");
+  }
 
   function messageFor(error) {
     return error instanceof Error && error.message
@@ -49,18 +67,26 @@
   async function ensureCsrf() {
     if (csrf) return csrf;
     if (!csrfLoad) {
-      csrfLoad = fetch(`${API_ROOT}/auth/session`, {
-        cache: "no-store",
-        credentials: "same-origin",
-      }).then(async (response) => {
-        const data = await json(response);
-        if (response.status === 401 || !response.ok || data.authenticated !== true || typeof data.csrf !== "string") {
-          authExpired();
-          throw new Error("Je sessie is verlopen. Meld je opnieuw aan.");
+      csrfLoad = (async () => {
+        let response;
+        try {
+          response = await fetch(`${API_ROOT}/auth/session`, {
+            cache: "no-store",
+            credentials: "same-origin",
+          });
+        } catch {
+          throw new Error(adapterMessage("unavailable"));
         }
+        const data = await json(response);
+        if (response.status === 401) {
+          authExpired();
+          throw new Error(adapterMessage("sessionExpired"));
+        }
+        if (!response.ok) throw new Error(bridgeFailure(response.status, data));
+        if (data.authenticated !== true || typeof data.csrf !== "string") throw new Error(adapterMessage("unavailable"));
         csrf = data.csrf;
         return csrf;
-      }).finally(() => {
+      })().finally(() => {
         csrfLoad = null;
       });
     }
@@ -100,30 +126,36 @@
     const token = await ensureCsrf();
     const outgoing = payload === undefined ? {} : { ...payload };
     if (method === "workspace_save") outgoing.workspace_revision = workspaceRevision;
-    const response = await fetch(`${API_ROOT}/bridge/${encodeURIComponent(method)}`, {
-      method: "POST",
-      cache: "no-store",
-      credentials: "same-origin",
-      headers: {
-        "content-type": "application/json",
-        "X-BelgoBase-CSRF": token,
-      },
-      body: JSON.stringify(outgoing),
-    });
+    let response;
+    try {
+      response = await fetch(`${API_ROOT}/bridge/${encodeURIComponent(method)}`, {
+        method: "POST",
+        cache: "no-store",
+        credentials: "same-origin",
+        headers: {
+          "content-type": "application/json",
+          "X-BelgoBase-CSRF": token,
+        },
+        body: JSON.stringify(outgoing),
+      });
+    } catch {
+      throw new Error(adapterMessage("unavailable"));
+    }
     const data = await json(response);
+    const localized = typeof window.BelgoBaseWebI18n?.enrich === "function" ? window.BelgoBaseWebI18n.enrich(method, data) : data;
     if (response.status === 401) {
       authExpired();
-      throw new Error("Je sessie is verlopen. Meld je opnieuw aan.");
+      throw new Error(adapterMessage("sessionExpired"));
     }
-    if (!response.ok || data.ok !== true) {
-      throw new Error(typeof data.error === "string" ? data.error : "Deze actie kon niet worden afgerond. Probeer het opnieuw.");
+    if (!response.ok || localized.ok !== true) {
+      throw new Error(bridgeFailure(response.status, localized));
     }
-    triggerDownload(data.download_url);
-    if ((method === "bootstrap" || method === "workspace_save") && Number.isInteger(data.workspace_revision)) workspaceRevision = data.workspace_revision;
-    if ((method === "set_language" || method === "bootstrap") && ["nl", "fr", "en"].includes(data.language)) {
-      window.parent.postMessage({ type: "belgobase-web-language", language: data.language }, window.location.origin);
+    triggerDownload(localized.download_url);
+    if ((method === "bootstrap" || method === "workspace_save") && Number.isInteger(localized.workspace_revision)) workspaceRevision = localized.workspace_revision;
+    if ((method === "set_language" || method === "bootstrap") && ["nl", "fr", "en"].includes(localized.language)) {
+      window.parent.postMessage({ type: "belgobase-web-language", language: localized.language }, window.location.origin);
     }
-    return typeof window.BelgoBaseWebI18n?.enrich === "function" ? window.BelgoBaseWebI18n.enrich(method, data) : data;
+    return localized;
   }
 
   function destroyVoice() {

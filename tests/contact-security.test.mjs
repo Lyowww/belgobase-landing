@@ -12,6 +12,46 @@ import {
   CONTACT_FIELD_LIMITS,
   contactFormSchema,
 } from "../src/lib/validations/contact.ts";
+import { resolveAdminEmailCandidate } from "../src/lib/email/admin-recipient.ts";
+import { salesContactEmail } from "../src/lib/site.ts";
+
+test("demo requests use the commercial fallback while explicit admin configuration wins", () => {
+  const originalAdminEmail = process.env.ADMIN_EMAIL;
+  const originalContactEmail = process.env.CONTACT_EMAIL;
+
+  try {
+    delete process.env.ADMIN_EMAIL;
+    delete process.env.CONTACT_EMAIL;
+    assert.equal(
+      resolveAdminEmailCandidate(salesContactEmail),
+      "david@belgobase.be",
+    );
+
+    process.env.CONTACT_EMAIL = "contact-override@example.com";
+    assert.equal(
+      resolveAdminEmailCandidate(salesContactEmail),
+      "contact-override@example.com",
+    );
+
+    process.env.ADMIN_EMAIL = "admin-override@example.com";
+    assert.equal(
+      resolveAdminEmailCandidate(salesContactEmail),
+      "admin-override@example.com",
+    );
+  } finally {
+    if (originalAdminEmail === undefined) {
+      delete process.env.ADMIN_EMAIL;
+    } else {
+      process.env.ADMIN_EMAIL = originalAdminEmail;
+    }
+
+    if (originalContactEmail === undefined) {
+      delete process.env.CONTACT_EMAIL;
+    } else {
+      process.env.CONTACT_EMAIL = originalContactEmail;
+    }
+  }
+});
 
 test("contact delivery keys impose a provider-enforced fixed-window budget", () => {
   const now = CONTACT_MAIL_WINDOW_MS * 10 + 1234;

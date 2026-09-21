@@ -99,3 +99,14 @@ input::placeholder, textarea::placeholder { color: #65748a; opacity: 1; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
 }
+.wallet-metric strong span { font: inherit; color: inherit; }
+/* Keep absolutely positioned screen-reader labels inside their scroll area. */
+.table-wrap { position: relative; }
+.wallet-primary strong { font-size: 2rem; line-height: 1.25; }
+.wallet-topup-form { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; gap: 12px; margin-top: 18px; }
+.wallet-topup-form[hidden] { display: none; }
+.wallet-topup-form label { font-size: 16px; font-weight: 600; }
+.wallet-topup-form input, .wallet-topup-form textarea { min-width: 0; max-width: 100%; box-sizing: border-box; width: 100%; font: inherit; padding: 12px; border: 1px solid #bdcbe1; border-radius: 9px; }
+.wallet-topup-form textarea { min-height: 150px; resize: vertical; }
+.wallet-topup-form a { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; text-decoration: none; }
+.wallet-topup-form a[aria-disabled="true"] { opacity: .5; cursor: not-allowed; }

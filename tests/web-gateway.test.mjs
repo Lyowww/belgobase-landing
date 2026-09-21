@@ -16,7 +16,14 @@ test('login mail requires the server signature, correct purpose and a fresh chal
   assert.equal(verifyLoginMail(raw,signature,'',now),null);
   const wrong=JSON.stringify({...message,purpose:'other-purpose'});
   assert.equal(verifyLoginMail(wrong,sign(null,Buffer.from(wrong),privateKey).toString('base64'),key,now),null);
-  assert.match(loginMailContent(message).text,/123456/);
+  const invalidLanguage=JSON.stringify({...message,language:'de'});
+  assert.equal(verifyLoginMail(invalidLanguage,sign(null,Buffer.from(invalidLanguage),privateKey).toString('base64'),key,now),null);
+  const localized={nl:/vervalt binnen 10 minuten/,fr:/expire dans 10 minutes/,en:/expires in 10 minutes/};
+  for (const [language, expected] of Object.entries(localized)) {
+    const content=loginMailContent({...message,language});
+    assert.match(content.text,/123456/);
+    assert.match(content.text,expected);
+  }
 });
 
 function request(path,body,headers={}) {
@@ -56,16 +63,21 @@ test('gateway preserves filters and forwards only the dedicated cookie and CSRF'
   } finally {globalThis.fetch=original;}
 });
 
-test('first use claims a licence; later sign-in needs only the registered email',async()=>{
+test('auth and enrollment starts forward a validated mail language',async()=>{
   const original=globalThis.fetch;const calls=[];
   globalThis.fetch=async(url,options)=>{calls.push([String(url),JSON.parse(new TextDecoder().decode(options.body))]);return Response.json({ok:true,challenge_id:'opaque_challenge'});};
   try {
-    await proxyWebRequest(request('auth/start',{email:'qa@example.test',license_code:'TEST-NOT-A-REAL-LICENCE',remember:true}),['auth','start']);
-    await proxyWebRequest(request('auth/start',{email:'qa@example.test',remember:false}),['auth','start']);
+    await proxyWebRequest(request('auth/start',{email:'qa@example.test',license_code:'TEST-NOT-A-REAL-LICENCE',remember:true,language:'fr'}),['auth','start']);
+    await proxyWebRequest(request('auth/start',{email:'qa@example.test',remember:false,language:'en'}),['auth','start']);
+    await proxyWebRequest(request('enrollment/start',{email:'qa@example.test',license_code:'TEST-NOT-A-REAL-LICENCE',remember_browser:false,language:'de'}),['enrollment','start']);
     assert.equal(calls[0][0],'https://api.belgobase.be/web/auth/claim');
     assert.equal(calls[0][1].remember_browser,true);
+    assert.equal(calls[0][1].language,'fr');
     assert.equal(calls[1][0],'https://api.belgobase.be/web/auth/login');
     assert.equal('license_code' in calls[1][1],false);
+    assert.equal(calls[1][1].language,'en');
+    assert.equal(calls[2][0],'https://api.belgobase.be/web/enrollment/start');
+    assert.equal(calls[2][1].language,'nl');
   } finally {globalThis.fetch=original;}
 });
 

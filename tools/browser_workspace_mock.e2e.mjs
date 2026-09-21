@@ -3,22 +3,24 @@
  * HTTP mock: no real license, mail provider, customer data or VPS is touched.
  *
  * Run from the worktree with:
+ *   pnpm exec next build
  *   node tools/browser_workspace_mock.e2e.mjs
  */
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
-import { access, mkdir, rm, writeFile, readFile } from "node:fs/promises";
-import http from "node:http";
+import { access, mkdir, mkdtemp, rm, writeFile, readFile } from "node:fs/promises";
+import https from "node:https";
+import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const appPort = 3107;
 const mockPort = 4191;
 const appOrigin = `http://localhost:${appPort}`;
-const mockOrigin = `http://127.0.0.1:${mockPort}`;
+const mockOrigin = `https://127.0.0.1:${mockPort}`;
 const artifactDirectory = path.join(root, "tools", "test-artifacts");
 const screenshotPath = path.join(artifactDirectory, "browser-workspace-mock.png");
 const enrollmentScreenshotPath = path.join(artifactDirectory, "browser-enrollment-mock.png");
@@ -46,6 +48,11 @@ const state = {
   appLog: [],
   expireNextBridge: false,
   expireNextDocument: false,
+  wallet: {currency:"EUR",balance_eur:0,available_eur:0,reserved_eur:0,spent_eur:0,entries:[]},
+  walletUnavailable: false,
+  failNextSearch: false,
+  history: [],
+  workspace: { lists: [], searches: [], active_list_id: null, result_columns: ["name", "city", "revenue", "profit", "fte", "year"] },
 };
 const csrf = "mock-csrf-token-0123456789";
 const sessionCookie = "belgobase_session=mock-browser-session";
@@ -109,7 +116,7 @@ function bootstrap() {
     legal_forms: [{ value: "BV", label: "Besloten vennootschap" }],
     statuses: [{ value: "", label: "Alle statussen" }, { value: "AC", label: "Actief" }],
     saved: [],
-    workspace: { lists: [], searches: [], active_list_id: null, result_columns: ["name", "city", "revenue", "profit", "fte", "year"] },
+    workspace: state.workspace,
     filter_labels: {}, enum_labels: {}, activity_labels_by_version: { "2025": {} },
   };
 }
@@ -125,7 +132,9 @@ function company() {
   };
 }
 
-const mock = http.createServer(async (request, response) => {
+const tlsDirectory = await mkdtemp(path.join(os.tmpdir(), "belgobase-browser-tls-"));
+execFileSync(process.env.PYTHON || "C:/Users/David1/AppData/Local/Programs/Python/Python313/python.exe", [path.join(root,"tools/mock_tls.py"),tlsDirectory], {windowsHide:true});
+const mock = https.createServer({key:await readFile(path.join(tlsDirectory,"key.pem")),cert:await readFile(path.join(tlsDirectory,"cert.pem"))}, async (request, response) => {
   const url = new URL(request.url || "/", mockOrigin);
   state.requests.push(`${request.method} ${url.pathname}`);
   try {
@@ -202,22 +211,37 @@ const mock = http.createServer(async (request, response) => {
       const body = await readBody(request);
       state.bridgeCalls.push(body);
       if (body.method === "bootstrap") return json(response, 200, bootstrap());
-      if (body.method === "ai_wallet") return json(response, 200, { ok: true, wallet: { currency: "EUR", balance_eur: 12, available_eur: 10, reserved_eur: 1, spent_eur: 2, entries: [] } });
+      if (body.method === "ai_wallet") return state.walletUnavailable?json(response,503,{ok:false,error:"temporarily_unavailable"}):json(response,200,{ok:true,wallet:state.wallet});
+      if (body.method === "account_action" && body.payload.action === "refresh") return json(response,200,{ok:true,rows:[{label:"Klantnummer",value:"KL-MOCK-001"},{label:"Licentie-ID",value:"LIC-MOCK-001"},{label:"Onderneming",value:"Mock BelgoBase"}],documents:[]});
+      if (body.method === "ai_usage") return json(response,200,{ok:true,usage:{mode:"server",wallet:state.wallet}});
+      if (body.method === "ai") return json(response,200,{ok:true,wallet:state.wallet,proposal:body.payload.selected_codes?{status:"ready",assistant_message:"Ik stel bouwbedrijven in Gent voor.",filters:{kbo_postcode:"9000",nace_prefix:"41"},summary:["Bouwbedrijven in Gent"]}:{status:"clarify",assistant_message:"Welke activiteit bedoel je?",choices:[{value:"41",label:"Bouwbedrijven"}]}});
       if (body.method === "set_language") {
         if (!["nl", "fr", "en"].includes(body.payload.language)) return json(response, 400, { ok: false, error: "invalid_request" });
         return json(response, 200, { ok: true, language: body.payload.language });
       }
-      if (body.method === "workspace_save") return json(response,200,{ok:true,workspace:body.payload.workspace,workspace_revision:++state.workspaceRevision});
+      if (body.method === "workspace_save") {state.workspace=structuredClone(body.payload.workspace);return json(response,200,{ok:true,workspace:state.workspace,workspace_revision:++state.workspaceRevision});}
       if (body.method === "workspace_data") return json(response,200,{ok:true,schema:metadata.filter_schema,filters:body.payload.filters||{},criteria:[],columns:metadata.column_groups.result_columns,selected:["name"]});
       if (body.method === "export_columns") return json(response,200,{ok:true,columns:metadata.column_groups.result_columns,selected:body.payload.columns||["name"]});
       if (body.method === "filters_apply") return json(response,200,{ok:true,filters:body.payload.filters});
       if (body.method === "xbrl_catalog") return json(response,200,{ok:true,metrics:[{key:"test_wages",label:"Bezoldigingen",value_type:"numeric",path:["Kosten","Personeel"],company_count:10}],total:1,offset:0,has_more:false});
-      if (body.method === "similar_company") return json(response,200,{ok:true,company:company().company,criteria:[]});
-      if (body.method === "search") return json(response, 200, { ok: true, rows: [company().company], total: 1, page: 1, page_size: 50, filters: body.payload.filters || {} });
+      if (body.method === "similar_company") return json(response,200,{ok:true,company:company().company,criteria:[{key:'postcode',label:'Postcode',kind:'text',value:'9000',default_selected:true},{key:'nace_prefix',label:'Activiteit',kind:'text',value:'41',default_selected:true}]});
+      if (body.method === "similar_apply") return json(response,200,{ok:true,filters:{...body.payload.filters,kbo_postcode:'9000',nace_prefix:'41'}});
+      if (body.method === "search") {
+        if(state.failNextSearch){state.failNextSearch=false;return json(response,503,{ok:false,error:"temporarily_unavailable"});}
+        return json(response, 200, { ok: true, rows: [company().company], total: 1, page: 1, page_size: 50, filters: body.payload.filters || {} });
+      }
       if (body.method === "company") return json(response, 200, company());
       if (["export_results","export_selection"].includes(body.method)) return json(response, 200, { ok: true, download_url: "/api/web/download/mock-download-token", rows: 1, total: 1, message: "1 bedrijf opgeslagen." });
       if (body.method === "operation_status") return json(response, 200, { ok: true });
-      if (body.method === "search_history") return json(response,200,{ok:true,history:[]});
+      if (body.method === "search_history") {
+        if(body.payload.action==='record'){
+          state.history.unshift({id:String(state.bridgeCalls.length),...body.payload,saved_at:Math.floor(Date.now()/1000)});
+          const signatures=new Set();state.history=state.history.filter(item=>{const signature=JSON.stringify([item.query,item.filters]);if(signatures.has(signature))return false;signatures.add(signature);return true;}).slice(0,50);
+        }
+        if(body.payload.action==='delete')state.history=state.history.filter(item=>item.id!==body.payload.id);
+        if(body.payload.action==='clear'&&body.payload.confirmed)state.history=[];
+        return json(response,200,{ok:true,history:state.history});
+      }
       state.unhandledMethods.push(body.method);
       return json(response, 400, {ok:false,error:"Unhandled mock method"});
     }
@@ -269,9 +293,9 @@ try {
 }
 await writeFile(temporaryEnvPath, `BELGOBASE_WEB_BACKEND_URL=${mockOrigin}/\n`, { encoding: "utf8", flag: "wx" });
 await new Promise((resolve) => mock.listen(mockPort, "127.0.0.1", resolve));
-const app = spawn(process.env.ComSpec || "cmd.exe", ["/d", "/s", "/c", `pnpm.cmd exec next dev -p ${appPort}`], {
+const app = spawn(process.env.ComSpec || "cmd.exe", ["/d", "/s", "/c", `pnpm.cmd exec next start -p ${appPort}`], {
   cwd: root,
-  env: { ...process.env, NODE_ENV: "development" },
+  env: { ...process.env, NODE_ENV: "production", NODE_EXTRA_CA_CERTS:path.join(tlsDirectory,"cert.pem"), NODE_OPTIONS:[process.env.NODE_OPTIONS||'',`--import=${pathToFileURL(path.join(root,'tools/browser_mock_network.mjs')).href}`].join(' ').trim() },
   stdio: "pipe",
   windowsHide: true,
 });
@@ -283,12 +307,23 @@ try {
   await waitForServer(`${appOrigin}/nl/app`);
   browser = await chromium.launch({ headless: true, executablePath: chromiumExecutable });
   const context = await browser.newContext({ acceptDownloads: true, viewport: { width: 1440, height: 960 } });
+  await context.route('**/*',route=>{
+    const url=new URL(route.request().url());
+    return ['localhost','127.0.0.1','[::1]'].includes(url.hostname)?route.continue():route.abort('blockedbyclient');
+  });
   const page = await context.newPage();
+  const runtimeErrors=[];
+  page.on('pageerror',error=>runtimeErrors.push(error.message));
   const workspaceResponses = [];
   page.on("response", (response) => {
     if (response.url().endsWith("/api/web/workspace")) workspaceResponses.push(response);
   });
+  await page.route('**/api/web/auth/session',route=>route.fulfill({status:503,contentType:'application/json',body:'{"ok":false,"error":"temporarily_unavailable"}'}));
   await page.goto(`${appOrigin}/nl/app`, { waitUntil: "networkidle" });
+  await page.getByRole('heading',{name:'BelgoBase is tijdelijk niet bereikbaar'}).waitFor();
+  assert.equal(await page.getByLabel('E-mailadres',{exact:true}).count(),0,'unknown session status does not invite another login');
+  await page.unroute('**/api/web/auth/session');
+  await page.getByRole('button',{name:'Opnieuw proberen'}).click();
   await page.getByLabel("E-mailadres", { exact: true }).waitFor();
   assert.equal((await page.request.get(appOrigin + "/api/web/desktop-download", { maxRedirects: 0 })).status(), 401, "desktop account download requires login");
   await page.getByLabel("E-mailadres", { exact: true }).fill("draft@example.test");
@@ -387,24 +422,52 @@ try {
   await page.getByRole("alert").getByText("De code is ongeldig of verlopen.").waitFor();
   assert.equal(await page.locator('iframe').count(), 0, "invalid code gives no workspace");
   await codeField.fill("123456");
+  await page.route('**/api/web/auth/session',route=>route.fulfill({status:503,contentType:'application/json',body:'{"ok":false,"error":"temporarily_unavailable"}'}));
   await page.getByRole("button", { name: "Aanmelden" }).click();
+  await page.getByRole('button',{name:'Opnieuw proberen',exact:true}).waitFor();
+  assert.equal(await codeField.isDisabled(),true,'verified code cannot be consumed again during session recovery');
+  await page.unroute('**/api/web/auth/session');
+  await page.getByRole('button',{name:'Opnieuw proberen',exact:true}).click();
   const iframe = page.locator('iframe[title="BelgoBase workspace"]');
   await iframe.waitFor();
   const frame = await loadedWorkspaceFrame(page);
   await frame.locator("#query").waitFor();
+  await page.getByRole('button',{name:'Account',exact:true}).click();
+  const accountPanel=page.getByRole('region',{name:'Account',exact:true});
+  await accountPanel.getByText('KL-MOCK-001',{exact:true}).waitFor();
+  await accountPanel.getByText('LIC-MOCK-001',{exact:true}).waitFor();
+  await accountPanel.getByRole('button',{name:'Kopiëren',exact:true}).first().click();
+  await accountPanel.getByRole('status').getByText('Klantnummer gekopieerd.').waitFor();
+  await page.screenshot({path:path.join(artifactDirectory,'account-desktop.png')});
+  await page.setViewportSize({width:390,height:844});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'account panel fits mobile width');
+  await page.screenshot({path:path.join(artifactDirectory,'account-mobile.png')});
+  await page.setViewportSize({width:1440,height:960});
+  await accountPanel.getByRole('button',{name:'Paneel sluiten'}).click();
   await frame.locator("#account-name").getByText("Mock BelgoBase").waitFor();
   assert.equal(state.claimCalls.length, 0, "registered customer signs in by verified email");
   assert.equal(state.loginCalls[0].remember_browser, true);
   assert.ok(state.bridgeCalls.some((call) => call.method === "bootstrap"), "frozen bootstrap reached the bridge");
   await page.getByRole("button", { name: "Account", exact: true }).click();
   await page.getByText("Testbrowser", { exact: false }).waitFor();
-  const installerLink = page.getByRole("link", { name: "BelgoBase voor Windows downloaden" });
-  assert.equal(await installerLink.getAttribute("href"), "/api/web/desktop-download");
+  const installerButton = page.getByRole("button", { name: "BelgoBase voor Windows downloaden" });
+  await installerButton.click();
+  await accountPanel.getByRole('alert').getByText('De Windows-download is tijdelijk niet beschikbaar.',{exact:false}).waitFor();
+  assert.equal(new URL(page.url()).pathname,'/nl/app','failed installer download never leaves the workspace');
+  const fakeInstaller='https://api.belgobase.be/client-updates/download/BelgoBase_CloudClient_Setup_BUILD999_UPDATE999.exe';
+  await page.route('**/api/web/desktop-download?*format=json',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,url:fakeInstaller})}));
+  await page.route(fakeInstaller,route=>route.fulfill({status:200,headers:{'content-type':'application/octet-stream','content-disposition':'attachment; filename="BelgoBase_mock_installer.exe"'},body:'SYNTHETIC TEST FILE — NOT AN INSTALLER'}));
+  const installerDownload=page.waitForEvent('download');
+  await installerButton.click();
+  assert.equal((await installerDownload).suggestedFilename(),'BelgoBase_mock_installer.exe','valid metadata starts browser download without fetching installer into JavaScript');
+  assert.equal(new URL(page.url()).pathname,'/nl/app');
+  await page.unroute('**/api/web/desktop-download?*format=json');
+  await page.unroute(fakeInstaller);
   await page.getByText("Alleen voor Windows.", { exact: true }).waitFor();
   const installerResponse = await page.request.get(appOrigin + "/api/web/desktop-download", { maxRedirects: 0 });
-  assert.equal(installerResponse.status(), 307);
-  assert.match(installerResponse.headers().location, /^https:\/\/api\.belgobase\.be\/client-updates\/download\/BelgoBase_CloudClient_Setup_BUILD\d+_UPDATE\d+\.exe$/);
-  await page.getByRole("button", { name: "Account sluiten", exact: true }).click();
+  assert.equal(installerResponse.status(), 503,'local suite blocks production manifest access and download fails closed');
+  assert.match((await installerResponse.json()).error,/Windows-download is tijdelijk niet beschikbaar/);
+  await page.getByRole("button", { name: "Paneel sluiten", exact: true }).click();
 
   assert.equal(await iframe.getAttribute("allow"), "microphone");
   assert.match(await frame.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute("content"), /connect-src 'self'/);
@@ -417,6 +480,37 @@ try {
   await frame.locator("#wallet-tab").click();
   await frame.getByText("Saldo").waitFor();
   assert.ok(state.bridgeCalls.some((call) => call.method === "ai_wallet"), "wallet reads the server snapshot through the bridge");
+  await frame.locator('[data-wallet-refresh]').waitFor({state:'visible'});
+  await frame.locator('.wallet-primary strong').getByText('€ 0',{exact:true}).waitFor();
+  state.wallet={currency:"EUR",balance_eur:10,available_eur:10,reserved_eur:0,spent_eur:0,entries:[{type:"topup",amount_eur:10,date:"2026-09-21"}]};
+  await frame.locator('#assistant-tab').click();
+  await frame.locator('#wallet-tab').click();
+  await frame.locator('.wallet-primary strong').getByText('€ 10',{exact:true}).waitFor();
+  assert.equal(await frame.locator('#assistant-credit-latest').innerText(),'—','a top-up is not displayed as latest AI usage');
+  state.walletUnavailable=true;
+  await frame.locator('[data-wallet-refresh]').click();
+  await frame.getByText('Vernieuwen is niet gelukt. De bedragen hieronder zijn van de vorige controle.').waitFor();
+  assert.match(await frame.locator('.wallet-primary strong').innerText(),/10/,'failed refresh retains explicitly stale amount');
+  state.walletUnavailable=false;
+  await frame.locator('[data-wallet-refresh]').click();
+  await frame.locator('[data-wallet-contact]').click();
+  await frame.locator('#wallet-topup-reference').getByText('KL-MOCK-001',{exact:false}).waitFor();
+  await frame.locator('#wallet-topup-amount').fill('20,50');
+  const topupHref=await frame.locator('#wallet-topup-mail').getAttribute('href');
+  assert.equal(new URL(topupHref).pathname,'david@belgobase.be');
+  assert.match(new URL(topupHref).searchParams.get('body'),/20\.50[\s\S]*KL-MOCK-001[\s\S]*LIC-MOCK-001/,'request contains exact amount and authenticated public references');
+  await page.screenshot({path:path.join(artifactDirectory,'wallet-desktop.png')});
+  await page.setViewportSize({width:390,height:844});
+  assert.equal(await frame.locator('body').evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'wallet request fits mobile width');
+  await frame.locator('#wallet-topup-amount').scrollIntoViewIfNeeded();
+  await page.screenshot({path:path.join(artifactDirectory,'wallet-request-mobile.png')});
+  await frame.locator('#wallet-topup-mail').scrollIntoViewIfNeeded();
+  await page.screenshot({path:path.join(artifactDirectory,'wallet-request-actions-mobile.png')});
+  await page.setViewportSize({width:1440,height:960});
+  await frame.locator('#wallet-topup-amount').fill('-10');
+  assert.equal(await frame.locator('#wallet-topup-mail').getAttribute('href'),null,'invalid amount cannot create request');
+  await frame.locator('#wallet-topup-amount').fill('10');
+  assert.match(await frame.locator('#wallet-topup-form').innerText(),/Verstuur de aanvraag/,'no false sent confirmation');
   const languageRequest = page.waitForRequest((request) => request.url().endsWith("/api/web/bridge/set_language"));
   const languageResponse = page.waitForResponse((response) => response.url().endsWith("/api/web/bridge/set_language"));
   await page.getByRole("combobox", { name: "Taal / Language / Langue", exact: true }).selectOption("fr");
@@ -425,6 +519,9 @@ try {
   assert.equal(await frame.locator("#language-switch").inputValue(), "fr", "the selected workspace language changes immediately");
   assert.ok(state.bridgeCalls.some((call) => call.method === "set_language" && call.payload.language === "fr"), "language preference is persisted through the bridge");
   assert.notEqual(await frame.locator("#new-search").innerText(), "Nieuwe zoekopdracht", "French changes visible labels, not just the dropdown");
+  await frame.locator('[data-wallet-contact]').click();
+  await frame.locator('#wallet-topup-reference').getByText('KL-MOCK-001',{exact:false}).waitFor();
+  assert.match(decodeURIComponent(await frame.locator('#wallet-topup-mail').getAttribute('href')),/KL-MOCK-001/,'French account row translation retains customer number in request');
   await page.getByRole("combobox", { name: "Taal / Language / Langue", exact: true }).selectOption("en");
   await frame.locator("#new-search").getByText("New search", { exact: true }).waitFor();
   await page.getByRole("combobox", { name: "Taal / Language / Langue", exact: true }).selectOption("nl");
@@ -437,6 +534,8 @@ try {
   await frame.locator("#search-form").press("Enter");
   await frame.locator('button[data-company="0123456789"]').first().waitFor();
   assert.ok(state.bridgeCalls.some((call) => call.method === "search"), "search reached the bridge");
+  const visibleSelection=async()=>({query:await frame.locator('#query').inputValue(),filters:await frame.locator('#chips').textContent(),rows:await frame.locator('#company-rows').textContent(),total:await frame.locator('#result-total').textContent()});
+  const beforeFailedFilters=await visibleSelection();
   await frame.getByRole("button", {name:"Alle filters openen",exact:true}).click();
   await frame.locator("#filter-finder").waitFor();
   const renderedFields = await frame.locator("[data-workspace-field]").evaluateAll(els => [...new Set(els.map(e=>e.dataset.workspaceField))]);
@@ -466,12 +565,38 @@ try {
   assert.equal(await frame.locator('body').evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'filter page fits mobile width');
   await frame.locator('body').evaluate(()=>window.scrollTo(0,0));await page.evaluate(()=>window.scrollTo(0,0));await page.screenshot({path:path.join(artifactDirectory,'filters-mobile.png')});
   await page.setViewportSize({width:1440,height:960});
+  state.failNextSearch=true;
+  await frame.locator('[data-tool="apply-workspace-filters"]').click();
+  await frame.locator('#notice').getByText('De eerder geladen resultaten en filters blijven behouden.',{exact:false}).waitFor();
+  assert.deepEqual(await visibleSelection(),beforeFailedFilters,'failed advanced search retains the exact previous visible data/filter pair');
+  assert.equal(await frame.locator('#filter-finder').isVisible(),true,'failed apply keeps the editable filter form');
   await frame.locator('[data-tool="apply-workspace-filters"]').click();
   await frame.locator('#query').waitFor();
   const applied=state.bridgeCalls.filter(c=>c.method==='filters_apply').at(-1).payload.filters;
   assert.equal(applied.ebitda_missing_mode,'alleen_met_waarde');
   assert.equal(applied.min_omzet,10000);assert.equal(applied.max_omzet,900000);
   assert.deepEqual(applied.regions,['vlaanderen']);
+  await frame.locator('#ai-mode').check();
+  await frame.locator('#query').fill('Zoek mijn ideale klant');
+  const beforeAiSearches=state.bridgeCalls.filter(c=>c.method==='search').length;
+  await frame.locator('#search-form').press('Enter');
+  await frame.locator('[data-choice="41"]').waitFor();
+  assert.equal(state.bridgeCalls.filter(c=>c.method==='search').length,beforeAiSearches,'clarification never silently starts a search');
+  await frame.locator('#answer-ai').click();
+  await frame.locator('#notice').getByText('Vink minstens één activiteit aan.').waitFor();
+  await frame.locator('[data-choice="41"]').check();
+  await frame.locator('#answer-ai').click();
+  await frame.locator('#apply-ai').waitFor();
+  const beforeFailedAi=await visibleSelection();
+  state.failNextSearch=true;
+  await frame.locator('#apply-ai').click();
+  await frame.locator('#notice').getByText('De eerder geladen resultaten en filters blijven behouden.',{exact:false}).waitFor();
+  assert.deepEqual(await visibleSelection(),beforeFailedAi,'failed AI apply retains old selection');
+  assert.equal(await frame.locator('#ai-panel').isVisible(),true,'failed AI apply preserves proposal for retry');
+  await frame.locator('#apply-ai').click();
+  await frame.locator('#ai-panel').waitFor({state:'hidden'});
+  assert.equal(state.bridgeCalls.filter(c=>c.method==='search').at(-1).payload.filters.nace_prefix,'41');
+  await frame.locator('#ai-mode').uncheck();
   await frame.getByRole('button',{name:'Alle filters openen',exact:true}).click();
   await frame.locator('#filter-finder').waitFor();
   await frame.locator('[data-tool="clear-filters"]').click();
@@ -518,7 +643,9 @@ try {
   await frame.locator("#similar-number").fill("0123456789");
   await frame.locator("#similar-form").press("Enter");
   await frame.locator("#similar-criteria").getByRole("heading",{name:"Voorbeeld Bouw BV"}).waitFor();
-  await frame.locator("#tools-back").click();
+  await frame.locator('[data-tool="apply-similar"]').click();
+  await frame.locator('#query').waitFor();
+  assert.equal(state.bridgeCalls.filter(c=>c.method==='similar_apply').at(-1).payload.criteria.length,2,'selected similarity criteria reach the service');
   const saveResponse = page.waitForResponse(r=>r.url().endsWith("/api/web/bridge/workspace_save"));
   await frame.locator('[data-save="0123456789"]').click();
   await saveResponse;
@@ -532,6 +659,14 @@ try {
   await frame.locator("#open-searches").click();
   await frame.getByText("Joël testselectie",{exact:true}).waitFor();
   await frame.locator("#dialog-close").click();
+  await frame.locator('#open-history').click();
+  await frame.locator('[data-history-load]').first().waitFor();
+  assert.doesNotMatch(await frame.locator('#dialog-content').innerText(),/Invalid Date|1970/,'history dates use backend seconds');
+  const historyCount=await frame.locator('[data-history-load]').count();
+  await frame.locator('[data-history-delete]').first().click();
+  await page.waitForFunction(count=>document.querySelector('iframe').contentDocument.querySelectorAll('[data-history-load]').length<count,historyCount);
+  await frame.locator('[data-history-load]').first().click();
+  await frame.locator('#workspace-dialog').waitFor({state:'hidden'});
   await frame.locator("#filter-toggle").click();
   await frame.locator("#f-postcode").fill("9000");
   const postcodeResponse = page.waitForResponse(r => r.url().endsWith("/api/web/bridge/search"));
@@ -553,9 +688,13 @@ try {
   await frame.locator('button[data-company="0123456789"]').first().click();
   await frame.getByRole("heading", { name: "Voorbeeld Bouw BV" }).waitFor();
   assert.ok(state.bridgeCalls.some((call) => call.method === "company"), "company detail reached the bridge");
+  await frame.locator('#finance-tab').click();
   for (const [language, revenue] of [["fr", "Chiffre d’affaires"], ["en", "Revenue"], ["nl", "Omzet"]]) {
     await page.getByRole("combobox", { name: "Taal / Language / Langue", exact: true }).selectOption(language);
+    await frame.locator('[data-metric="revenue"]').getByText(revenue,{exact:true}).waitFor();
     assert.equal(await frame.locator('[data-metric="revenue"]').innerText(), revenue, "financial chart labels follow selected language");
+    await frame.locator('#dossier-meta > span:last-child').getByText({fr:'Actif',en:'Active',nl:'Actief'}[language],{exact:true}).waitFor();
+    assert.equal(await frame.locator('#finance-chart-slot #financial-chart').isVisible(),true,'financial chart stays on active tab after '+language+' switch');
     assert.equal(await frame.getByRole("heading", { name: "Voorbeeld Bouw BV" }).count(), 1, "company identity is never translated");
   }
   await page.screenshot({ path: screenshotPath, fullPage: true });
@@ -649,13 +788,17 @@ try {
 
   await writeFile(path.join(artifactDirectory,"marketing-errors.json"),JSON.stringify(marketingErrors,null,2));
   assert.equal(marketingErrors.length,0,"marketing renders without browser errors; see marketing-errors.json");
+  assert.deepEqual(runtimeErrors,[],"all authenticated and public flows finish without uncaught browser errors");
   assert.deepEqual(state.unhandledMethods,[],"the browser never receives fake success for an unimplemented mock route");
-  console.log(JSON.stringify({ ok: true, enrollmentScreenshot: enrollmentScreenshotPath, documentScreenshot: documentScreenshotPath, screenshot: screenshotPath, bridgeMethods: state.bridgeCalls.map((call) => call.method), version: release }, null, 2));
+  const report = { ok: true, checkedAt: new Date().toISOString(), network: "loopback mocks only; synthetic installer", enrollmentScreenshot: enrollmentScreenshotPath, documentScreenshot: documentScreenshotPath, screenshot: screenshotPath, bridgeMethods: state.bridgeCalls.map((call) => call.method), version: release };
+  await writeFile(path.join(artifactDirectory,"workspace-proof.json"),JSON.stringify(report,null,2));
+  console.log(JSON.stringify(report, null, 2));
   await context.close();
 } finally {
   await browser?.close();
   stopProcess(app);
   await new Promise((resolve) => mock.close(resolve));
   await rm(temporaryEnvPath, { force: true });
+  await rm(tlsDirectory, {recursive:true,force:true});
   if (process.env.KEEP_BROWSER_ARTIFACT !== "1") await rm(path.join(artifactDirectory, "unused"), { recursive: true, force: true });
 }

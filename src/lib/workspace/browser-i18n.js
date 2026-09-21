@@ -13,6 +13,13 @@
   // without making any statement about a Windows client or synchronisation.
   const webMessageOverrides=Object.freeze({
     "dialog.localWorkspace":Object.freeze({nl:"Opgeslagen in je BelgoBase-accountwerkruimte.",fr:"Enregistré dans l’espace de travail de votre compte BelgoBase.",en:"Saved in your BelgoBase account workspace."}),
+    "account.deactivate":Object.freeze({nl:"Deze browser afmelden",fr:"Déconnecter ce navigateur",en:"Sign out this browser"}),
+    "account.deactivateCopy":Object.freeze({nl:"Wil je deze browser afmelden? Je moet je daarna opnieuw aanmelden om BelgoBase hier te gebruiken.",fr:"Voulez-vous déconnecter ce navigateur ? Vous devrez ensuite vous reconnecter pour utiliser BelgoBase ici.",en:"Do you want to sign out this browser? You will need to sign in again to use BelgoBase here."}),
+    "account.deactivateConfirm":Object.freeze({nl:"Browser afmelden",fr:"Déconnecter le navigateur",en:"Sign out browser"}),
+    "account.deactivating":Object.freeze({nl:"Browser afmelden…",fr:"Déconnexion du navigateur…",en:"Signing out browser…"}),
+    "account.deactivated":Object.freeze({nl:"Browser afgemeld",fr:"Navigateur déconnecté",en:"Browser signed out"}),
+    "account.deactivatedTitle":Object.freeze({nl:"Deze browser is afgemeld.",fr:"Ce navigateur est déconnecté.",en:"This browser is signed out."}),
+    "account.deactivatedCopy":Object.freeze({nl:"Meld je opnieuw aan om BelgoBase hier verder te gebruiken.",fr:"Reconnectez-vous pour continuer à utiliser BelgoBase ici.",en:"Sign in again to continue using BelgoBase here."}),
   });
   if (window.BelgoBaseI18n?.messages && typeof window.BelgoBaseI18n.messages==="object") {
     for (const [key,value] of Object.entries(webMessageOverrides)) window.BelgoBaseI18n.messages[key]={...value};
@@ -129,7 +136,7 @@
   // rerenders a few frozen lexical labels after its language event; translate
   // only those fixed-label slots. Company cards, result rows, NACE/XBRL
   // catalogues and the assistant are intentionally outside this scope.
-  const fixedSlots="#f-status option,#tools-content .tool-group summary,#tools-content .column-option,#financial-rows td:first-child,#year-table td:first-child,#chart-note,#dossier-note";
+  const fixedSlots="#f-status option,#dossier-meta > span:last-child,#tools-content .tool-group summary,#tools-content .column-option,#financial-rows td:first-child,#year-table td:first-child,#chart-note,#dossier-note";
   const apply=()=>{
     for (const element of document.querySelectorAll?.(fixedSlots)||[]) {
       for (const child of element.childNodes||[]) {

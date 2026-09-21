@@ -13,6 +13,10 @@ const enrollmentMethods = new Set(["start", "verify", "session", "autofill", "co
 const sessionNames = new Set(["__Host-belgobase_session", "belgobase_session", "__Host-belgobase_enrollment", "belgobase_enrollment"]);
 const MAX_REQUEST_BYTES = 8 * 1024 * 1024;
 
+function mailLanguage(value: unknown): "nl" | "fr" | "en" {
+  return value === "fr" || value === "en" ? value : "nl";
+}
+
 export const privateHeaders = {
   "Cache-Control": "private, no-store, max-age=0",
   "X-Content-Type-Options": "nosniff",
@@ -95,7 +99,13 @@ export async function proxyWebRequest(request: NextRequest, parts: string[]): Pr
         upstreamPath = parsed.license_code ? "auth/claim" : "auth/login";
         body = new TextEncoder().encode(JSON.stringify({ email: parsed.email,
           ...(parsed.license_code ? { license_code: parsed.license_code } : {}),
-          remember_browser: parsed.remember === true })).buffer;
+          remember_browser: parsed.remember === true,
+          language: mailLanguage(parsed.language) })).buffer;
+      } else if (upstreamPath === "enrollment/start") {
+        body = new TextEncoder().encode(JSON.stringify({
+          ...parsed,
+          language: mailLanguage(parsed.language),
+        })).buffer;
       } else if (parts[0] === "bridge") {
         upstreamPath = "bridge";
         body = new TextEncoder().encode(JSON.stringify({ method: parts[1], payload: parsed })).buffer;

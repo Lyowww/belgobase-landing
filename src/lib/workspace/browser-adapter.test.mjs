@@ -6,7 +6,7 @@ import vm from "node:vm";
 
 const source = await readFile(new URL("./browser-adapter.js", import.meta.url), "utf8");
 
-function adapterHarness(replies, mediaError, language = "nl") {
+function adapterHarness(replies, mediaError, language = "nl", enrich) {
   const calls = [];
   const messages = [];
   const links = [];
@@ -36,10 +36,12 @@ function adapterHarness(replies, mediaError, language = "nl") {
     setTimeout(callback) { timeout = callback; return 1; },
     clearTimeout() {},
   };
+  if (enrich) window.BelgoBaseWebI18n = { enrich };
   const fetch = async (url, options = {}) => {
     calls.push({ url: String(url), options });
     const reply = replies.shift();
     assert.ok(reply, `unexpected request ${url}`);
+    if (reply.error) throw reply.error;
     return {
       ok: reply.status === undefined || (reply.status >= 200 && reply.status < 300),
       status: reply.status ?? 200,
@@ -153,6 +155,45 @@ test("a bridge 401 tells the containing login screen that the session expired", 
   assert.equal(h.messages[0].value.type, "belgobase-web-auth-expired");
 });
 
+test("a temporary session lookup failure keeps the containing session intact", async () => {
+  const h = adapterHarness([{ status: 503, body: { error: "internal_error" } }], undefined, "en");
+  await assert.rejects(h.api.search({}), /temporarily unavailable/i);
+  assert.equal(h.messages.length, 0);
+});
+
+test("bridge errors are localized before display and protocol codes stay private", async () => {
+  const translated = adapterHarness([
+    { body: { authenticated: true, csrf: "t".repeat(32) } },
+    { status: 400, body: { ok: false, error: "Ongeldig verzoek." } },
+  ], undefined, "fr", (_method, data) => ({ ...data, error: "Requête non valide." }));
+  await assert.rejects(translated.api.search({}), /Requête non valide/);
+
+  for (const [status, code, expected] of [
+    [403, "csrf_invalid", /not available for your account/i],
+    [500, "internal_error", /temporarily unavailable/i],
+  ]) {
+    const h = adapterHarness([
+      { body: { authenticated: true, csrf: "p".repeat(32) } },
+      { status, body: { ok: false, error: code } },
+    ], undefined, "en");
+    await assert.rejects(h.api.search({}), error => {
+      assert.match(error.message, expected);
+      assert.doesNotMatch(error.message, new RegExp(code));
+      return true;
+    });
+    assert.equal(h.messages.length, 0);
+  }
+});
+
+test("a bridge network interruption gives retry guidance without signing out", async () => {
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "n".repeat(32) } },
+    { error: new TypeError("network details") },
+  ], undefined, "fr");
+  await assert.rejects(h.api.search({}), /temporairement indisponible/i);
+  assert.equal(h.messages.length, 0);
+});
+
 test("rapid saves use successive revisions while preserving each edit snapshot", async () => {
   const h = adapterHarness([
     { body: { authenticated: true, csrf: "e".repeat(32) } },
@@ -181,6 +222,20 @@ test("the login component retains the public auth contract", async () => {
   assert.match(component, /\/api\/web\/auth\/verify/);
   assert.match(component, /one-time-code/);
   assert.match(component, /X-BelgoBase-CSRF/);
+  assert.match(component, /customer_number/);
+  assert.match(component, /license_id/);
+  assert.match(component, /referenceUnavailable/);
+  assert.match(component, /desktop-download\?lang=\$\{shellLanguage\}&format=json/);
+  assert.equal(component.match(/language: shellLanguage/g)?.length, 3);
+  assert.match(component, /setAccountBusy\(true\); setBrowserSessions\(\[\]\);/);
+  assert.match(component, /closeAccount: "Close panel"/);
+  assert.match(component, /mail_unavailable: t\.unavailable/);
+  assert.match(component, /setPhase\("serviceUnavailable"\)/);
+  assert.match(component, /if \(response\.ok\) \{ setAccount\(undefined\); setCsrf\(""\); setError\(""\); setSessionRetryAvailable\(false\); setPhase\("login"\); return; \}/);
+  assert.match(component, /setSessionRetryAvailable\(true\); throw reason;/);
+  assert.match(component, /retrySession\(true\)/);
+  assert.match(component, /disabled=\{sessionRetryAvailable\}/);
+  assert.match(component, /accountIntro: "Manage your account and signed-in browsers\."/);
 });
 
 
