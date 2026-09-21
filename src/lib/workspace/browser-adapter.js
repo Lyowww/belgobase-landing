@@ -253,7 +253,7 @@
       method: "POST",
       credentials: "same-origin",
       headers: { "content-type": "application/json", "X-BelgoBase-CSRF": token },
-      body: JSON.stringify({ wav_base64: wavBase64(samples) }),
+      body: JSON.stringify({ request_id: window.crypto.randomUUID(), audio_wav: wavBase64(samples) }),
       signal: controller.signal,
     });
     const data = await json(response);
@@ -262,7 +262,17 @@
       authExpired();
       throw new Error("Je sessie is verlopen. Meld je opnieuw aan.");
     }
-    if (!response.ok || data.ok !== true) throw new Error(typeof data.error === "string" ? data.error : "De spraak kon niet worden verwerkt.");
+    if (!response.ok || data.ok !== true) {
+      const language = document.getElementById?.("language-switch")?.value || document.documentElement?.lang || "nl";
+      const errors = {
+        voice_invalid_audio: { nl: "De opname kon niet worden gelezen. Neem opnieuw op, maximaal 60 seconden.", fr: "L’enregistrement est illisible. Réessayez pendant 60 secondes maximum.", en: "The recording could not be read. Record again for up to 60 seconds." },
+        no_speech: { nl: "Geen spraak herkend. Spreek duidelijk en probeer opnieuw.", fr: "Aucune parole reconnue. Parlez clairement et réessayez.", en: "No speech recognised. Speak clearly and try again." },
+        voice_timeout: { nl: "Het omzetten duurde te lang. Probeer opnieuw; je tekst is behouden.", fr: "La transcription a pris trop de temps. Réessayez ; votre texte est conservé.", en: "Transcription took too long. Try again; your text has been kept." },
+      };
+      const fallback = { nl: "De spraak kon niet worden verwerkt. Probeer opnieuw; je tekst is behouden.", fr: "La transcription a échoué. Réessayez ; votre texte est conservé.", en: "Speech could not be processed. Try again; your text has been kept." };
+      const message = errors[data.error] || fallback;
+      throw new Error(message[language] || message.nl);
+    }
     active.result = data;
     active.state = "complete";
     return data;

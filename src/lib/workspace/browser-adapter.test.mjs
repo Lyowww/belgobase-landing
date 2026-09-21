@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
+import { webcrypto } from "node:crypto";
 import test from "node:test";
 import vm from "node:vm";
 
@@ -30,6 +31,7 @@ function adapterHarness(replies, mediaError, language = "nl") {
     location: { origin: "https://app.example.test" },
     isSecureContext: true,
     AudioContext,
+    crypto: webcrypto,
     addEventListener() {},
     setTimeout(callback) { timeout = callback; return 1; },
     clearTimeout() {},
@@ -91,11 +93,33 @@ test("voice creates a 16 kHz WAV request and cancellation stops browser tracks",
   const result = await h.api.voice_stop();
   assert.equal(result.text, "bouwbedrijven in Gent");
   const payload = JSON.parse(h.calls[1].options.body);
-  assert.match(payload.wav_base64, /^[A-Za-z0-9+/]+=*$/);
+  assert.deepEqual(Object.keys(payload).sort(), ["audio_wav", "request_id"]);
+  assert.match(payload.request_id, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+  assert.match(payload.audio_wav, /^[A-Za-z0-9+/]+=*$/);
+  const wav = Buffer.from(payload.audio_wav, "base64");
+  assert.equal(wav.toString("ascii", 0, 4), "RIFF");
+  assert.equal(wav.readUInt32LE(24), 16000);
+  assert.equal(wav.readUInt16LE(22), 1);
+  assert.equal(wav.readUInt16LE(34), 16);
+  assert.equal(wav.readUInt32LE(40), wav.length - 44);
+  if (process.env.BB_SYNTHETIC_VOICE_PROOF) await writeFile(process.env.BB_SYNTHETIC_VOICE_PROOF, JSON.stringify(payload));
 
   await h.api.voice_start({ text: "behouden concept" });
   await h.api.voice_cancel();
   assert.equal(h.tracks.at(-1).stopped, true);
+});
+
+test("rejected audio shows recovery advice rather than an internal error code", async () => {
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "b".repeat(32) } },
+    { status: 400, body: { error: "voice_invalid_audio" } },
+  ]);
+  await h.api.voice_start();
+  h.getProcessor().onaudioprocess({ inputBuffer: { getChannelData: () => new Float32Array(24_000).fill(0.1) } });
+  await assert.rejects(h.api.voice_stop(), /Neem opnieuw op/);
+  assert.equal(h.tracks[0].stopped, true);
+  await h.api.voice_start();
+  await h.api.voice_cancel();
 });
 
 test("workspace deactivation logs out the web session rather than a Windows device", async () => {
