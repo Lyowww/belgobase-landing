@@ -49,6 +49,46 @@
       : `${saved[1]} companies saved.`;
     return value;
   };
+  const optionLabels={
+    alle:["","",""], alleen_met_waarde:["Aanwezig","Disponible","Available"], alleen_zonder_waarde:["Ontbreekt","Manquant","Missing"],
+    exact:["Exact","Exact","Exact"], berekend:["Berekend","Calculé","Calculated"], geschat:["Geschat","Estimé","Estimated"], niet_beschikbaar:["Niet beschikbaar","Non disponible","Unavailable"],
+    true:["Ja","Oui","Yes"], false:["Nee","Non","No"], AC:["Actief","Actif","Active"], ST:["Stopgezet","Cessé","Discontinued"],
+    vlaanderen:["Vlaanderen","Flandre","Flanders"], wallonie:["Wallonië","Wallonie","Wallonia"], brussel:["Brussel","Bruxelles","Brussels"],
+    omzet_en_winst_ok:["Omzet en resultaat beschikbaar","Chiffre d’affaires et résultat disponibles","Revenue and result available"],
+    omzet_ok_winst_missing:["Omzet beschikbaar, resultaat ontbreekt","Chiffre d’affaires disponible, résultat manquant","Revenue available, result missing"],
+    omzet_missing_winst_ok:["Omzet ontbreekt, resultaat beschikbaar","Chiffre d’affaires manquant, résultat disponible","Revenue missing, result available"],
+    omzet_en_winst_missing:["Omzet en resultaat ontbreken","Chiffre d’affaires et résultat manquants","Revenue and result missing"],
+    finance_join_missing:["Geen gekoppelde financiële gegevens","Aucune donnée financière associée","No linked financial data"], geen_nbb_data:["Geen NBB-gegevens","Aucune donnée BNB","No NBB data"],
+    met_financial_summary:["Financiële samenvatting beschikbaar","Synthèse financière disponible","Financial summary available"], zonder_financial_summary:["Financiële samenvatting ontbreekt","Synthèse financière manquante","Financial summary missing"],
+    kbo_ok_actief:["Gekoppeld en actief","Associé et actif","Linked and active"], kbo_niet_actief:["Niet actief","Non actif","Inactive"], kbo_status_missing:["KBO-status ontbreekt","Statut BCE manquant","CBE status missing"],
+    valid:["Geldige postcode","Code postal valide","Valid postcode"], valid_duplicate_equivalent:["Geldige, gelijkwaardige vermeldingen","Mentions valides équivalentes","Valid equivalent entries"], invalid_source:["Ongeldige bronwaarde","Valeur source non valide","Invalid source value"]
+  };
+  const filterLayout=[
+    ["bedrijf","Bedrijfsgegevens",/^(naam|ondernemingsnummer|juridical|type_of_enterprise|kbo_status|start_date)/],
+    ["locatie","Locatie",/^(regions|gemeente|kbo_postcode|straat|huisnummer|bus$|land$|adres)/],
+    ["sector","Activiteiten",/^(nace|activity|sector)/],
+    ["personeel","Personeel",/personeel/],
+    ["financieel","Financiële cijfers",/(omzet|winst|ebitda|brutomarge)/],
+    ["balans","Balans en schulden",/(balanstotaal|eigen_vermogen|schulden)/],
+    ["jaarrekening","Jaarrekening en datums",/^(jaar|boekjaar|depotdatum|latest_only)/],
+    ["geavanceerd","Aanvullende filters",/.*/]
+  ];
+  // The frozen renderer also uses this dictionary when switching language
+  // without fetching the schema again. Keep option wording translatable there.
+  for(const entries of [...Object.values(optionLabels),["Natuurlijke persoon","Personne physique","Natural person"],["Rechtspersoon","Personne morale","Legal entity"]]){
+    if(!entries[0]) continue;
+    catalog._PHRASES[entries[0]]=entries.slice(1);
+    for(const value of entries) canonical.set(value,entries[0]);
+  }
+  const arrangeFilters=schema=>{
+    if(!schema || !Array.isArray(schema.fields)) return;
+    const rank=key=>key.startsWith('min_')||key.endsWith('_min')?0:key.startsWith('max_')||key.endsWith('_max')?1:key.endsWith('_missing_mode')?3:2;
+    const base=key=>key.replace(/^(min_|max_)/,'').replace(/(_min|_max|_missing_mode|_status)$/,'');
+    const priority=['regions','kbo_postcode','kbo_postcode_exclude','gemeente_nl','gemeente_nl_match','gemeente_fr','gemeente_fr_match','straat_nl','straat_fr','huisnummer','bus','land','adres_type','adres_missing_mode','naam','ondernemingsnummer','kbo_status','type_of_enterprise','juridical_form','juridical_form_exclude','nace_prefix','nace_prefix_exclude','nace_exact','nace_exact_exclude'];
+    const order=key=>priority.includes(key)?priority.indexOf(key):100;
+    schema.fields=schema.fields.map(field=>({...field,group:filterLayout.find(([, ,pattern])=>pattern.test(field.key))[0]})).sort((a,b)=>order(a.key)-order(b.key)||base(a.key).localeCompare(base(b.key))||rank(a.key)-rank(b.key)||a.key.localeCompare(b.key));
+    schema.groups=filterLayout.map(([key,label])=>({key,label}));
+  };
   const enrich=(method,data)=>{
     if (!data || typeof data!=="object") return data;
     const selectedLanguage=languages.has(data.language)?data.language:language();
@@ -61,6 +101,7 @@
     }
     if (method!=="workspace_data" && method!=="company" && method!=="compare_companies" && method!=="account_action") return result;
     const copy=structuredClone(result);
+    if(method==="workspace_data") arrangeFilters(copy.schema || copy.filter_schema);
     // The web projection supplies legacy humanized field keys ("Straat nl").
     // Relabel known metadata only; never rewrite company names or source values.
     if (method==="company" && Array.isArray(copy.fields)) {
@@ -71,12 +112,14 @@
         return {...field,label,...(missingAddress?{value:null}:{})};
       });
     }
-    const visit=(value,key)=>{
+    const visit=(value,key,isOption=false)=>{
       if (!value || typeof value!=="object") return;
-      if (Array.isArray(value)) { value.forEach(item=>visit(item,key)); return; }
+      if (Array.isArray(value)) { value.forEach(item=>visit(item,key,isOption)); return; }
       for (const [name,current] of Object.entries(value)) {
-        if (typeof current==="string" && ["label","group","title","hint","description","note","message","explanation"].includes(name)) value[name]=translate(current,name==="label"?value.key||key:undefined,selectedLanguage);
-        else if (current && typeof current==="object") visit(current,value.key||key);
+        if (typeof current==="string" && ["label","group","title","hint","description","note","message","explanation"].includes(name)) {
+          const choices=isOption && name==="label" && (key==="type_of_enterprise" ? {"1":["Natuurlijke persoon","Personne physique","Natural person"],"2":["Rechtspersoon","Personne morale","Legal entity"]}[value.value] : key?.startsWith("gemeente_") ? null : optionLabels[value.value]);
+          value[name]=choices ? choices[{nl:0,fr:1,en:2}[selectedLanguage]] : translate(current,name==="label"&&!isOption?value.key:undefined,selectedLanguage);
+        } else if (current && typeof current==="object") visit(current,value.key||key,name==="options");
       }
     };
     visit(copy);

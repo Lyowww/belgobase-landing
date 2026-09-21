@@ -74,11 +74,40 @@ test("enriches only fixed bootstrap and workspace presentation labels", () => {
   assert.equal(bootstrap.filter_labels.revenue, "Chiffre d’affaires");
   assert.equal(bootstrap.presentation_dictionary.canonicalNL.Omzet.fr, "Chiffre d’affaires");
   const workspace = window.BelgoBaseWebI18n.enrich("workspace_data", { schema: { fields: [{ key: "revenue", label: "Omzet", note: "Personeel" }, { key: "company_name", label: "NV onbekend" }] }, company: { name: "Personeel BV" }, user_question: "Personeel" });
-  assert.equal(workspace.schema.fields[0].label, "Chiffre d’affaires");
-  assert.equal(workspace.schema.fields[0].note, "Personnel");
-  assert.equal(workspace.schema.fields[1].label, "NV onbekend");
+  assert.equal(workspace.schema.fields.find(f=>f.key==="revenue").label, "Chiffre d’affaires");
+  assert.equal(workspace.schema.fields.find(f=>f.key==="revenue").note, "Personnel");
+  assert.equal(workspace.schema.fields.find(f=>f.key==="company_name").label, "NV onbekend");
   assert.equal(workspace.company.name, "Personeel BV");
   assert.equal(workspace.user_question, "Personeel");
+});
+
+const filterMetadata=JSON.parse(await readFile(new URL("../../../backend/workspace_assets/workspace_metadata.json",import.meta.url),"utf8"));
+test("every filter keeps its values and distinct option meanings in all languages",()=>{
+  const original=structuredClone(filterMetadata.filter_schema);
+  for(const language of ["nl","fr","en"]){
+    const result=load(language).BelgoBaseWebI18n.enrich("workspace_data",{schema:original});
+    assert.equal(result.schema.fields.length,original.fields.length);
+    for(const field of result.schema.fields){
+      const before=original.fields.find(f=>f.key===field.key);
+      assert.deepEqual(field.options.map(o=>o.value),before.options.map(o=>o.value));
+      if(field.type==='select'){
+        assert.equal(new Set(field.options.map(o=>o.label)).size,field.options.length,field.key+': distinct choices');
+        assert.ok(field.options.every(o=>o.label!==field.label),field.key+': choices must not repeat field label');
+      }
+    }
+    assert.equal(result.schema.fields.find(f=>f.key==='min_omzet').group,'financieel');
+    assert.equal(result.schema.fields.find(f=>f.key==='kbo_postcode').group,'locatie');
+    const staff=result.schema.fields.filter(f=>f.group==='personeel').map(f=>f.key);
+    assert.equal(staff.indexOf('max_personeel_vte'),staff.indexOf('min_personeel_vte')+1);
+    const choices=result.schema.fields.find(f=>f.key==='ebitda_missing_mode').options;
+    assert.equal(choices[1].label,{nl:'Aanwezig',fr:'Disponible',en:'Available'}[language]);
+  }
+  assert.deepEqual(original,filterMetadata.filter_schema,'source schema untouched');
+});
+test("option translations cannot replace actual company or financial labels",()=>{
+  const result=load('en').BelgoBaseWebI18n.enrich('company',{fields:[{key:'naam',label:'Naam',value:'true'}],metrics:[{key:'profit',label:'Resultaat',value:0}]});
+  assert.equal(result.fields[0].label,'Name');assert.equal(result.fields[0].value,'true');
+  assert.equal(result.metrics[0].label,'Result');assert.equal(result.metrics[0].value,0);
 });
 
 

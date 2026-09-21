@@ -7,7 +7,23 @@
 .intro p { max-width: 65ch; }
 .ghost { color: #52627a; }
 .ghost:hover:not(:disabled) { background: var(--blue-soft); border-radius: 7px; }
-.filter-grid label, .tool-field { font-size: 13px; }
+.filter-grid label, .tool-field { font-size: 16px; line-height: 1.5; }
+.tool-fields { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 22px 28px; }
+.tool-field>span:first-child, .filter-grid label { color: #164bba; font-weight: 600; }
+.tool-field input, .tool-field select, .tool-field textarea { font-size: 16px; color: #172333; font-weight: 400; min-height: 44px; }
+.tool-field .column-option { color: #172333; font-size: 16px; font-weight: 400; }
+.tool-field small { color: #52627a; font-size: 13px; font-weight: 400; }
+.tool-field .switch { justify-content: flex-start; gap: 10px; color: #172333; font-size: 16px; font-weight: 400; }
+.tool-field input[type=checkbox] { min-height: 0; width: 18px; height: 18px; }
+.tool-group { padding: 0; margin-bottom: 18px; }
+.tool-group>summary { font-size: 19px; font-weight: 650; padding: 18px 22px; }
+.tool-group>.tool-fields { padding: 0 22px 22px; }
+.tool-group[open]>summary { margin-bottom: 0; }
+.tool-kicker, .source-copy { font-size: 14px; line-height: 1.6; }
+.tool-search { font-size: 16px; min-height: 44px; }
+.catalog-list strong, .criterion h3 { font-size: 16px; line-height: 1.5; }
+.catalog-list small { font-size: 14px; line-height: 1.5; }
+@media(max-width:850px) { .tool-fields { grid-template-columns:minmax(0,1fr); } .tool-group>summary { padding: 18px; } .tool-group>.tool-fields { padding: 0 18px 18px; } }
 .filter-grid input, .filter-grid select, .tool-field input, .tool-field select,
 .tool-field textarea, .tool-search, .dialog-input { border-color: #c4cedc; }
 input::placeholder, textarea::placeholder { color: #65748a; opacity: 1; }

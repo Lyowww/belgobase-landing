@@ -211,7 +211,7 @@ const mock = http.createServer(async (request, response) => {
       if (body.method === "workspace_data") return json(response,200,{ok:true,schema:metadata.filter_schema,filters:body.payload.filters||{},criteria:[],columns:metadata.column_groups.result_columns,selected:["name"]});
       if (body.method === "export_columns") return json(response,200,{ok:true,columns:metadata.column_groups.result_columns,selected:body.payload.columns||["name"]});
       if (body.method === "filters_apply") return json(response,200,{ok:true,filters:body.payload.filters});
-      if (body.method === "xbrl_catalog") return json(response,200,{ok:true,metrics:[],total:0,offset:0,has_more:false});
+      if (body.method === "xbrl_catalog") return json(response,200,{ok:true,metrics:[{key:"test_wages",label:"Bezoldigingen",value_type:"numeric",path:["Kosten","Personeel"],company_count:10}],total:1,offset:0,has_more:false});
       if (body.method === "similar_company") return json(response,200,{ok:true,company:company().company,criteria:[]});
       if (body.method === "search") return json(response, 200, { ok: true, rows: [company().company], total: 1, page: 1, page_size: 50, filters: body.payload.filters || {} });
       if (body.method === "company") return json(response, 200, company());
@@ -404,7 +404,7 @@ try {
   const installerResponse = await page.request.get(appOrigin + "/api/web/desktop-download", { maxRedirects: 0 });
   assert.equal(installerResponse.status(), 307);
   assert.match(installerResponse.headers().location, /^https:\/\/api\.belgobase\.be\/client-updates\/download\/BelgoBase_CloudClient_Setup_BUILD\d+_UPDATE\d+\.exe$/);
-  await page.getByRole("button", { name: "Account", exact: true }).click();
+  await page.getByRole("button", { name: "Account sluiten", exact: true }).click();
 
   assert.equal(await iframe.getAttribute("allow"), "microphone");
   assert.match(await frame.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute("content"), /connect-src 'self'/);
@@ -442,6 +442,41 @@ try {
   const renderedFields = await frame.locator("[data-workspace-field]").evaluateAll(els => [...new Set(els.map(e=>e.dataset.workspaceField))]);
   const omittedFields = metadata.filter_schema.fields.filter(f=>!renderedFields.includes(f.key));
   assert.deepEqual(omittedFields, [], "every server filter renders a usable control");
+  await frame.locator('[data-filter-group]').evaluateAll(els=>els.forEach(el=>el.open=true));
+  const ebitdaSelect=frame.locator('[data-workspace-field="ebitda_missing_mode"]');
+  assert.deepEqual(await ebitdaSelect.locator('option').allTextContents(),['','Aanwezig','Ontbreekt']);
+  assert.deepEqual(await frame.locator('[data-workspace-field="gemeente_nl_match"] option').allTextContents(),['','Naam bevat (bestaande zoekwijze)','Exacte gemeentenaam']);
+  assert.equal(await frame.locator('[placeholder="Geen beperking"]').count(),0);
+  assert.deepEqual(await frame.locator('[data-workspace-field="regions"]').evaluateAll(els=>els.map(el=>el.parentElement.textContent.trim())),['Vlaanderen','Wallonië','Brussel']);
+  assert.ok(await ebitdaSelect.evaluate(el=>parseFloat(getComputedStyle(el.parentElement.querySelector('span')).fontSize)>=16));
+  for(const [language,label] of [['fr','Disponible'],['en','Available'],['nl','Aanwezig']]){
+    await page.getByLabel('Taal / Language / Langue',{exact:true}).selectOption(language);
+    await page.waitForFunction(({language})=>document.querySelector('iframe').contentWindow.BelgoBaseI18n.language===language,{language});
+    assert.equal(await ebitdaSelect.locator('option[value="alleen_met_waarde"]').textContent(),label);
+  }
+  await frame.locator('[data-filter-group]').evaluateAll(els=>els.forEach(el=>el.open=true));
+  await ebitdaSelect.selectOption('alleen_met_waarde');
+  await frame.locator('[data-workspace-field="regions"][value="vlaanderen"]').check();
+  await frame.locator('[data-workspace-field="min_omzet"]').fill('10000');
+  await frame.locator('[data-workspace-field="max_omzet"]').fill('900000');
+  await frame.locator('[data-filter-group]').evaluateAll(els=>els.forEach(el=>el.open=el.querySelector('[data-workspace-field="regions"]')!==null));
+  await frame.locator('body').evaluate(()=>window.scrollTo(0,0));await page.evaluate(()=>window.scrollTo(0,0));
+  await page.screenshot({path:path.join(artifactDirectory,'filters-desktop.png')});
+  await page.setViewportSize({width:390,height:844});
+  assert.equal(await frame.locator('body').evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'filter page fits mobile width');
+  await frame.locator('body').evaluate(()=>window.scrollTo(0,0));await page.evaluate(()=>window.scrollTo(0,0));await page.screenshot({path:path.join(artifactDirectory,'filters-mobile.png')});
+  await page.setViewportSize({width:1440,height:960});
+  await frame.locator('[data-tool="apply-workspace-filters"]').click();
+  await frame.locator('#query').waitFor();
+  const applied=state.bridgeCalls.filter(c=>c.method==='filters_apply').at(-1).payload.filters;
+  assert.equal(applied.ebitda_missing_mode,'alleen_met_waarde');
+  assert.equal(applied.min_omzet,10000);assert.equal(applied.max_omzet,900000);
+  assert.deepEqual(applied.regions,['vlaanderen']);
+  await frame.getByRole('button',{name:'Alle filters openen',exact:true}).click();
+  await frame.locator('#filter-finder').waitFor();
+  await frame.locator('[data-tool="clear-filters"]').click();
+  assert.equal(await ebitdaSelect.inputValue(),'');
+  assert.equal(await frame.locator('[data-workspace-field="regions"]:checked').count(),0);
   const postcodeInput = frame.locator('[data-workspace-field="kbo_postcode"]');
   await frame.locator("#filter-finder").fill("Postcode");
   const manyPostcodes = Array.from({length:300},(_,i)=>String(1000+i)).join("; ");
@@ -453,6 +488,31 @@ try {
   await frame.locator("#catalog-query").fill("bezoldigingen");
   await frame.locator("#catalog-form").press("Enter");
   await page.waitForFunction(() => !document.querySelector('iframe').contentDocument.querySelector('#tools-back').disabled);
+  await frame.locator('[data-add-metric="test_wages"]').click();
+  await frame.locator('[data-xbrl-field="numeric_min"]').fill('50000');
+  await frame.locator('[data-xbrl-field="year_min"]').fill('2023');
+  for(const language of ['fr','en','nl']){
+    await page.getByLabel('Taal / Language / Langue',{exact:true}).selectOption(language);
+    await page.waitForFunction(({language})=>document.querySelector('iframe').contentWindow.BelgoBaseI18n.language===language,{language});
+    assert.equal(await frame.locator('[data-add-metric="test_wages"]').count(),1,'catalog remains visible after language switch');
+    assert.equal(await frame.locator('[data-xbrl-field="numeric_min"]').inputValue(),'50000');
+  }
+  await frame.locator('body').evaluate(()=>window.scrollTo(0,0));await page.evaluate(()=>window.scrollTo(0,0));
+  await page.screenshot({path:path.join(artifactDirectory,'annual-accounts-desktop.png')});
+  await page.setViewportSize({width:390,height:844});
+  assert.equal(await frame.locator('body').evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'annual accounts fits mobile width');
+  await frame.locator('body').evaluate(()=>window.scrollTo(0,0));await page.evaluate(()=>window.scrollTo(0,0));await page.screenshot({path:path.join(artifactDirectory,'annual-accounts-mobile.png')});
+  await page.setViewportSize({width:1440,height:960});
+  await frame.locator('[data-tool="apply-workspace-filters"]').click();
+  await frame.locator('#query').waitFor();
+  const annual=state.bridgeCalls.filter(c=>c.method==='filters_apply').at(-1).payload.filters.xbrl_metric_filters[0];
+  assert.equal(annual.xbrl_metric_key,'test_wages');assert.equal(annual.numeric_min,50000);assert.equal(annual.year_min,2023);
+  await frame.locator('#new-search').click();
+  await frame.locator('#query').fill('Voorbeeld Bouw');
+  await frame.locator('#search-form').press('Enter');
+  await frame.locator('button[data-company="0123456789"]').first().waitFor();
+  await frame.getByRole('button',{name:'Jaarrekeningen',exact:true}).click();
+  await frame.locator('#catalog-query').waitFor();
   await frame.locator("#tools-back").click();
   await frame.getByRole("button",{name:"Vergelijkbaar",exact:true}).click();
   await frame.locator("#similar-number").fill("0123456789");
@@ -499,7 +559,6 @@ try {
     assert.equal(await frame.getByRole("heading", { name: "Voorbeeld Bouw BV" }).count(), 1, "company identity is never translated");
   }
   await page.screenshot({ path: screenshotPath, fullPage: true });
-  await page.getByRole("button", { name: "Account sluiten", exact: true }).click();
   await page.setViewportSize({ width: 390, height: 844 });
   assert.equal(await frame.locator('body').evaluate(el => el.scrollWidth <= innerWidth), true, 'mobile workspace fits viewport');
   assert.equal(await frame.locator('[data-view="search"] [data-i18n="nav.companies"]').isVisible(), true, 'mobile navigation has readable labels');
