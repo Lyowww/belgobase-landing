@@ -14,6 +14,10 @@
     "NBB-kerncijfers per bronjaar via BelgoBase. Ontbrekende cijfers blijven leeg.":["Chiffres clés BNB par année source via BelgoBase. Les chiffres manquants restent vides.","NBB key figures by source year via BelgoBase. Missing figures remain empty."],
     "Overgenomen uit de bron":["Repris de la source","Taken from the source"],
   });
+  for (const key of ["straat_nl","huisnummer","bus","kbo_postcode"]) {
+    const [nl,fr,en]=catalog._KEY_LABELS[key];
+    catalog._PHRASES[nl]=[fr,en];
+  }
   // Web-only wording: workspace saves belong to the authenticated account,
   // without making any statement about a Windows client or synchronisation.
   const webMessageOverrides=Object.freeze({
@@ -160,7 +164,7 @@
   // rerenders a few frozen lexical labels after its language event; translate
   // only those fixed-label slots. Company cards, result rows, NACE/XBRL
   // catalogues and the assistant are intentionally outside this scope.
-  const fixedSlots="#f-status option,#dossier-meta > span:last-child,#tools-content .tool-group summary,#tools-content .column-option,#financial-rows td:first-child,#financial-rows td:nth-child(4),#year-table td:first-child,#chart-note,#dossier-note,.chart-head .segment button,.metric-explanation p,.value-explanation,#result-total";
+  const fixedSlots="#f-status option,#dossier-meta > span:last-child,#overview-info .info-row > span,#tools-content .tool-group summary,#tools-content .column-option,#financial-rows td:first-child,#financial-rows td:nth-child(4),#year-table td:first-child,#chart-note,#dossier-note,.chart-head .segment button,.metric-explanation p,.value-explanation,#result-total";
   const translateSingularCompanyCount=(value,selectedLanguage)=>/^1\s+(?:bedrijf|bedrijven|entreprise|entreprises|company|companies)$/i.test(String(value).trim())
     ? {nl:"1 bedrijf",fr:"1 entreprise",en:"1 company"}[selectedLanguage]
     : value;

@@ -176,6 +176,22 @@ test("uses singular company wording only for an exact count of one", () => {
   assert.equal(load("nl").BelgoBaseWebI18n.enrich("workspace_save", { message: "2 bedrijven opgeslagen." }).message, "Excel met 2 bedrijven is voorbereid; de browserdownload is gestart.");
 });
 
+test("live language switches update only known company identity labels", () => {
+  const labels = [
+    ["Straat (NL)", "Rue (NL)", "Street (NL)"],
+    ["Huisnummer", "Numéro", "House number"],
+    ["Bus", "Boîte", "Box"],
+    ["Postcode (KBO)", "Code postal (BCE)", "Postcode (CBE)"],
+  ];
+  const nodes = labels.map(values => ({ nodeType: 3, nodeValue: values[0] }));
+  const window = load("nl", {}, [{ selector: "#overview-info .info-row > span", elements: nodes.map(child => ({ childNodes: [child] })) }]);
+  for (const [index, language] of ["nl", "fr", "en"].entries()) {
+    window.BelgoBaseI18n.language = language;
+    window.BelgoBasePresentationI18n.apply();
+    nodes.forEach((node, labelIndex) => assert.equal(node.nodeValue, labels[labelIndex][index]));
+  }
+});
+
 test("keeps source provenance in the delivered browser layer", () => {
   assert.match(source, /BUILD100_FINAL_V1 input\/premium_translations\.py/);
   assert.match(source, /source sha256: [a-f0-9]{64}/);

@@ -260,6 +260,38 @@ test("similar-company seed values format money and FTE without changing their nu
   assert.deepEqual(criteria, before, "formatting must not change the seed or submitted values");
 });
 
+test("result renderer uses the singular company label in every language", () => {
+  const makeNode = () => ({
+    innerHTML: "", textContent: "", hidden: false,
+    classList: { toggle() {}, add() {}, remove() {} },
+  });
+  for (const language of ["nl", "fr", "en"]) {
+    const nodes = new Map();
+    const $ = selector => {
+      if (!nodes.has(selector)) nodes.set(selector, makeNode());
+      return nodes.get(selector);
+    };
+    const state = {
+      view: "search", searched: true, total: 1, saved: [], rows: [], page: 1, pageSize: 50,
+      selectedRows: {}, sort: { key: "", direction: 1 }, filters: {},
+      workspace: { lists: [], active_list_id: null, result_columns: [] },
+    };
+    const locale = { nl: "nl-BE", fr: "fr-BE", en: "en-BE" }[language];
+    const singular = { nl: "Bedrijf", fr: "Entreprise", en: "Company" }[language];
+    const plural = { nl: "Bedrijven", fr: "Entreprises", en: "Companies" }[language];
+    const { renderRows } = loadFunctions(["renderRows"], {
+      state, $, currentRows: () => [], resultColumns: {},
+      esc: value => String(value), t: (key, fallback) => key === "nav.companies" ? plural : fallback,
+      present: value => value === "Bedrijf" ? singular : value,
+      locale, nf: new Intl.NumberFormat(locale),
+      columnLabel: value => value, companyCell: () => "", isSaved: () => false, icon: () => "",
+      activeList: () => null, renderAssistantContext() {}, controls() {},
+    });
+    renderRows();
+    assert.equal($("#result-total").textContent, `1 ${singular.toLocaleLowerCase(locale)}`);
+  }
+});
+
 test("annual latest-only filter stays visible and selected exports state exact scope", () => {
   assert.doesNotMatch(functionSource("renderChips"), /latest_only/);
   assert.doesNotMatch(functionSource("renderAiChanges"), /latest_only/);
