@@ -14,6 +14,9 @@
   const DOWNLOAD_PATH = /^\/api\/web\/download(?:\/[^/?#]+)?(?:\?[^#]*)?$/;
   const MAX_SECONDS = 60;
   const TARGET_RATE = 16_000;
+  const AI_CONTRACT = "belgobase-premium-v1";
+  const AI_SELECTION_CONTRACT = "belgobase-selection-v2";
+  const AI_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
   let csrf = "";
   let csrfLoad = null;
   let voice = null;
@@ -21,6 +24,9 @@
   let voiceStarting = 0;
   let workspaceRevision = null;
   let workspaceSaveQueue = Promise.resolve();
+  let aiSessionId = null;
+  let aiGeneration = 0;
+  let aiPending = null;
   const adapterMessages = Object.freeze({
     recordingActive: { nl: "Er loopt al een opname.", fr: "Un enregistrement est déjà en cours.", en: "A recording is already in progress." },
     secureAudio: { nl: "Microfoonopname vereist een beveiligde browserverbinding.", fr: "L’enregistrement nécessite une connexion sécurisée.", en: "Microphone recording requires a secure browser connection." },
@@ -32,9 +38,23 @@
     unavailable: { nl: "BelgoBase is tijdelijk niet beschikbaar. Probeer het later opnieuw.", fr: "BelgoBase est temporairement indisponible. Réessayez plus tard.", en: "BelgoBase is temporarily unavailable. Try again later." },
     denied: { nl: "Deze actie is niet beschikbaar voor je account. Vernieuw de pagina of neem contact op met BelgoBase.", fr: "Cette action n’est pas disponible pour votre compte. Actualisez la page ou contactez BelgoBase.", en: "This action is not available for your account. Refresh the page or contact BelgoBase." },
     retry: { nl: "Deze actie kon niet worden afgerond. Probeer het opnieuw.", fr: "Cette action n’a pas pu être terminée. Réessayez.", en: "This action could not be completed. Try again." },
+    aiInsufficient: { nl: "Je AI-tegoed is onvoldoende voor deze opdracht. Neem contact op met BelgoBase om bij te laden.", fr: "Votre solde IA est insuffisant pour cette demande. Contactez BelgoBase pour le recharger.", en: "Your AI balance is insufficient for this request. Contact BelgoBase to top it up." },
+    aiWalletUnavailable: { nl: "Je AI-tegoed kan niet worden gecontroleerd. Er is geen nieuwe betaalde aanvraag gestart.", fr: "Votre solde IA ne peut pas être vérifié. Aucune nouvelle demande payante n’a été lancée.", en: "Your AI balance could not be checked. No new paid request was started." },
+    aiSessionExpired: { nl: "Dit zoekgesprek is verlopen. Start een nieuw gesprek; je huidige filters blijven behouden.", fr: "Cette conversation de recherche a expiré. Démarrez une nouvelle conversation ; vos filtres actuels sont conservés.", en: "This search conversation has expired. Start a new conversation; your current filters are preserved." },
+    aiSessionBusy: { nl: "Dit zoekgesprek verwerkt nog een vraag. Wacht op het antwoord; je huidige filters blijven behouden.", fr: "Cette conversation traite encore une demande. Attendez la réponse ; vos filtres actuels sont conservés.", en: "This search conversation is still processing a request. Wait for the answer; your current filters are preserved." },
+    aiDuplicate: { nl: "Deze vraag is al ontvangen. Ze wordt niet opnieuw verstuurd; je huidige filters blijven behouden.", fr: "Cette demande a déjà été reçue. Elle n’est pas renvoyée ; vos filtres actuels sont conservés.", en: "This request was already received. It will not be sent again; your current filters are preserved." },
+    aiBusy: { nl: "Slim Zoeken is momenteel druk bezet. Wacht even; je huidige filters blijven behouden.", fr: "La recherche intelligente est actuellement occupée. Patientez ; vos filtres actuels sont conservés.", en: "Smart Search is currently busy. Wait a moment; your current filters are preserved." },
+    aiSessionLimit: { nl: "Er staan al zoekgesprekken open. Ga verder in een bestaand gesprek; je filters blijven behouden.", fr: "Des conversations de recherche sont déjà ouvertes. Continuez dans une conversation existante ; vos filtres sont conservés.", en: "Search conversations are already open. Continue in an existing conversation; your filters are preserved." },
+    aiAccessDenied: { nl: "Slim Zoeken kon je toegang niet bevestigen. Meld je opnieuw aan; je filters blijven behouden.", fr: "La recherche intelligente n’a pas pu confirmer votre accès. Reconnectez-vous ; vos filtres sont conservés.", en: "Smart Search could not confirm your access. Sign in again; your filters are preserved." },
+    aiInvalidRequest: { nl: "Slim Zoeken kon deze vraag niet verwerken. Controleer je invoer; je filters blijven behouden.", fr: "La recherche intelligente n’a pas pu traiter cette demande. Vérifiez votre saisie ; vos filtres sont conservés.", en: "Smart Search could not process this request. Check your input; your filters are preserved." },
+    aiTimeout: { nl: "Slim Zoeken antwoordde niet op tijd. Verstuur de vraag niet automatisch opnieuw; je filters blijven behouden.", fr: "La recherche intelligente n’a pas répondu à temps. Ne renvoyez pas automatiquement la demande ; vos filtres sont conservés.", en: "Smart Search did not respond in time. Do not resend the request automatically; your filters are preserved." },
+    aiInvalidResponse: { nl: "Slim Zoeken gaf geen geldig antwoord. Je filters blijven behouden.", fr: "La recherche intelligente a renvoyé une réponse non valide. Vos filtres sont conservés.", en: "Smart Search returned an invalid response. Your filters are preserved." },
+    aiClosed: { nl: "Dit zoekgesprek is gesloten. Start een nieuw gesprek; je huidige filters blijven behouden.", fr: "Cette conversation de recherche est fermée. Démarrez une nouvelle conversation ; vos filtres actuels sont conservés.", en: "This search conversation is closed. Start a new conversation; your current filters are preserved." },
+    aiTransport: { nl: "De verbinding met Slim Zoeken is mislukt. De vraag wordt niet automatisch opnieuw verstuurd; je filters blijven behouden.", fr: "La connexion à la recherche intelligente a échoué. La demande n’est pas renvoyée automatiquement ; vos filtres sont conservés.", en: "The connection to Smart Search failed. The request is not resent automatically; your filters are preserved." },
+    aiUnavailable: { nl: "Slim Zoeken is tijdelijk niet beschikbaar. Je huidige filters blijven behouden.", fr: "La recherche intelligente est temporairement indisponible. Vos filtres actuels sont conservés.", en: "Smart Search is temporarily unavailable. Your current filters are preserved." },
   });
   function adapterLanguage() {
-    const value = document.documentElement?.lang?.toLowerCase();
+    const value = (document.getElementById?.("language-switch")?.value || document.documentElement?.lang)?.toLowerCase();
     return ["nl", "fr", "en"].includes(value) ? value : "nl";
   }
   const adapterMessage = key => adapterMessages[key][adapterLanguage()];
@@ -44,6 +64,51 @@
     if (status >= 500) return adapterMessage("unavailable");
     const message = typeof data?.error === "string" && !protocolCode(data.error) ? data.error : null;
     return message || adapterMessage("retry");
+  }
+
+  const AI_ERROR_MESSAGES = Object.freeze({
+    insufficient_balance: "aiInsufficient", wallet_insufficient: "aiInsufficient", budget_exhausted: "aiInsufficient",
+    wallet_unavailable: "aiWalletUnavailable", ai_session_expired: "aiSessionExpired", ai_session_closed: "aiClosed",
+    ai_session_busy: "aiSessionBusy", duplicate_request: "aiDuplicate", ai_busy: "aiBusy",
+    concurrency_limit_exceeded: "aiBusy", ai_session_limit: "aiSessionLimit", ai_access_denied: "aiAccessDenied",
+    invalid_ai_request: "aiInvalidRequest", ai_timeout: "aiTimeout", ai_invalid_response: "aiInvalidResponse",
+    transport_error: "aiTransport",
+  });
+  function aiError(code = "ai_unavailable", status) {
+    const fallback = status === 408 || status === 504 ? "aiTimeout" : status === 401 || status === 403 ? "aiAccessDenied" : "aiUnavailable";
+    const error = new Error(adapterMessage(AI_ERROR_MESSAGES[code] || fallback));
+    error.code = code;
+    error.status = status;
+    return error;
+  }
+  const clone = value => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
+  const object = value => value !== null && typeof value === "object" && !Array.isArray(value);
+  function normalizeRegions(value) {
+    if (value == null || value === "") return [];
+    if (!Array.isArray(value)) throw aiError("invalid_ai_request", 400);
+    const result = [], allowed = new Set(["vlaanderen", "wallonie", "brussel"]);
+    for (const item of value) {
+      if (!allowed.has(item) || result.includes(item)) throw aiError("invalid_ai_request", 400);
+      result.push(item);
+    }
+    return result;
+  }
+  function normalizePreferences(value) {
+    if (value == null) return [];
+    if (!Array.isArray(value) || value.length > 3) throw aiError("invalid_ai_request", 400);
+    const fields = new Set(), priorities = new Set(), result = [];
+    for (const item of value) {
+      const keys = object(item) ? Object.keys(item).sort() : [];
+      if (keys.join(",") !== "direction,evidence,field,priority" || !["omzet", "winst", "personeel_vte"].includes(item.field)
+          || !["high", "low"].includes(item.direction) || !Number.isInteger(item.priority) || item.priority < 1 || item.priority > 3
+          || typeof item.evidence !== "string" || !item.evidence.trim() || item.evidence.length > 250
+          || fields.has(item.field) || priorities.has(item.priority)) throw aiError("invalid_ai_request", 400);
+      fields.add(item.field); priorities.add(item.priority);
+      result.push({ field: item.field, direction: item.direction, priority: item.priority, evidence: item.evidence.trim() });
+    }
+    result.sort((left, right) => left.priority - right.priority);
+    if (result.some((item, index) => item.priority !== index + 1)) throw aiError("invalid_ai_request", 400);
+    return result;
   }
 
   function messageFor(error) {
@@ -59,6 +124,9 @@
   }
 
   function authExpired() {
+    aiGeneration++;
+    aiSessionId = null;
+    aiPending = null;
     csrf = "";
     csrfLoad = null;
     notifyAuth("belgobase-web-auth-expired");
@@ -123,7 +191,131 @@
     link.remove();
   }
 
+  function canonicalAiRequest(request) {
+    if (!object(request)) throw aiError("invalid_ai_request", 400);
+    const common = {
+      contract: AI_CONTRACT,
+      request_id: window.crypto.randomUUID(),
+      assistant: true,
+      language: adapterLanguage(),
+    };
+    if (request.selected_company_choice !== undefined && request.selected_company_choice !== null) {
+      if (!aiSessionId || typeof request.selected_company_choice !== "string" || !request.selected_company_choice) throw aiError("ai_session_expired", 409);
+      return { ...common, action: "choose", choice_id: request.selected_company_choice, session_id: aiSessionId };
+    }
+    if (request.selected_codes !== undefined && request.selected_codes !== null) {
+      if (!aiSessionId) throw aiError("ai_session_expired", 409);
+      if (!Array.isArray(request.selected_codes) || request.selected_codes.some(code => typeof code !== "string" || !code)) throw aiError("invalid_ai_request", 400);
+      return { ...common, action: "select", codes: clone(request.selected_codes), session_id: aiSessionId };
+    }
+    if (typeof request.text !== "string" || !object(request.filters ?? {})) throw aiError("invalid_ai_request", 400);
+    const currentFilters = clone(request.filters ?? {});
+    const currentRegions = normalizeRegions(currentFilters.regions);
+    const currentPreferences = normalizePreferences(currentFilters.preferences);
+    delete currentFilters.regions;
+    delete currentFilters.preferences;
+    return {
+      ...common,
+      action: "ask",
+      text: request.text.trim(),
+      current_filters: currentFilters,
+      current_regions: currentRegions,
+      current_preferences: currentPreferences,
+      ...(Array.isArray(request.conversation) && request.conversation.length === 0 ? { reset: true } : {}),
+      ...(aiSessionId ? { session_id: aiSessionId } : {}),
+    };
+  }
+
+  function validateAiProposal(response, action, expectedSession) {
+    if (!object(response)) throw aiError("ai_invalid_response", 502);
+    const statusCode = Number.isInteger(response._http_status) ? response._http_status : Number.isInteger(response.http_status) ? response.http_status : undefined;
+    if (response.ok === false || typeof response.error === "string" || (statusCode !== undefined && statusCode >= 400)) {
+      throw aiError(typeof response.error === "string" ? response.error : "ai_unavailable", statusCode);
+    }
+    if (response.contract !== AI_CONTRACT || typeof response.session_id !== "string" || !AI_UUID.test(response.session_id)
+        || !Number.isInteger(response.expires_in_seconds) || response.expires_in_seconds <= 0
+        || (expectedSession && response.session_id !== expectedSession)) throw aiError("ai_invalid_response", 502);
+    if (action === "reset") {
+      if (response.status !== "reset") throw aiError("ai_invalid_response", 502);
+      return { proposal: { status: "reset" }, sessionId: response.session_id };
+    }
+    const required = ["status", "filters", "summary", "question", "choices", "message", "answer_context", "activity_selection_complete"];
+    if (!required.every(key => Object.hasOwn(response, key)) || !["ready", "clarify", "out_of_scope", "unsupported"].includes(response.status)
+        || !object(response.filters) || !Array.isArray(response.summary) || typeof response.question !== "string"
+        || !Array.isArray(response.choices) || typeof response.message !== "string" || !object(response.answer_context)
+        || typeof response.activity_selection_complete !== "boolean") throw aiError("ai_invalid_response", 502);
+    let regions, preferences;
+    try {
+      regions = normalizeRegions(response.regions ?? []);
+      preferences = normalizePreferences(response.preferences ?? []);
+    } catch {
+      throw aiError("ai_invalid_response", 502);
+    }
+    if (JSON.stringify(regions) !== JSON.stringify(response.regions ?? []) || JSON.stringify(preferences) !== JSON.stringify(response.preferences ?? [])) throw aiError("ai_invalid_response", 502);
+    const selectionContract = response.selection_contract ?? null;
+    if ((regions.length || preferences.length) && selectionContract !== AI_SELECTION_CONTRACT) throw aiError("ai_invalid_response", 502);
+    if (selectionContract !== null && selectionContract !== AI_SELECTION_CONTRACT) throw aiError("ai_invalid_response", 502);
+    if (Object.hasOwn(response, "assistant_message") && (typeof response.assistant_message !== "string" || response.assistant_message.length > 12000)) throw aiError("ai_invalid_response", 502);
+    if (Object.hasOwn(response, "reference_choices") && (!Array.isArray(response.reference_choices) || response.reference_choices.length > 20)) throw aiError("ai_invalid_response", 502);
+    if (Object.hasOwn(response, "wallet") && !object(response.wallet)) throw aiError("ai_invalid_response", 502);
+    const proposal = Object.fromEntries(required.map(key => [key, clone(response[key])]));
+    proposal.regions = regions;
+    proposal.preferences = preferences;
+    proposal.selection_contract = selectionContract;
+    for (const key of ["assistant_message", "export_proposal", "reference_choices", "action", "count", "wallet"]) {
+      if (Object.hasOwn(response, key)) proposal[key] = clone(response[key]);
+    }
+    proposal.filters = { ...proposal.filters, regions: clone(regions), preferences: clone(preferences) };
+    return { proposal, sessionId: response.session_id };
+  }
+
+  async function closeLateAiSession(response) {
+    const sessionId = response?.proposal?.contract === AI_CONTRACT && AI_UUID.test(response.proposal.session_id || "") ? response.proposal.session_id : null;
+    if (!sessionId) return;
+    try {
+      await sendBridge("ai", { contract: AI_CONTRACT, action: "close", request_id: window.crypto.randomUUID(), session_id: sessionId, assistant: true });
+    } catch {}
+  }
+
+  function cancelAiState(operationId) {
+    if (!aiPending || (operationId && aiPending.operationId && operationId !== aiPending.operationId)) return false;
+    aiGeneration++;
+    aiSessionId = null;
+    aiPending = null;
+    return true;
+  }
+
+  async function aiBridge(request) {
+    if (aiPending) throw aiError("ai_session_busy", 409);
+    const outgoing = canonicalAiRequest(request);
+    const expectedSession = aiSessionId;
+    const pending = { generation: aiGeneration, operationId: typeof request.operation_id === "string" ? request.operation_id : null };
+    aiPending = pending;
+    try {
+      const wrapped = await sendBridge("ai", outgoing);
+      if (pending.generation !== aiGeneration || aiPending !== pending) {
+        await closeLateAiSession(wrapped);
+        throw aiError("ai_session_closed", 409);
+      }
+      const validated = validateAiProposal(wrapped.proposal, outgoing.action, expectedSession);
+      aiSessionId = validated.sessionId;
+      const result = { ...wrapped, proposal: validated.proposal };
+      if (object(validated.proposal.wallet)) result.wallet = clone(validated.proposal.wallet);
+      return result;
+    } catch (error) {
+      if (error?.code === "ai_session_expired" && pending.generation === aiGeneration) aiSessionId = null;
+      throw error;
+    } finally {
+      if (aiPending === pending) aiPending = null;
+    }
+  }
+
   function bridge(method, payload) {
+    if (method === "ai") return aiBridge(payload);
+    if (method === "cancel_operation") {
+      cancelAiState(payload?.operation_id);
+      return sendBridge(method, payload);
+    }
     if (method !== "workspace_save") return sendBridge(method, payload);
     // Keep rapid edits from this browser in order. Other browsers still use
     // the server revision check, so a stale window cannot overwrite their work.
@@ -150,6 +342,7 @@
         body: JSON.stringify(outgoing),
       });
     } catch {
+      if (method === "ai") throw aiError("transport_error");
       throw new Error(adapterMessage("unavailable"));
     }
     const data = await json(response);
@@ -159,6 +352,7 @@
       throw new Error(adapterMessage("sessionExpired"));
     }
     if (!response.ok || localized.ok !== true) {
+      if (method === "ai") throw aiError(typeof localized.error === "string" ? localized.error : "ai_unavailable", response.status);
       throw new Error(bridgeFailure(response.status, localized));
     }
     triggerDownload(localized.download_url, ["export_results", "export_selection"].includes(method));
@@ -369,6 +563,9 @@
   }
 
   async function logoutFromWorkspace() {
+    aiGeneration++;
+    aiSessionId = null;
+    aiPending = null;
     const token = await ensureCsrf();
     const response = await fetch(`${API_ROOT}/auth/logout`, {
       method: "POST",
@@ -410,5 +607,10 @@
     }
   });
   window.pywebview = { api };
-  window.addEventListener("pagehide", destroyVoice);
+  window.addEventListener("pagehide", () => {
+    aiGeneration++;
+    aiSessionId = null;
+    aiPending = null;
+    destroyVoice();
+  });
 })();

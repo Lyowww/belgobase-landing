@@ -5,6 +5,26 @@ import test from "node:test";
 import vm from "node:vm";
 
 const source = await readFile(new URL("./browser-adapter.js", import.meta.url), "utf8");
+const AI_CONTRACT = "belgobase-premium-v1";
+const AI_SESSION = "00000000-0000-4000-8000-000000000001";
+function aiProposal(overrides = {}) {
+  return {
+    contract: AI_CONTRACT,
+    session_id: AI_SESSION,
+    expires_in_seconds: 900,
+    status: "clarify",
+    filters: {},
+    summary: [],
+    question: "Welke activiteit bedoel je?",
+    choices: [],
+    message: "",
+    answer_context: {},
+    activity_selection_complete: false,
+    regions: [],
+    preferences: [],
+    ...overrides,
+  };
+}
 
 function adapterHarness(replies, mediaError, language = "nl", enrich) {
   const calls = [];
@@ -41,6 +61,7 @@ function adapterHarness(replies, mediaError, language = "nl", enrich) {
     calls.push({ url: String(url), options });
     const reply = replies.shift();
     assert.ok(reply, `unexpected request ${url}`);
+    if (reply.wait) await reply.wait;
     if (reply.error) throw reply.error;
     return {
       ok: reply.status === undefined || (reply.status >= 200 && reply.status < 300),
@@ -147,6 +168,170 @@ test("bridge forwards an authenticated method and starts a same-origin download"
   assert.equal(h.calls[1].options.headers["X-BelgoBase-CSRF"], "a".repeat(32));
   assert.equal(h.links[0].href, "https://app.example.test/api/web/download/abcdefghijklmnop");
   assert.equal(h.links[0].clicked, true);
+});
+
+test("AI sends the live canonical contract and merges selection metadata back into UI filters", async () => {
+  const preference = { field: "omzet", direction: "high", priority: 1, evidence: "hoogste omzet eerst" };
+  const wallet = { available_eur: 7.25, entries: [] };
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "a".repeat(32) } },
+    { body: { ok: true, proposal: aiProposal({
+      status: "ready", filters: { nace_prefix: "41" }, question: "", summary: ["Bouw"],
+      activity_selection_complete: true, regions: ["vlaanderen"], preferences: [preference],
+      selection_contract: "belgobase-selection-v2", wallet,
+    }) } },
+  ], undefined, "fr");
+  const result = await h.api.ai({
+    text: "  bouwbedrijven  ", conversation: [], operation_id: "ui-operation",
+    filters: { juridical_situation_exclude: ["J003"], regions: ["vlaanderen"], preferences: [preference] },
+  });
+  const payload = JSON.parse(h.calls[1].options.body);
+  assert.equal(h.calls[1].url, "/api/web/bridge/ai");
+  assert.equal(payload.contract, AI_CONTRACT);
+  assert.equal(payload.action, "ask");
+  assert.match(payload.request_id, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+  assert.equal(payload.assistant, true);
+  assert.equal(payload.language, "fr");
+  assert.equal(payload.text, "bouwbedrijven");
+  assert.equal(payload.reset, true);
+  assert.deepEqual(payload.current_filters, { juridical_situation_exclude: ["J003"] });
+  assert.deepEqual(payload.current_regions, ["vlaanderen"]);
+  assert.deepEqual(payload.current_preferences, [preference]);
+  assert.equal("operation_id" in payload, false);
+  assert.equal("conversation" in payload, false);
+  assert.equal("filters" in payload, false);
+  assert.deepEqual(JSON.parse(JSON.stringify(result.proposal.filters)), { nace_prefix: "41", regions: ["vlaanderen"], preferences: [preference] });
+  assert.deepEqual(JSON.parse(JSON.stringify(result.wallet)), wallet);
+  assert.deepEqual(JSON.parse(JSON.stringify(result.proposal.wallet)), wallet);
+  assert.equal("session_id" in result.proposal, false, "canonical session metadata stays inside the adapter");
+});
+
+test("AI follow-ups keep one session and a new UI conversation sends reset without forwarding conversation", async () => {
+  const ready = overrides => ({ body: { ok: true, proposal: aiProposal(overrides) } });
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "s".repeat(32) } },
+    ready({ choices: [{ value: "41", label: "Bouw" }] }),
+    ready({ status: "ready", question: "", activity_selection_complete: true }),
+    ready({ reference_choices: [{ choice_id: "company-1", label: "Voorbeeld" }] }),
+    ready({ status: "ready", question: "", activity_selection_complete: true }),
+    ready({}),
+  ], undefined, "en");
+  await h.api.ai({ text: "builders", conversation: [], filters: {} });
+  await h.api.ai({ selected_codes: ["41"] });
+  await h.api.ai({ text: "near Ghent", conversation: [{ role: "user", content: "builders" }], filters: {} });
+  await h.api.ai({ selected_company_choice: "company-1" });
+  await h.api.ai({ text: "new conversation", conversation: [], filters: {} });
+  const payloads = h.calls.slice(1).map(call => JSON.parse(call.options.body));
+  assert.deepEqual(payloads.map(payload => payload.action), ["ask", "select", "ask", "choose", "ask"]);
+  assert.equal(payloads[0].session_id, undefined);
+  for (const payload of payloads.slice(1)) assert.equal(payload.session_id, AI_SESSION);
+  assert.deepEqual(payloads[1].codes, ["41"]);
+  assert.equal(payloads[3].choice_id, "company-1");
+  assert.equal(payloads[2].reset, undefined);
+  assert.equal(payloads[4].reset, true);
+  assert.ok(payloads.every(payload => !("conversation" in payload)));
+});
+
+test("AI rejects malformed canonical responses without retaining their session", async () => {
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "r".repeat(32) } },
+    { body: { ok: true, proposal: aiProposal({ expires_in_seconds: 0 }) } },
+    { body: { ok: true, proposal: aiProposal({ session_id: "00000000-0000-4000-8000-000000000002" }) } },
+  ]);
+  await assert.rejects(h.api.ai({ text: "test", conversation: [], filters: {} }), error => {
+    assert.equal(error.code, "ai_invalid_response");
+    assert.match(error.message, /geen geldig antwoord/);
+    return true;
+  });
+  await h.api.ai({ text: "retry", conversation: [{ role: "user", content: "test" }], filters: {} });
+  const retry = JSON.parse(h.calls[2].options.body);
+  assert.equal(retry.session_id, undefined);
+});
+
+test("AI balance errors are human in every language and a paid request is never retried automatically", async () => {
+  for (const [language, expected] of [["nl", /AI-tegoed/], ["fr", /solde IA/], ["en", /AI balance/]]) {
+    const h = adapterHarness([
+      { body: { authenticated: true, csrf: "b".repeat(32) } },
+      { status: 402, body: { ok: false, error: "insufficient_balance" } },
+    ], undefined, language);
+    await assert.rejects(h.api.ai({ text: "bouw", conversation: [], filters: {} }), error => {
+      assert.equal(error.code, "insufficient_balance");
+      assert.match(error.message, expected);
+      assert.doesNotMatch(error.message, /insufficient_balance/);
+      return true;
+    });
+    assert.equal(h.calls.filter(call => call.url.endsWith("/bridge/ai")).length, 1);
+  }
+  const retry = adapterHarness([
+    { body: { authenticated: true, csrf: "m".repeat(32) } },
+    { status: 402, body: { ok: false, error: "insufficient_balance" } },
+    { body: { ok: true, proposal: aiProposal() } },
+  ]);
+  await assert.rejects(retry.api.ai({ text: "behouden tekst", conversation: [], filters: {} }));
+  await retry.api.ai({ text: "behouden tekst", conversation: [], filters: {} });
+  const paid = retry.calls.filter(call => call.url.endsWith("/bridge/ai")).map(call => JSON.parse(call.options.body));
+  assert.equal(paid.length, 2, "only the explicit manual retry creates a second paid request");
+  assert.notEqual(paid[0].request_id, paid[1].request_id);
+  assert.deepEqual(paid.map(payload => payload.text), ["behouden tekst", "behouden tekst"]);
+});
+
+test("AI maps session and invalid-request protocol errors to typed human messages", async () => {
+  for (const [status, code, language, expected] of [
+    [409, "ai_session_expired", "nl", /zoekgesprek is verlopen/],
+    [400, "invalid_ai_request", "fr", /Vérifiez votre saisie/],
+    [400, "invalid_ai_request", "en", /Check your input/],
+  ]) {
+    const h = adapterHarness([
+      { body: { authenticated: true, csrf: "e".repeat(32) } },
+      { status, body: { ok: false, error: code } },
+    ], undefined, language);
+    await assert.rejects(h.api.ai({ text: "query", conversation: [], filters: {} }), error => {
+      assert.equal(error.code, code);
+      assert.match(error.message, expected);
+      assert.doesNotMatch(error.message, new RegExp(code));
+      return true;
+    });
+  }
+});
+
+test("AI cancellation rejects concurrent work, ignores the late session and closes it once", async () => {
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  const nextSession = "00000000-0000-4000-8000-000000000002";
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "c".repeat(32) } },
+    { wait: gate, body: { ok: true, proposal: aiProposal() } },
+    { body: { ok: true, cancelled: true } },
+    { body: { ok: true, proposal: { contract: AI_CONTRACT, session_id: AI_SESSION, expires_in_seconds: 900, status: "closed" } } },
+    { body: { ok: true, proposal: aiProposal({ session_id: nextSession }) } },
+  ]);
+  const late = h.api.ai({ text: "first", conversation: [], filters: {}, operation_id: "op-1" });
+  await new Promise(resolve => setImmediate(resolve));
+  await assert.rejects(h.api.ai({ text: "concurrent", conversation: [], filters: {} }), error => error.code === "ai_session_busy");
+  await h.api.cancel_operation({ operation_id: "op-1" });
+  release();
+  await assert.rejects(late, error => error.code === "ai_session_closed");
+  await h.api.ai({ text: "after cancel", conversation: [{ role: "user", content: "old" }], filters: {} });
+  const payloads = h.calls.filter(call => call.url.endsWith("/bridge/ai")).map(call => JSON.parse(call.options.body));
+  assert.deepEqual(payloads.map(payload => payload.action), ["ask", "close", "ask"]);
+  assert.equal(payloads[1].session_id, AI_SESSION);
+  assert.equal(payloads[2].session_id, undefined, "a late response cannot resurrect the cancelled session");
+});
+
+test("workspace logout clears the AI session before another browser request", async () => {
+  const nextSession = "00000000-0000-4000-8000-000000000002";
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "l".repeat(32) } },
+    { body: { ok: true, proposal: aiProposal() } },
+    { body: { ok: true } },
+    { body: { authenticated: true, csrf: "n".repeat(32) } },
+    { body: { ok: true, proposal: aiProposal({ session_id: nextSession }) } },
+  ]);
+  await h.api.ai({ text: "before logout", conversation: [], filters: {} });
+  await h.api.account_action({ action: "deactivate", confirmed: true });
+  await h.api.ai({ text: "after logout", conversation: [{ role: "user", content: "old" }], filters: {} });
+  const last = JSON.parse(h.calls.at(-1).options.body);
+  assert.equal(last.session_id, undefined);
 });
 
 test("voice creates a 16 kHz WAV request and cancellation stops browser tracks", async () => {

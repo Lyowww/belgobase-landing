@@ -223,7 +223,27 @@ const mock = https.createServer({key:await readFile(path.join(tlsDirectory,"key.
       if (body.method === "ai_usage") return json(response,200,{ok:true,usage:{mode:"server",wallet:state.wallet}});
       if (body.method === "cancel_operation") return json(response,200,{ok:true,cancelled:true});
       if (body.method === "ai" && state.aiGate) await state.aiGate;
-      if (body.method === "ai") return json(response,200,{ok:true,wallet:state.wallet,proposal:body.payload.selected_codes?{status:"ready",assistant_message:"Ik stel bouwbedrijven in Gent voor.",filters:{kbo_postcode:"9000",nace_prefix:"41"},summary:["Bouwbedrijven in Gent"]}:{status:"clarify",assistant_message:"Welke activiteit bedoel je?",choices:[{value:"41",label:"Bouwbedrijven"}]}});
+      if (body.method === "ai") {
+        const p=body.payload, uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+        const allowed=new Set(['contract','action','request_id','session_id','text','current_filters','current_regions','current_preferences','reset','codes','assistant','choice_id','language']);
+        assert.equal(p.contract,'belgobase-premium-v1','AI must use the real server contract');
+        assert.ok(uuid.test(p.request_id),'AI requests require unique UUID identity');
+        assert.ok(Object.keys(p).every(key=>allowed.has(key)),'UI-only fields must not leak to AI service');
+        assert.equal(p.assistant,true); assert.ok(['nl','fr','en'].includes(p.language));
+        state.aiRequestIds??=new Set(); assert.ok(!state.aiRequestIds.has(p.request_id),'no automatic duplicate paid call');state.aiRequestIds.add(p.request_id);
+        if(p.action==='ask'){
+          assert.equal(typeof p.text,'string');assert.equal(typeof p.current_filters,'object');
+          assert.ok(Array.isArray(p.current_regions));assert.ok(Array.isArray(p.current_preferences));
+        } else if(p.action==='select') { assert.ok(Array.isArray(p.codes)); assert.ok(uuid.test(p.session_id)); }
+        else if(p.action==='choose') { assert.equal(typeof p.choice_id,'string'); assert.ok(uuid.test(p.session_id)); }
+        else assert.ok(['close','reset'].includes(p.action));
+        if(state.aiFailureOnce){const failure=state.aiFailureOnce;state.aiFailureOnce=null;return json(response,failure.status,{ok:false,error:failure.code});}
+        const session=p.session_id||'00000000-0000-4000-8000-000000000001';
+        const proposal={contract:'belgobase-premium-v1',session_id:session,expires_in_seconds:900,
+          filters:{},summary:[],question:'',choices:[],message:'',answer_context:{},activity_selection_complete:false,regions:[],preferences:[],wallet:state.wallet,
+          ...(p.action==='select'?{status:'ready',assistant_message:'Ik stel bouwbedrijven in Gent voor.',filters:{kbo_postcode:'9000',nace_prefix:'41'},summary:['Bouwbedrijven in Gent'],activity_selection_complete:true}:{status:'clarify',assistant_message:'Welke activiteit bedoel je?',choices:[{value:'41',label:'Bouwbedrijven'}]})};
+        return json(response,200,{ok:true,proposal});
+      }
       if (body.method === "set_language") {
         if (!["nl", "fr", "en"].includes(body.payload.language)) return json(response, 400, { ok: false, error: "invalid_request" });
         return json(response, 200, { ok: true, language: body.payload.language });
@@ -597,6 +617,12 @@ try {
   await frame.locator('#ai-mode').check();
   await frame.locator('#query').fill('Zoek mijn ideale klant');
   const beforeAiSearches=state.bridgeCalls.filter(c=>c.method==='search').length;
+  state.aiFailureOnce={status:402,code:'insufficient_balance'};
+  await frame.locator('#search-form').press('Enter');
+  await frame.locator('#notice').filter({hasText:/tegoed/i}).waitFor();
+  assert.equal(await frame.locator('#query').inputValue(),'Zoek mijn ideale klant','rejected AI request keeps the typed question');
+  assert.doesNotMatch(await frame.locator('#notice').innerText(),/insufficient_balance|Deze actie kon niet/);
+  await page.waitForFunction(()=>!document.querySelector('iframe').contentDocument.querySelector('#query').disabled);
   await frame.locator('#search-form').press('Enter');
   try { await frame.locator('[data-choice="41"]').waitFor(); } catch(error) { console.error(JSON.stringify({runtimeErrors,notice:await frame.locator("#notice").textContent(),calls:state.bridgeCalls.slice(-5)},null,2)); throw error; }
   assert.equal(state.bridgeCalls.filter(c=>c.method==='search').length,beforeAiSearches,'clarification never silently starts a search');
@@ -856,7 +882,7 @@ try {
   await auditAccountFinal({page, context, appOrigin, state, artifactDirectory});
   assert.deepEqual(runtimeErrors,[],"all authenticated and public flows finish without uncaught browser errors");
   assert.deepEqual(state.unhandledMethods,[],"the browser never receives fake success for an unimplemented mock route");
-  const report = { ok: true, checkedAt: new Date().toISOString(), network: "loopback mocks only; synthetic installer", enrollmentScreenshot: enrollmentScreenshotPath, documentScreenshot: documentScreenshotPath, screenshot: screenshotPath, bridgeMethods: state.bridgeCalls.map((call) => call.method), version: release };
+  const report = { ok: true, checkedAt: new Date().toISOString(), network: "loopback mocks only; synthetic installer", aiRequests: state.bridgeCalls.filter(call=>call.method==="ai").map(call=>call.payload), enrollmentScreenshot: enrollmentScreenshotPath, documentScreenshot: documentScreenshotPath, screenshot: screenshotPath, bridgeMethods: state.bridgeCalls.map((call) => call.method), version: release };
   await writeFile(path.join(artifactDirectory,"workspace-proof.json"),JSON.stringify(report,null,2));
   console.log(JSON.stringify(report, null, 2));
   await context.close();
