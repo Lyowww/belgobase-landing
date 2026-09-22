@@ -146,7 +146,7 @@ test("a malformed successful transcription becomes a recoverable error rather th
 test("microphone failures explain permission recovery, missing hardware and busy input", async () => {
   for (const [name, language, expected] of [
     ["NotAllowedError", "nl", /instellingenicoon/],
-    ["NotAllowedError", "fr", /Microphone bloqué/],
+    ["NotAllowedError", "fr", /Microphone bloquÃ©/],
     ["NotAllowedError", "en", /Microphone blocked/],
     ["NotFoundError", "nl", /Geen microfoon/],
     ["NotReadableError", "nl", /andere opname/],
@@ -278,8 +278,11 @@ test("AI balance errors are human in every language and a paid request is never 
 test("AI maps session and invalid-request protocol errors to typed human messages", async () => {
   for (const [status, code, language, expected] of [
     [409, "ai_session_expired", "nl", /zoekgesprek is verlopen/],
-    [400, "invalid_ai_request", "fr", /Vérifiez votre saisie/],
+    [400, "invalid_ai_request", "fr", /VÃ©rifiez votre saisie/],
     [400, "invalid_ai_request", "en", /Check your input/],
+    [400, "ai_invalid_proposal", "nl", /zoekvoorstel kon niet veilig/],
+    [400, "ai_invalid_proposal", "fr", /proposition de recherche/],
+    [400, "ai_invalid_proposal", "en", /proposal could not be validated/],
   ]) {
     const h = adapterHarness([
       { body: { authenticated: true, csrf: "e".repeat(32) } },
@@ -415,8 +418,8 @@ test("bridge errors are localized before display and protocol codes stay private
   const translated = adapterHarness([
     { body: { authenticated: true, csrf: "t".repeat(32) } },
     { status: 400, body: { ok: false, error: "Ongeldig verzoek." } },
-  ], undefined, "fr", (_method, data) => ({ ...data, error: "Requête non valide." }));
-  await assert.rejects(translated.api.search({}), /Requête non valide/);
+  ], undefined, "fr", (_method, data) => ({ ...data, error: "RequÃªte non valide." }));
+  await assert.rejects(translated.api.search({}), /RequÃªte non valide/);
 
   for (const [status, code, expected] of [
     [403, "csrf_invalid", /not available for your account/i],
