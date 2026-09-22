@@ -14,6 +14,11 @@ type Details = { company?: { company_type?: string; enterprise_number?: string; 
 type AccountRow = { key?: string; label?: string; value?: unknown };
 type Result = { ok?: boolean; error?: string; challenge_id?: string; csrf?: string; enrollment_verified?: boolean; title?: string; text?: string; url?: unknown; sha256?: string; sessions?: BrowserSession[]; current_session_revoked?: boolean; rows?: AccountRow[]; customer?: { customer_number?: unknown }; license?: { license_id?: unknown } } & Session & Details;
 type AccountReferences = { customerNumber?: string; licenseId?: string };
+const phoneText = {
+  nl: { label: "Telefoonnummer voor ondersteuning (optioneel)", help: "Belgische notatie (0471 12 34 56 of 03 123 45 67), 0032 en internationale +notatie zijn welkom.", invalid: "Gebruik een geldig Belgisch of internationaal telefoonnummer, of laat dit veld leeg." },
+  fr: { label: "Téléphone de support (facultatif)", help: "Les formats belges (0471 12 34 56 ou 03 123 45 67), 0032 et le format international + sont acceptés.", invalid: "Utilisez un numéro belge ou international valide, ou laissez ce champ vide." },
+  en: { label: "Support telephone number (optional)", help: "Belgian formats (0471 12 34 56 or 03 123 45 67), 0032 and international + formats are accepted.", invalid: "Use a valid Belgian or international telephone number, or leave this field empty." },
+} as const;
 
 const initialDeclarations: Record<Declaration, boolean> = { terms_accepted: false, usage_terms_accepted: false, privacy_acknowledged: false, authority_declared: false };
 const declarationByRole: Record<LegalDocument["role"], Declaration> = { contractual_terms: "terms_accepted", acceptable_use_terms: "usage_terms_accepted", privacy_notice: "privacy_acknowledged" };
@@ -74,8 +79,8 @@ function addressLine(value: { street?: string; house_number?: string; postal_cod
   const address = value as { street?: string; house_number?: string; postal_code?: string; municipality?: string };
   return [([address.street, address.house_number].filter(Boolean).join(" ")), ([address.postal_code, address.municipality].filter(Boolean).join(" "))].filter(Boolean).join(", ");
 }
-function errorMessage(code: string | undefined, t: (typeof text)[ShellLanguage]) {
-  return ({ invalid_request: t.invalid, code_invalid: t.invalidCode, otp_invalid: t.invalidCode, rate_limited: t.rateLimited, enrollment_invalid: t.enrollmentInvalid, enrollment_expired: t.enrollmentInvalid, company_not_found: t.companyMissing, binding_conflict: t.conflict, legal_acceptance_invalid: t.legal, legal_preflight_expired: t.preflightExpired, session_expired: t.expired, signed_out: t.loggedOut, browser_limit_reached: t.devices, license_inactive: t.devices, identity_changed: t.devices, authorization_denied: t.devices, temporarily_unavailable: t.unavailable, mail_unavailable: t.unavailable, consumer_registration_unavailable: t.consumer } as Record<string, string>)[code || ""] || t.generic;
+function errorMessage(code: string | undefined, t: (typeof text)[ShellLanguage], phoneInvalid?: string) {
+  return ({ invalid_request: t.invalid, support_phone_invalid: phoneInvalid || t.invalid, code_invalid: t.invalidCode, otp_invalid: t.invalidCode, rate_limited: t.rateLimited, enrollment_invalid: t.enrollmentInvalid, enrollment_expired: t.enrollmentInvalid, company_not_found: t.companyMissing, binding_conflict: t.conflict, legal_acceptance_invalid: t.legal, legal_preflight_expired: t.preflightExpired, session_expired: t.expired, signed_out: t.loggedOut, browser_limit_reached: t.devices, license_inactive: t.devices, identity_changed: t.devices, authorization_denied: t.devices, temporarily_unavailable: t.unavailable, mail_unavailable: t.unavailable, consumer_registration_unavailable: t.consumer } as Record<string, string>)[code || ""] || t.generic;
 }
 function cleanReference(value: unknown): string | undefined { const result = typeof value === "string" ? value.trim() : ""; return result || undefined; }
 export function accountReferences(result: Result): AccountReferences {
@@ -107,6 +112,7 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
   const [company, setCompany] = useState("");
   const [acceptantName, setAcceptantName] = useState("");
   const [acceptantFunction, setAcceptantFunction] = useState("");
+  const [supportPhone, setSupportPhone] = useState("");
   const [details, setDetails] = useState<Details>();
   const [declarations, setDeclarations] = useState(initialDeclarations);
   const [documentView, setDocumentView] = useState<{ title: string; text: string }>();
@@ -127,7 +133,7 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
   const frame = useRef<HTMLIFrameElement>(null);
   const documentCloseButton = useRef<HTMLButtonElement>(null);
   const clearEnrollment = useCallback(() => {
-    setEnrollmentCsrf(""); setEnterprise(""); setCompany(""); setAcceptantName(""); setAcceptantFunction(""); setDetails(undefined); setDeclarations(initialDeclarations);
+    setEnrollmentCsrf(""); setEnterprise(""); setCompany(""); setAcceptantName(""); setAcceptantFunction(""); setSupportPhone(""); setDetails(undefined); setDeclarations(initialDeclarations);
   }, []);
 
   const loadSession = useCallback(async () => {
@@ -281,7 +287,7 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
     if (details.preflight_expires_at && Date.parse(details.preflight_expires_at) <= Date.now()) { setDetails(undefined); setDeclarations(initialDeclarations); setError("legal_preflight_expired"); return; }
     setBusy(true); setError("");
     try {
-      const { response, result } = await request("/api/web/enrollment/complete", { company_type: "business", enterprise_number: enterprise.trim(), legal_name: company.trim(), acceptant: { name: acceptantName.trim(), function: acceptantFunction.trim() }, declarations, choice_texts: details.legal?.choice_texts, preflight_id: details.preflight_id, preflight_fingerprint: details.preflight_fingerprint }, enrollmentCsrf);
+      const { response, result } = await request("/api/web/enrollment/complete", { company_type: "business", enterprise_number: enterprise.trim(), legal_name: company.trim(), support_phone: supportPhone.trim(), acceptant: { name: acceptantName.trim(), function: acceptantFunction.trim() }, declarations, choice_texts: details.legal?.choice_texts, preflight_id: details.preflight_id, preflight_fingerprint: details.preflight_fingerprint }, enrollmentCsrf);
       if (result.error === "legal_preflight_expired") { setDetails(undefined); setDeclarations(initialDeclarations); }
       if (!response.ok || !result.ok || result.authenticated !== true) throw new Error(result.error || "unknown_error");
       clearEnrollment();
@@ -368,6 +374,7 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
   const back = () => { setError(""); setChallengeId(""); setCode(""); setSessionRetryAvailable(false); setResendIn(0); clearEnrollment(); setPhase("login"); };
   const documents = details?.legal?.documents || [];
   const choices = details?.legal?.choice_texts || {};
+  const phone = phoneText[shellLanguage];
   const authorityText = choices.business_authority || details?.legal?.authority_declaration?.text;
   const legalReady = Boolean(authorityText?.trim()) && documents.length === 3 && ["general_terms", "usage_terms", "privacy_notice"].every((key) => typeof choices[key as keyof typeof choices] === "string" && choices[key as keyof typeof choices]?.trim());
   const codeInputLocked = retryLocksCodeInput(phase, sessionRetryAvailable);
@@ -417,11 +424,12 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
     <div className={styles.formLanguage}><label><span className={styles.visuallyHidden}>Taal / Language / Langue</span><select aria-label="Taal / Language / Langue" value={shellLanguage} onChange={(event) => selectShellLanguage(event.target.value as ShellLanguage)}><option value="nl">NL</option><option value="fr">FR</option><option value="en">EN</option></select></label></div>
     {codePhase ? <><h1 id="app-title">{t.codeTitle}</h1><p className={styles.intro}>{phase === "loginCode" ? t.loginCodeHelp : t.enrollmentCodeHelp}</p>{error ? <p role="alert" className={styles.error}>{errorMessage(error, t)}</p> : null}<form aria-busy={busy} className={styles.form} onSubmit={phase === "loginCode" ? verifyLogin : verifyEnrollment}><label>{t.code}<input autoComplete="one-time-code" disabled={codeInputLocked} inputMode="numeric" maxLength={12} required value={code} onChange={(event) => setCode(event.target.value)} /></label>{codeInputLocked ? <button disabled={busy} type="button" onClick={() => void retrySession(true)}>{busy ? t.working : t.retrySession}</button> : <><button disabled={busy} type="submit">{busy ? t.working : phase === "loginCode" ? t.login : t.verify}</button><button className={styles.secondary} disabled={busy || resendIn > 0} type="button" onClick={() => void (phase === "loginCode" ? resendLoginCode() : resendEnrollmentCode())}>{resendIn > 0 ? t.resendIn.replace("{seconds}", String(resendIn)) : t.resend}</button></>}<button className={styles.secondary} disabled={busy} type="button" onClick={back}>{t.otherEmail}</button></form></> : null}
     {phase === "profile" ? <>
-      <h1 id="app-title">{t.profileTitle}</h1><p className={styles.intro}>{t.profileHelp}</p><p className={styles.legalLanguageNotice}>{t.legalLanguageNotice}</p>{error ? <p role="alert" className={styles.error}>{errorMessage(error, t)}</p> : null}
+      <h1 id="app-title">{t.profileTitle}</h1><p className={styles.intro}>{t.profileHelp}</p><p className={styles.legalLanguageNotice}>{t.legalLanguageNotice}</p>{error ? <p role="alert" className={styles.error}>{errorMessage(error, t, phone.invalid)}</p> : null}
       <form aria-busy={busy} className={styles.form} onSubmit={autofill}><label>{t.enterprise}<input autoComplete="off" inputMode="text" placeholder="BE 1006.303.437" aria-describedby="enterprise-help" required value={enterprise} onChange={(event) => { setEnterprise(event.target.value); setDetails(undefined); setDeclarations(initialDeclarations); }} /></label><small id="enterprise-help">{t.enterpriseHelp}</small><button disabled={busy} type="submit">{busy ? t.working : t.find}</button></form>
       {details ? <form className={styles.form + " " + styles.confirmation} onSubmit={complete}>
         <label>{t.company}<input readOnly required value={company} /></label>
         {addressLine(details.company?.address) ? <p className={styles.readonly}><strong>{t.address}</strong><span>{addressLine(details.company?.address)}</span></p> : null}
+        <label>{phone.label}<input autoComplete="tel" inputMode="tel" maxLength={64} placeholder="+32 470 12 34 56" value={supportPhone} onChange={(event) => setSupportPhone(event.target.value)} /><small>{phone.help}</small></label>
         <label>{t.name}<input autoComplete="name" required value={acceptantName} onChange={(event) => setAcceptantName(event.target.value)} /></label>
         <label>{t.function}<input required value={acceptantFunction} onChange={(event) => setAcceptantFunction(event.target.value)} /></label>
         {documents.map((document) => {

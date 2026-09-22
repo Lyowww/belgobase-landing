@@ -11,7 +11,7 @@ import { auditPublicSite } from './public_site_flows.mjs';
 import { auditAccountFinal } from './account_final_flows.mjs';
 import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
-import { access, mkdir, mkdtemp, rm, writeFile, readFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile, readFile } from "node:fs/promises";
 import https from "node:https";
 import os from "node:os";
 import path from "node:path";
@@ -27,7 +27,6 @@ const artifactDirectory = path.join(root, "tools", "test-artifacts");
 const screenshotPath = path.join(artifactDirectory, "browser-workspace-mock.png");
 const enrollmentScreenshotPath = path.join(artifactDirectory, "browser-enrollment-mock.png");
 const documentScreenshotPath = path.join(artifactDirectory, "browser-enrollment-document-mock.png");
-const temporaryEnvPath = path.join(root, ".env.local");
 const runtimeNodeModules = "C:/Users/David1/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules";
 const chromiumExecutable = "C:/Program Files/Google/Chrome/Application/chrome.exe";
 const runtimeRequire = createRequire(path.join(runtimeNodeModules, "playwright", "package.json"));
@@ -292,17 +291,10 @@ async function loadedWorkspaceFrame(page) {
 }
 
 await mkdir(artifactDirectory, { recursive: true });
-try {
-  await access(temporaryEnvPath);
-  throw new Error("Refusing to overwrite an existing .env.local during the browser mock test.");
-} catch (error) {
-  if (error?.code !== "ENOENT") throw error;
-}
-await writeFile(temporaryEnvPath, `BELGOBASE_WEB_BACKEND_URL=${mockOrigin}/\n`, { encoding: "utf8", flag: "wx" });
 await new Promise((resolve) => mock.listen(mockPort, "127.0.0.1", resolve));
 const app = spawn(process.env.ComSpec || "cmd.exe", ["/d", "/s", "/c", `pnpm.cmd exec next start -p ${appPort}`], {
   cwd: root,
-  env: { ...process.env, NODE_ENV: "production", NODE_EXTRA_CA_CERTS:path.join(tlsDirectory,"cert.pem"), NODE_OPTIONS:[process.env.NODE_OPTIONS||'',`--import=${pathToFileURL(path.join(root,'tools/browser_mock_network.mjs')).href}`].join(' ').trim() },
+  env: { ...process.env, NODE_ENV: "production", BELGOBASE_WEB_BACKEND_URL: `${mockOrigin}/`, RESEND_API_KEY: "", NODE_EXTRA_CA_CERTS:path.join(tlsDirectory,"cert.pem"), NODE_OPTIONS:[process.env.NODE_OPTIONS||'',`--import=${pathToFileURL(path.join(root,'tools/browser_mock_network.mjs')).href}`].join(' ').trim() },
   stdio: "pipe",
   windowsHide: true,
 });
@@ -398,6 +390,7 @@ try {
   const enrollmentChecks = page.locator("form").last().locator('input[type="checkbox"]');
   assert.equal(await enrollmentChecks.count(), 4, "all four deliberate legal declarations are required");
   for (let index = 0; index < 4; index += 1) await enrollmentChecks.nth(index).check();
+  await page.getByLabel("Telefoonnummer voor ondersteuning (optioneel)").fill("0471 12 34 56");
   await page.getByLabel("Naam van de aanvaarder").fill("Nieuw Account");
   await page.getByLabel("Functie van de aanvaarder").fill("Bestuurder");
   await page.route("**/api/web/enrollment/complete", route => route.fulfill({status:409,contentType:"application/json",body:JSON.stringify({ok:false,error:"legal_preflight_expired"})}));
@@ -420,7 +413,14 @@ try {
   await page.locator('iframe[title="BelgoBase workspace"]').waitFor();
   assert.equal(state.enrollmentCalls[0].body.remember_browser, true, "enrollment preserves the remember choice");
   assert.deepEqual(state.enrollmentComplete.declarations, { terms_accepted: true, usage_terms_accepted: true, privacy_acknowledged: true, authority_declared: true });
+  assert.equal(state.enrollmentComplete.support_phone, "0471 12 34 56", "optional Belgian phone is submitted only during completion");
   assert.deepEqual(state.enrollmentComplete.choice_texts, enrollmentAutofill().legal.choice_texts, "server legal text is echoed unchanged");
+  if (process.env.BELGOBASE_PHONE_ENROLLMENT_ONLY === "1") {
+    const report = { ok: true, checkedAt: new Date().toISOString(), network: "loopback mocks only; synthetic enrollment", supportPhone: state.enrollmentComplete.support_phone };
+    await writeFile(path.join(artifactDirectory, "phone-enrollment-proof.json"), JSON.stringify(report, null, 2));
+    console.log(JSON.stringify(report, null, 2));
+  }
+  if (process.env.BELGOBASE_PHONE_ENROLLMENT_ONLY !== "1") {
   await page.getByRole("button", { name: "Afmelden" }).click();
   await page.getByLabel("E-mailadres", { exact: true }).waitFor();
   const emailField = page.getByLabel("E-mailadres", { exact: true });
@@ -841,11 +841,11 @@ try {
   await writeFile(path.join(artifactDirectory,"workspace-proof.json"),JSON.stringify(report,null,2));
   console.log(JSON.stringify(report, null, 2));
   await context.close();
+  }
 } finally {
   await browser?.close();
   stopProcess(app);
   await new Promise((resolve) => mock.close(resolve));
-  await rm(temporaryEnvPath, { force: true });
   await rm(tlsDirectory, {recursive:true,force:true});
   if (process.env.KEEP_BROWSER_ARTIFACT !== "1") await rm(path.join(artifactDirectory, "unused"), { recursive: true, force: true });
 }
