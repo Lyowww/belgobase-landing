@@ -33,3 +33,19 @@ test('AI drawer is removed and wallet stays on Account with browser email handof
  assert.match(source('refreshWalletContact'),/mailto:david@belgobase\.be/);
  assert.doesNotMatch(html,/bridge\(['"]open_wallet_topup_email/);
 });
+test('year result columns render without grouping while ordinary numbers keep locale grouping',()=>{
+ const resultColumns={year:{format:'number'},jaar:{format:'number'},financial_jaar:{format:'number'},ebitda_jaar:{format:'number'},ordinary:{format:'number'}};
+ const context=vm.createContext({
+  resultColumns,
+  resultValue:(row,key)=>Object.hasOwn(row,key)?row[key]:row.values?.[key],
+  esc:String,display:value=>value??'—',fmt:value=>value==null?'—':new Intl.NumberFormat('nl-BE').format(value),
+  money:String,negativeClass:()=>'',initials:String,activityLabel:String,present:String,
+  filterValueLabels:{},optionLabel:(_selector,value)=>String(value??'')
+ });
+ vm.runInContext(source('companyCell'),context);
+ for(const key of ['year','jaar','financial_jaar','ebitda_jaar']){
+  assert.equal(context.companyCell({values:{[key]:2025}},key),'2025',key);
+  assert.equal(context.companyCell({values:{[key]:null}},key),'—',`${key} missing`);
+ }
+ assert.equal(context.companyCell({values:{ordinary:2025}},'ordinary'),'<span class="">2.025</span>');
+});
