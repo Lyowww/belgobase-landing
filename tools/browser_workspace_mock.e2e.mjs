@@ -35,6 +35,8 @@ const { chromium } = runtimeRequire("playwright");
 const metadata = JSON.parse(await readFile(path.join(root,"backend/workspace_assets/workspace_metadata.json"),"utf8"));
 // Mirror the core schema enrichment; backend regression verifies its source contract.
 metadata.filter_schema.fields.find(f=>f.key==="regions").options=[{value:"vlaanderen",label:"Vlaanderen"},{value:"wallonie",label:"Wallonië"},{value:"brussel",label:"Brussel"}];
+const resultColumnOptions = JSON.parse(await readFile(path.join(root,"tools/fixtures/result-column-options.json"),"utf8"));
+assert.equal(resultColumnOptions.length,60,"the production output contract offers 60 visible columns");
 const state = {
   bridgeCalls: [],
   workspaceRevision: 0,
@@ -113,6 +115,7 @@ function bootstrap() {
     brand_logo: logo,
     version: "Mock web 1.0",
     workspace_revision: state.workspaceRevision,
+    result_column_options: resultColumnOptions,
     sectors: [{ value: "56", label: "Horeca" }],
     legal_forms: [{ value: "BV", label: "Besloten vennootschap" }],
     statuses: [{ value: "", label: "Alle statussen" }, { value: "AC", label: "Actief" }],
@@ -125,7 +128,7 @@ function bootstrap() {
 function company() {
   return {
     ok: true,
-    company: { number: "0123456789", name: "Voorbeeld Bouw BV", city: "Gent", postcode: "9000", nace: "41201", status: "AC", legal_form: "BV", revenue: 1250000, profit: 145000, fte: 12, year: 2024 },
+    company: { number: "0123456789", name: "Voorbeeld Bouw BV", city: "Gent", postcode: "9000", nace: "41201", status: "AC", legal_form: "BV", revenue: 1250000, profit: 145000, fte: 12, year: 2024, values: {straat_nl:"Voorbeeldstraat",balanstotaal:510000} },
     fields: [{ label: "Adres", value: "Voorbeeldstraat 1, 9000 Gent" }, { label: "Activiteit", value: "Algemene bouwwerken" }],
     metrics: [{ key: "revenue", label: "Omzet", value: 1250000, unit: "€", year: 2024, note: "reported" }, { key: "profit", label: "Resultaat", value: 145000, unit: "€", year: 2024, note: "reported" }, { key: "fte", label: "Personeel", value: 12, unit: "VTE", year: 2024, note: "reported" }],
     history: { years: [2023, 2024], series: { revenue: [980000, 1250000], profit: [100000, 145000], fte: [10, 12], assets: [400000, 510000] }, label: "Financi\u00eble evolutie", note: "Mock bronjaren." },
@@ -321,7 +324,7 @@ try {
   });
   const page = await context.newPage();
   const runtimeErrors=[];
-  page.on('pageerror',error=>runtimeErrors.push(error.message));
+  page.on('pageerror',error=>runtimeErrors.push(error.stack||error.message));
   const workspaceResponses = [];
   page.on("response", (response) => {
     if (response.url().endsWith("/api/web/workspace")) workspaceResponses.push(response);
@@ -492,17 +495,15 @@ try {
   assert.match(release || "", /^[a-f0-9]{64}$/);
   const versionResponse = await page.request.get(`${appOrigin}/api/web/version`);
   assert.equal((await versionResponse.json()).version, release, "the version endpoint matches the active iframe release");
-  await frame.locator("#assistant-nav").click();
-  await frame.locator("#wallet-tab").click();
+  await frame.locator('[data-workspace="account"]').click();
   await frame.getByText("Saldo").waitFor();
   assert.ok(state.bridgeCalls.some((call) => call.method === "ai_wallet"), "wallet reads the server snapshot through the bridge");
   await frame.locator('[data-wallet-refresh]').waitFor({state:'visible'});
   await frame.locator('.wallet-primary strong').getByText('€ 0',{exact:true}).waitFor();
   state.wallet={currency:"EUR",balance_eur:10,available_eur:10,reserved_eur:0,spent_eur:0,entries:[{type:"topup",amount_eur:10,date:"2026-09-21"}]};
-  await frame.locator('#assistant-tab').click();
-  await frame.locator('#wallet-tab').click();
+  await frame.locator('[data-wallet-refresh]').click();
   await frame.locator('.wallet-primary strong').getByText('€ 10',{exact:true}).waitFor();
-  assert.equal(await frame.locator('#assistant-credit-latest').innerText(),'—','a top-up is not displayed as latest AI usage');
+  assert.equal(await frame.locator('#assistant-dock').count(),0,'AI side panel has been removed');
   state.walletUnavailable=true;
   await frame.locator('[data-wallet-refresh]').click();
   await frame.getByText('Vernieuwen is niet gelukt. De bedragen hieronder zijn van de vorige controle.').waitFor();
@@ -542,7 +543,7 @@ try {
   await frame.locator("#new-search").getByText("New search", { exact: true }).waitFor();
   await page.getByRole("combobox", { name: "Taal / Language / Langue", exact: true }).selectOption("nl");
   await frame.locator("#new-search").getByText("Nieuwe zoekopdracht", { exact: true }).waitFor();
-  await frame.locator("#assistant-close").click();
+  await frame.locator("#tools-back").click();
   await frame.locator("#query").waitFor();
 
   await frame.locator("#ai-mode").uncheck();
@@ -556,11 +557,12 @@ try {
   await frame.locator("#filter-finder").waitFor();
   const renderedFields = await frame.locator("[data-workspace-field]").evaluateAll(els => [...new Set(els.map(e=>e.dataset.workspaceField))]);
   const omittedFields = metadata.filter_schema.fields.filter(f=>!renderedFields.includes(f.key));
-  assert.deepEqual(omittedFields, [], "every server filter renders a usable control");
+  const retired = new Set(['naam_missing_mode','type_of_enterprise','adres_type','gemeente_nl_match','gemeente_fr_match','activity_classification','nace_missing_mode','personeel_missing_mode']);
+  assert.ok(omittedFields.every(field=>retired.has(field.key)), "only the eight explicitly retired inactive fields are omitted");
   await frame.locator('[data-filter-group]').evaluateAll(els=>els.forEach(el=>el.open=true));
   const ebitdaSelect=frame.locator('[data-workspace-field="ebitda_missing_mode"]');
   assert.deepEqual(await ebitdaSelect.locator('option').allTextContents(),['','Aanwezig','Ontbreekt']);
-  assert.deepEqual(await frame.locator('[data-workspace-field="gemeente_nl_match"] option').allTextContents(),['','Naam bevat (bestaande zoekwijze)','Exacte gemeentenaam']);
+  assert.equal(await frame.locator('[data-workspace-field="gemeente_nl_match"]').count(),0,'inactive legacy municipality mode is hidden');
   assert.equal(await frame.locator('[placeholder="Geen beperking"]').count(),0);
   assert.deepEqual(await frame.locator('[data-workspace-field="regions"]').evaluateAll(els=>els.map(el=>el.parentElement.textContent.trim())),['Vlaanderen','Wallonië','Brussel']);
   assert.ok(await ebitdaSelect.evaluate(el=>parseFloat(getComputedStyle(el.parentElement.querySelector('span')).fontSize)>=16));
@@ -596,7 +598,7 @@ try {
   await frame.locator('#query').fill('Zoek mijn ideale klant');
   const beforeAiSearches=state.bridgeCalls.filter(c=>c.method==='search').length;
   await frame.locator('#search-form').press('Enter');
-  await frame.locator('[data-choice="41"]').waitFor();
+  try { await frame.locator('[data-choice="41"]').waitFor(); } catch(error) { console.error(JSON.stringify({runtimeErrors,notice:await frame.locator("#notice").textContent(),calls:state.bridgeCalls.slice(-5)},null,2)); throw error; }
   assert.equal(state.bridgeCalls.filter(c=>c.method==='search').length,beforeAiSearches,'clarification never silently starts a search');
   await frame.locator('#answer-ai').click();
   await frame.locator('#notice').getByText('Vink minstens één activiteit aan.').waitFor();
@@ -689,14 +691,32 @@ try {
   await frame.locator('button[data-company="0123456789"]').first().waitFor();
   await frame.getByRole("button",{name:"Bedrijven",exact:true}).first().click();
   await frame.locator("#save-search").click();
-  await page.waitForFunction(()=>document.querySelector('iframe').contentDocument.activeElement?.id==='workspace-name');
-  await frame.locator('#workspace-name').press('Escape');
+  await page.waitForFunction(()=>['saved-search-target','saved-search-name'].includes(document.querySelector('iframe').contentDocument.activeElement?.id));
+  await frame.locator('#saved-search-name').press('Escape');
   await frame.locator('#workspace-dialog').waitFor({state:'hidden'});
   assert.equal(await frame.locator('#save-search').evaluate(element=>element.ownerDocument.activeElement===element),true,'closing a workspace dialog restores keyboard focus');
   await frame.locator('#save-search').click();
-  await frame.locator("#workspace-name").fill("Joël testselectie");
+  await frame.locator("#saved-search-name").fill("Joël testselectie");
   await frame.locator('[data-dialog="submit"]').click();
   await frame.locator("#workspace-dialog").waitFor({state:"hidden"});
+  const savedIdentity=state.workspace.searches.find(row=>row.name==="Joël testselectie").id;
+  await frame.locator('#save-search').click();
+  await frame.locator('#saved-search-target').selectOption(savedIdentity);
+  assert.equal(await frame.locator('#saved-search-name').isDisabled(),true);
+  assert.equal(await frame.locator('#save-search-confirm').innerText(),'Vervangen');
+  await frame.locator('#save-search-confirm').click();
+  await frame.locator('#workspace-dialog').waitFor({state:'hidden'});
+  assert.equal(state.workspace.searches.filter(row=>row.name==="Joël testselectie").length,1);
+  assert.equal(state.workspace.searches.find(row=>row.name==="Joël testselectie").id,savedIdentity);
+  await frame.locator('#result-columns').click();
+  await frame.locator('[data-column-catalog]').click();
+  assert.equal(await frame.locator('[data-result-column]').count(),60);
+  await frame.locator('#column-catalog-search').fill('Straat');
+  await frame.locator('[data-result-column="straat_nl"]').check();
+  await frame.locator('[data-dialog="submit"]').click();
+  await frame.locator('#workspace-dialog').waitFor({state:'hidden'});
+  await frame.locator('#company-rows').getByText('Voorbeeldstraat',{exact:true}).waitFor();
+  assert.ok(state.bridgeCalls.filter(c=>c.method==='search').at(-1).payload.result_columns.includes('straat_nl'));
   await frame.locator("#open-searches").click();
   await frame.getByText("Joël testselectie",{exact:true}).waitFor();
   await frame.locator("#dialog-close").click();
@@ -743,16 +763,13 @@ try {
   assert.equal(await frame.locator('body').evaluate(el => el.scrollWidth <= innerWidth), true, 'mobile workspace fits viewport');
   assert.equal(await frame.locator('[data-view="search"] [data-i18n="nav.companies"]').isVisible(), true, 'mobile navigation has readable labels');
   await page.screenshot({ path: path.join(artifactDirectory, 'mobile-dossier.png'), fullPage: true });
-  await frame.locator('#assistant-nav').click();
-  const assistantBox = await frame.locator('#assistant-dock').boundingBox();
-  assert.ok(assistantBox && assistantBox.width >= 380 && assistantBox.height > 400, 'mobile assistant opens as usable full-width panel: '+JSON.stringify(assistantBox));
-  await page.screenshot({ path: path.join(artifactDirectory, 'mobile-assistant.png'), fullPage: true });
-  await frame.locator('#assistant-close').click();
+  assert.equal(await frame.locator('#assistant-nav').count(),0,'mobile has no obsolete assistant navigation');
+  assert.equal(await frame.locator('#assistant-dock').count(),0,'mobile has no obsolete assistant drawer');
   await page.setViewportSize({ width: 1440, height: 900 });
 
 
   await frame.locator("#back").click();
-  await frame.getByRole("button",{name:"Exportkolommen instellen",exact:true}).click();
+  await frame.getByRole("button",{name:"Excel-kolommen",exact:true}).click();
   await frame.locator('[data-tool="columns-none"]').click();
   await frame.locator('[data-export-column="name"]').check();
   await frame.locator('[data-export-column="revenue"]').check();
@@ -806,6 +823,7 @@ try {
   await page.setViewportSize({ width: 768, height: 900 });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, "English tablet sign-in has no horizontal overflow");
 
+  if (process.env.WORKSPACE_ONLY !== "1") {
   const marketingErrors=[];
   const marketingPageError=error=>marketingErrors.push(error.message);
   const marketingConsoleError=message=>{if(message.type()==='error') marketingErrors.push(message.text());};
@@ -834,6 +852,7 @@ try {
   page.off('console',marketingConsoleError);
   await writeFile(path.join(artifactDirectory,"marketing-errors.json"),JSON.stringify(marketingErrors,null,2));
   assert.equal(marketingErrors.length,0,"marketing renders without browser errors; see marketing-errors.json");
+  }
   await auditAccountFinal({page, context, appOrigin, state, artifactDirectory});
   assert.deepEqual(runtimeErrors,[],"all authenticated and public flows finish without uncaught browser errors");
   assert.deepEqual(state.unhandledMethods,[],"the browser never receives fake success for an unimplemented mock route");

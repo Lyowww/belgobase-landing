@@ -110,3 +110,40 @@ input::placeholder, textarea::placeholder { color: #65748a; opacity: 1; }
 .wallet-topup-form textarea { min-height: 150px; resize: vertical; }
 .wallet-topup-form a { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; text-decoration: none; }
 .wallet-topup-form a[aria-disabled="true"] { opacity: .5; cursor: not-allowed; }
+
+/* PC1 layout parity: compact navigation, grouped filters and account-first wallet. */
+.side { gap: 20px; }
+.nav { padding: 10px 12px; margin: 3px 0; }
+.saved-search-nav { border-top: 1px solid #2a3a52; margin-top: 14px; padding-top: 10px; }
+.content { padding-top: 26px; }
+.intro { margin-bottom: 20px; }
+.intro .eyebrow { display: none; }
+.intro p { margin-top: 6px; }
+.workbar { margin: 14px 0; }
+.results-head { padding: 16px 20px; }
+.filterline { margin: 12px 0 16px; }
+#tools-back { margin-bottom: 8px; }
+.workspace-head { margin: 12px 0 18px; }
+.workspace-head .eyebrow { display: none; }
+.workspace-head h1 { font-size: 26px; }
+.workspace-head p { margin-top: 4px; }
+.filter-domain-title { font-size: 16px; color: var(--blue); margin: 22px 0 10px; letter-spacing: 0; }
+.filter-domain-title:first-child { margin-top: 0; }
+.tool-fields { grid-template-columns: repeat(auto-fit,minmax(230px,1fr)); gap: 14px 18px; align-items: start; }
+.tool-group { margin-bottom: 10px; }
+.tool-group>summary { font-size: 15px; padding: 12px 16px; }
+.tool-group>.tool-fields, .tool-group>.column-grid { padding: 0 16px 16px; }
+.column-grid { grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 9px 18px; }
+.account-reference { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 0; margin: 8px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.account-reference>span { color: var(--muted); }
+.account-reference strong { font-size: 13px; font-weight: 500; overflow-wrap: anywhere; min-width: 0; flex: 1; }
+.account-reference button { padding: 7px 10px; }
+#ai-usage-card>.card { margin-bottom: 14px; }
+
+@media (max-width: 760px) {
+  .side nav .saved-search-nav { display: flex; gap: 6px; border: 0; margin: 0; padding: 0; }
+  .side-bottom { display: flex; align-items: center; gap: 6px; }
+  .side-bottom>#new-search { display: inline-flex; width: auto; margin: 0; padding: 8px; }
+  .side-bottom>#new-search>span:last-child { display: none; }
+  .tool-fields, .column-grid { grid-template-columns: minmax(0,1fr); }
+}

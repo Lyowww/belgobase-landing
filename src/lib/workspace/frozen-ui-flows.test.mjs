@@ -199,39 +199,12 @@ test("a rejected AI proposal search leaves the proposal and visible query unchan
   assert.equal(renderCount, 0);
 });
 
-test("opening Wallet preserves normal search mode and an explicit assistant tab enables AI mode", () => {
-  const classList = () => ({ add() {}, remove() {}, toggle() {} });
-  const node = () => ({ hidden: false, checked: false, classList: classList(), setAttribute() {}, append() {}, focus() {} });
-  const nodes = Object.fromEntries([
-    "#search-form", "#search-modes", "#ai-scope", "#voice-info", "#ai-conversation", "#ai-panel",
-    "#assistant-tab", "#wallet-tab", "#assistant-dock-body", "#wallet-panel", "#assistant-dock",
-    "#assistant-nav", "#ai-mode", "#query", "#assistant-home-slot",
-  ].map(selector => [selector, node()]));
-  const shell = node();
-  const returnFocus = { focusCalls: 0, focus() { this.focusCalls += 1; } };
-  let composerRenders = 0;
-  const selector = selector => selector === ".shell" ? shell : nodes[selector];
-  const loaded = loadFunctions(
-    ["setAssistantTab", "openAssistant", "closeAssistant"],
-    {
-      assistantUi: { open: false, tab: "assistant", returnFocus: null },
-      document: { activeElement: returnFocus },
-      $: selector,
-      assistantNodes: () => ["#search-form", "#search-modes", "#ai-scope", "#voice-info", "#ai-conversation", "#ai-panel"].map(selector),
-      work: { wallet: {} },
-      renderWallet() {}, loadWallet() {}, renderAssistantContext() {}, renderAssistantCredit() {},
-      renderComposer() { composerRenders += 1; },
-    },
-  );
-
-  loaded.openAssistant("wallet");
-  assert.equal(nodes["#ai-mode"].checked, false);
-  loaded.closeAssistant();
-  assert.equal(nodes["#ai-mode"].checked, false);
-  loaded.openAssistant("wallet");
-  loaded.setAssistantTab("assistant", true);
-  assert.equal(nodes["#ai-mode"].checked, true);
-  assert.ok(composerRenders > 0, "explicit assistant selection refreshes the composer controls");
+test("opening Wallet goes to Account without enabling AI or moving the composer", () => {
+  const calls=[];
+  const {openAssistant}=loadFunctions(["openAssistant"], {openWorkspace:section=>calls.push(section),navigate:()=>{throw new Error("Wallet must not change the search screen");},$:()=>{throw new Error("Wallet must not touch AI input");}});
+  openAssistant("wallet");
+  assert.deepEqual(calls,["account"]);
+  assert.doesNotMatch(html,/id="assistant-dock"|id="assistant-nav"/);
 });
 
 test("similar-company seed values format money and FTE without changing their numeric values", () => {
@@ -514,48 +487,49 @@ test("voice cancel releases the UI even while the browser permission prompt is u
 });
 
 
-test("metric staff units and account credit copy are rendered in each language without changing values", () => {
-  for(const [language,unit] of [["nl","VTE"],["fr","ETP"],["en","FTE"]]) {
-    const metric={value:0.3,unit:"VTE"};
-    const card={innerHTML:""};
-    const work={usage:{mode:"server",message:"Je AI-tegoed is gekoppeld aan je BelgoBase-licentie.",wallet:{balance_eur:0,available_eur:0,reserved_eur:0,currency:"EUR"}}};
-    const {metricValue,renderUsage}=loadFunctions(["metricValue","renderUsage"],{
-      work,$:()=>card,number:Number.isFinite,esc:String,display:String,fmt:String,short:String,euro:String,fieldRows:()=>"",controls(){},
-      t:(key,fallback)=>key==="column.fte"?unit:key==="account.walletLinked"?`credit-${language}`:fallback,
-    });
+test("metric staff units and the Account wallet render without changing values", () => {
+  const walletSource=html.slice(html.indexOf("  function euro("),html.indexOf("  walletPanel.onclick"));
+  for(const [language,unit,availableLabel] of [["nl","VTE","Beschikbaar"],["fr","ETP","Disponible"],["en","FTE","Available"]]) {
+    const metric={value:0.3,unit:"VTE"},nodes=new Map();
+    const node=selector=>{if(!nodes.has(selector))nodes.set(selector,{innerHTML:"",textContent:"",value:"",href:"",isConnected:false,children:[],attributes:{},replaceChildren(...children){this.children=children;for(const child of children)child.isConnected=true;},setAttribute(key,value){this.attributes[key]=value;},removeAttribute(key){delete this.attributes[key];if(key==="href")this.href="";},focus(){},select(){}});return nodes.get(selector);};
+    const walletPanel=node("#wallet-panel"),wallet={available_eur:0,spent_eur:0,reserved_eur:0,balance_eur:0,entries:[]},work={wallet:structuredClone(wallet)},assistantUi={tab:"wallet",walletLoading:false,walletStale:false},labels={"wallet.available":availableLabel};
+    const t=(key,fallback,vars={})=>String(labels[key]??fallback).replace(/\{(\w+)\}/g,(_match,name)=>String(vars[name]??""));
+    const context=vm.createContext({$,walletPanel,work,assistantUi,state:{busy:false},nf:new Intl.NumberFormat(language==="en"?"en-GB":`${language}-BE`),esc:String,t,navigator:{},document:{},accountPublicLabel:row=>row.label,action:async()=>null});
+    function $(selector){return node(selector);}
+    vm.runInContext(`${walletSource}\n${functionSource("renderUsage")}`,context);
+    const {metricValue}=loadFunctions(["metricValue"],{number:Number.isFinite,esc:String,display:String,fmt:String,short:String,t:(key,fallback)=>key==="column.fte"?unit:fallback});
     assert.equal(metricValue(metric),`0.3 ${unit}`);
-    assert.equal(metric.unit,"VTE");
-    assert.equal(metric.value,0.3);
-    renderUsage();
-    assert.ok(card.innerHTML.includes(`credit-${language}`));
-    assert.equal(work.usage.message,"Je AI-tegoed is gekoppeld aan je BelgoBase-licentie.");
+    assert.deepEqual(metric,{value:0.3,unit:"VTE"});
+    context.renderUsage();
+    assert.equal(node("#ai-usage-card").children[0],walletPanel);
+    assert.match(walletPanel.innerHTML,new RegExp(availableLabel));
+    assert.match(walletPanel.innerHTML,/€ 0/);
+    assert.deepEqual(work.wallet,wallet);
+    walletPanel.isConnected=false;node("#ai-usage-card").children=[];
+    const lateSnapshot={...wallet,available_eur:7};
+    assert.doesNotThrow(()=>context.acceptWalletSnapshot(lateSnapshot));
+    assert.deepEqual(work.wallet,lateSnapshot);
+    assert.match(walletPanel.innerHTML,/€ 7/);
   }
 });
 
 
-test("account language changes redraw already loaded usage without another request", () => {
-  const card={innerHTML:""}, selector={value:"nl"}, i18n={language:"nl",locales:{nl:"nl-BE",fr:"fr-BE",en:"en-GB"},setLanguage(value){this.language=value;}};
-  const usage={mode:"server",message:"Je AI-tegoed is gekoppeld aan je BelgoBase-licentie.",wallet:{balance_eur:12.34,available_eur:10,reserved_eur:2.34,currency:"EUR"}};
-  const work={section:"account",data:{rows:[]},usage,wallet:null};
-  const original=structuredClone(work);
-  const {refreshLanguage}=loadFunctions(["refreshLanguage","renderUsage"],{
-    i18n,locale:"nl-BE",nf:new Intl.NumberFormat("nl-BE"),compact:new Intl.NumberFormat("nl-BE"),
-    state:{ready:true,view:"tools",filters:{}},filterDraft:null,work,assistantUi:{tab:"assistant"},
-    $: key=>key==="#language-switch"?selector:key==="#dossier-view"?{hidden:true}:card,$$:()=>[],
-    configureQuickCity(){},renderAssistantContext(){},renderConversation(){},renderRows(){},workspaceTitles:()=>({}),renderAssistantCredit(){},
-    renderAccount(){card.innerHTML="Loading usage";},controls(){},esc:String,euro:String,
-    fieldRows:rows=>rows.map(row=>row.value).join("|"),
-    t:(key,fallback)=>key==="account.walletLinked"?`credit-${i18n.language}`:fallback,
-    bridge(){throw new Error("language redraw must not fetch usage");},
-  });
-  for(const language of ["fr","en","nl"]){
-    refreshLanguage(language);
-    assert.ok(card.innerHTML.includes(`credit-${language}`));
-    assert.ok(card.innerHTML.includes("12.34|10|2.34"));
-    assert.ok(!card.innerHTML.includes("Loading usage"));
-    assert.deepEqual(work,original);
+test("account language changes redraw the mounted wallet without another request", () => {
+  const walletSource=html.slice(html.indexOf("  function euro("),html.indexOf("  walletPanel.onclick")),nodes=new Map();
+  const node=selector=>{if(!nodes.has(selector))nodes.set(selector,{innerHTML:"",textContent:"",value:"",href:"",hidden:selector==="#dossier-view",isConnected:false,children:[],attributes:{},replaceChildren(...children){this.children=children;for(const child of children)child.isConnected=true;},setAttribute(key,value){this.attributes[key]=value;},removeAttribute(key){delete this.attributes[key];if(key==="href")this.href="";},focus(){},select(){}});return nodes.get(selector);};
+  const i18n={language:"nl",locales:{nl:"nl-BE",fr:"fr-BE",en:"en-GB"},setLanguage(value){this.language=value;}},wallet={balance_eur:12.34,available_eur:10,reserved_eur:2.34,spent_eur:0,entries:[]},work={section:"account",data:{rows:[]},usage:{mode:"wallet"},wallet:structuredClone(wallet)},assistantUi={tab:"wallet",walletRequest:0,walletLoading:false,walletStale:false},walletPanel=node("#wallet-panel");
+  const translations={nl:{"wallet.available":"Beschikbaar"},fr:{"wallet.available":"Disponible"},en:{"wallet.available":"Available"}};
+  const t=(key,fallback,vars={})=>String(translations[i18n.language]?.[key]??fallback).replace(/\{(\w+)\}/g,(_match,name)=>String(vars[name]??""));
+  let actions=0,context;
+  function $(selector){return node(selector);}
+  context=vm.createContext({$,walletPanel,work,assistantUi,state:{ready:true,view:"tools",filters:{}},filterDraft:null,i18n,locale:"nl-BE",nf:new Intl.NumberFormat("nl-BE"),compact:new Intl.NumberFormat("nl-BE"),esc:String,t,navigator:{},document:{},accountPublicLabel:row=>row.label,action:async()=>{actions+=1;return null;},$$:()=>[],configureQuickCity(){},renderAssistantContext(){},renderConversation(){},renderRows(){},workspaceTitles:()=>({account:["Account",""]}),renderAssistantCredit(){},renderAccount(){context.renderUsage();},renderDetail(){},setTab(){},bridge(){throw new Error("language redraw must not fetch usage");}});
+  vm.runInContext(`${walletSource}\n${functionSource("renderUsage")}\n${functionSource("refreshLanguage")}`,context);
+  for(const [language,label] of [["fr","Disponible"],["en","Available"],["nl","Beschikbaar"]]){
+    context.refreshLanguage(language);
+    assert.match(walletPanel.innerHTML,new RegExp(label));
+    assert.match(walletPanel.innerHTML,/€ 12[,.]34/);
+    assert.deepEqual(work.wallet,wallet);
+    assert.equal(node("#ai-usage-card").children[0],walletPanel);
   }
-  work.usage=null;
-  refreshLanguage("en");
-  assert.equal(card.innerHTML,"Loading usage","pending initial usage remains pending");
+  assert.equal(actions,0);
 });

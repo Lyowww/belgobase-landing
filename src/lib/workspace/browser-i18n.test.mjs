@@ -212,6 +212,41 @@ test("enriches only fixed bootstrap and workspace presentation labels", () => {
   assert.equal(workspace.user_question, "Personeel");
 });
 
+test("localises all delivered result-column labels without changing their keys", () => {
+  const columns = [
+    { key: "straat_nl", label: "Straat (NL)" },
+    { key: "financial_omzet_status", label: "Financiële omzetstatus" },
+    { key: "financial_winst_verlies_methode", label: "Financiële resultaatmethode" },
+    { key: "financial_confidence_score", label: "Financiële betrouwbaarheidsscore" },
+    { key: "ebitda_jaar", label: "EBITDA-bronjaar" },
+    { key: "addback_total_bkd_m1", label: "Totale add-backs BKD M1" },
+    { key: "historical_or_event_relevant", label: "Historisch of eventrelevant" },
+  ];
+  const expected = {
+    nl: columns.map(column => column.label),
+    fr: ["Rue (NL)","Statut du chiffre d’affaires financier","Méthode du résultat financier","Score de fiabilité financière","Année source EBITDA","Total des ajustements BKD M1","Historique ou lié à un événement"],
+    en: ["Street (NL)","Financial revenue status","Financial-result method","Financial confidence score","EBITDA source year","Total BKD M1 add-backs","Historical or event-relevant"],
+  };
+  for (const language of ["nl","fr","en"]) {
+    const source = { language, result_column_options: structuredClone(columns) };
+    const result = load(language).BelgoBaseWebI18n.enrich("bootstrap", source);
+    assert.deepEqual(result.result_column_options.map(column => column.key), columns.map(column => column.key));
+    assert.deepEqual(result.result_column_options.map(column => column.label), expected[language]);
+    assert.deepEqual(source.result_column_options, columns, "bootstrap source stays intact");
+  }
+});
+
+test("supplies browser-safe replace, account and wallet copy in all languages", () => {
+  const messages = {};
+  load("nl", messages);
+  assert.equal(messages["savedSearch.replace"].fr, "Remplacer");
+  assert.equal(messages["savedSearch.replaceFailed"].en, "The search could not be replaced. Your existing search was kept.");
+  assert.equal(messages["wallet.emptyHistory"].fr, "Aucun mouvement de portefeuille n’est encore disponible.");
+  assert.equal(messages["account.customerNumber"].en, "Customer number");
+  assert.equal(messages["dialog.columnsTitle"].fr, "Affichage des résultats");
+  assert.equal(messages["account.deactivate"].en, "Sign out this browser", "browser sign-out remains distinct from a desktop device action");
+});
+
 const filterMetadata=JSON.parse(await readFile(new URL("../../../backend/workspace_assets/workspace_metadata.json",import.meta.url),"utf8"));
 test("every filter keeps its values and distinct option meanings in all languages",()=>{
   const original=structuredClone(filterMetadata.filter_schema);

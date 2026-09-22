@@ -72,7 +72,28 @@
   "similar.desiredValue":{"nl":"Gewenste waarde","fr":"Valeur souhaitée","en":"Desired value"},
   "similar.deviationYears":{"nl":"Afwijking (jaren)","fr":"Écart (années)","en":"Deviation (years)"},
   "similar.deviationPercent":{"nl":"Afwijking (%)","fr":"Écart (%)","en":"Deviation (%)"},
-  "export.dataGroup":{"nl":"Gegevens","fr":"Données","en":"Data"}
+  "export.dataGroup":{"nl":"Gegevens","fr":"Données","en":"Data"},
+  "savedSearch.replace":{"nl":"Vervangen","fr":"Remplacer","en":"Replace"},
+  "savedSearch.replaceTitle":{"nl":"Zoekopdracht vervangen","fr":"Remplacer la recherche","en":"Replace search"},
+  "savedSearch.replaceCopy":{"nl":"De bestaande zoekopdracht wordt bijgewerkt met je huidige zoektekst en filters.","fr":"La recherche existante sera mise à jour avec votre texte de recherche et vos filtres actuels.","en":"The existing search will be updated with your current search text and filters."},
+  "savedSearch.replaceFailed":{"nl":"De zoekopdracht kon niet worden vervangen. Je bestaande zoekopdracht is behouden.","fr":"La recherche n’a pas pu être remplacée. Votre recherche existante est conservée.","en":"The search could not be replaced. Your existing search was kept."},
+  "saveSearch.replace":{"nl":"Vervangen","fr":"Remplacer","en":"Replace"},
+  "saveSearch.target":{"nl":"Bewaren als","fr":"Enregistrer sous","en":"Save as"},
+  "saveSearch.new":{"nl":"Nieuwe zoekopdracht","fr":"Nouvelle recherche","en":"New search"},
+  "saveSearch.missing":{"nl":"Deze zoekopdracht bestaat niet meer.","fr":"Cette recherche n’existe plus.","en":"This saved search no longer exists."},
+  "saveSearch.chooseExisting":{"nl":"Kies de bestaande zoekopdracht hierboven om die te vervangen.","fr":"Choisissez la recherche existante ci-dessus pour la remplacer.","en":"Choose the existing search above to replace it."},
+  "columns.find":{"nl":"Zoek een gegeven…","fr":"Chercher une donnée…","en":"Find a field…"},
+  "columns.standard":{"nl":"Standaardgegevens","fr":"Données standards","en":"Standard fields"},
+  "columns.more":{"nl":"Andere gegevens","fr":"Autres données","en":"Other fields"},
+  "layout.searchNav":{"nl":"ZOEKOPDRACHTEN","fr":"RECHERCHES","en":"SEARCHES"},
+  "layout.excelColumns":{"nl":"Excel-kolommen","fr":"Colonnes Excel","en":"Excel columns"},
+  "layout.domain.kbo":{"nl":"KBO · Bedrijfsgegevens","fr":"BCE · Données d’entreprise","en":"CBE · Company data"},
+  "layout.domain.nbb":{"nl":"NBB · Financiële gegevens","fr":"BNB · Données financières","en":"NBB · Financial data"},
+  "filters.fteSourceStatus":{"nl":"Bronstatus VTE","fr":"Statut de la source ETP","en":"FTE source status"},
+  "filters.technical":{"nl":"Technische bronfilters","fr":"Filtres techniques des sources","en":"Technical source filters"},
+  "account.identityTitle":{"nl":"Jouw klantnummer","fr":"Votre numéro client","en":"Your customer number"},
+  "account.identityMissing":{"nl":"Je klantnummer is niet beschikbaar. Vernieuw je accountgegevens. Gebruik de licentie-ID hieronder als die beschikbaar is.","fr":"Votre numéro client est indisponible. Actualisez vos données de compte. Utilisez l’identifiant de licence ci-dessous s’il est disponible.","en":"Your customer number is unavailable. Refresh your account details. Use the licence ID below if available."},
+  "account.copyNumber":{"nl":"Klantnummer kopiëren","fr":"Copier le numéro client","en":"Copy customer number"}
  });
  const locales={nl:'nl-BE',fr:'fr-BE',en:'en-GB'};
  let language='nl';

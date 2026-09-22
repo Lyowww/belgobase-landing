@@ -1,0 +1,422 @@
+[
+  {
+    "key": "name",
+    "label": "Bedrijf",
+    "raw_key": "naam",
+    "group": "Identificatie",
+    "format": "text"
+  },
+  {
+    "key": "number",
+    "label": "Ondernemingsnummer",
+    "raw_key": "ondernemingsnummer",
+    "group": "Identificatie",
+    "format": "text"
+  },
+  {
+    "key": "city",
+    "label": "Gemeente",
+    "raw_key": "gemeente_nl",
+    "group": "Adres",
+    "format": "text"
+  },
+  {
+    "key": "postcode",
+    "label": "Postcode",
+    "raw_key": "kbo_postcode",
+    "group": "Adres",
+    "format": "text"
+  },
+  {
+    "key": "nace",
+    "label": "Activiteit",
+    "raw_key": "nace_code",
+    "group": "Hoofdactiviteit",
+    "format": "text"
+  },
+  {
+    "key": "status",
+    "label": "KBO-status",
+    "raw_key": "kbo_status",
+    "group": "KBO-profiel",
+    "format": "text"
+  },
+  {
+    "key": "legal_form",
+    "label": "Rechtsvorm",
+    "raw_key": "juridical_form",
+    "group": "KBO-profiel",
+    "format": "text"
+  },
+  {
+    "key": "revenue",
+    "label": "Omzet",
+    "raw_key": "omzet",
+    "group": "Recent NBB-profiel",
+    "format": "money"
+  },
+  {
+    "key": "profit",
+    "label": "Resultaat",
+    "raw_key": "winst_verlies",
+    "group": "Recent NBB-profiel",
+    "format": "money"
+  },
+  {
+    "key": "fte",
+    "label": "Personeel (VTE)",
+    "raw_key": "personeel_vte",
+    "group": "Recent NBB-profiel",
+    "format": "number"
+  },
+  {
+    "key": "year",
+    "label": "Bronjaar",
+    "raw_key": "jaar",
+    "group": "Recent NBB-profiel",
+    "format": "number"
+  },
+  {
+    "key": "straat_nl",
+    "label": "Straat (NL)",
+    "raw_key": "straat_nl",
+    "group": "Adres",
+    "format": "text"
+  },
+  {
+    "key": "huisnummer",
+    "label": "Huisnummer",
+    "raw_key": "huisnummer",
+    "group": "Adres",
+    "format": "text"
+  },
+  {
+    "key": "bus",
+    "label": "Bus",
+    "raw_key": "bus",
+    "group": "Adres",
+    "format": "text"
+  },
+  {
+    "key": "land",
+    "label": "Land",
+    "raw_key": "land",
+    "group": "Adres",
+    "format": "text"
+  },
+  {
+    "key": "straat_fr",
+    "label": "Straat (FR)",
+    "raw_key": "straat_fr",
+    "group": "Adres",
+    "format": "text"
+  },
+  {
+    "key": "gemeente_fr",
+    "label": "Gemeente (FR)",
+    "raw_key": "gemeente_fr",
+    "group": "Adres",
+    "format": "text"
+  },
+  {
+    "key": "naam_taal",
+    "label": "Taal van de naam",
+    "raw_key": "naam_taal",
+    "group": "Identificatie",
+    "format": "text"
+  },
+  {
+    "key": "naam_type",
+    "label": "Naamtype",
+    "raw_key": "naam_type",
+    "group": "Identificatie",
+    "format": "text"
+  },
+  {
+    "key": "activity_classification",
+    "label": "Activiteitclassificatie",
+    "raw_key": "activity_classification",
+    "group": "Hoofdactiviteit",
+    "format": "text"
+  },
+  {
+    "key": "activity_group",
+    "label": "Activiteitgroep",
+    "raw_key": "activity_group",
+    "group": "Hoofdactiviteit",
+    "format": "text"
+  },
+  {
+    "key": "nace_version",
+    "label": "NACE-versie",
+    "raw_key": "nace_version",
+    "group": "Hoofdactiviteit",
+    "format": "text"
+  },
+  {
+    "key": "type_of_enterprise",
+    "label": "Type onderneming",
+    "raw_key": "type_of_enterprise",
+    "group": "KBO-profiel",
+    "format": "text"
+  },
+  {
+    "key": "juridical_situation",
+    "label": "Rechtstoestand",
+    "raw_key": "juridical_situation",
+    "group": "KBO-profiel",
+    "format": "text"
+  },
+  {
+    "key": "start_date",
+    "label": "Startdatum",
+    "raw_key": "start_date",
+    "group": "KBO-profiel",
+    "format": "date"
+  },
+  {
+    "key": "nbb_coverage_status",
+    "label": "NBB-dekkingsstatus",
+    "raw_key": "nbb_coverage_status",
+    "group": "Recent NBB-profiel",
+    "format": "text"
+  },
+  {
+    "key": "boekjaar_einddatum",
+    "label": "Einde boekjaar",
+    "raw_key": "boekjaar_einddatum",
+    "group": "Recent NBB-profiel",
+    "format": "date"
+  },
+  {
+    "key": "depotdatum",
+    "label": "Neerleggingsdatum",
+    "raw_key": "depotdatum",
+    "group": "Recent NBB-profiel",
+    "format": "date"
+  },
+  {
+    "key": "nbb_postcode",
+    "label": "Postcode (NBB)",
+    "raw_key": "nbb_postcode",
+    "group": "Recent NBB-profiel",
+    "format": "text"
+  },
+  {
+    "key": "balanstotaal",
+    "label": "Balanstotaal",
+    "raw_key": "balanstotaal",
+    "group": "Recent NBB-profiel",
+    "format": "money"
+  },
+  {
+    "key": "schulden",
+    "label": "Schulden",
+    "raw_key": "schulden",
+    "group": "Recent NBB-profiel",
+    "format": "money"
+  },
+  {
+    "key": "rest_na_schulden",
+    "label": "Rest na schulden",
+    "raw_key": "rest_na_schulden",
+    "group": "Recent NBB-profiel",
+    "format": "money"
+  },
+  {
+    "key": "financial_jaar",
+    "label": "Financieel jaar",
+    "raw_key": "financial_jaar",
+    "group": "Financiële verrijking",
+    "format": "number"
+  },
+  {
+    "key": "financial_depotdatum",
+    "label": "Financiële neerleggingsdatum",
+    "raw_key": "financial_depotdatum",
+    "group": "Financiële verrijking",
+    "format": "date"
+  },
+  {
+    "key": "financial_omzet",
+    "label": "Financiële omzet",
+    "raw_key": "financial_omzet",
+    "group": "Financiële verrijking",
+    "format": "money"
+  },
+  {
+    "key": "financial_omzet_status",
+    "label": "Financiële omzetstatus",
+    "raw_key": "financial_omzet_status",
+    "group": "Financiële verrijking",
+    "format": "text"
+  },
+  {
+    "key": "financial_omzet_methode",
+    "label": "Financiële omzetmethode",
+    "raw_key": "financial_omzet_methode",
+    "group": "Financiële verrijking",
+    "format": "text"
+  },
+  {
+    "key": "financial_winst_verlies",
+    "label": "Financieel resultaat boekjaar",
+    "raw_key": "financial_winst_verlies",
+    "group": "Financiële verrijking",
+    "format": "money"
+  },
+  {
+    "key": "financial_winst_verlies_status",
+    "label": "Financiële resultaatstatus",
+    "raw_key": "financial_winst_verlies_status",
+    "group": "Financiële verrijking",
+    "format": "text"
+  },
+  {
+    "key": "financial_winst_verlies_methode",
+    "label": "Financiële resultaatmethode",
+    "raw_key": "financial_winst_verlies_methode",
+    "group": "Financiële verrijking",
+    "format": "text"
+  },
+  {
+    "key": "brutomarge",
+    "label": "Brutomarge",
+    "raw_key": "brutomarge",
+    "group": "Financiële verrijking",
+    "format": "money"
+  },
+  {
+    "key": "brutomarge_status",
+    "label": "Brutomargestatus",
+    "raw_key": "brutomarge_status",
+    "group": "Financiële verrijking",
+    "format": "text"
+  },
+  {
+    "key": "brutomarge_methode",
+    "label": "Brutomargemethode",
+    "raw_key": "brutomarge_methode",
+    "group": "Financiële verrijking",
+    "format": "text"
+  },
+  {
+    "key": "eigen_vermogen",
+    "label": "Eigen vermogen",
+    "raw_key": "eigen_vermogen",
+    "group": "Financiële verrijking",
+    "format": "money"
+  },
+  {
+    "key": "eigen_vermogen_status",
+    "label": "Status eigen vermogen",
+    "raw_key": "eigen_vermogen_status",
+    "group": "Financiële verrijking",
+    "format": "text"
+  },
+  {
+    "key": "eigen_vermogen_methode",
+    "label": "Methode eigen vermogen",
+    "raw_key": "eigen_vermogen_methode",
+    "group": "Financiële verrijking",
+    "format": "text"
+  },
+  {
+    "key": "financial_confidence_score",
+    "label": "Financiële betrouwbaarheidsscore",
+    "raw_key": "financial_confidence_score",
+    "group": "Financiële verrijking",
+    "format": "number"
+  },
+  {
+    "key": "financial_formule_versie",
+    "label": "Versie financiële formule",
+    "raw_key": "financial_formule_versie",
+    "group": "Financiële verrijking",
+    "format": "text"
+  },
+  {
+    "key": "ebitda_jaar",
+    "label": "EBITDA-bronjaar",
+    "raw_key": "ebitda_jaar",
+    "group": "EBITDA en resultaat",
+    "format": "number"
+  },
+  {
+    "key": "ebitda",
+    "label": "EBITDA",
+    "raw_key": "ebitda",
+    "group": "EBITDA en resultaat",
+    "format": "money"
+  },
+  {
+    "key": "ebitda_status",
+    "label": "EBITDA-status",
+    "raw_key": "ebitda_status",
+    "group": "EBITDA en resultaat",
+    "format": "text"
+  },
+  {
+    "key": "ebitda_proxy_level",
+    "label": "EBITDA-proxyniveau",
+    "raw_key": "ebitda_proxy_level",
+    "group": "EBITDA en resultaat",
+    "format": "text"
+  },
+  {
+    "key": "ebitda_methode",
+    "label": "EBITDA-methode",
+    "raw_key": "ebitda_methode",
+    "group": "EBITDA en resultaat",
+    "format": "text"
+  },
+  {
+    "key": "ebitda_confidence_score",
+    "label": "EBITDA-betrouwbaarheidsscore",
+    "raw_key": "ebitda_confidence_score",
+    "group": "EBITDA en resultaat",
+    "format": "number"
+  },
+  {
+    "key": "operating_result",
+    "label": "Bedrijfsresultaat",
+    "raw_key": "operating_result",
+    "group": "EBITDA en resultaat",
+    "format": "money"
+  },
+  {
+    "key": "operating_result_status",
+    "label": "Status bedrijfsresultaat",
+    "raw_key": "operating_result_status",
+    "group": "EBITDA en resultaat",
+    "format": "text"
+  },
+  {
+    "key": "addback_total_bkd_m1",
+    "label": "Totale add-backs BKD M1",
+    "raw_key": "addback_total_bkd_m1",
+    "group": "EBITDA en resultaat",
+    "format": "money"
+  },
+  {
+    "key": "addback_total_status",
+    "label": "Status totale add-backs",
+    "raw_key": "addback_total_status",
+    "group": "EBITDA en resultaat",
+    "format": "text"
+  },
+  {
+    "key": "lifecycle_bucket",
+    "label": "Levenscycluscategorie",
+    "raw_key": "lifecycle_bucket",
+    "group": "Historiek",
+    "format": "text"
+  },
+  {
+    "key": "historical_or_event_relevant",
+    "label": "Historisch of eventrelevant",
+    "raw_key": "historical_or_event_relevant",
+    "group": "Historiek",
+    "format": "text"
+  }
+]

@@ -20,6 +20,34 @@
     const [nl,fr,en]=catalog._KEY_LABELS[key];
     catalog._PHRASES[nl]=[fr,en];
   }
+  // Result columns are delivered by key from the server contract.  Keep their
+  // labels in the same fixed catalogue as filters, so the browser can show the
+  // complete desktop result selection in every supported language.
+  Object.assign(catalog._KEY_LABELS,{
+    ebitda_jaar:["EBITDA-bronjaar","Année source EBITDA","EBITDA source year"],
+    financial_omzet_status:["Financiële omzetstatus","Statut du chiffre d’affaires financier","Financial revenue status"],
+    financial_omzet_methode:["Financiële omzetmethode","Méthode du chiffre d’affaires financier","Financial revenue method"],
+    financial_winst_verlies_status:["Financiële resultaatstatus","Statut du résultat financier","Financial-result status"],
+    financial_winst_verlies_methode:["Financiële resultaatmethode","Méthode du résultat financier","Financial-result method"],
+    brutomarge_methode:["Brutomargemethode","Méthode de la marge brute","Gross-margin method"],
+    eigen_vermogen_methode:["Methode eigen vermogen","Méthode des capitaux propres","Equity method"],
+    financial_confidence_score:["Financiële betrouwbaarheidsscore","Score de fiabilité financière","Financial confidence score"],
+    financial_formule_versie:["Versie financiële formule","Version de la formule financière","Financial formula version"],
+    ebitda_proxy_level:["EBITDA-proxyniveau","Niveau de proxy EBITDA","EBITDA proxy level"],
+    ebitda_methode:["EBITDA-methode","Méthode EBITDA","EBITDA method"],
+    ebitda_confidence_score:["EBITDA-betrouwbaarheidsscore","Score de fiabilité EBITDA","EBITDA confidence score"],
+    operating_result_status:["Status bedrijfsresultaat","Statut du résultat d’exploitation","Operating-result status"],
+    addback_total_bkd_m1:["Totale add-backs BKD M1","Total des ajustements BKD M1","Total BKD M1 add-backs"],
+    addback_total_status:["Status totale add-backs","Statut du total des ajustements","Total add-backs status"]
+  });
+  Object.assign(catalog._PHRASES,{
+    "Standaardgegevens":["Données standards","Standard fields"],
+    "Andere gegevens":["Autres données","Other fields"],
+    "Zoek een gegeven…":["Chercher une donnée…","Find a field…"],
+    "Technische bronfilters":["Filtres techniques des sources","Technical source filters"],
+    "Rechtstoestand opnemen":["Inclure une situation juridique","Include legal situation"],
+    "Rechtstoestand uitsluiten":["Exclure une situation juridique","Exclude legal situation"]
+  });
   // Web-only wording: workspace saves belong to the authenticated account,
   // without making any statement about a Windows client or synchronisation.
   const webMessageOverrides=Object.freeze({
@@ -32,6 +60,25 @@
     "account.deactivated":Object.freeze({nl:"Browser afgemeld",fr:"Navigateur déconnecté",en:"Browser signed out"}),
     "account.deactivatedTitle":Object.freeze({nl:"Deze browser is afgemeld.",fr:"Ce navigateur est déconnecté.",en:"This browser is signed out."}),
     "account.deactivatedCopy":Object.freeze({nl:"Meld je opnieuw aan om BelgoBase hier verder te gebruiken.",fr:"Reconnectez-vous pour continuer à utiliser BelgoBase ici.",en:"Sign in again to continue using BelgoBase here."}),
+    "dialog.columnsTitle":Object.freeze({nl:"Resultatenweergave",fr:"Affichage des résultats",en:"Results display"}),
+    "dialog.columnsCopy":Object.freeze({nl:"Kies je schermkolommen en hun volgorde. Je Excelkolommen stel je apart in.",fr:"Choisissez les colonnes et leur ordre à l’écran. Les colonnes Excel se règlent séparément.",en:"Choose your screen columns and their order. Excel columns are configured separately."}),
+    "columns.left":Object.freeze({nl:"naar links",fr:"vers la gauche",en:"to the left"}),
+    "columns.right":Object.freeze({nl:"naar rechts",fr:"vers la droite",en:"to the right"}),
+    "columns.keepLink":Object.freeze({nl:"Behoud Bedrijf of Ondernemingsnummer zodat je een fiche kunt openen.",fr:"Conservez Entreprise ou Numéro d’entreprise afin de pouvoir ouvrir une fiche.",en:"Keep Company or Enterprise number so that you can open a profile."}),
+    "savedSearch.replace":Object.freeze({nl:"Vervangen",fr:"Remplacer",en:"Replace"}),
+    "savedSearch.replaceTitle":Object.freeze({nl:"Zoekopdracht vervangen",fr:"Remplacer la recherche",en:"Replace search"}),
+    "savedSearch.replaceCopy":Object.freeze({nl:"De bestaande zoekopdracht wordt bijgewerkt met je huidige zoektekst en filters.",fr:"La recherche existante sera mise à jour avec votre texte de recherche et vos filtres actuels.",en:"The existing search will be updated with your current search text and filters."}),
+    "savedSearch.replaceFailed":Object.freeze({nl:"De zoekopdracht kon niet worden vervangen. Je bestaande zoekopdracht is behouden.",fr:"La recherche n’a pas pu être remplacée. Votre recherche existante est conservée.",en:"The search could not be replaced. Your existing search was kept."}),
+    "saveSearch.replace":Object.freeze({nl:"Vervangen",fr:"Remplacer",en:"Replace"}),
+    "wallet.description":Object.freeze({nl:"Overzicht van je tegoed in {currency}. Dit is geen factuuroverzicht.",fr:"Aperçu de votre crédit en {currency}. Ceci n’est pas un relevé de factures.",en:"Overview of your credit in {currency}. This is not an invoice overview."}),
+    "wallet.noLatest":Object.freeze({nl:"Nog geen boekingen beschikbaar.",fr:"Aucune opération disponible pour le moment.",en:"No entries available yet."}),
+    "wallet.entryFallback":Object.freeze({nl:"Boeking",fr:"Opération",en:"Entry"}),
+    "wallet.emptyHistory":Object.freeze({nl:"Er zijn nog geen walletbewegingen beschikbaar.",fr:"Aucun mouvement de portefeuille n’est encore disponible.",en:"No wallet activity is available yet."}),
+    "wallet.topup":Object.freeze({nl:"Opwaardering aanvragen",fr:"Demander un rechargement",en:"Request top-up"}),
+    "account.title":Object.freeze({nl:"Account en licentie",fr:"Compte et licence",en:"Account and licence"}),
+    "account.customerNumber":Object.freeze({nl:"Klantnummer",fr:"Numéro client",en:"Customer number"}),
+    "account.licenceId":Object.freeze({nl:"Licentie-ID",fr:"ID de licence",en:"Licence ID"}),
+    "account.readonly":Object.freeze({nl:"Accountgegevens zijn hier alleen te bekijken.",fr:"Les données du compte sont uniquement consultables ici.",en:"Account details are view-only here."}),
   });
   if (window.BelgoBaseI18n?.messages && typeof window.BelgoBaseI18n.messages==="object") {
     for (const [key,value] of Object.entries(webMessageOverrides)) window.BelgoBaseI18n.messages[key]={...value};
@@ -134,6 +181,10 @@
     if (method==="bootstrap") {
       result.presentation_dictionary={canonicalNL:dictionary()};
       if (result.filter_labels && typeof result.filter_labels==="object") result.filter_labels=Object.fromEntries(Object.entries(result.filter_labels).map(([key,value])=>[key,translate(value,key,selectedLanguage)]));
+      if (Array.isArray(result.result_column_options)) result.result_column_options=result.result_column_options.map(column=>{
+        if (!column || typeof column!=="object") return column;
+        return {...column,label:translate(column.label,column.key,selectedLanguage)};
+      });
       return result;
     }
     if (method!=="workspace_data" && method!=="company" && method!=="compare_companies" && method!=="account_action") return result;

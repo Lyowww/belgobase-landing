@@ -4,11 +4,11 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 
 const html=readFileSync(new URL('./assets/frozen-ui.html',import.meta.url),'utf8');
-const walletSource=html.slice(html.indexOf('  function euro('),html.indexOf(" $('#assistant-credit').onclick"));
+const walletSource=html.slice(html.indexOf('  function euro('),html.indexOf("  walletPanel.onclick"));
 function harness(){
  const nodes=new Map();
  const node=selector=>{if(!nodes.has(selector))nodes.set(selector,{innerHTML:'',textContent:'',value:'',href:'',attributes:{},setAttribute(k,v){this.attributes[k]=v;},removeAttribute(k){delete this.attributes[k];if(k==='href')this.href='';},focus(){},select(){}});return nodes.get(selector);};
- const context=vm.createContext({$:node,work:{wallet:null},state:{busy:false},assistantUi:{tab:'wallet',walletRequest:0,walletLoading:false},nf:new Intl.NumberFormat('nl-BE'),esc:value=>String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;'),t:(key,fallback,vars={})=>fallback.replace(/\{(\w+)\}/g,(_,name)=>String(vars[name]??'')),navigator:{},document:{},accountPublicLabel:row=>row.label,action:async()=>null});
+ const context=vm.createContext({$:node,walletPanel:node('#wallet-panel'),work:{wallet:null,usage:null},state:{busy:false},assistantUi:{tab:'wallet',walletRequest:0,walletLoading:false},nf:new Intl.NumberFormat('nl-BE'),esc:value=>String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;'),t:(key,fallback,vars={})=>fallback.replace(/\{(\w+)\}/g,(_,name)=>String(vars[name]??'')),navigator:{},document:{},accountPublicLabel:row=>row.label,action:async()=>null});
  vm.runInContext(walletSource,context);
  return {context,node,run:source=>vm.runInContext(source,context)};
 }
