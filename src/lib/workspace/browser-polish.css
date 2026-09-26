@@ -7,13 +7,13 @@
 .intro p { max-width: 65ch; }
 .ghost { color: #52627a; }
 .ghost:hover:not(:disabled) { background: var(--blue-soft); border-radius: 7px; }
-.filter-grid label, .tool-field { font-size: 16px; line-height: 1.5; }
+.filter-grid label, .tool-field { font-size: 14px; line-height: 1.5; }
 .tool-fields { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 22px 28px; }
-.tool-field>span:first-child, .filter-grid label { color: #164bba; font-weight: 600; }
-.tool-field input, .tool-field select, .tool-field textarea { font-size: 16px; color: #172333; font-weight: 400; min-height: 44px; }
-.tool-field .column-option { color: #172333; font-size: 16px; font-weight: 400; }
+.tool-field>span:first-child, .filter-grid label { color: var(--ink); font-weight: 600; }
+.tool-field input, .tool-field select, .tool-field textarea { font-size: 14px; color: #172333; font-weight: 400; min-height: 44px; }
+.tool-field .column-option { color: #172333; font-size: 14px; font-weight: 400; }
 .tool-field small { color: #52627a; font-size: 13px; font-weight: 400; }
-.tool-field .switch { justify-content: flex-start; gap: 10px; color: #172333; font-size: 16px; font-weight: 400; }
+.tool-field .switch { justify-content: flex-start; gap: 10px; color: #172333; font-size: 14px; font-weight: 400; }
 .tool-field input[type=checkbox] { min-height: 0; width: 18px; height: 18px; }
 .tool-group { padding: 0; margin-bottom: 18px; }
 .tool-group>summary { font-size: 19px; font-weight: 650; padding: 18px 22px; }
@@ -127,7 +127,7 @@ input::placeholder, textarea::placeholder { color: #65748a; opacity: 1; }
 .workspace-head .eyebrow { display: none; }
 .workspace-head h1 { font-size: 26px; }
 .workspace-head p { margin-top: 4px; }
-.filter-domain-title { font-size: 16px; color: var(--blue); margin: 22px 0 10px; letter-spacing: 0; }
+.filter-domain-title { font-size: 16px; color: var(--ink); margin: 22px 0 10px; letter-spacing: 0; }
 .filter-domain-title:first-child { margin-top: 0; }
 .tool-fields { grid-template-columns: repeat(auto-fit,minmax(230px,1fr)); gap: 14px 18px; align-items: start; }
 .tool-group { margin-bottom: 10px; }
