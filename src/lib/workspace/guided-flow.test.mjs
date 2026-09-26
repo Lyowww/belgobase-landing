@@ -39,6 +39,13 @@ test("completed research and a pending delivery have an explicit download step",
   assert.equal(stage({ searched: true }, { mode: "contacts", job: { status: "paused" }, pendingExport: { export_id: "pending" } }), "download");
 });
 
+test("choosing a new contact source is not mistaken for downloading an older completed task", () => {
+  const flow = { mode: "contacts", contactView: "home", job: { status: "completed" } };
+  assert.equal(stage({ searched: true, total: 397 }, flow), "contacts");
+  flow.contactView = "job";
+  assert.equal(stage({ searched: true, total: 397 }, flow), "download");
+});
+
 test("going back changes presentation without mutating saved selection or pending delivery", () => {
   const app = { searched: true, rows: [{ number: "0123456789" }], selectedRows: { "0123456789": { name: "Test" } }, conversation: [{ role: "user", content: "Mechelen" }] };
   const flow = { mode: "contacts", job: { job_id: "job", status: "completed" }, pendingExport: { export_id: "delivery" } };
@@ -115,17 +122,19 @@ test("reviewing a resumed target clears clarify override and reaches confirmatio
   assert.equal(stage(state, journey, harness.override()), "confirm", "ready proposal must win even when older search results remain loaded");
 });
 
-test("ready guided proposal remains collapsed when its conversation is rendered", () => {
+test("guided confirmation and clarification keep conversation history collapsed", () => {
   const lines = html.split(/\r?\n/);
   const proposalLine = lines.findIndex(line => /const p=r\.proposal\|\|\{\}/.test(line));
   const titleLine = lines.findIndex((line, index) => index > proposalLine && /#ai-title/.test(line));
   assert.ok(proposalLine >= 0 && titleLine > proposalLine, "AI proposal rendering block must remain inspectable");
   const responseRender = lines.slice(proposalLine, titleLine).join("\n");
-  assert.match(
-    responseRender,
-    /state\.conversationCollapsed=guidedModeActive\(\)&&p\.status==='ready';renderConversation\(\)/,
-    "the last collapse assignment before rendering must reflect the actual guided confirmation stage",
-  );
+  const assignment = responseRender.match(/state\.conversationCollapsed=([^;]+);renderConversation\(\)/);
+  assert.ok(assignment, "the final collapse decision must precede conversation rendering");
+  const collapsed = Function("p", "guidedModeActive", `return ${assignment[1]};`);
+  for (const status of ["ready", "clarify"]) {
+    assert.equal(collapsed({ status }, () => true), true, status);
+    assert.equal(collapsed({ status }, () => false), false, `advanced ${status}`);
+  }
 });
 
 test("typed and spoken sends use the same composer dispatcher", () => {
@@ -164,6 +173,15 @@ test("download backtracking keeps contact delivery context until the user return
   assert.equal(previousStage("download", false), "results");
   const backSource = html.split(/\r?\n/).find(line => /#guided-back.*onclick/.test(line));
   assert.match(backSource || "", /leaveGuidedContactContext\(\)/, "contacts-to-results back navigation must leave only the contact presentation");
+});
+
+test("guided clarification asks one question while advanced mode retains the full explanation", () => {
+  const source = html.split(/\r?\n/).find(line => line.trim().startsWith("const explanation="));
+  assert.ok(source);
+  const explain = Function("p", "summary", "guidedModeActive", `${source};return explanation;`);
+  const proposal = { status: "clarify", question: "Bedoel je minstens 10 VTE?", assistant_message: "Ik stel Mechelen voor. Bedoel je minstens 10 VTE?", message: "Technische toelichting" };
+  assert.equal(explain(proposal, ["Personeelsfilter"], () => true), proposal.question);
+  assert.match(explain(proposal, ["Personeelsfilter"], () => false), /Technische toelichting/);
 });
 
 test("all guided labels have Dutch French and English text", () => {
