@@ -459,8 +459,11 @@
     document.body.append(link);
     link.click();
     link.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 0);
-    return { ok: true, filename, rows: request.rows, message: `${filename} is gedownload.` };
+    window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+    // An anchor click cannot tell whether the browser saved or cancelled the
+    // download. Let the customer acknowledge receipt before marking rows used.
+    return { ok: true, filename, rows: request.rows, export_id: request.export_id,
+      delivery_pending: true, message: `${filename}: download gestart.` };
   }
 
   function bridge(method, payload) {

@@ -59,7 +59,7 @@ test("web journey UI exposes the same bounded explicit workflow", () => {
   assert.match(script, /if\(history\[index\]\?\.role==='user'\)/);
   assert.match(script, /linkedAssistant\.content===savedAdvice\?\.assistant_message/);
   assert.match(script, /command:'job_remove'.*confirmed:true/);
-  assert.match(script, /Exporteer eerst wat je wilt bewaren/);
+  assert.match(script, /journeyText\('removeJobConfirm'\)/);
   assert.match(script, /data-journey-action="search-target"/);
   assert.match(script, /searchJourneyTarget\(button\.dataset\.brief\)/);
   assert.match(script, /filters:freshSession\?journeyApplyExclusions\(\{\}\)/);
@@ -73,13 +73,13 @@ test("web renders service-shaped saved advice and list metadata", () => {
   const esc = value => String(value ?? "");
   const journey = { data: {} };
   const advice = scriptFunction("renderJourneyAdvice", "renderJourneyFeedback", {
-    journey, journeyPanel, esc, journeyProfileMarkup: () => "",
+    journey, journeyPanel, esc, journeyProfileMarkup: () => "", journeyText: key => key,
   });
   advice({ assistant_message: "Bewaard advies", question: "Volgende vraag", hypotheses: [], search_brief: "Zoekbrief" });
   assert.match(panel.body, /Bewaard advies/);
 
   journey.data = null; journey.selectionImported = true; journey.file = null;
-  const journeyMappingMarkup = scriptFunction("journeyMappingMarkup", "renderJourneyList", { esc });
+  const journeyMappingMarkup = scriptFunction("journeyMappingMarkup", "renderJourneyList", { esc, journeyText: key => key });
   const renderList = scriptFunction("renderJourneyList", "renderJourneyAdvice", {
     journey, journeyPanel, journeyMappingMarkup, esc, nf: new Intl.NumberFormat("nl-BE"),
     journeyText: key => key === "chooseAnotherFile" ? "Ander bestand kiezen" : key,
@@ -89,10 +89,10 @@ test("web renders service-shaped saved advice and list metadata", () => {
     summary: { missing: {} }, preview: [], headers: [], mapping: {},
   } };
   renderList();
-  assert.match(panel.body, /nog geen website aangetroffen/);
+  assert.match(panel.body, /noWebsiteWarning/);
   journey.data.list.website_missing_count = 1;
   renderList();
-  assert.doesNotMatch(panel.body, /nog geen website aangetroffen/);
+  assert.doesNotMatch(panel.body, /noWebsiteWarning/);
   assert.match(panel.body, /Ander bestand kiezen/);
 });
 
@@ -115,6 +115,9 @@ test("web profile prefers a current draft and ignores an empty confirmed profile
   assert.deepEqual(journeyProfileState(), { profile: { business: "Nieuw concept" }, confirmed: false });
 
   journey.data.profile = { business: "   " };
+  assert.deepEqual(journeyProfileState(), { profile: { business: "Eerder bevestigd" }, confirmed: true });
+
+  journey.data.profile = { business: "Eerder bevestigd" };
   assert.deepEqual(journeyProfileState(), { profile: { business: "Eerder bevestigd" }, confirmed: true });
 });
 
@@ -291,6 +294,7 @@ test("web recovers service-shaped user-assistant advice without a second advise"
     },
     renderJourneyAdvice(value) { rendered = value; },
     acceptWalletSnapshot() {},
+    journeyText: key => key,
   });
 
   await journeyAdvise("Mijn bedrijf");
@@ -301,25 +305,28 @@ test("web recovers service-shaped user-assistant advice without a second advise"
 });
 
 test("web maps contact statuses safely and strips transport fields before export", async () => {
-  const journeyRowStatuses = { pending: "Nog te verwerken", found: "Gecontroleerd", unresolved: "Niet gevonden", review: "Nakijken" };
-  const journeyWebsiteEvidence = { found: "Nummer op de website gecontroleerd", not_supplied: "Geen website aangeleverd" };
-  const status = scriptFunction("journeyRowStatus", "journeyEvidenceLabel", { journeyRowStatuses });
-  const evidence = scriptFunction("journeyEvidenceLabel", "journeyCandidateReason", { journeyWebsiteEvidence });
-  assert.deepEqual(status("pending"), { key: "pending", label: "Nog te verwerken" });
-  assert.equal(status("private-provider-state").label, "Status niet beschikbaar");
-  assert.equal(evidence({ website_status: "not_supplied" }), "Geen website aangeleverd");
+  const journeyRowStatuses = { pending: "row.pending", found: "row.found", unresolved: "row.unresolved", review: "row.review" };
+  const journeyWebsiteEvidence = { found: "evidence.found", not_supplied: "evidence.notSupplied" };
+  const journeyText = key => key;
+  const status = scriptFunction("journeyRowStatus", "journeyEvidenceLabel", { journeyRowStatuses, journeyText });
+  const evidence = scriptFunction("journeyEvidenceLabel", "journeyCandidateReason", { journeyWebsiteEvidence, journeyText });
+  assert.deepEqual(status("pending"), { key: "pending", label: "row.pending" });
+  assert.equal(status("private-provider-state").label, "row.unknown");
+  assert.equal(evidence({ website_status: "not_supplied" }), "evidence.notSupplied");
 
-  const journey = { job: { job_id: "job-1" } };
+  const journey = { job: { job_id: "job-1" }, pendingExport: null };
   let savedPayload;
-  const exportJourney = scriptFunction("exportJourney", "journeyExportConfiguration", {
+  const exportJourney = scriptFunction("exportJourney", "confirmJourneyExport", {
     journey, busy() {},
     async journeyCall() { return { ok: true, export_id: "export-1", size: 123, rows: 2, filename: "Contacten.xlsx" }; },
-    async bridge(method, payload) { assert.equal(method, "journey_save_export"); savedPayload = payload; return { ok: true, message: "opgeslagen" }; },
-    notice() {},
+    async bridge(method, payload) { assert.equal(method, "journey_save_export"); savedPayload = payload; return { delivery_pending: true, export_id: "export-1" }; },
+    notice() {}, journeyText: key => key, renderJourneyJob() {}, mergeJourneyResult() {},
   });
   await exportJourney(true);
   assert.deepEqual(savedPayload, { export_id: "export-1", size: 123, rows: 2, filename: "Contacten.xlsx" });
   assert.equal("ok" in savedPayload, false);
+  assert.deepEqual(journey.pendingExport, { export_id: "export-1", filename: "Contacten.xlsx", rows: 2, savedLocally: false });
+  assert.match(script, /command:'export_complete',export_id:pending\.export_id,confirmed:true/);
 });
 
 test("web journey applies persistent exclusions and exposes review, feedback and export controls", () => {
@@ -332,9 +339,11 @@ test("web journey applies persistent exclusions and exposes review, feedback and
   journey.onlyNew = false;
   assert.deepEqual(exclusions(), ["0111111111", "0222222222"]);
 
-  const candidateReason = scriptFunction("journeyCandidateReason", "journeyExportMarkup", {});
+  const candidateReason = scriptFunction("journeyCandidateReason", "journeyExportMarkup", {
+    journeyText: (key, vars = {}) => key === "candidateReason" ? vars.facts : `${key}:${vars.value ?? ""}`,
+  });
   assert.equal(candidateReason({ city: "Mechelen", nace: "62", fte: 10, year: 2025 }),
-    "Voldoet aan jouw selectie: locatie Mechelen · sector 62 · 10 VTE · bronjaar 2025");
+    "fact.location:Mechelen · fact.sector:62 · fact.fte:10 · fact.year:2025");
   assert.doesNotMatch(candidateReason({ city: "Mechelen" }), /koopkans|ranking/i);
 
   const configuration = scriptFunction("journeyExportConfiguration", "journeyProfileInput", {
@@ -354,4 +363,9 @@ test("web journey applies persistent exclusions and exposes review, feedback and
   assert.match(script, /\['contact_research'/);
   assert.match(script, /\['voice'/);
   assert.match(script, /max_spend_under_budget_eur/);
+  assert.match(script, /data-journey-action="apply-feedback-mapping"/);
+  assert.match(script, /feedback_result/);
+  assert.match(script, /feedback_status/);
+  assert.match(script, /feedback_reason/);
+  assert.match(script, /\$\$\('\[data-journey-action\]'\).*button\.dataset\.lock=''/);
 });

@@ -72,8 +72,9 @@ function adapterHarness(replies, mediaError, language = "nl", enrich) {
   };
   const context = vm.createContext({
     window, document, fetch, navigator: { mediaDevices: { getUserMedia: async () => { if (mediaError) throw mediaError; return { getTracks: () => tracks }; } } },
-    URL, Proxy, Promise, Uint8Array, Int16Array, Float32Array, DataView, AbortController,
+    URL, Blob, Proxy, Promise, Uint8Array, Int16Array, Float32Array, DataView, AbortController,
     performance: { now: () => 1_000 }, btoa: (value) => Buffer.from(value, "binary").toString("base64"),
+    atob: (value) => Buffer.from(value, "base64").toString("binary"),
   });
   vm.runInContext(source, context);
   return { api: window.pywebview.api, calls, links, messages, window, context, getProcessor: () => processor, fireTimeout: () => timeout(), tracks };
@@ -221,6 +222,21 @@ test("journey returns the real service state view without adding a state layer",
   assert.deepEqual(JSON.parse(JSON.stringify(result.last_advice)), savedAdvice);
   assert.equal("state" in result, false);
   assert.equal(JSON.parse(h.calls[1].options.body).journey.command, "state");
+});
+
+test("contact download needs customer receipt before marking any company treated", async () => {
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "d".repeat(32) } },
+    { body: { ok: true, proposal: { status: "journey", contract: AI_CONTRACT,
+      journey: { data: "AQID", offset: 3 } } } },
+  ]);
+  const result = await h.api.journey_save_export({ export_id: "export-1", size: 3, rows: 1, filename: "Contacten.xlsx" });
+  assert.equal(result.delivery_pending, true);
+  assert.equal(result.export_id, "export-1");
+  assert.equal(h.links[0].clicked, true);
+  assert.equal(h.calls.length, 2);
+  assert.equal(JSON.parse(h.calls[1].options.body).journey.command, "export_chunk");
+  h.fireTimeout();
 });
 
 test("journey selection import preserves the exact count and marks the upload as prospects", async () => {
