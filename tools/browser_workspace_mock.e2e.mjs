@@ -567,6 +567,7 @@ try {
   await frame.locator("#query").waitFor();
 
   await frame.locator("#ai-mode").uncheck();
+  await frame.locator("#ai-mode").uncheck();
   await frame.locator("#query").fill("Voorbeeld Bouw");
   await frame.locator("#search-form").press("Enter");
   await frame.locator('button[data-company="0123456789"]').first().waitFor();
@@ -636,17 +637,32 @@ try {
     assert.equal(await frame.locator('#ai-turns li.user strong').last().innerText(),role);
   }
 
-  await frame.locator('#answer-ai').click();
-  await frame.locator('#apply-ai').waitFor();
   const beforeFailedAi=await visibleSelection();
   state.failNextSearch=true;
-  await frame.locator('#apply-ai').click();
+  await frame.locator('#answer-ai').click();
   await frame.locator('#notice').getByText('De eerder geladen resultaten en filters blijven behouden.',{exact:false}).waitFor();
   assert.deepEqual(await visibleSelection(),beforeFailedAi,'failed AI apply retains old selection');
   assert.equal(await frame.locator('#ai-panel').isVisible(),true,'failed AI apply preserves proposal for retry');
   await frame.locator('#apply-ai').click();
   await frame.locator('#ai-panel').waitFor({state:'hidden'});
   assert.equal(state.bridgeCalls.filter(c=>c.method==='search').at(-1).payload.filters.nace_prefix,'41');
+  const aiCallsBeforeExcel=state.bridgeCalls.filter(c=>c.method==='ai').length;
+  await frame.locator('#query').fill('Maak Excel');
+  await frame.locator('#search-form').press('Enter');
+  await frame.locator('#conversation-export-scope').waitFor();
+  assert.equal(state.bridgeCalls.filter(c=>c.method==='ai').length,aiCallsBeforeExcel,'simple Excel command needs no paid AI request');
+  await frame.locator('#export-limit').fill('7');
+  const conversationDownload=page.waitForEvent('download');
+  await frame.locator('[data-tool="columns-apply-export"]').click();
+  await conversationDownload;
+  await frame.locator('#search-view').waitFor({state:'visible'});
+  assert.equal(state.bridgeCalls.filter(c=>c.method==='export_results').at(-1).payload.filters.max_rows,7);
+  await frame.locator('#ai-turns').getByText('De Excel-export is afgerond. Je kunt verderwerken met deze selectie.',{exact:true}).waitFor();
+  await page.setViewportSize({width:390,height:844});
+  assert.equal(await frame.locator('body').evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'conversation fits mobile width');
+  await page.screenshot({path:path.join(artifactDirectory,'conversation-mobile.png')});
+  await page.setViewportSize({width:1440,height:960});
+  await page.screenshot({path:path.join(artifactDirectory,'conversation-desktop.png')});
   const priorConversation=await frame.locator('#ai-turns').innerText();
   let releaseAi;
   state.aiGate=new Promise(resolve=>{releaseAi=resolve;});
@@ -697,6 +713,7 @@ try {
   const annual=state.bridgeCalls.filter(c=>c.method==='filters_apply').at(-1).payload.filters.xbrl_metric_filters[0];
   assert.equal(annual.xbrl_metric_key,'test_wages');assert.equal(annual.numeric_min,50000);assert.equal(annual.year_min,2023);
   await frame.locator('#new-search').click();
+  await frame.locator('#ai-mode').uncheck();
   await frame.locator('#query').fill('Voorbeeld Bouw');
   await frame.locator('#search-form').press('Enter');
   await frame.locator('button[data-company="0123456789"]').first().waitFor();
@@ -769,6 +786,7 @@ try {
   assert.ok(state.bridgeCalls.filter(c => c.method === "search").at(-1).payload.filters.regions.includes("vlaanderen"), "regional selection reaches backend");
   await frame.locator("#new-search").click();
   assert.equal(await frame.locator("#query").inputValue(), "", "new search clears query");
+  await frame.locator("#ai-mode").uncheck();
   await frame.locator("#query").fill("Voorbeeld Bouw");
   await frame.locator("#search-form").press("Enter");
   await frame.locator('button[data-company="0123456789"]').first().waitFor();

@@ -2,6 +2,20 @@
 (function(global){
  'use strict';
  const messages={
+"conversation.foundOne":{"nl":"1 bedrijf gevonden. Je kunt verder verfijnen of de lijst naar Excel brengen.","fr":"1 entreprise trouvée. Affinez la sélection ou exportez la liste vers Excel.","en":"1 company found. Refine the selection or export the list to Excel."},
+"conversation.exact":{"nl":"Exacte selectie: {count} bedrijven","fr":"Sélection exacte : {count} entreprises","en":"Exact selection: {count} companies"},
+"conversation.mode":{"nl": "Gesprek met BelgoBase", "fr": "Conversation avec BelgoBase", "en": "Conversation with BelgoBase"},
+"conversation.found":{"nl": "{count} bedrijven gevonden. Je kunt verder verfijnen of de lijst naar Excel brengen.", "fr": "{count} entreprises trouvées. Affinez la sélection ou exportez la liste vers Excel.", "en": "{count} companies found. Refine the selection or export the list to Excel."},
+"conversation.none":{"nl": "Geen bedrijven gevonden. Welke voorwaarde wil je verruimen?", "fr": "Aucune entreprise trouvée. Quel critère souhaitez-vous élargir ?", "en": "No companies found. Which criterion would you like to broaden?"},
+"conversation.searchFirst":{"nl": "Zoek eerst bedrijven. Daarna kan ik die lijst naar Excel brengen.", "fr": "Recherchez d’abord des entreprises. Vous pourrez ensuite exporter la liste vers Excel.", "en": "Search for companies first. Then I can prepare the list for Excel."},
+"conversation.invalidColumns":{"nl": "Dit Excelvoorstel bevat onbekende kolommen. Kies zelf de gewenste kolommen.", "fr": "Cette proposition Excel contient des colonnes inconnues. Choisissez les colonnes souhaitées.", "en": "This Excel proposal contains unknown columns. Choose the columns you need."},
+"conversation.exportReview":{"nl": "Controleer je lijst en kolommen.", "fr": "Vérifiez votre liste et vos colonnes.", "en": "Review your list and columns."},
+"conversation.invalidExport":{"nl": "Het Excelvoorstel is niet duidelijk. Gebruik Exporteren bij je resultaten.", "fr": "La proposition Excel est ambiguë. Utilisez Exporter dans vos résultats.", "en": "The Excel proposal is unclear. Use Export in your results."},
+"conversation.all":{"nl": "Volledige lijst ({count})", "fr": "Liste complète ({count})", "en": "Full list ({count})"},
+"conversation.selected":{"nl": "Aangevinkte bedrijven ({count})", "fr": "Entreprises cochées ({count})", "en": "Selected companies ({count})"},
+"conversation.page":{"nl": "Deze pagina ({count})", "fr": "Cette page ({count})", "en": "This page ({count})"},
+"conversation.whichList":{"nl": "Welke bedrijven?", "fr": "Quelles entreprises ?", "en": "Which companies?"},
+"conversation.exportDone":{"nl": "De Excel-export is afgerond. Je kunt verderwerken met deze selectie.", "fr": "L’exportation Excel est terminée. Vous pouvez continuer avec cette sélection.", "en": "The Excel export is complete. You can continue with this selection."},
 "xbrl.duplicate":{"nl": "Dit gegeven staat al bij je criteria.", "fr": "Cette donn\u00e9e figure d\u00e9j\u00e0 dans vos crit\u00e8res.", "en": "This item is already in your criteria."},
 "similar.loading":{"nl": "Bedrijf en vergelijkingsgegevens laden\u2026", "fr": "Chargement de l\u2019entreprise et des donn\u00e9es de comparaison\u2026", "en": "Loading company and comparison data\u2026"},
 "similar.chooseProperty":{"nl": "Kies minstens \u00e9\u00e9n eigenschap om te vergelijken.", "fr": "Choisissez au moins une propri\u00e9t\u00e9 \u00e0 comparer.", "en": "Choose at least one property to compare."},
