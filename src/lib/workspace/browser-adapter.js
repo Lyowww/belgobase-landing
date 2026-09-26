@@ -43,6 +43,8 @@
   let journeyLastStarted = 0;
   let journeyClosed = false;
   const adapterMessages = Object.freeze({
+    journeyInvalid: { nl: "Controleer je bestand of klantreisaanvraag. Gebruik een gewone Excel- of CSV-lijst en controleer de kolomkoppeling. Je bestaande lijst blijft behouden.", fr: "Vérifiez votre fichier ou votre demande. Utilisez un fichier Excel ou CSV standard et vérifiez les colonnes associées. Votre liste existante est conservée.", en: "Check your file or customer journey request. Use a standard Excel or CSV file and check the column mapping. Your existing list is preserved." },
+    journeyAdviceInvalid: { nl: "Het advies kon niet betrouwbaar worden verwerkt. Je lijst en selectie blijven behouden.", fr: "Le conseil n’a pas pu être traité de manière fiable. Votre liste et votre sélection sont conservées.", en: "The advice could not be processed reliably. Your list and selection are preserved." },
     recordingActive: { nl: "Er loopt al een opname.", fr: "Un enregistrement est déjà en cours.", en: "A recording is already in progress." },
     secureAudio: { nl: "Microfoonopname vereist een beveiligde browserverbinding.", fr: "L’enregistrement nécessite une connexion sécurisée.", en: "Microphone recording requires a secure browser connection." },
     unsupportedAudio: { nl: "Deze browser ondersteunt geen microfoonopname.", fr: "Ce navigateur ne prend pas en charge l’enregistrement audio.", en: "This browser does not support microphone recording." },
@@ -83,6 +85,7 @@
   }
 
   const AI_ERROR_MESSAGES = Object.freeze({
+    journey_invalid_request: "journeyInvalid", journey_advice_invalid: "journeyAdviceInvalid",
     insufficient_balance: "aiInsufficient", wallet_insufficient: "aiInsufficient", budget_exhausted: "aiInsufficient",
     wallet_unavailable: "aiWalletUnavailable", ai_session_expired: "aiSessionExpired", ai_session_closed: "aiClosed",
     ai_session_busy: "aiSessionBusy", duplicate_request: "aiDuplicate", ai_busy: "aiBusy",

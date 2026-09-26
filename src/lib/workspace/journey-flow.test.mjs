@@ -79,7 +79,7 @@ test("web renders service-shaped saved advice and list metadata", () => {
   assert.match(panel.body, /Bewaard advies/);
 
   journey.data = null; journey.selectionImported = true; journey.file = null;
-  const journeyMappingMarkup = scriptFunction("journeyMappingMarkup", "renderJourneyList", { esc, journeyText: key => key });
+  const journeyMappingMarkup = scriptFunction("journeyMappingMarkup", "journeyUploadPreviewMarkup", { esc, journeyText: key => key });
   const renderList = scriptFunction("renderJourneyList", "renderJourneyAdvice", {
     journey, journeyPanel, journeyMappingMarkup, esc, nf: new Intl.NumberFormat("nl-BE"),
     journeyText: key => key === "chooseAnotherFile" ? "Ander bestand kiezen" : key,

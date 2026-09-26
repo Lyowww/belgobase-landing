@@ -239,6 +239,17 @@ test("contact download needs customer receipt before marking any company treated
   h.fireTimeout();
 });
 
+test("invalid journey uploads explain file recovery instead of claiming an outage", async () => {
+  for (const language of ["nl", "fr", "en"]) {
+    const h = adapterHarness([
+      { body: { authenticated: true, csrf: "d".repeat(32) } },
+      { status: 400, body: { error: "journey_invalid_request" } },
+    ], undefined, language);
+    await assert.rejects(h.api.journey({ command: "upload_finish", upload_id: "x" }), error =>
+      /CSV/.test(error.message) && !/journey_invalid_request|temporarily unavailable|tijdelijk niet beschikbaar/.test(error.message));
+  }
+});
+
 test("journey selection import preserves the exact count and marks the upload as prospects", async () => {
   const journeyReply = journey => ({ body: { ok: true, proposal: { status: "journey", contract: AI_CONTRACT, journey } } });
   const h = adapterHarness([
