@@ -175,8 +175,8 @@ test("journey throttles request starts without blocking pause behind slow advice
   const slowAdvice = new Promise(resolve => { releaseAdvice = resolve; });
   const h = adapterHarness([
     { body: { authenticated: true, csrf: "j".repeat(32) } },
-    { wait: slowAdvice, body: { ok: true, status: "journey", contract: AI_CONTRACT, journey: { advice: {} } } },
-    { body: { ok: true, status: "journey", contract: AI_CONTRACT, journey: { job: { status: "paused" } } } },
+    { wait: slowAdvice, body: { ok: true, proposal: { status: "journey", contract: AI_CONTRACT, journey: { advice: {} } } } },
+    { body: { ok: true, proposal: { status: "journey", contract: AI_CONTRACT, journey: { job: { status: "paused" } } } } },
   ]);
   h.window.setTimeout = callback => { queueMicrotask(callback); return 1; };
 
@@ -202,8 +202,8 @@ test("journey returns the real service state view without adding a state layer",
   };
   const h = adapterHarness([
     { body: { authenticated: true, csrf: "k".repeat(32) } },
-    { body: {
-      ok: true, status: "journey", contract: AI_CONTRACT,
+    { body: { ok: true, proposal: {
+      status: "journey", contract: AI_CONTRACT,
       journey: {
         profile: {}, history: [
           { role: "user", content: "Mijn bedrijf" },
@@ -212,7 +212,7 @@ test("journey returns the real service state view without adding a state layer",
         last_advice: savedAdvice, list: null, job: null,
         retention_days: 7, google_available: false,
       },
-    } },
+    } } },
   ]);
 
   const result = await h.api.journey({ command: "state" });
@@ -220,6 +220,21 @@ test("journey returns the real service state view without adding a state layer",
   assert.deepEqual(JSON.parse(JSON.stringify(result.last_advice)), savedAdvice);
   assert.equal("state" in result, false);
   assert.equal(JSON.parse(h.calls[1].options.body).journey.command, "state");
+});
+
+test("journey rejects missing or malformed BFF proposal envelopes", async () => {
+  for (const body of [
+    { ok: true, status: "journey", contract: AI_CONTRACT, journey: {} },
+    { ok: true, proposal: { status: "journey", contract: "wrong", journey: {} } },
+    { ok: true, proposal: { status: "search", contract: AI_CONTRACT, journey: {} } },
+    { ok: true, proposal: { status: "journey", contract: AI_CONTRACT, journey: [] } },
+  ]) {
+    const h = adapterHarness([
+      { body: { authenticated: true, csrf: "j".repeat(32) } },
+      { body },
+    ]);
+    await assert.rejects(h.api.journey({ command: "state" }), error => error.code === "ai_invalid_response");
+  }
 });
 
 test("AI sends the live canonical contract and merges selection metadata back into UI filters", async () => {

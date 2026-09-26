@@ -346,11 +346,12 @@
         language: adapterLanguage(),
         journey: snapshot,
       });
-      if (!object(wrapped) || wrapped.status !== "journey" || wrapped.contract !== AI_CONTRACT || !object(wrapped.journey)) {
+      const envelope = object(wrapped) ? wrapped.proposal : null;
+      if (!object(envelope) || envelope.status !== "journey" || envelope.contract !== AI_CONTRACT || !object(envelope.journey)) {
         throw aiError("ai_invalid_response", 502);
       }
-      const result = { ok: true, ...clone(wrapped.journey) };
-      if (object(wrapped.wallet)) result.wallet = clone(wrapped.wallet);
+      const result = { ok: true, ...clone(envelope.journey) };
+      if (object(envelope.wallet)) result.wallet = clone(envelope.wallet);
       return result;
     });
   }
