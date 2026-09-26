@@ -77,6 +77,9 @@ test("web renders service-shaped saved advice and list metadata", () => {
   });
   advice({ assistant_message: "Bewaard advies", question: "Volgende vraag", hypotheses: [], search_brief: "Zoekbrief" });
   assert.match(panel.body, /Bewaard advies/);
+  assert.equal(panel.copy, "Volgende vraag", "a separate follow-up question must stay visible");
+  advice({ assistant_message: "Bewaard advies. Volgende vraag", question: "Volgende vraag", hypotheses: [] });
+  assert.equal(panel.copy, "", "a question already shown in the conversation must not be repeated in the panel");
 
   journey.data = null; journey.selectionImported = true; journey.file = null;
   const journeyMappingMarkup = scriptFunction("journeyMappingMarkup", "journeyUploadPreviewMarkup", { esc, journeyText: key => key });
