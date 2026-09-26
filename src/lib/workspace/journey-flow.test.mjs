@@ -117,6 +117,7 @@ test("web journey controls switch through the shared NL FR EN catalog", () => {
   assert.equal(journeyText("prospects"), "Sélection de prospects");
   assert.equal(journeyText("source"), "Source");
   assert.equal(journeyText("chooseAnotherFile"), "Choisir un autre fichier");
+  assert.equal(journeyText("taskReady"), "La sélection a été reprise et la tâche de contact est prête.");
   assert.equal(journeyTaskStatus("running"), "En cours");
 
   i18n.setLanguage("en", { persist: false });
@@ -124,6 +125,7 @@ test("web journey controls switch through the shared NL FR EN catalog", () => {
   assert.equal(journeyText("customers"), "Customer list");
   assert.equal(journeyText("openJob"), "Open task");
   assert.equal(journeyText("chooseAnotherFile"), "Choose another file");
+  assert.equal(journeyText("selectionReady"), "The selection has been imported.");
   assert.equal(journeyTaskStatus("completed"), "Completed");
 });
 
@@ -135,18 +137,29 @@ test("web clears stale job state and sends the exact selected count to the prosp
   mergeJourneyResult({ job: null });
   assert.equal(journey.job, null);
 
-  const requests = [];
+  const requests = [], notices = [];
+  let attempts = 0;
   const prepareJourneySelection = scriptFunction("prepareJourneySelection", "openJourneyContacts", {
     journey,
     journeySelectionContext: () => ({ count: 2, numbers: ["0123456789", "0987654321"] }),
-    journeyText: key => key, nf: new Intl.NumberFormat("nl-BE"), notice() {}, busy() {},
-    async bridge(method, payload) { requests.push({ method, payload }); return { list: { purpose: "prospects" }, job: null }; },
+    journeyText: key => key, nf: new Intl.NumberFormat("nl-BE"),
+    notice(message, isError = false) { notices.push({ message, isError }); }, busy() {},
+    async bridge(method, payload) {
+      if (attempts++ === 0) throw new Error("oude fout");
+      requests.push({ method, payload });
+      return { list: { purpose: "prospects" }, job: null };
+    },
     updateJourney() {}, async journeyCall(command) { requests.push(command); return { job: { job_id: "new" } }; },
   });
+  await prepareJourneySelection(true);
   await prepareJourneySelection(true);
   assert.deepEqual(requests[0], { method: "journey_prepare_selection", payload: { numbers: ["0123456789", "0987654321"], expected_count: 2 } });
   assert.deepEqual(requests[1], { command: "job_create" });
   assert.equal(journey.mode, "contacts");
+  assert.deepEqual(notices, [
+    { message: "oude fout", isError: true },
+    { message: "taskReady", isError: false },
+  ]);
 });
 
 test("web recovers service-shaped user-assistant advice without a second advise", async () => {
