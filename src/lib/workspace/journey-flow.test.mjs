@@ -53,8 +53,8 @@ test("web journey UI exposes the same bounded explicit workflow", () => {
   assert.match(script, /input_phone/);
   assert.match(script, /email/);
   assert.match(script, /select\.value\|\|null/);
-  assert.match(script, /command:'job_resume'.*options:journeyContactOptions\(\)/);
-  assert.match(script, /command:'job_start'.*options:journeyContactOptions\(\)/);
+  assert.match(script, /actionName==='resume-job'\)startJourneyJob\(\{command:'job_resume'/);
+  assert.match(script, /actionName==='start-job'\)startJourneyJob\(\{command:'job_start'/);
   assert.match(script, /command:'state'.*last_advice/s);
   assert.match(script, /if\(history\[index\]\?\.role==='user'\)/);
   assert.match(script, /linkedAssistant\.content===savedAdvice\?\.assistant_message/);
@@ -96,6 +96,28 @@ test("web renders service-shaped saved advice and list metadata", () => {
   assert.match(panel.body, /Ander bestand kiezen/);
 });
 
+test("web profile prefers a current draft and ignores an empty confirmed profile", () => {
+  const journeyProfileFields = [["business", "Bedrijf"], ["offering", "Aanbod"], ["goal", "Doel"], ["geography", "Regio"], ["ideal_customer", "Ideale klant"], ["exclusions", "Uitsluitingen"]];
+  const journey = { data: {
+    profile_confirmed: true,
+    confirmed_profile: {},
+    last_advice: { profile: { business: "Adviesprofiel" } },
+  } };
+  const journeyProfileState = scriptFunction("journeyProfileState", "journeyProfile", { journey, journeyProfileFields });
+  assert.deepEqual(journeyProfileState(), { profile: { business: "Adviesprofiel" }, confirmed: false });
+
+  journey.data = {
+    profile_confirmed: true,
+    profile: { business: "Nieuw concept" },
+    confirmed_profile: { business: "Eerder bevestigd" },
+    last_advice: { profile: { business: "Ouder advies" } },
+  };
+  assert.deepEqual(journeyProfileState(), { profile: { business: "Nieuw concept" }, confirmed: false });
+
+  journey.data.profile = { business: "   " };
+  assert.deepEqual(journeyProfileState(), { profile: { business: "Eerder bevestigd" }, confirmed: true });
+});
+
 test("web journey controls switch through the shared NL FR EN catalog", () => {
   const controls = ["goalAction", "uploadAction", "contactsAction"].map(key => ({
     dataset: { i18n: `journey.${key}` }, textContent: "oude tekst",
@@ -132,6 +154,7 @@ test("web journey controls switch through the shared NL FR EN catalog", () => {
   assert.equal(journeyText("taskReady"), "La sélection a été reprise et la tâche de contact est prête.");
   assert.equal(journeyText("onlyNew"), "Exclure les entreprises déjà traitées ou livrées");
   assert.equal(journeyText("feedbackAdvise"), "Proposition de profil basée sur le retour");
+  assert.equal(journeyText("maxBudget"), "Budget maximal (€)");
   assert.equal(journeyTaskStatus("running"), "En cours");
 
   i18n.setLanguage("en", { persist: false });
@@ -145,6 +168,7 @@ test("web journey controls switch through the shared NL FR EN catalog", () => {
   assert.equal(journeyText("selectionReady"), "The selection has been imported.");
   assert.equal(journeyText("profileSave"), "Confirm profile");
   assert.equal(journeyText("customExport"), "Configure Excel");
+  assert.equal(journeyText("maxBudget"), "Maximum budget (€)");
   assert.equal(journeyTaskStatus("completed"), "Completed");
   assert.match(html, /id="journey-goal"[^>]+data-i18n="journey\.goalAction"/);
   assert.match(html, /id="journey-upload"[^>]+data-i18n="journey\.uploadAction"/);
@@ -172,17 +196,45 @@ test("web clears stale job state and sends the exact selected count to the prosp
       requests.push({ method, payload });
       return { list: { purpose: "prospects" }, job: null };
     },
-    updateJourney() {}, async journeyCall(command) { requests.push(command); return { job: { job_id: "new" } }; },
+    updateJourney() {},
+    async requestJourneyEstimate() { requests.push({ command: "estimate_requested" }); return true; },
+    async journeyCall(command) { requests.push(command); return { job: { job_id: "new" } }; },
   });
   await prepareJourneySelection(true);
   await prepareJourneySelection(true);
   assert.deepEqual(requests[0], { method: "journey_prepare_selection", payload: { numbers: ["0123456789", "0987654321"], expected_count: 2 } });
   assert.deepEqual(requests[1], { command: "job_create", only_new: true });
+  assert.deepEqual(requests[2], { command: "estimate_requested" });
   assert.equal(journey.mode, "contacts");
   assert.deepEqual(notices, [
     { message: "oude fout", isError: true },
     { message: "taskReady", isError: false },
   ]);
+});
+
+test("web requests the server estimate with the selected options before paid start", async () => {
+  const job = { job_id: "11111111-1111-4111-8111-111111111111", status: "created" };
+  const journey = { job, data: { job }, estimateRevision: 0 };
+  const calls = [], notices = [];
+  const requestJourneyEstimate = scriptFunction("requestJourneyEstimate", "startJourneyJob", {
+    journey,
+    journeyContactOptions: () => ({ google_enabled: false, max_calls: 0, max_cost_eur: 0 }),
+    async journeyCall(command) { calls.push(command); return { estimate: { rows: 3, estimated_cost_min_eur: 0, estimated_cost_max_eur: 0 } }; },
+    renderJourneyJob() {},
+    notice(message, isError) { notices.push({ message, isError }); },
+  });
+  assert.equal(await requestJourneyEstimate(), true);
+  assert.deepEqual(calls, [{
+    command: "job_estimate",
+    job_id: job.job_id,
+    options: { google_enabled: false, max_calls: 0, max_cost_eur: 0 },
+  }]);
+  assert.equal(journey.job.estimate.rows, 3);
+  assert.deepEqual(journey.job.options, { google_enabled: false, max_calls: 0, max_cost_eur: 0 });
+  assert.deepEqual(notices, []);
+  assert.match(script, /actionName==='start-job'\)startJourneyJob\(\{command:'job_start'/);
+  assert.match(script, /async function startJourneyJob[\s\S]*?requestJourneyEstimate\(options\)[\s\S]*?journeyCall\(\{\.\.\.command,options\}\)/);
+  assert.match(script, /journeyText\('maxBudget'\)/);
 });
 
 test("web loads persistent exclusions once before a search boundary and blocks on a missing state", async () => {

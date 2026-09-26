@@ -133,6 +133,7 @@
 ,"journey.memoryManage":{"nl":"Bewaarde uitsluitingen beheren","fr":"Gérer les exclusions enregistrées","en":"Manage saved exclusions"}
 ,"journey.memoryRemove":{"nl":"Uitsluiting terugnemen","fr":"Retirer l’exclusion","en":"Remove exclusion"}
 ,"journey.memoryRemoveConfirm":{"nl":"Deze bewaarde uitsluiting terugnemen?","fr":"Retirer cette exclusion enregistrée ?","en":"Remove this saved exclusion?"}
+,"journey.maxBudget":{"nl":"Maximumbudget (€)","fr":"Budget maximal (€)","en":"Maximum budget (€)"}
 ,"journey.costEstimate":{"nl":"Kostenraming van de server","fr":"Estimation des coûts du serveur","en":"Server cost estimate"}
 ,"journey.costEstimateRange":{"nl":"{rows} resterende rijen · extra klantkosten € {min} tot maximaal € {max}","fr":"{rows} lignes restantes · coût client supplémentaire de {min} € à {max} € maximum","en":"{rows} remaining rows · additional customer cost € {min} to at most € {max}"}
 ,"journey.budgetRemaining":{"nl":"Resterend bevestigd maximum: € {amount}","fr":"Maximum confirmé restant : {amount} €","en":"Remaining confirmed maximum: € {amount}"}

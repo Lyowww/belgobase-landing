@@ -269,7 +269,7 @@ test("result renderer uses the singular company label in every language", () => 
 test("annual latest-only filter stays visible and selected exports state exact scope", () => {
   assert.doesNotMatch(functionSource("renderChips"), /latest_only/);
   assert.doesNotMatch(functionSource("renderAiChanges"), /latest_only/);
-  assert.match(html, /!\['max_rows','selected_output_cols'\]\.includes\(key\)/);
+  assert.match(html, /!\['max_rows','selected_output_cols','ondernemingsnummers_exclude'\]\.includes\(key\)/);
   assert.match(functionSource("renderExportColumns"), /export\.exactSelectionCount/);
   assert.match(functionSource("renderExportColumns"), /explicitExportCount\(\)/);
 });
@@ -328,6 +328,7 @@ test("quick filters preserve untouched arrays and replace only a field the user 
     ["snapshotFilters", "syncFilters"],
     {
       state,
+      journeyApplyExclusions: filters => filters,
       quickCityDirty: false,
       quickCityKeys: ["gemeente_nl", "gemeente_fr"],
       quickFilterDirty,
