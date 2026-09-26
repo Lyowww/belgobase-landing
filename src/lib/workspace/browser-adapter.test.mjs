@@ -291,14 +291,14 @@ test("AI sends the live canonical contract and merges selection metadata back in
   const h = adapterHarness([
     { body: { authenticated: true, csrf: "a".repeat(32) } },
     { body: { ok: true, proposal: aiProposal({
-      status: "ready", filters: { nace_prefix: "41" }, question: "", summary: ["Bouw"],
+      status: "ready", filters: { nace_prefix: "41", ondernemingsnummers_exclude: ["1111111111"] }, question: "", summary: ["Bouw"],
       activity_selection_complete: true, regions: ["vlaanderen"], preferences: [preference],
       selection_contract: "belgobase-selection-v2", wallet,
     }) } },
   ], undefined, "fr");
   const result = await h.api.ai({
     text: "  bouwbedrijven  ", conversation: [], operation_id: "ui-operation",
-    filters: { juridical_situation_exclude: ["J003"], regions: ["vlaanderen"], preferences: [preference] },
+    filters: { juridical_situation_exclude: ["J003"], ondernemingsnummers_exclude: ["0123456789", "0987654321"], regions: ["vlaanderen"], preferences: [preference] },
   });
   const payload = JSON.parse(h.calls[1].options.body);
   assert.equal(h.calls[1].url, "/api/web/bridge/ai");
@@ -309,16 +309,26 @@ test("AI sends the live canonical contract and merges selection metadata back in
   assert.equal(payload.language, "fr");
   assert.equal(payload.text, "bouwbedrijven");
   assert.equal(payload.reset, true);
-  assert.deepEqual(payload.current_filters, { juridical_situation_exclude: ["J003"] });
+  assert.deepEqual(payload.current_filters, { juridical_situation_exclude: ["J003"], ondernemingsnummers_exclude: ["0123456789", "0987654321"] });
   assert.deepEqual(payload.current_regions, ["vlaanderen"]);
   assert.deepEqual(payload.current_preferences, [preference]);
   assert.equal("operation_id" in payload, false);
   assert.equal("conversation" in payload, false);
   assert.equal("filters" in payload, false);
-  assert.deepEqual(JSON.parse(JSON.stringify(result.proposal.filters)), { nace_prefix: "41", regions: ["vlaanderen"], preferences: [preference] });
+  assert.deepEqual(JSON.parse(JSON.stringify(result.proposal.filters)), { nace_prefix: "41", ondernemingsnummers_exclude: ["0123456789", "0987654321"], regions: ["vlaanderen"], preferences: [preference] });
   assert.deepEqual(JSON.parse(JSON.stringify(result.wallet)), wallet);
   assert.deepEqual(JSON.parse(JSON.stringify(result.proposal.wallet)), wallet);
   assert.equal("session_id" in result.proposal, false, "canonical session metadata stays inside the adapter");
+});
+
+test("AI rejects more than 10,000 persistent enterprise exclusions before transport", async () => {
+  const h = adapterHarness([]);
+  const exclusions = Array.from({ length: 10_001 }, (_, index) => String(index).padStart(10, "0"));
+  await assert.rejects(
+    h.api.ai({ text: "bedrijven", filters: { ondernemingsnummers_exclude: exclusions } }),
+    error => error?.code === "invalid_ai_request",
+  );
+  assert.equal(h.calls.length, 0);
 });
 
 test("AI follow-ups keep one session and a new UI conversation sends reset without forwarding conversation", async () => {

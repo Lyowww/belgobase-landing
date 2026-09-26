@@ -19,6 +19,7 @@
   const JOURNEY_CHUNK_SIZE = 30000;
   const JOURNEY_MIN_REQUEST_INTERVAL = 800;
   const JOURNEY_MAX_UPLOAD = 4 * 1024 * 1024;
+  const ENTERPRISE_EXCLUSION_FIELD = "ondernemingsnummers_exclude";
   const JOURNEY_EXPORT_COLUMNS = [
     "ondernemingsnummer", "naam", "straat_nl", "straat_fr", "huisnummer",
     "bus", "kbo_postcode", "gemeente_nl", "gemeente_fr", "land",
@@ -35,6 +36,7 @@
   let workspaceRevision = null;
   let workspaceSaveQueue = Promise.resolve();
   let aiSessionId = null;
+  let aiControlFilters = {};
   let aiGeneration = 0;
   let aiPending = null;
   let journeyQueue = Promise.resolve();
@@ -140,6 +142,7 @@
   function authExpired() {
     aiGeneration++;
     aiSessionId = null;
+    aiControlFilters = {};
     aiPending = null;
     csrf = "";
     csrfLoad = null;
@@ -224,6 +227,15 @@
     }
     if (typeof request.text !== "string" || !object(request.filters ?? {})) throw aiError("invalid_ai_request", 400);
     const currentFilters = clone(request.filters ?? {});
+    if (Object.hasOwn(currentFilters, ENTERPRISE_EXCLUSION_FIELD)) {
+      const exclusions = currentFilters[ENTERPRISE_EXCLUSION_FIELD];
+      if (!Array.isArray(exclusions) || exclusions.length > 10000
+          || exclusions.some(value => typeof value !== "string" || !/^[0-9]{10}$/.test(value))) {
+        throw aiError("invalid_ai_request", 400);
+      }
+      currentFilters[ENTERPRISE_EXCLUSION_FIELD] = [...new Set(exclusions)];
+      if (!currentFilters[ENTERPRISE_EXCLUSION_FIELD].length) delete currentFilters[ENTERPRISE_EXCLUSION_FIELD];
+    }
     const currentRegions = normalizeRegions(currentFilters.regions);
     const currentPreferences = normalizePreferences(currentFilters.preferences);
     delete currentFilters.regions;
@@ -295,6 +307,7 @@
     if (!aiPending || (operationId && aiPending.operationId && operationId !== aiPending.operationId)) return false;
     aiGeneration++;
     aiSessionId = null;
+    aiControlFilters = {};
     aiPending = null;
     return true;
   }
@@ -304,8 +317,13 @@
     if (request?.fresh_session === true) {
       aiGeneration++;
       aiSessionId = null;
+      aiControlFilters = {};
     }
     const outgoing = canonicalAiRequest(request);
+    const controls = outgoing.action === "ask"
+      ? (Object.hasOwn(outgoing.current_filters || {}, ENTERPRISE_EXCLUSION_FIELD)
+          ? { [ENTERPRISE_EXCLUSION_FIELD]: clone(outgoing.current_filters[ENTERPRISE_EXCLUSION_FIELD]) } : {})
+      : clone(aiControlFilters);
     const expectedSession = aiSessionId;
     const pending = { generation: aiGeneration, operationId: typeof request.operation_id === "string" ? request.operation_id : null };
     aiPending = pending;
@@ -316,6 +334,9 @@
         throw aiError("ai_session_closed", 409);
       }
       const validated = validateAiProposal(wrapped.proposal, outgoing.action, expectedSession);
+      delete validated.proposal.filters[ENTERPRISE_EXCLUSION_FIELD];
+      Object.assign(validated.proposal.filters, clone(controls));
+      aiControlFilters = clone(controls);
       aiSessionId = validated.sessionId;
       const result = { ...wrapped, proposal: validated.proposal };
       if (object(validated.proposal.wallet)) result.wallet = clone(validated.proposal.wallet);
@@ -700,6 +721,7 @@
   async function logoutFromWorkspace() {
     aiGeneration++;
     aiSessionId = null;
+    aiControlFilters = {};
     aiPending = null;
     const token = await ensureCsrf();
     const response = await fetch(`${API_ROOT}/auth/logout`, {
@@ -745,6 +767,7 @@
   window.addEventListener("pagehide", () => {
     aiGeneration++;
     aiSessionId = null;
+    aiControlFilters = {};
     aiPending = null;
     journeyClosed = true;
     destroyVoice();

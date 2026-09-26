@@ -62,7 +62,7 @@ test("web journey UI exposes the same bounded explicit workflow", () => {
   assert.match(script, /Exporteer eerst wat je wilt bewaren/);
   assert.match(script, /data-journey-action="search-target"/);
   assert.match(script, /searchJourneyTarget\(button\.dataset\.brief\)/);
-  assert.match(script, /filters:freshSession\?\{\}/);
+  assert.match(script, /filters:freshSession\?journeyApplyExclusions\(\{\}\)/);
   assert.match(script, /freshSession\?\{fresh_session:true\}/);
   assert.doesNotThrow(() => new Function(script));
 });
@@ -71,11 +71,14 @@ test("web renders service-shaped saved advice and list metadata", () => {
   let panel;
   const journeyPanel = (title, copy, body) => { panel = { title, copy, body }; };
   const esc = value => String(value ?? "");
-  const advice = scriptFunction("renderJourneyAdvice", "renderJourneyContactChoices", { journeyPanel, esc });
+  const journey = { data: {} };
+  const advice = scriptFunction("renderJourneyAdvice", "renderJourneyFeedback", {
+    journey, journeyPanel, esc, journeyProfileMarkup: () => "",
+  });
   advice({ assistant_message: "Bewaard advies", question: "Volgende vraag", hypotheses: [], search_brief: "Zoekbrief" });
   assert.match(panel.body, /Bewaard advies/);
 
-  const journey = { data: null, selectionImported: true, file: null };
+  journey.data = null; journey.selectionImported = true; journey.file = null;
   const journeyMappingMarkup = scriptFunction("journeyMappingMarkup", "renderJourneyList", { esc });
   const renderList = scriptFunction("renderJourneyList", "renderJourneyAdvice", {
     journey, journeyPanel, journeyMappingMarkup, esc, nf: new Intl.NumberFormat("nl-BE"),
@@ -127,6 +130,8 @@ test("web journey controls switch through the shared NL FR EN catalog", () => {
   assert.equal(journeyText("source"), "Source");
   assert.equal(journeyText("chooseAnotherFile"), "Choisir un autre fichier");
   assert.equal(journeyText("taskReady"), "La sélection a été reprise et la tâche de contact est prête.");
+  assert.equal(journeyText("onlyNew"), "Exclure les entreprises déjà traitées ou livrées");
+  assert.equal(journeyText("feedbackAdvise"), "Proposition de profil basée sur le retour");
   assert.equal(journeyTaskStatus("running"), "En cours");
 
   i18n.setLanguage("en", { persist: false });
@@ -138,6 +143,8 @@ test("web journey controls switch through the shared NL FR EN catalog", () => {
   assert.equal(journeyText("openJob"), "Open task");
   assert.equal(journeyText("chooseAnotherFile"), "Choose another file");
   assert.equal(journeyText("selectionReady"), "The selection has been imported.");
+  assert.equal(journeyText("profileSave"), "Confirm profile");
+  assert.equal(journeyText("customExport"), "Configure Excel");
   assert.equal(journeyTaskStatus("completed"), "Completed");
   assert.match(html, /id="journey-goal"[^>]+data-i18n="journey\.goalAction"/);
   assert.match(html, /id="journey-upload"[^>]+data-i18n="journey\.uploadAction"/);
@@ -156,6 +163,7 @@ test("web clears stale job state and sends the exact selected count to the prosp
   let attempts = 0;
   const prepareJourneySelection = scriptFunction("prepareJourneySelection", "openJourneyContacts", {
     journey,
+    ensureJourneyState: async () => true,
     journeySelectionContext: () => ({ count: 2, numbers: ["0123456789", "0987654321"] }),
     journeyText: key => key, nf: new Intl.NumberFormat("nl-BE"),
     notice(message, isError = false) { notices.push({ message, isError }); }, busy() {},
@@ -169,12 +177,41 @@ test("web clears stale job state and sends the exact selected count to the prosp
   await prepareJourneySelection(true);
   await prepareJourneySelection(true);
   assert.deepEqual(requests[0], { method: "journey_prepare_selection", payload: { numbers: ["0123456789", "0987654321"], expected_count: 2 } });
-  assert.deepEqual(requests[1], { command: "job_create" });
+  assert.deepEqual(requests[1], { command: "job_create", only_new: true });
   assert.equal(journey.mode, "contacts");
   assert.deepEqual(notices, [
     { message: "oude fout", isError: true },
     { message: "taskReady", isError: false },
   ]);
+});
+
+test("web loads persistent exclusions once before a search boundary and blocks on a missing state", async () => {
+  const exclusions = { customer_enterprise_numbers: ["0123456789"], treated_enterprise_numbers: [], rejected_enterprise_numbers: [] };
+  const journey = { data: null, exclusionsReady: false };
+  const calls = [], notices = [];
+  const ensureJourneyState = scriptFunction("ensureJourneyState", "journeyPanel", {
+    journey,
+    async journeyCall(command) { calls.push(command); return { exclusions }; },
+    mergeJourneyResult(result) { journey.data = result; },
+    notice(message, isError) { notices.push({ message, isError }); },
+    journeyText: key => key,
+  });
+  assert.equal(await ensureJourneyState(), true);
+  assert.equal(await ensureJourneyState(), true);
+  assert.deepEqual(calls, [{ command: "state" }]);
+  assert.deepEqual(journey.data.exclusions, exclusions);
+  assert.deepEqual(notices, []);
+
+  journey.data = null; journey.exclusionsReady = false;
+  const blocked = scriptFunction("ensureJourneyState", "journeyPanel", {
+    journey,
+    async journeyCall() { return {}; },
+    mergeJourneyResult(result) { journey.data = result; },
+    notice(message, isError) { notices.push({ message, isError }); },
+    journeyText: key => key,
+  });
+  assert.equal(await blocked(), false);
+  assert.deepEqual(notices.at(-1), { message: "exclusionsUnavailable", isError: true });
 });
 
 test("web recovers service-shaped user-assistant advice without a second advise", async () => {
@@ -215,14 +252,14 @@ test("web maps contact statuses safely and strips transport fields before export
   const journeyRowStatuses = { pending: "Nog te verwerken", found: "Gecontroleerd", unresolved: "Niet gevonden", review: "Nakijken" };
   const journeyWebsiteEvidence = { found: "Nummer op de website gecontroleerd", not_supplied: "Geen website aangeleverd" };
   const status = scriptFunction("journeyRowStatus", "journeyEvidenceLabel", { journeyRowStatuses });
-  const evidence = scriptFunction("journeyEvidenceLabel", "renderJourneyJob", { journeyWebsiteEvidence });
+  const evidence = scriptFunction("journeyEvidenceLabel", "journeyCandidateReason", { journeyWebsiteEvidence });
   assert.deepEqual(status("pending"), { key: "pending", label: "Nog te verwerken" });
   assert.equal(status("private-provider-state").label, "Status niet beschikbaar");
   assert.equal(evidence({ website_status: "not_supplied" }), "Geen website aangeleverd");
 
   const journey = { job: { job_id: "job-1" } };
   let savedPayload;
-  const exportJourney = scriptFunction("exportJourney", "openJourneyGoal", {
+  const exportJourney = scriptFunction("exportJourney", "journeyExportConfiguration", {
     journey, busy() {},
     async journeyCall() { return { ok: true, export_id: "export-1", size: 123, rows: 2, filename: "Contacten.xlsx" }; },
     async bridge(method, payload) { assert.equal(method, "journey_save_export"); savedPayload = payload; return { ok: true, message: "opgeslagen" }; },
@@ -231,4 +268,38 @@ test("web maps contact statuses safely and strips transport fields before export
   await exportJourney(true);
   assert.deepEqual(savedPayload, { export_id: "export-1", size: 123, rows: 2, filename: "Contacten.xlsx" });
   assert.equal("ok" in savedPayload, false);
+});
+
+test("web journey applies persistent exclusions and exposes review, feedback and export controls", () => {
+  const journey = { onlyNew: true, data: { exclusions: {
+    customer_enterprise_numbers: ["0111111111"], rejected_enterprise_numbers: ["0222222222"],
+    treated_enterprise_numbers: ["0333333333"],
+  } } };
+  const exclusions = scriptFunction("journeyExclusionNumbers", "journeyApplyExclusions", { journey });
+  assert.deepEqual(exclusions(), ["0111111111", "0222222222", "0333333333"]);
+  journey.onlyNew = false;
+  assert.deepEqual(exclusions(), ["0111111111", "0222222222"]);
+
+  const candidateReason = scriptFunction("journeyCandidateReason", "journeyExportMarkup", {});
+  assert.equal(candidateReason({ city: "Mechelen", nace: "62", fte: 10, year: 2025 }),
+    "Voldoet aan jouw selectie: locatie Mechelen · sector 62 · 10 VTE · bronjaar 2025");
+  assert.doesNotMatch(candidateReason({ city: "Mechelen" }), /koopkans|ranking/i);
+
+  const configuration = scriptFunction("journeyExportConfiguration", "journeyProfileInput", {
+    $$: selector => selector.includes("column") ? [{ value: "phone" }, { value: "source" }] : [{ value: "found" }],
+    $: selector => ({ checked: selector.includes("evidence") }),
+  });
+  assert.deepEqual(configuration(), {
+    columns: ["phone", "source"], statuses: ["found"], include_evidence: true, include_alternatives: false,
+  });
+  assert.match(script, /command:'profile_confirm'.*confirmed:true/);
+  assert.match(script, /command:'feedback_advise'/);
+  assert.match(script, /command:'feedback_confirm'.*proposal_id/);
+  assert.match(script, /command:'candidate_review'.*reason:/);
+  assert.match(script, /command:'identity_memory_remove'/);
+  assert.match(script, /command:'candidates_mark_treated'/);
+  assert.match(script, /usageItems=\[\['chat_analysis'/);
+  assert.match(script, /\['contact_research'/);
+  assert.match(script, /\['voice'/);
+  assert.match(script, /max_spend_under_budget_eur/);
 });
