@@ -16,6 +16,16 @@
   const TARGET_RATE = 16_000;
   const AI_CONTRACT = "belgobase-premium-v1";
   const AI_SELECTION_CONTRACT = "belgobase-selection-v2";
+  const JOURNEY_CHUNK_SIZE = 30000;
+  const JOURNEY_MIN_REQUEST_INTERVAL = 800;
+  const JOURNEY_MAX_UPLOAD = 4 * 1024 * 1024;
+  const JOURNEY_EXPORT_COLUMNS = [
+    "ondernemingsnummer", "naam", "straat_nl", "straat_fr", "huisnummer",
+    "bus", "kbo_postcode", "gemeente_nl", "gemeente_fr", "land",
+    "nace_code", "nace_version", "personeel_vte", "personeel_status",
+    "omzet", "omzet_status", "winst_verlies", "winst_verlies_status",
+    "boekjaar_einddatum", "jaar",
+  ];
   const AI_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
   let csrf = "";
   let csrfLoad = null;
@@ -27,6 +37,9 @@
   let aiSessionId = null;
   let aiGeneration = 0;
   let aiPending = null;
+  let journeyQueue = Promise.resolve();
+  let journeyLastStarted = 0;
+  let journeyClosed = false;
   const adapterMessages = Object.freeze({
     recordingActive: { nl: "Er loopt al een opname.", fr: "Un enregistrement est déjà en cours.", en: "A recording is already in progress." },
     secureAudio: { nl: "Microfoonopname vereist een beveiligde browserverbinding.", fr: "L’enregistrement nécessite une connexion sécurisée.", en: "Microphone recording requires a secure browser connection." },
@@ -222,7 +235,7 @@
       current_filters: currentFilters,
       current_regions: currentRegions,
       current_preferences: currentPreferences,
-      ...(Array.isArray(request.conversation) && request.conversation.length === 0 ? { reset: true } : {}),
+      ...(request.fresh_session === true || (Array.isArray(request.conversation) && request.conversation.length === 0) ? { reset: true } : {}),
       ...(aiSessionId ? { session_id: aiSessionId } : {}),
     };
   }
@@ -288,6 +301,10 @@
 
   async function aiBridge(request) {
     if (aiPending) throw aiError("ai_session_busy", 409);
+    if (request?.fresh_session === true) {
+      aiGeneration++;
+      aiSessionId = null;
+    }
     const outgoing = canonicalAiRequest(request);
     const expectedSession = aiSessionId;
     const pending = { generation: aiGeneration, operationId: typeof request.operation_id === "string" ? request.operation_id : null };
@@ -311,8 +328,114 @@
     }
   }
 
+  function journeyBridge(command) {
+    if (!object(command) || typeof command.command !== "string") throw aiError("invalid_ai_request", 400);
+    const snapshot = clone(command);
+    const start = journeyQueue.then(async () => {
+      const wait = Math.max(0, JOURNEY_MIN_REQUEST_INTERVAL - (performance.now() - journeyLastStarted));
+      if (wait) await new Promise(resolve => window.setTimeout(resolve, wait));
+      if (journeyClosed) throw aiError("ai_session_closed", 409);
+      journeyLastStarted = performance.now();
+    });
+    journeyQueue = start.catch(() => {});
+    return start.then(async () => {
+      const wrapped = await sendBridge("ai", {
+        contract: AI_CONTRACT,
+        action: "journey",
+        request_id: window.crypto.randomUUID(),
+        language: adapterLanguage(),
+        journey: snapshot,
+      });
+      if (!object(wrapped) || wrapped.status !== "journey" || wrapped.contract !== AI_CONTRACT || !object(wrapped.journey)) {
+        throw aiError("ai_invalid_response", 502);
+      }
+      const result = { ok: true, ...clone(wrapped.journey) };
+      if (object(wrapped.wallet)) result.wallet = clone(wrapped.wallet);
+      return result;
+    });
+  }
+
+  function bytesBase64(bytes) {
+    let binary = "";
+    for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+      binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+    }
+    return btoa(binary);
+  }
+
+  async function journeyPrepareSelection(request) {
+    if (!object(request)) throw new Error(adapterMessage("retry"));
+    const numbers = Array.isArray(request.numbers) ? request.numbers : [];
+    if (numbers.length > 5000) throw new Error("Voeg maximaal 5.000 bedrijven tegelijk toe.");
+    const payload = numbers.length
+      ? { numbers: clone(numbers), columns: [...JOURNEY_EXPORT_COLUMNS] }
+      : {
+          filters: { ...clone(request.filters || {}), max_rows: 5000 },
+          query: typeof request.query === "string" ? request.query : "",
+          columns: [...JOURNEY_EXPORT_COLUMNS],
+        };
+    const method = numbers.length ? "export_selection" : "export_results";
+    const exported = await sendBridge(method, payload, { skipAutodownload: true });
+    const url = assertDownloadUrl(exported.download_url);
+    if (!url) throw new Error(adapterMessage("retry"));
+    const response = await fetch(url.href, { cache: "no-store", credentials: "same-origin" });
+    if (response.status === 401) {
+      authExpired();
+      throw new Error(adapterMessage("sessionExpired"));
+    }
+    if (!response.ok) throw new Error(adapterMessage("retry"));
+    const raw = new Uint8Array(await response.arrayBuffer());
+    if (!raw.length || raw.length > JOURNEY_MAX_UPLOAD) {
+      throw new Error("Deze selectie is te groot voor de tijdelijke klantenlijst. Verklein ze tot maximaal 4 MB.");
+    }
+    const upload = await journeyBridge({ command: "upload_begin", filename: "BelgoBase_selectie.xlsx", size: raw.length });
+    if (typeof upload.upload_id !== "string") throw new Error(adapterMessage("retry"));
+    let offset = 0;
+    while (offset < raw.length) {
+      const chunk = raw.subarray(offset, Math.min(raw.length, offset + JOURNEY_CHUNK_SIZE));
+      const sent = await journeyBridge({ command: "upload_chunk", upload_id: upload.upload_id, offset, data: bytesBase64(chunk) });
+      if (!Number.isInteger(sent.offset) || sent.offset !== offset + chunk.length) throw new Error(adapterMessage("retry"));
+      offset = sent.offset;
+    }
+    return journeyBridge({ command: "upload_finish", upload_id: upload.upload_id });
+  }
+
+  async function journeyDownloadExport(request) {
+    if (!object(request) || typeof request.export_id !== "string" || !Number.isInteger(request.size)
+        || request.size < 1 || request.size > 16 * 1024 * 1024) throw new Error(adapterMessage("retry"));
+    const chunks = [];
+    let offset = 0;
+    while (offset < request.size) {
+      const reply = await journeyBridge({ command: "export_chunk", export_id: request.export_id, offset });
+      if (typeof reply.data !== "string" || !Number.isInteger(reply.offset) || reply.offset <= offset || reply.offset > request.size) {
+        throw new Error(adapterMessage("retry"));
+      }
+      const binary = atob(reply.data);
+      const chunk = Uint8Array.from(binary, char => char.charCodeAt(0));
+      if (!chunk.length || chunk.length > JOURNEY_CHUNK_SIZE || reply.offset !== offset + chunk.length) throw new Error(adapterMessage("retry"));
+      chunks.push(chunk);
+      offset = reply.offset;
+    }
+    const blob = new Blob(chunks, { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    const filename = typeof request.filename === "string" && request.filename.toLowerCase().endsWith(".xlsx")
+      ? request.filename : "BelgoBase_contacten.xlsx";
+    link.download = filename;
+    link.style.display = "none";
+    document.body.append(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    return { ok: true, filename, rows: request.rows, message: `${filename} is gedownload.` };
+  }
+
   function bridge(method, payload) {
     if (method === "ai") return aiBridge(payload);
+    if (method === "journey") return journeyBridge(payload);
+    if (method === "journey_prepare_selection") return journeyPrepareSelection(payload);
+    if (method === "journey_save_export") return journeyDownloadExport(payload);
     if (method === "cancel_operation") {
       cancelAiState(payload?.operation_id);
       return sendBridge(method, payload);
@@ -326,7 +449,7 @@
     return pending;
   }
 
-  async function sendBridge(method, payload) {
+  async function sendBridge(method, payload, { skipAutodownload = false } = {}) {
     const token = await ensureCsrf();
     const outgoing = payload === undefined ? {} : { ...payload };
     if (method === "workspace_save") outgoing.workspace_revision = workspaceRevision;
@@ -356,7 +479,7 @@
       if (method === "ai") throw aiError(typeof localized.error === "string" ? localized.error : "ai_unavailable", response.status);
       throw new Error(bridgeFailure(response.status, localized));
     }
-    triggerDownload(localized.download_url, ["export_results", "export_selection"].includes(method));
+    if (!skipAutodownload) triggerDownload(localized.download_url, ["export_results", "export_selection"].includes(method));
     if ((method === "bootstrap" || method === "workspace_save") && Number.isInteger(localized.workspace_revision)) workspaceRevision = localized.workspace_revision;
     if ((method === "set_language" || method === "bootstrap") && ["nl", "fr", "en"].includes(localized.language)) {
       window.parent.postMessage({ type: "belgobase-web-language", language: localized.language }, window.location.origin);
@@ -612,6 +735,7 @@
     aiGeneration++;
     aiSessionId = null;
     aiPending = null;
+    journeyClosed = true;
     destroyVoice();
   });
 })();

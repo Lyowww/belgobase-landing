@@ -170,6 +170,58 @@ test("bridge forwards an authenticated method and starts a same-origin download"
   assert.equal(h.links[0].clicked, true);
 });
 
+test("journey throttles request starts without blocking pause behind slow advice", async () => {
+  let releaseAdvice;
+  const slowAdvice = new Promise(resolve => { releaseAdvice = resolve; });
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "j".repeat(32) } },
+    { wait: slowAdvice, body: { ok: true, status: "journey", contract: AI_CONTRACT, journey: { advice: {} } } },
+    { body: { ok: true, status: "journey", contract: AI_CONTRACT, journey: { job: { status: "paused" } } } },
+  ]);
+  h.window.setTimeout = callback => { queueMicrotask(callback); return 1; };
+
+  let adviceDone = false;
+  const advice = h.api.journey({ command: "advise", text: "test" }).then(result => {
+    adviceDone = true;
+    return result;
+  });
+  await new Promise(resolve => setImmediate(resolve));
+  const paused = await h.api.journey({ command: "job_pause", job_id: "job-1" });
+
+  assert.equal(paused.job.status, "paused");
+  assert.equal(adviceDone, false, "pause must not await the slow advice response");
+  assert.equal(JSON.parse(h.calls[2].options.body).journey.command, "job_pause");
+  releaseAdvice();
+  await advice;
+});
+
+test("journey returns the real service state view without adding a state layer", async () => {
+  const savedAdvice = {
+    assistant_message: "Bewaard advies", profile: {}, question: "Volgende vraag",
+    hypotheses: [], search_brief: "Zoekbrief",
+  };
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "k".repeat(32) } },
+    { body: {
+      ok: true, status: "journey", contract: AI_CONTRACT,
+      journey: {
+        profile: {}, history: [
+          { role: "user", content: "Mijn bedrijf" },
+          { role: "assistant", content: "Bewaard advies" },
+        ],
+        last_advice: savedAdvice, list: null, job: null,
+        retention_days: 7, google_available: false,
+      },
+    } },
+  ]);
+
+  const result = await h.api.journey({ command: "state" });
+
+  assert.deepEqual(JSON.parse(JSON.stringify(result.last_advice)), savedAdvice);
+  assert.equal("state" in result, false);
+  assert.equal(JSON.parse(h.calls[1].options.body).journey.command, "state");
+});
+
 test("AI sends the live canonical contract and merges selection metadata back into UI filters", async () => {
   const preference = { field: "omzet", direction: "high", priority: 1, evidence: "hoogste omzet eerst" };
   const wallet = { available_eur: 7.25, entries: [] };
@@ -230,6 +282,26 @@ test("AI follow-ups keep one session and a new UI conversation sends reset witho
   assert.equal(payloads[2].reset, undefined);
   assert.equal(payloads[4].reset, true);
   assert.ok(payloads.every(payload => !("conversation" in payload)));
+});
+
+test("journey target search starts without the prior AI session or filters", async () => {
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "f".repeat(32) } },
+    { body: { ok: true, proposal: aiProposal() } },
+    { body: { ok: true, proposal: aiProposal() } },
+  ]);
+  await h.api.ai({ text: "oude zoekvraag", conversation: [], filters: { nace_prefix: "41" } });
+  await h.api.ai({
+    text: "bevestigde doelgroep", conversation: [{ role: "user", content: "zichtbaar gesprek" }],
+    filters: {}, fresh_session: true,
+  });
+  const payload = JSON.parse(h.calls.at(-1).options.body);
+  assert.equal(payload.action, "ask");
+  assert.equal(payload.session_id, undefined);
+  assert.equal(payload.reset, true);
+  assert.deepEqual(payload.current_filters, {});
+  assert.equal("fresh_session" in payload, false);
+  assert.equal("conversation" in payload, false);
 });
 
 test("AI rejects malformed canonical responses without retaining their session", async () => {
