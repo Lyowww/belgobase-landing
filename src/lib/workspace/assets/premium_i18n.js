@@ -349,7 +349,35 @@
 "journey.goalTitle":{"nl":"Doel en ideale klant","fr":"Objectif et client idéal","en":"Goal and ideal customer"},
 "journey.goalCopy":{"nl":"Vertel in het bestaande invoerveld wat je aanbiedt, welk doel je hebt en welke klanten je zoekt. Er wordt nog niets gezocht.","fr":"Décrivez dans le champ existant votre offre, votre objectif et les clients recherchés. Aucune recherche ne démarre encore.","en":"Use the existing input field to describe your offering, goal, and target customers. No search starts yet."},
 "journey.goalLoading":{"nl":"Eerder doelgesprek laden…","fr":"Chargement de la conversation précédente…","en":"Loading previous goal conversation…"},
-"journey.analysePrompt":{"nl":"Analyseer de samenvatting van deze klantenlijst en stel gerichte hypotheses voor mijn ideale klant voor.","fr":"Analysez le résumé de cette liste de clients et proposez des hypothèses ciblées pour mon client idéal.","en":"Analyze this customer list summary and suggest focused hypotheses for my ideal customer."}
+"journey.analysePrompt":{"nl":"Analyseer de samenvatting van deze klantenlijst en stel gerichte hypotheses voor mijn ideale klant voor.","fr":"Analysez le résumé de cette liste de clients et proposez des hypothèses ciblées pour mon client idéal.","en":"Analyze this customer list summary and suggest focused hypotheses for my ideal customer."},
+"guided.advanced":{"nl":"Geavanceerd","fr":"Avancé","en":"Advanced"},
+"guided.guided":{"nl":"Begeleid","fr":"Guidé","en":"Guided"},
+"guided.back":{"nl":"Terug","fr":"Retour","en":"Back"},
+"guided.step":{"nl":"Stap {current} van 6","fr":"Étape {current} sur 6","en":"Step {current} of 6"},
+"guided.goalTitle":{"nl":"Vertel wat je doet","fr":"Parlez-nous de votre activité","en":"Tell us what you do"},
+"guided.goalCopy":{"nl":"Wat doe je, en welke klanten wil je bereiken?","fr":"Que faites-vous et quels clients souhaitez-vous atteindre ?","en":"What do you do, and which customers do you want to reach?"},
+"guided.goalPlaceholder":{"nl":"Typ je verhaal of spreek het in…","fr":"Écrivez votre histoire ou dictez-la…","en":"Type your story or say it aloud…"},
+"guided.clarifyTitle":{"nl":"Maak je doelgroep scherp","fr":"Précisez votre cible","en":"Clarify your target audience"},
+"guided.clarifyCopy":{"nl":"Laten we bepalen wie bij je aanbod past.","fr":"Déterminons qui correspond à votre offre.","en":"Let’s determine who fits your offer."},
+"guided.confirmTitle":{"nl":"Bevestig je doelgroep","fr":"Confirmez votre cible","en":"Confirm your target audience"},
+"guided.confirmCopy":{"nl":"Klopt deze doelgroep?","fr":"Cette cible vous convient-elle ?","en":"Is this target audience right?"},
+"guided.resultsTitle":{"nl":"Bekijk en pas je resultaten aan","fr":"Consultez et adaptez vos résultats","en":"Review and adjust your results"},
+"guided.resultsCopy":{"nl":"Pas je doelgroep aan via het gesprek of kies een bedrijf.","fr":"Adaptez votre cible dans la conversation ou choisissez une entreprise.","en":"Adjust your target audience in the conversation or choose a company."},
+"guided.contactsTitle":{"nl":"Vul contactgegevens aan","fr":"Complétez les coordonnées","en":"Complete contact details"},
+"guided.contactsCopy":{"nl":"Controleer je kostenlimiet voordat je begint.","fr":"Vérifiez votre limite de coûts avant de commencer.","en":"Review your spending limit before you begin."},
+"guided.downloadTitle":{"nl":"Download je lijst","fr":"Téléchargez votre liste","en":"Download your list"},
+"guided.downloadCopy":{"nl":"Kies je gecontroleerde gegevens en download Excel.","fr":"Choisissez vos données vérifiées et téléchargez Excel.","en":"Choose your verified data and download Excel."},
+"guided.uploadContext":{"nl":"Klantenlijst als context","fr":"Liste de clients comme contexte","en":"Customer list as context"},
+"guided.contacts":{"nl":"Contactgegevens aanvullen","fr":"Compléter les coordonnées","en":"Complete contact details"},
+"guided.download":{"nl":"Downloaden","fr":"Télécharger","en":"Download"},
+"guided.reviewTarget":{"nl":"Doelgroep bekijken","fr":"Voir la cible","en":"Review target audience"},
+"guided.findCompanies":{"nl":"Vind deze bedrijven","fr":"Trouver ces entreprises","en":"Find these companies"},
+"guided.moreInsight":{"nl":"Bekijk onderbouwing en profiel","fr":"Voir l’analyse et le profil","en":"View rationale and profile"}
+,
+"guided.resume":{"nl":"Hervatten","fr":"Reprendre","en":"Resume"},
+"guided.resumeCopy":{"nl":"Je hebt eerder werk dat je kunt hervatten.","fr":"Vous avez un travail précédent à reprendre.","en":"You have previous work you can resume."},
+"journey.reviewTarget":{"nl":"Doelgroep bekijken","fr":"Voir la cible","en":"Review target audience"},
+"journey.moreInsight":{"nl":"Bekijk onderbouwing en profiel","fr":"Voir l’analyse et le profil","en":"View rationale and profile"}
  });
   const locales={nl:'nl-BE',fr:'fr-BE',en:'en-GB'};
  let language='nl';

@@ -271,14 +271,14 @@ test("web loads persistent exclusions once before a search boundary and blocks o
 
 test("web recovers service-shaped user-assistant advice without a second advise", async () => {
   const savedAdvice = { assistant_message: "Bewaard antwoord", question: "Vervolgvraag", hypotheses: [], search_brief: "" };
-  const calls = [], conversation = [], query = { value: "", focus() {} };
+  const calls = [], conversation = [], query = { value: "", focus() {} }, noticeNode = { hidden: false };
   let rendered = null;
   const journey = { mode: null, data: null };
   const journeyAdvise = scriptFunction("journeyAdvise", "uploadJourneyFile", {
     journey,
     notice() { throw new Error("recovery should suppress the original transport error"); },
     appendConversation(role, content) { conversation.push({ role, content }); },
-    $: selector => { assert.equal(selector, "#query"); return query; },
+    $: selector => selector === "#notice" ? noticeNode : (assert.equal(selector, "#query"), query),
     busy() {},
     updateJourney() { throw new Error("failed advise must not return a direct result"); },
     async journeyCall(command) {
@@ -301,6 +301,7 @@ test("web recovers service-shaped user-assistant advice without a second advise"
 
   assert.deepEqual(calls, ["advise", "state"]);
   assert.equal(rendered, savedAdvice);
+  assert.equal(noticeNode.hidden, true);
   assert.equal(conversation.at(-1).content, "Bewaard antwoord");
 });
 

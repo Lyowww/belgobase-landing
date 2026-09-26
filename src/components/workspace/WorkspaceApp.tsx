@@ -385,7 +385,7 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
       <span className={styles.workspaceIdentity}>{account?.name || account?.email || "BelgoBase"}</span>
       <div className={styles.workspaceActions}>
         <label className={styles.languagePicker}><span className={styles.visuallyHidden}>Taal / Language / Langue</span><select aria-label="Taal / Language / Langue" value={shellLanguage} onChange={(event) => selectShellLanguage(event.target.value as ShellLanguage)}><option value="nl">NL</option><option value="fr">FR</option><option value="en">EN</option></select></label>
-        <button type="button" onClick={openAccount} disabled={accountBusy}>{t.account}</button>
+        <button type="button" onClick={openAccount} disabled={accountBusy}>{shellLanguage === "nl" ? "Toegang" : shellLanguage === "fr" ? "Accès" : "Access"}</button>
         <button type="button" onClick={() => void logout()} disabled={busy}>{t.logout}</button>
       </div>
     </div>
