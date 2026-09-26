@@ -94,7 +94,13 @@ test("web renders service-shaped saved advice and list metadata", () => {
 });
 
 test("web journey controls switch through the shared NL FR EN catalog", () => {
-  const document = { documentElement: { lang: "nl" }, querySelectorAll: () => [] };
+  const controls = ["goalAction", "uploadAction", "contactsAction"].map(key => ({
+    dataset: { i18n: `journey.${key}` }, textContent: "oude tekst",
+  }));
+  const document = {
+    documentElement: { lang: "nl" },
+    querySelectorAll: selector => selector === "[data-i18n]" ? controls : [],
+  };
   const window = {
     document,
     dispatchEvent() {},
@@ -113,6 +119,9 @@ test("web journey controls switch through the shared NL FR EN catalog", () => {
   const journeyTaskStatus = Function("t", `${script.slice(statusStart, statusEnd)};return journeyTaskStatus;`)(i18n.t);
 
   i18n.setLanguage("fr", { persist: false });
+  assert.deepEqual(controls.map(control => control.textContent), [
+    "Discuter de l’objectif", "Ajouter une liste de clients", "Compléter les coordonnées",
+  ]);
   assert.equal(journeyText("enrichSelection", { count: 12 }), "Enrichir cette sélection (12)");
   assert.equal(journeyText("prospects"), "Sélection de prospects");
   assert.equal(journeyText("source"), "Source");
@@ -121,12 +130,18 @@ test("web journey controls switch through the shared NL FR EN catalog", () => {
   assert.equal(journeyTaskStatus("running"), "En cours");
 
   i18n.setLanguage("en", { persist: false });
+  assert.deepEqual(controls.map(control => control.textContent), [
+    "Discuss your goal", "Add customer list", "Complete contact details",
+  ]);
   assert.equal(journeyText("currentSelection"), "Current search selection");
   assert.equal(journeyText("customers"), "Customer list");
   assert.equal(journeyText("openJob"), "Open task");
   assert.equal(journeyText("chooseAnotherFile"), "Choose another file");
   assert.equal(journeyText("selectionReady"), "The selection has been imported.");
   assert.equal(journeyTaskStatus("completed"), "Completed");
+  assert.match(html, /id="journey-goal"[^>]+data-i18n="journey\.goalAction"/);
+  assert.match(html, /id="journey-upload"[^>]+data-i18n="journey\.uploadAction"/);
+  assert.match(html, /id="journey-contacts"[^>]+data-i18n="journey\.contactsAction"/);
 });
 
 test("web clears stale job state and sends the exact selected count to the prospects import", async () => {
