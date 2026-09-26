@@ -67,6 +67,7 @@ function adapterHarness(replies, mediaError, language = "nl", enrich) {
       ok: reply.status === undefined || (reply.status >= 200 && reply.status < 300),
       status: reply.status ?? 200,
       json: async () => reply.body,
+      arrayBuffer: async () => Uint8Array.from(reply.raw || []).buffer,
     };
   };
   const context = vm.createContext({
@@ -220,6 +221,53 @@ test("journey returns the real service state view without adding a state layer",
   assert.deepEqual(JSON.parse(JSON.stringify(result.last_advice)), savedAdvice);
   assert.equal("state" in result, false);
   assert.equal(JSON.parse(h.calls[1].options.body).journey.command, "state");
+});
+
+test("journey selection import preserves the exact count and marks the upload as prospects", async () => {
+  const journeyReply = journey => ({ body: { ok: true, proposal: { status: "journey", contract: AI_CONTRACT, journey } } });
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "p".repeat(32) } },
+    { body: { ok: true, total: 2, rows: 2, download_url: "/api/web/download/selection-file" } },
+    { raw: [1, 2, 3] },
+    journeyReply({ upload_id: "upload-1" }),
+    journeyReply({ offset: 3 }),
+    journeyReply({ list: { purpose: "prospects", unique_count: 2 }, job: null }),
+  ]);
+  h.window.setTimeout = callback => { queueMicrotask(callback); return 1; };
+
+  const result = await h.api.journey_prepare_selection({ numbers: ["0123456789", "0987654321"], expected_count: 2 });
+
+  assert.equal(result.list.purpose, "prospects");
+  const exported = JSON.parse(h.calls[1].options.body);
+  assert.deepEqual(exported.numbers, ["0123456789", "0987654321"]);
+  const upload = JSON.parse(h.calls[3].options.body).journey;
+  assert.deepEqual(upload, { command: "upload_begin", filename: "BelgoBase_selectie.xlsx", size: 3, purpose: "prospects" });
+});
+
+test("journey selection import rejects truncation and over 5,000 before uploading", async () => {
+  const oversized = adapterHarness([]);
+  await assert.rejects(
+    oversized.api.journey_prepare_selection({ filters: {}, expected_count: 5001 }),
+    /maximaal 5\.000/,
+  );
+  assert.equal(oversized.calls.length, 0);
+
+  const empty = adapterHarness([]);
+  await assert.rejects(
+    empty.api.journey_prepare_selection({ numbers: [], expected_count: 1 }),
+    /selectie is gewijzigd/,
+  );
+  assert.equal(empty.calls.length, 0);
+
+  const limited = adapterHarness([
+    { body: { authenticated: true, csrf: "l".repeat(32) } },
+    { body: { ok: true, total: 5, rows: 3, download_url: "/api/web/download/short" } },
+  ]);
+  await assert.rejects(
+    limited.api.journey_prepare_selection({ filters: {}, query: "bouw", expected_count: 5 }),
+    /kapt de lijst niet stil af/,
+  );
+  assert.equal(limited.calls.length, 2, "a truncated export must never be downloaded or uploaded");
 });
 
 test("journey rejects missing or malformed BFF proposal envelopes", async () => {

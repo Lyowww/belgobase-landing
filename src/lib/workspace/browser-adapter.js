@@ -366,17 +366,27 @@
 
   async function journeyPrepareSelection(request) {
     if (!object(request)) throw new Error(adapterMessage("retry"));
-    const numbers = Array.isArray(request.numbers) ? request.numbers : [];
-    if (numbers.length > 5000) throw new Error("Voeg maximaal 5.000 bedrijven tegelijk toe.");
-    const payload = numbers.length
+    const hasNumbers = Array.isArray(request.numbers);
+    const numbers = hasNumbers ? request.numbers : [];
+    const expectedCount = request.expected_count;
+    if (!Number.isInteger(expectedCount) || expectedCount < 1 || expectedCount > 5000) {
+      throw new Error("Kies één tot maximaal 5.000 bedrijven om te verrijken.");
+    }
+    if (hasNumbers && numbers.length !== expectedCount) {
+      throw new Error("De aangevinkte selectie is gewijzigd. Kies de bedrijven opnieuw.");
+    }
+    const payload = hasNumbers
       ? { numbers: clone(numbers), columns: [...JOURNEY_EXPORT_COLUMNS] }
       : {
-          filters: { ...clone(request.filters || {}), max_rows: 5000 },
+          filters: { ...clone(request.filters || {}), max_rows: expectedCount },
           query: typeof request.query === "string" ? request.query : "",
           columns: [...JOURNEY_EXPORT_COLUMNS],
         };
-    const method = numbers.length ? "export_selection" : "export_results";
+    const method = hasNumbers ? "export_selection" : "export_results";
     const exported = await sendBridge(method, payload, { skipAutodownload: true });
+    if (exported.total !== expectedCount || exported.rows !== expectedCount) {
+      throw new Error("De selectie of je exportlimiet is gewijzigd. Vernieuw de resultaten; BelgoBase kapt de lijst niet stil af.");
+    }
     const url = assertDownloadUrl(exported.download_url);
     if (!url) throw new Error(adapterMessage("retry"));
     const response = await fetch(url.href, { cache: "no-store", credentials: "same-origin" });
@@ -389,7 +399,7 @@
     if (!raw.length || raw.length > JOURNEY_MAX_UPLOAD) {
       throw new Error("Deze selectie is te groot voor de tijdelijke klantenlijst. Verklein ze tot maximaal 4 MB.");
     }
-    const upload = await journeyBridge({ command: "upload_begin", filename: "BelgoBase_selectie.xlsx", size: raw.length });
+    const upload = await journeyBridge({ command: "upload_begin", filename: "BelgoBase_selectie.xlsx", size: raw.length, purpose: "prospects" });
     if (typeof upload.upload_id !== "string") throw new Error(adapterMessage("retry"));
     let offset = 0;
     while (offset < raw.length) {

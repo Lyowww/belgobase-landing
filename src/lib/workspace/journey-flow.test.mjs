@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import vm from "node:vm";
 
 const adapter = await readFile(new URL("./browser-adapter.js", import.meta.url), "utf8");
 const html = await readFile(new URL("./assets/frozen-ui.html", import.meta.url), "utf8");
+const i18nSource = await readFile(new URL("./assets/premium_i18n.js", import.meta.url), "utf8");
 const script = html.slice(html.lastIndexOf("<script>") + 8, html.lastIndexOf("</script>"));
 
 function scriptFunction(name, nextName, dependencies) {
@@ -69,7 +71,7 @@ test("web renders service-shaped saved advice and list metadata", () => {
   let panel;
   const journeyPanel = (title, copy, body) => { panel = { title, copy, body }; };
   const esc = value => String(value ?? "");
-  const advice = scriptFunction("renderJourneyAdvice", "journeyContactOptions", { journeyPanel, esc });
+  const advice = scriptFunction("renderJourneyAdvice", "renderJourneyContactChoices", { journeyPanel, esc });
   advice({ assistant_message: "Bewaard advies", question: "Volgende vraag", hypotheses: [], search_brief: "Zoekbrief" });
   assert.match(panel.body, /Bewaard advies/);
 
@@ -77,6 +79,7 @@ test("web renders service-shaped saved advice and list metadata", () => {
   const journeyMappingMarkup = scriptFunction("journeyMappingMarkup", "renderJourneyList", { esc });
   const renderList = scriptFunction("renderJourneyList", "renderJourneyAdvice", {
     journey, journeyPanel, journeyMappingMarkup, esc, nf: new Intl.NumberFormat("nl-BE"),
+    journeyText: key => key === "chooseAnotherFile" ? "Ander bestand kiezen" : key,
   });
   journey.data = { list: {
     filename: "BelgoBase_selectie.xlsx", unique_count: 2, website_missing_count: 2,
@@ -87,6 +90,63 @@ test("web renders service-shaped saved advice and list metadata", () => {
   journey.data.list.website_missing_count = 1;
   renderList();
   assert.doesNotMatch(panel.body, /nog geen website aangetroffen/);
+  assert.match(panel.body, /Ander bestand kiezen/);
+});
+
+test("web journey controls switch through the shared NL FR EN catalog", () => {
+  const document = { documentElement: { lang: "nl" }, querySelectorAll: () => [] };
+  const window = {
+    document,
+    dispatchEvent() {},
+    localStorage: { setItem() {}, getItem() { return null; } },
+  };
+  vm.runInNewContext(i18nSource, {
+    window, document,
+    CustomEvent: class CustomEvent { constructor(type, detail) { this.type = type; this.detail = detail; } },
+  });
+  const i18n = window.BelgoBaseI18n;
+  const textStart = script.indexOf("const journeyFallbacks=");
+  const textEnd = script.indexOf("function journeySelectionContext", textStart);
+  const journeyText = Function("i18n", "t", `${script.slice(textStart, textEnd)};return journeyText;`)(i18n, i18n.t);
+  const statusStart = script.indexOf("const journeyTaskStatusFallbacks=");
+  const statusEnd = script.indexOf("function journeyContactOptions", statusStart);
+  const journeyTaskStatus = Function("t", `${script.slice(statusStart, statusEnd)};return journeyTaskStatus;`)(i18n.t);
+
+  i18n.setLanguage("fr", { persist: false });
+  assert.equal(journeyText("enrichSelection", { count: 12 }), "Enrichir cette sélection (12)");
+  assert.equal(journeyText("prospects"), "Sélection de prospects");
+  assert.equal(journeyText("source"), "Source");
+  assert.equal(journeyText("chooseAnotherFile"), "Choisir un autre fichier");
+  assert.equal(journeyTaskStatus("running"), "En cours");
+
+  i18n.setLanguage("en", { persist: false });
+  assert.equal(journeyText("currentSelection"), "Current search selection");
+  assert.equal(journeyText("customers"), "Customer list");
+  assert.equal(journeyText("openJob"), "Open task");
+  assert.equal(journeyText("chooseAnotherFile"), "Choose another file");
+  assert.equal(journeyTaskStatus("completed"), "Completed");
+});
+
+test("web clears stale job state and sends the exact selected count to the prospects import", async () => {
+  const journey = { mode: null, data: {}, job: { job_id: "old" }, viewingHistory: true };
+  const mergeJourneyResult = scriptFunction("mergeJourneyResult", "updateJourney", {
+    journey, acceptWalletSnapshot() {},
+  });
+  mergeJourneyResult({ job: null });
+  assert.equal(journey.job, null);
+
+  const requests = [];
+  const prepareJourneySelection = scriptFunction("prepareJourneySelection", "openJourneyContacts", {
+    journey,
+    journeySelectionContext: () => ({ count: 2, numbers: ["0123456789", "0987654321"] }),
+    journeyText: key => key, nf: new Intl.NumberFormat("nl-BE"), notice() {}, busy() {},
+    async bridge(method, payload) { requests.push({ method, payload }); return { list: { purpose: "prospects" }, job: null }; },
+    updateJourney() {}, async journeyCall(command) { requests.push(command); return { job: { job_id: "new" } }; },
+  });
+  await prepareJourneySelection(true);
+  assert.deepEqual(requests[0], { method: "journey_prepare_selection", payload: { numbers: ["0123456789", "0987654321"], expected_count: 2 } });
+  assert.deepEqual(requests[1], { command: "job_create" });
+  assert.equal(journey.mode, "contacts");
 });
 
 test("web recovers service-shaped user-assistant advice without a second advise", async () => {

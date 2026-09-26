@@ -438,6 +438,7 @@ test("language rerender restores the active dossier tab after rebuilding its cha
     nf: new Intl.NumberFormat("nl-BE"),
     compact: new Intl.NumberFormat("nl-BE"),
     state,
+    journey: { mode: null },
     filterDraft: null,
     work: { section: null, wallet: null },
     assistantUi: { tab: "assistant" },
@@ -522,7 +523,7 @@ test("account language changes redraw the mounted wallet without another request
   const t=(key,fallback,vars={})=>String(translations[i18n.language]?.[key]??fallback).replace(/\{(\w+)\}/g,(_match,name)=>String(vars[name]??""));
   let actions=0,context;
   function $(selector){return node(selector);}
-  context=vm.createContext({$,walletPanel,work,assistantUi,state:{ready:true,view:"tools",filters:{}},filterDraft:null,i18n,locale:"nl-BE",nf:new Intl.NumberFormat("nl-BE"),compact:new Intl.NumberFormat("nl-BE"),esc:String,t,navigator:{},document:{},accountPublicLabel:row=>row.label,action:async()=>{actions+=1;return null;},$$:()=>[],configureQuickCity(){},renderAssistantContext(){},renderConversation(){},renderRows(){},workspaceTitles:()=>({account:["Account",""]}),renderAssistantCredit(){},renderAccount(){context.renderUsage();},renderDetail(){},setTab(){},bridge(){throw new Error("language redraw must not fetch usage");}});
+  context=vm.createContext({$,walletPanel,work,assistantUi,journey:{mode:null},state:{ready:true,view:"tools",filters:{}},filterDraft:null,i18n,locale:"nl-BE",nf:new Intl.NumberFormat("nl-BE"),compact:new Intl.NumberFormat("nl-BE"),esc:String,t,navigator:{},document:{},accountPublicLabel:row=>row.label,action:async()=>{actions+=1;return null;},$$:()=>[],configureQuickCity(){},renderAssistantContext(){},renderConversation(){},renderRows(){},workspaceTitles:()=>({account:["Account",""]}),renderAssistantCredit(){},renderAccount(){context.renderUsage();},renderDetail(){},setTab(){},bridge(){throw new Error("language redraw must not fetch usage");}});
   vm.runInContext(`${walletSource}\n${functionSource("renderUsage")}\n${functionSource("refreshLanguage")}`,context);
   for(const [language,label] of [["fr","Disponible"],["en","Available"],["nl","Beschikbaar"]]){
     context.refreshLanguage(language);
