@@ -2,6 +2,11 @@
 (function(global){
  'use strict';
  const messages={
+"mode.label":{"nl":"Weergave","fr":"Vue","en":"View"},
+"mode.conversation":{"nl":"Gesprek","fr":"Conversation","en":"Conversation"},
+"mode.workspace":{"nl":"Werkruimte","fr":"Espace de travail","en":"Workspace"},
+"mode.saveError":{"nl":"Je tabbladkeuze kon niet worden bewaard.","fr":"Votre choix d’onglet n’a pas pu être enregistré.","en":"Your tab preference could not be saved."},
+
 "conversation.foundOne":{"nl":"1 bedrijf gevonden. Je kunt verder verfijnen of de lijst naar Excel brengen.","fr":"1 entreprise trouvée. Affinez la sélection ou exportez la liste vers Excel.","en":"1 company found. Refine the selection or export the list to Excel."},
 "conversation.exact":{"nl":"Exacte selectie: {count} bedrijven","fr":"Sélection exacte : {count} entreprises","en":"Exact selection: {count} companies"},
 "conversation.mode":{"nl": "Gesprek met BelgoBase", "fr": "Conversation avec BelgoBase", "en": "Conversation with BelgoBase"},
