@@ -1,6 +1,6 @@
 "use client";
 
-import { ClipboardList, Euro, FileSpreadsheet } from "lucide-react";
+import { MessageSquare, ListFilter, FileSpreadsheet } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { useTranslations } from "@/providers/TranslationsProvider";
 
@@ -11,14 +11,14 @@ export function Process() {
     {
       number: "01",
       label: t("process.step1Label"),
-      icon: ClipboardList,
+      icon: MessageSquare,
       title: t("process.step1Title"),
       description: t("process.step1Description"),
     },
     {
       number: "02",
       label: t("process.step2Label"),
-      icon: Euro,
+      icon: ListFilter,
       title: t("process.step2Title"),
       description: t("process.step2Description"),
     },

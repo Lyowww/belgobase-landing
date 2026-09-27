@@ -76,7 +76,7 @@ export function Header({ variant = "default" }: HeaderProps) {
         {navLinks.map((link) => (
           <a
             key={link.href}
-            href={link.href}
+            href={`/${locale}${link.href}`}
             className="pointer-events-auto text-sm font-medium text-foreground/90 transition-colors duration-200 hover:text-foreground"
           >
             {link.label}
@@ -124,7 +124,7 @@ export function Header({ variant = "default" }: HeaderProps) {
               <Phone className="h-4 w-4 text-primary" />
             </a>
             <MagneticButton
-              href="#contact"
+              href={`/${locale}#contact`}
               className="!min-w-[11rem] !px-8 !py-2.5 !text-sm xl:!min-w-[12rem] xl:!px-10"
             >
               {t("nav.getFreeLeads")}
@@ -171,7 +171,7 @@ export function Header({ variant = "default" }: HeaderProps) {
           {navLinks.map((link) => (
             <a
               key={link.href}
-              href={link.href}
+              href={`/${locale}${link.href}`}
               onClick={() => setMobileOpen(false)}
               className="rounded-xl px-3 py-2.5 text-sm font-medium text-foreground/90 transition-colors hover:bg-surface-hover hover:text-foreground"
             >
@@ -183,7 +183,7 @@ export function Header({ variant = "default" }: HeaderProps) {
               {t("nav.signIn")}
             </Link>
             <a
-              href="#contact"
+              href={`/${locale}#contact`}
               onClick={() => setMobileOpen(false)}
               className="flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-deep-navy transition-colors hover:bg-surface-hover"
             >

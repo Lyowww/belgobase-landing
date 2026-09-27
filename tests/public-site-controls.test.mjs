@@ -41,7 +41,7 @@ test("public routes and section controls resolve to owned targets", async () => 
   }
   for (const href of ["#process", "#industries", "#database", "#pricing", "#contact"]) {
     assert.equal(
-      header.includes(`href: "${href}"`) || header.includes(`href="${href}"`),
+      header.includes(`href: "${href}"`) || header.includes(`href="${href}"`) || header.includes("href={`/${locale}" + href + "`}"),
       true,
       href,
     );
@@ -190,7 +190,8 @@ test("mobile and preference controls retain their keyboard escape path", async (
     assert.match(dropdown, /event\.key !== "Escape"/);
     assert.match(dropdown, /triggerRef\.current\?\.focus\(\)/);
   }
-  assert.match(hero, /aria-expanded={demoOpen}/);
+  assert.match(hero, /prefers-reduced-motion: reduce/);
+  assert.match(hero, /controls loop muted playsInline/);
   assert.match(hero, /aria-controls="hero-product-demo"/);
   assert.match(legal, /target="_blank" rel="noreferrer"/);
   assert.match(legal, /download hrefLang=/);

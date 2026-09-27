@@ -11,10 +11,6 @@ import { ScrollRestoration } from "@/components/layout/ScrollRestoration";
 import { SectionSkeleton } from "@/components/ui/SectionSkeleton";
 import { Hero } from "@/components/sections/Hero";
 
-const SocialProof = dynamic(
-  () => import("@/components/sections/SocialProof").then((m) => ({ default: m.SocialProof })),
-  { loading: () => <SectionSkeleton /> },
-);
 const Process = dynamic(
   () => import("@/components/sections/Process").then((m) => ({ default: m.Process })),
   { loading: () => <SectionSkeleton /> },
@@ -60,17 +56,14 @@ export default function Home() {
       <StickyCTA />
       <main className="min-w-0 overflow-x-hidden [overflow-anchor:none]">
         <Hero />
-        <div className="section-lazy section-lazy--social">
-          <SocialProof />
-        </div>
-        <div className="section-lazy section-lazy--default">
-          <LeadPreview />
-        </div>
         <div className="section-lazy section-lazy--process">
           <Process />
         </div>
         <div className="section-lazy section-lazy--default">
           <Industries />
+        </div>
+        <div className="section-lazy section-lazy--default">
+          <LeadPreview />
         </div>
         <div className="section-lazy section-lazy--default">
           <Results />

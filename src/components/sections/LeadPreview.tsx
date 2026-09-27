@@ -67,8 +67,8 @@ export function LeadPreview() {
                   <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/12 to-accent/8 ring-1 ring-primary/10">
                     <item.icon className="h-4 w-4 text-primary" aria-hidden="true" />
                   </div>
-                  <h4 className="mb-1 text-sm font-semibold text-deep-navy">{item.title}</h4>
-                  <p className="text-xs leading-relaxed text-muted">{item.description}</p>
+                  <h4 className="mb-1 text-base font-semibold text-deep-navy">{item.title}</h4>
+                  <p className="text-base leading-7 text-muted">{item.description}</p>
                 </m.div>
               </StaggerItem>
             ))}

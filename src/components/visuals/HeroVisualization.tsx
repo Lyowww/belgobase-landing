@@ -1,96 +1,54 @@
 "use client";
 
-import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Pause, Play } from "lucide-react";
 import { useTranslations } from "@/providers/TranslationsProvider";
 
 export function HeroVisualization() {
-  const [demoOpen, setDemoOpen] = useState(false);
   const { locale } = useTranslations();
-  const copy =
-    locale === "nl"
-      ? {
-          caption: "Echte BelgoBase-interface met duidelijk fictieve voorbeeldgegevens.",
-          demo: "Bekijk de korte productdemo",
-          closeDemo: "Sluit de productdemo",
-          transcript:
-            "Demo: zoeken naar een onderneming, het bedrijfsprofiel openen, grafieken bekijken en de financiële tabel raadplegen.",
-          fallback: "Download de productdemo",
-        }
-      : {
-          caption:
-            "Genuine BelgoBase interface with clearly fictional example data; interface shown in Dutch.",
-          demo: "Watch the short product demo",
-          closeDemo: "Close the product demo",
-          transcript:
-            "Demo: search for a company, open its profile, review charts and inspect the financial table.",
-          fallback: "Download the product demo",
-        };
-
-  return (
-    <figure id="product-demonstration" className="w-full min-w-0 scroll-mt-24">
-      <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#07152f] shadow-[0_28px_80px_-32px_rgba(5,18,45,0.7)] sm:rounded-3xl">
-        <div className="flex items-center justify-between gap-4 border-b border-white/10 bg-[#0a1b3a] px-4 py-3 sm:px-5">
-          <div className="flex items-center gap-1.5" aria-hidden="true">
-            <span className="h-2.5 w-2.5 rounded-full bg-white/25" />
-            <span className="h-2.5 w-2.5 rounded-full bg-white/25" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[#3978ff]" />
-          </div>
-          <span className="truncate text-[11px] font-medium tracking-wide text-white/70 sm:text-xs">
-            BelgoBase
-          </span>
-        </div>
-
-        {demoOpen ? (
-          <div id="hero-product-demo" className="bg-black p-1.5 sm:p-2">
-            <video
-              controls
-              playsInline
-              preload="none"
-              poster="/product/belgobase-workspace.webp"
-              width={1600}
-              height={1000}
-              className="aspect-[8/5] h-auto w-full rounded-lg bg-black"
-              aria-describedby="hero-demo-transcript"
-            >
-              <source src="/product/belgobase-demo.webm" type="video/webm" />
-              <a href="/product/belgobase-demo.webm" download>
-                {copy.fallback}
-              </a>
-            </video>
-            <p
-              id="hero-demo-transcript"
-              className="px-3 py-3 text-xs leading-5 text-white/70 sm:text-sm"
-            >
-              {copy.transcript}
-            </p>
-          </div>
-        ) : (
-          <div id="hero-product-demo" className="bg-[#e8edf4] p-1.5 sm:p-2">
-            <Image
-              src="/product/belgobase-workspace.webp"
-              alt={locale === "nl" ? "BelgoBase-zoekresultaten met regiofilters en Excel-export; fictieve voorbeeldbedrijven" : "BelgoBase company search with regional filters and Excel export; fictional example companies"}
-              width={1600}
-              height={1000}
-              preload
-              sizes="(min-width: 1280px) 720px, (min-width: 1024px) 56vw, 94vw"
-              className="h-auto w-full rounded-lg"
-            />
-          </div>
-        )}
-        <button
-          type="button"
-          aria-expanded={demoOpen}
-          aria-controls="hero-product-demo"
-          onClick={() => setDemoOpen((open) => !open)}
-          className="flex w-full cursor-pointer items-center justify-center border-t border-white/10 bg-[#0a1b3a] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#10264e] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-white/80"
-        >
-          {demoOpen ? copy.closeDemo : copy.demo}
+  const nl = locale === "nl";
+  const video = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const apply = () => {
+      if (preference.matches) video.current?.pause();
+      else void video.current?.play().catch(() => setPlaying(false));
+    };
+    apply();
+    preference.addEventListener("change", apply);
+    return () => preference.removeEventListener("change", apply);
+  }, []);
+  const toggle = () => {
+    if (!video.current) return;
+    if (video.current.paused) void video.current.play().catch(() => setPlaying(false));
+    else video.current.pause();
+  };
+  return <figure id="product-demonstration" className="w-full min-w-0 scroll-mt-28">
+    <div className="overflow-hidden rounded-2xl border border-border bg-[#0a1730] shadow-[0_28px_80px_-32px_rgba(5,18,45,0.5)]">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 text-white sm:px-7">
+        <span className="text-base font-medium">{nl ? "Van uw verhaal naar uw volgende prospectielijst" : "From your story to your next prospect list"}</span>
+        <button type="button" onClick={toggle} disabled={failed} aria-controls="hero-product-demo" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/30 px-4 py-2 text-sm hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:opacity-50">
+          {playing ? <Pause size={16} aria-hidden="true" /> : <Play size={16} aria-hidden="true" />}
+          {playing ? (nl ? "Pauzeren" : "Pause") : (nl ? "Afspelen" : "Play")}
         </button>
       </div>
-      <figcaption className="mt-3 text-center text-xs leading-relaxed text-muted sm:text-sm">
-        {copy.caption}
-      </figcaption>
-    </figure>
-  );
+      <video ref={video} id="hero-product-demo" controls loop muted playsInline preload="metadata"
+        poster="/product/belgobase-journey-poster.webp" width={1600} height={1000}
+        className="aspect-[8/5] h-auto w-full bg-[#f5f6fa]" aria-label={nl ? "BelgoBase productdemo: drie voorbeelden van gesprek tot Excel" : "BelgoBase product demo: three examples from conversation to Excel"}
+        aria-describedby="hero-demo-transcript" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onError={() => { setFailed(true); setPlaying(false); }}>
+        <source src="/product/belgobase-journey-demo.mp4" type="video/mp4" />
+        <source src="/product/belgobase-journey-demo.webm" type="video/webm" />
+        <track key={locale} kind="captions" src={nl ? "/product/belgobase-journey-captions.vtt" : "/product/belgobase-journey-captions-en.vtt"} srcLang={locale} label={nl ? "Nederlands" : "English"} default />
+        <a href="/product/belgobase-journey-demo.mp4">{nl ? "Open de productdemo" : "Open the product demo"}</a>
+      </video>
+      {failed && <p role="status" className="p-5 text-base text-white">{nl ? "De video kan hier niet afspelen. Bekijk de werkwijze hieronder of" : "The video cannot play here. Explore the workflow below or"} <a className="underline" href="/product/belgobase-journey-demo.mp4">{nl ? "open de video apart" : "open the video directly"}</a>.</p>}
+    </div>
+    <figcaption className="mt-4 text-center text-sm leading-6 text-muted">{nl ? "Productdemonstratie met fictieve voorbeeldgegevens." : "Product demonstration with fictional sample data. Interface in Dutch."}</figcaption>
+    <details className="mx-auto mt-3 max-w-3xl text-left text-base leading-7 text-muted">
+      <summary className="cursor-pointer text-center underline underline-offset-4">{nl ? "Lees de demonstratie" : "Read the demonstration"}</summary>
+      <p id="hero-demo-transcript" className="mt-4">{nl ? "Drie toepassingen volgen elkaar op: een verkoopteam beschrijft zijn aanbod en doelgroep; een marketingbureau voegt een voorbeeldklantenlijst toe; een accountant of business developer selecteert bedrijven, controleert beschikbare contactgegevens en downloadt Excel. Getoonde bedrijven en uitkomsten zijn fictieve voorbeelden." : "Three use cases follow each other: a sales team describes its offer and target market; a marketing agency adds a sample customer list; an accountant or business developer selects companies, checks available contact details and downloads Excel. The companies and results shown are fictional examples."}</p>
+    </details>
+  </figure>;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { m } from "framer-motion";
-import { Rocket, Briefcase, Building, Info } from "lucide-react";
+import { Rocket, Briefcase, Building } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { SectionReveal } from "@/components/ui/SectionReveal";
 import { useTranslations } from "@/providers/TranslationsProvider";
@@ -30,12 +30,6 @@ export function Industries() {
     },
   ];
 
-  const notFit = [
-    t("industries.notFit1"),
-    t("industries.notFit2"),
-    t("industries.notFit3"),
-  ];
-
   return (
     <section id="industries" className="noise-overlay relative bg-surface py-16 sm:py-24 md:py-32">
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -59,7 +53,7 @@ export function Industries() {
                 <h3 className="mb-2 text-lg font-semibold text-deep-navy">
                   {industry.title}
                 </h3>
-                <p className="mb-5 text-sm text-muted">{industry.subtitle}</p>
+                <p className="mb-5 text-base leading-7 text-muted">{industry.subtitle}</p>
                 <ul className="space-y-2">
                   {industry.benefits.map((benefit) => (
                     <li
@@ -78,29 +72,7 @@ export function Industries() {
           ))}
         </div>
 
-        <SectionReveal>
-          <div className="premium-card rounded-2xl border-border bg-light-bg p-5 sm:p-8 md:p-10">
-            <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                <Info className="h-5 w-5 text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold text-deep-navy">
-                {t("industries.notFitTitle")}
-              </h3>
-            </div>
-            <ul className="grid gap-3 md:grid-cols-3">
-              {notFit.map((item) => (
-                <li
-                  key={item}
-                  className="flex items-start gap-3 text-sm text-muted"
-                >
-                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </SectionReveal>
+
       </div>
     </section>
   );

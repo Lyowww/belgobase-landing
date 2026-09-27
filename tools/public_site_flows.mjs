@@ -8,7 +8,7 @@ const LOCALES = {
     otherLanguage: "English",
     themeDark: "Donkere modus",
     themeSystem: "Systeemthema",
-    faqQuestion: "Hoe snel kunnen we starten?",
+    faqQuestion: "Hoe verloopt een opdracht in BelgoBase?",
     formLabel: "Demo-aanvraagformulier",
     submit: "Boek mijn demo",
     nameError: /Naam moet minstens 2 tekens bevatten/i,
@@ -20,7 +20,7 @@ const LOCALES = {
     otherLanguage: "Nederlands",
     themeDark: "Dark mode",
     themeSystem: "System theme",
-    faqQuestion: "How quickly can we get started?",
+    faqQuestion: "How does an assignment work in BelgoBase?",
     formLabel: "Demo request form",
     submit: "Book My Demo",
     nameError: /Name must be at least 2 characters/i,
@@ -126,17 +126,18 @@ async function assertFaq(page, copy) {
 
 async function assertProductVideo(page) {
   const toggle = page.locator('button[aria-controls="hero-product-demo"]');
-  assert.equal(await toggle.count(), 1, "Product demonstration needs one toggle");
-  assert.equal(await toggle.getAttribute("aria-expanded"), "false");
-  assert.equal(await page.locator("#hero-product-demo video").count(), 0);
-
+  const video = page.locator('video#hero-product-demo');
+  await video.waitFor({state: "visible"});
+  await page.waitForFunction(() => { const v=document.querySelector('video#hero-product-demo'); return v && v.readyState>=2 && Number.isFinite(v.duration) && v.duration>10; }, {timeout: 30000});
+  assert.equal(await video.evaluate(v => v.loop && v.muted && v.playsInline && v.controls), true);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.waitForFunction(() => document.querySelector('video#hero-product-demo').paused);
   await toggle.click();
-  assert.equal(await toggle.getAttribute("aria-expanded"), "true");
-  await page.locator("#hero-product-demo video[controls]").waitFor({ state: "visible" });
-
+  await page.waitForFunction(() => !document.querySelector('video#hero-product-demo').paused);
   await toggle.click();
-  assert.equal(await toggle.getAttribute("aria-expanded"), "false");
-  await page.locator("#hero-product-demo video").waitFor({ state: "detached" });
+  await page.waitForFunction(() => document.querySelector('video#hero-product-demo').paused);
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.waitForFunction(() => !document.querySelector('video#hero-product-demo').paused);
 }
 
 async function assertMobileControls(page, copy) {
@@ -244,7 +245,7 @@ async function auditMarketingLocale({ page, appOrigin, artifactDirectory, locale
     locale,
     sectionTargets: targets,
     faqQuestions: 9,
-    productVideoToggle: "open-close",
+    productVideoToggle: "autoplay-pause-play-reduced-motion",
     mobileControls: "menu-language-theme Escape focus",
     contactValidation: "empty-name, oversized-phone, unchecked-privacy",
   };

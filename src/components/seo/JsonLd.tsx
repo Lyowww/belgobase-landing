@@ -22,6 +22,19 @@ export async function JsonLd({ locale, title, description }: JsonLdProps) {
     "@context": "https://schema.org",
     "@graph": [
       {
+        "@type": "VideoObject",
+        "@id": `${url}/#product-demo`,
+        name: locale === "nl" ? "BelgoBase: van gesprek naar prospectielijst" : "BelgoBase: from conversation to prospect list",
+        description: locale === "nl"
+          ? "Productdemonstratie van gesprek, klantenlijst uploaden, bedrijfsselectie, beschikbare contactgegevens controleren en Excel-export. Fictieve voorbeeldgegevens."
+          : "Product demonstration of conversation, customer list upload, company selection, available contact research and Excel export. Fictional sample data; interface in Dutch.",
+        thumbnailUrl: `${siteUrl}/product/belgobase-journey-poster.webp`,
+        contentUrl: `${siteUrl}/product/belgobase-journey-demo.mp4`,
+        uploadDate: "2026-09-27T21:00:00Z",
+        inLanguage: "nl-BE",
+        isFamilyFriendly: true,
+      },
+      {
         "@type": "Organization",
         "@id": `${siteUrl}/#organization`,
         name: "BelgoBase",

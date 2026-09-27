@@ -1,63 +1,24 @@
 "use client";
-
-import { SectionHeader } from "@/components/ui/SectionHeader";
-import { SectionReveal } from "@/components/ui/SectionReveal";
+import { ArrowUpRight } from "lucide-react";
+import { getUseCase, useCaseSlugs } from "@/lib/seo/use-cases";
 import { useTranslations } from "@/providers/TranslationsProvider";
-
-const STAT_BOXES = [
-  { key: "it", labelKey: "database.statIt" as const },
-  { key: "realEstate", labelKey: "database.statRealEstate" as const },
-  { key: "horeca", labelKey: "database.statHoreca" as const },
-  { key: "marketing", labelKey: "database.statMarketing" as const },
-] as const;
-
-function StatBox({ label }: { label: string }) {
-  return (
-    <div className="premium-card flex min-h-[5.5rem] flex-col justify-center rounded-xl px-4 py-3.5 sm:min-h-[6rem] sm:px-5 sm:py-4">
-      <p className="text-sm font-medium text-deep-navy sm:text-base">{label}</p>
-    </div>
-  );
-}
-
 export function Results() {
-  const { t } = useTranslations();
-  return (
-    <section id="database" className="noise-overlay relative bg-surface py-16 sm:py-24 md:py-32">
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionHeader
-          eyebrow={t("database.eyebrow")}
-          title={t("database.title")}
-          description={t("database.description")}
-        />
-
-        <SectionReveal delay={0.1}>
-          <div className="form-surface mx-auto max-w-4xl rounded-2xl sm:rounded-3xl">
-            <div className="px-5 py-6 sm:px-8 sm:py-8">
-              <h3 className="text-lg font-semibold tracking-tight text-deep-navy sm:text-xl">
-                {t("database.cardTitle")}
-              </h3>
-              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted sm:text-base">
-                {t("database.cardDescription")}
-              </p>
-
-              <div className="mt-6 grid grid-cols-2 gap-3 sm:mt-8 sm:gap-4 lg:grid-cols-4">
-                {STAT_BOXES.map((box) => (
-                  <StatBox key={box.key} label={t(box.labelKey)} />
-                ))}
-              </div>
-            </div>
-
-            <div className="border-t border-border px-5 py-6 sm:px-8 sm:py-8">
-              <a
-                href="#contact"
-                className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              >
-                {t("database.formSubmit")}
-              </a>
-            </div>
-          </div>
-        </SectionReveal>
+  const { locale } = useTranslations();
+  const nl = locale === "nl";
+  return <section id="database" className="bg-surface py-16 sm:py-24">
+    <div className="mx-auto max-w-7xl px-5 sm:px-8">
+      <h2 className="max-w-3xl text-3xl font-semibold tracking-tight text-deep-navy sm:text-4xl">{nl ? "Waar wilt u mee beginnen?" : "Where would you like to start?"}</h2>
+      <div className="mt-10 grid gap-5 md:grid-cols-3">
+        {useCaseSlugs.map(slug => {
+          const data = getUseCase(locale, slug);
+          return <a key={slug} href={`/${locale}/${slug}`} className="group rounded-2xl border border-border p-6 transition-colors hover:border-primary focus-visible:outline-2 focus-visible:outline-primary sm:p-8">
+            <ArrowUpRight className="mb-6 h-6 w-6 text-primary" aria-hidden="true" />
+            <h3 className="text-xl font-semibold leading-7 text-deep-navy">{data.title}</h3>
+            <p className="mt-4 text-base leading-7 text-muted">{data.description}</p>
+            <span className="mt-6 block font-semibold text-primary">{nl ? "Bekijk de werkwijze" : "Explore the workflow"} →</span>
+          </a>;
+        })}
       </div>
-    </section>
-  );
+    </div>
+  </section>;
 }
