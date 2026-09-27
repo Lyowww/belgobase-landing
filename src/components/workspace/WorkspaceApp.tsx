@@ -25,7 +25,7 @@ const declarationByRole: Record<LegalDocument["role"], Declaration> = { contract
 const text = {
   nl: {
     title: "BelgoBase online", existing: "Inloggen", existingHelp: "Meld je aan met het e-mailadres van je account.", new: "Nieuw bij BelgoBase", newHelp: "Schrijf je zakelijke account veilig in.", noAccount: "Nog geen account?", createAccount: "Maak een account aan",
-    email: "E-mailadres", license: "Licentiecode (optioneel)", enrollmentLicense: "BelgoBase-licentiecode", enrollmentLicenseHelp: "Voor registratie heb je een bestaande BelgoBase-licentie nodig.", licenseHelp: "Heb je al een BelgoBase-account? Dan volstaat je geregistreerde e-mailadres.", requestLicenseIntro: "Geen licentie?", requestLicense: "Toegang aanvragen", requestLicenseHelp: "Dit opent je e-mailprogramma.", requestLicenseSubject: "BelgoBase licentie aanvragen", requestLicenseBody: "Naam:\nBedrijf:\n", remember: "Op dit apparaat aangemeld blijven", send: "Code per e-mail ontvangen", working: "Even geduld…",
+    email: "E-mailadres", license: "Licentiecode (optioneel)", enrollmentLicense: "BelgoBase-licentiecode", enrollmentLicenseHelp: "Voor registratie heb je een bestaande BelgoBase-licentie nodig.", licenseHelp: "Heb je al een BelgoBase-account? Dan volstaat je geregistreerde e-mailadres.", requestLicenseIntro: "Geen licentie?", requestLicense: "Toegang aanvragen", requestLicenseHelp: "Dit opent je e-mailprogramma.", requestLicenseSubject: "BelgoBase licentie aanvragen", requestLicenseBody: "Naam:\nBedrijf:\n", remember: "Dit apparaat 30 dagen onthouden", send: "Code per e-mail ontvangen", working: "Even geduld…",
     codeTitle: "Controleer je e-mail", loginCodeHelp: "Als dit e-mailadres aan een actief account gekoppeld is, ontvang je een code. Controleer ook ongewenste e-mail.", enrollmentCodeHelp: "Voer de beveiligingscode uit je e-mail in.", code: "Beveiligingscode", login: "Aanmelden", verify: "E-mailadres bevestigen", back: "Terug", otherEmail: "Gebruik een ander e-mailadres",
     profileTitle: "Bevestig je bedrijfsgegevens", profileHelp: "BelgoBase is momenteel beschikbaar voor professionele gebruikers. Zoek je onderneming op en controleer de gegevens voordat je inschrijving wordt voltooid.",
     enterpriseHelp: "10 cijfers, met of zonder BE, punten of spaties. Bijvoorbeeld: 1006303437 of BE 1006.303.437. Hetzelfde ondernemingsnummer kan voor meerdere licenties worden gebruikt.", enterprise: "Ondernemingsnummer (KBO)", find: "Bedrijfsgegevens ophalen", company: "Wettelijke bedrijfsnaam", address: "Adres", name: "Naam van de aanvaarder", function: "Functie van de aanvaarder", read: "Lees document", close: "Sluiten", finish: "Zakelijke inschrijving voltooien",
@@ -35,7 +35,7 @@ const text = {
   },
   en: {
     title: "BelgoBase online", existing: "Sign in", existingHelp: "Sign in with the email address on your account.", new: "New to BelgoBase", newHelp: "Set up your professional account securely.", noAccount: "No account yet?", createAccount: "Create an account",
-    email: "Email address", license: "License code (optional)", enrollmentLicense: "BelgoBase license code", enrollmentLicenseHelp: "Registration requires an existing BelgoBase licence.", licenseHelp: "Already have a BelgoBase account? Your registered email address is enough.", requestLicenseIntro: "No licence?", requestLicense: "Request access", requestLicenseHelp: "This opens your email app.", requestLicenseSubject: "Request a BelgoBase licence", requestLicenseBody: "Name:\nCompany:\n", remember: "Keep me signed in on this device", send: "Send email code", working: "Please wait…",
+    email: "Email address", license: "License code (optional)", enrollmentLicense: "BelgoBase license code", enrollmentLicenseHelp: "Registration requires an existing BelgoBase licence.", licenseHelp: "Already have a BelgoBase account? Your registered email address is enough.", requestLicenseIntro: "No licence?", requestLicense: "Request access", requestLicenseHelp: "This opens your email app.", requestLicenseSubject: "Request a BelgoBase licence", requestLicenseBody: "Name:\nCompany:\n", remember: "Remember this device for 30 days", send: "Send email code", working: "Please wait…",
     codeTitle: "Check your email", loginCodeHelp: "If this email address is linked to an active account, you will receive a code. Please check your junk email too.", enrollmentCodeHelp: "Enter the security code from your email.", code: "Security code", login: "Sign in", verify: "Confirm email address", back: "Back", otherEmail: "Use a different email address",
     profileTitle: "Confirm your company details", profileHelp: "BelgoBase is currently available to professional users. Find your company and check the details before completing enrolment.",
     enterpriseHelp: "10 digits, with or without BE, dots or spaces. For example: 1006303437 or BE 1006.303.437. The same company number can be used for multiple licences.", enterprise: "Company number (CBE)", find: "Get company details", company: "Legal company name", address: "Address", name: "Name of the person accepting", function: "Role of the person accepting", read: "Read document", close: "Close", finish: "Complete professional enrolment",
@@ -45,7 +45,7 @@ const text = {
   },
   fr: {
     title: "BelgoBase en ligne", existing: "Se connecter", existingHelp: "Connectez-vous avec l’adresse e-mail de votre compte.", new: "Nouveau sur BelgoBase", newHelp: "Créez votre compte professionnel de manière sécurisée.", noAccount: "Pas encore de compte ?", createAccount: "Créer un compte",
-    email: "Adresse e-mail", license: "Code de licence (facultatif)", enrollmentLicense: "Code de licence BelgoBase", enrollmentLicenseHelp: "L’inscription nécessite une licence BelgoBase existante.", licenseHelp: "Vous avez déjà un compte BelgoBase ? Votre adresse e-mail enregistrée suffit.", requestLicenseIntro: "Pas de licence ?", requestLicense: "Demander un accès", requestLicenseHelp: "Cela ouvre votre application de messagerie.", requestLicenseSubject: "Demande de licence BelgoBase", requestLicenseBody: "Nom :\nEntreprise :\n", remember: "Rester connecté sur cet appareil", send: "Recevoir un code par e-mail", working: "Un instant…",
+    email: "Adresse e-mail", license: "Code de licence (facultatif)", enrollmentLicense: "Code de licence BelgoBase", enrollmentLicenseHelp: "L’inscription nécessite une licence BelgoBase existante.", licenseHelp: "Vous avez déjà un compte BelgoBase ? Votre adresse e-mail enregistrée suffit.", requestLicenseIntro: "Pas de licence ?", requestLicense: "Demander un accès", requestLicenseHelp: "Cela ouvre votre application de messagerie.", requestLicenseSubject: "Demande de licence BelgoBase", requestLicenseBody: "Nom :\nEntreprise :\n", remember: "Mémoriser cet appareil pendant 30 jours", send: "Recevoir un code par e-mail", working: "Un instant…",
     codeTitle: "Vérifiez vos e-mails", loginCodeHelp: "Si cette adresse e-mail est liée à un compte actif, vous recevrez un code. Vérifiez aussi vos courriers indésirables.", enrollmentCodeHelp: "Saisissez le code de sécurité reçu par e-mail.", code: "Code de sécurité", login: "Se connecter", verify: "Confirmer l’adresse e-mail", back: "Retour", otherEmail: "Utiliser une autre adresse e-mail",
     profileTitle: "Confirmez les données de votre entreprise", profileHelp: "BelgoBase est actuellement disponible pour les utilisateurs professionnels. Recherchez votre entreprise et vérifiez les données avant de terminer l’inscription.",
     enterpriseHelp: "10 chiffres, avec ou sans BE, points ou espaces. Par exemple : 1006303437 ou BE 1006.303.437. Le même numéro d’entreprise peut être utilisé pour plusieurs licences.", enterprise: "Numéro d’entreprise (BCE)", find: "Récupérer les données de l’entreprise", company: "Dénomination légale", address: "Adresse", name: "Nom de la personne qui accepte", function: "Fonction de la personne qui accepte", read: "Lire le document", close: "Fermer", finish: "Terminer l’inscription professionnelle",
@@ -232,7 +232,18 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
   }
   async function sendLoginCode() {
     setBusy(true); setError("");
-    try { const { response, result } = await request("/api/web/auth/start", { email: email.trim(), remember, language: shellLanguage }); if (!response.ok || !result.ok || !result.challenge_id) throw new Error(result.error || "unknown_error"); setChallengeId(result.challenge_id); setCode(""); setSessionRetryAvailable(false); setResendIn(30); setPhase("loginCode"); } catch (reason) { setError(reason instanceof Error ? reason.message : "unknown_error"); } finally { setBusy(false); }
+    try {
+      const { response, result } = await request("/api/web/auth/start", { email: email.trim(), remember, language: shellLanguage });
+      if (!response.ok || !result.ok) throw new Error(result.error || "unknown_error");
+      if (result.authenticated === true) {
+        if (!validSessionProjection(result)) throw new Error("temporarily_unavailable");
+        setAccount(result.account); setCsrf(result.csrf); setChallengeId(""); setCode("");
+        setSessionRetryAvailable(false); setPhase("workspace");
+      } else {
+        if (!result.challenge_id) throw new Error("unknown_error");
+        setChallengeId(result.challenge_id); setCode(""); setSessionRetryAvailable(false); setResendIn(30); setPhase("loginCode");
+      }
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "unknown_error"); } finally { setBusy(false); }
   }
   async function startLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); await sendLoginCode();
@@ -448,7 +459,7 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
         <label>{t.email}<input autoComplete="email" required type="email" value={email} onChange={(event) => setEmail(event.target.value)} /></label>
         {phase === "enroll" ? <><label>{t.enrollmentLicense}<input autoComplete="off" required value={licenseCode} onChange={(event) => setLicenseCode(event.target.value)} /><small>{t.enrollmentLicenseHelp}</small></label><div className={styles.licenseRequest}><div><span>{t.requestLicenseIntro} </span><a href={licenseRequestHref}>{t.requestLicense}</a></div><small>{t.requestLicenseHelp}</small></div></> : null}
         <label className={styles.checkbox}><input checked={remember} type="checkbox" onChange={(event) => setRemember(event.target.checked)} />{t.remember}</label>
-        <button disabled={busy} type="submit">{busy ? t.working : t.send}</button>
+        <button disabled={busy} type="submit">{busy ? t.working : phase === "login" ? t.login : t.send}</button>
         {phase === "enroll" ? <button className={styles.secondary} disabled={busy} type="button" onClick={back}>{t.back}</button> : null}
       </form>
       {phase === "login" ? <p className={styles.createAccount}>{t.noAccount} <button type="button" onClick={() => { setError(""); setLicenseCode(""); setSessionRetryAvailable(false); setPhase("enroll"); }}>{t.createAccount}</button></p> : null}

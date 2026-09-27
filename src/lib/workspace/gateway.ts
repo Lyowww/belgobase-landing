@@ -10,7 +10,7 @@ const bridgeMethods = new Set([
 ]);
 const authMethods = new Set(["start", "verify", "session", "logout", "logout-all", "sessions", "revoke"]);
 const enrollmentMethods = new Set(["start", "verify", "session", "autofill", "complete"]);
-const sessionNames = new Set(["__Host-belgobase_session", "belgobase_session", "__Host-belgobase_enrollment", "belgobase_enrollment"]);
+const sessionNames = new Set(["__Host-belgobase_session", "belgobase_session", "__Host-belgobase_enrollment", "belgobase_enrollment", "__Host-bb_trust", "bb_trust"]);
 const MAX_REQUEST_BYTES = 8 * 1024 * 1024;
 
 function mailLanguage(value: unknown): "nl" | "fr" | "en" {
