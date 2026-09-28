@@ -36,7 +36,6 @@ const EXPECTED_HOME_TARGETS = [
   "pricing",
   "faq",
   "contact",
-  "product-demonstration",
 ];
 
 const LEGAL_ROUTES = ["privacy", "terms", "cookies", "legal"];
@@ -125,34 +124,27 @@ async function assertFaq(page, copy) {
 }
 
 async function assertProductVideo(page) {
-  const toggle = page.locator('button[aria-controls="hero-product-demo"]');
+  await page.evaluate(() => window.scrollTo({top:0,behavior:"instant"}));
   const video = page.locator('video#hero-product-demo');
-  await video.waitFor({state: "visible"});
-  await page.waitForFunction(() => { const v=document.querySelector('video#hero-product-demo'); return v && v.readyState>=2 && Number.isFinite(v.duration) && v.duration>10; }, {timeout: 30000});
-  assert.equal(await video.evaluate(v => v.loop && v.muted && v.playsInline && v.controls), true);
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.waitForFunction(() => document.querySelector('video#hero-product-demo').paused);
-  await toggle.click();
-  await page.waitForFunction(() => !document.querySelector('video#hero-product-demo').paused);
-  await page.locator('[data-demo-mode]').click();
-  await page.waitForFunction(() => { const v=document.querySelector('video#hero-product-demo'); return v.currentSrc.includes('guided-demo') && v.currentTime > 0 && !v.paused; }, {timeout: 30000});
-  assert.equal(await video.evaluate(v => !v.muted && !v.loop && v.controls), true);
-  await video.evaluate(v => { v.currentTime = v.duration - .25; });
-  await page.waitForFunction(() => document.querySelector('video#hero-product-demo').ended);
-  assert.match(await toggle.innerText(), /Afspelen|Play/);
-  await toggle.click();
-  await page.waitForFunction(() => !document.querySelector('video#hero-product-demo').paused);
-  await toggle.click();
-  await page.waitForFunction(() => document.querySelector('video#hero-product-demo').paused);
-  await page.locator('[data-demo-mode]').click();
-  await page.waitForFunction(() => { const v=document.querySelector('video#hero-product-demo'); return v.currentSrc.includes('journey-demo') && v.paused; });
-  assert.equal(await video.evaluate(v => v.muted && v.loop), true);
-  await toggle.click();
-  await page.waitForFunction(() => !document.querySelector('video#hero-product-demo').paused);
-  await toggle.click();
-  await page.waitForFunction(() => document.querySelector('video#hero-product-demo').paused);
-  await page.emulateMedia({ reducedMotion: "no-preference" });
-  await page.waitForFunction(() => !document.querySelector('video#hero-product-demo').paused);
+  const play = page.locator('button[aria-controls="hero-product-demo"]');
+  await page.waitForFunction(() => { const v=document.querySelector('video#hero-product-demo'); return v && v.readyState>=1 && v.duration>70; }, {timeout:30000});
+  assert.equal(await video.evaluate(v => v.paused && !v.loop && !v.muted && v.playsInline && v.controls && v.currentSrc.includes('guided-demo')),true);
+  const box=await video.boundingBox();
+  assert.ok(box.y>=0 && box.y+box.height<=page.viewportSize().height, 'Video visible on the first screen');
+  assert.equal(await page.locator('[data-demo-mode]').count(),0);
+  await page.emulateMedia({reducedMotion:"reduce"});
+  assert.equal(await video.evaluate(v=>v.paused),true);
+  await play.click();
+  await page.waitForFunction(()=>{const v=document.querySelector('video#hero-product-demo');return !v.paused && v.currentTime>0;});
+  assert.equal(await video.evaluate(v=>v.muted),false);
+  await video.evaluate(v=>{v.currentTime=v.duration-.25;});
+  await page.waitForFunction(()=>document.querySelector('video#hero-product-demo').ended);
+  await play.waitFor({state:"visible"});
+  await play.click();
+  await page.waitForFunction(()=>!document.querySelector('video#hero-product-demo').paused);
+  await video.evaluate(v=>v.pause());
+  await page.emulateMedia({reducedMotion:"no-preference"});
+  assert.equal(await video.evaluate(v=>v.paused),true);
 }
 
 async function assertMobileControls(page, copy) {
@@ -260,7 +252,7 @@ async function auditMarketingLocale({ page, appOrigin, artifactDirectory, locale
     locale,
     sectionTargets: targets,
     faqQuestions: 9,
-    productVideoToggle: "autoplay-pause-play-reduced-motion",
+    productVideoToggle: "direct-guided-play-replay-reduced-motion",
     mobileControls: "menu-language-theme Escape focus",
     contactValidation: "empty-name, oversized-phone, unchecked-privacy",
   };

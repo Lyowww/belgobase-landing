@@ -28,10 +28,11 @@ export async function JsonLd({ locale, title, description }: JsonLdProps) {
         description: locale === "nl"
           ? "Productdemonstratie van gesprek, klantenlijst uploaden, bedrijfsselectie, beschikbare contactgegevens controleren en Excel-export. Fictieve voorbeeldgegevens."
           : "Product demonstration of conversation, customer list upload, company selection, available contact research and Excel export. Fictional sample data; interface in Dutch.",
-        thumbnailUrl: `${siteUrl}/product/belgobase-journey-poster.webp`,
-        contentUrl: `${siteUrl}/product/belgobase-journey-demo.mp4`,
-        uploadDate: "2026-09-27T21:00:00Z",
-        inLanguage: "nl-BE",
+        thumbnailUrl: `${siteUrl}/product/belgobase-guided-poster.webp`,
+        contentUrl: `${siteUrl}/product/belgobase-guided-demo.mp4`,
+        uploadDate: "2026-09-28T07:22:52Z",
+        inLanguage: "nl-NL",
+        duration: "PT1M25.612S",
         isFamilyFriendly: true,
       },
       {

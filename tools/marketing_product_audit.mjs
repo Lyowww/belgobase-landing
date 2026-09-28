@@ -42,13 +42,10 @@ try {
   await page.goto(origin+"/nl");
   await page.setViewportSize({width:1440,height:1000});
   await page.locator('video#hero-product-demo').scrollIntoViewIfNeeded();
-  await page.waitForFunction(()=>{const v=document.querySelector('video');return v.readyState>=2 && !v.paused;});
+  await page.waitForFunction(()=>{const v=document.querySelector('video');return v.readyState>=1 && v.paused;});
   report.video=await page.locator('video#hero-product-demo').evaluate(v=>({duration:v.duration,width:v.videoWidth,height:v.videoHeight,muted:v.muted,loop:v.loop,currentSrc:v.currentSrc}));
-  assert.ok(report.video.duration>15);
-  await page.locator('video#hero-product-demo').evaluate(v=>{v.currentTime=v.duration-.3;});
-  await page.waitForFunction(()=>document.querySelector('video#hero-product-demo').currentTime<3);
-  report.video.loopRestart=true;
-  await page.locator('video#hero-product-demo').evaluate(v=>{v.currentTime=3;v.pause();});
+  assert.ok(report.video.duration>70);
+  assert.equal(report.video.loop,false);
   await page.evaluate(()=>window.scrollTo(0,0));
   await page.screenshot({path:path.join(output,"homepage-desktop.png")});
   await page.setViewportSize({width:390,height:844});

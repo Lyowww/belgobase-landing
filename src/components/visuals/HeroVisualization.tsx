@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Pause, Play } from "lucide-react";
+import { useRef, useState } from "react";
+import { Play } from "lucide-react";
 import { useTranslations } from "@/providers/TranslationsProvider";
 
 const guidedTranscript = {
@@ -15,58 +15,38 @@ export function HeroVisualization() {
   const video = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const [failed, setFailed] = useState(false);
-  const [guided, setGuided] = useState(false);
-  const source = guided ? "/product/belgobase-guided-demo.mp4" : "/product/belgobase-journey-demo.mp4";
-  useEffect(() => {
-    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const apply = () => {
-      if (!guided && preference.matches) video.current?.pause();
-      else void video.current?.play().catch(() => setPlaying(false));
-    };
-    apply();
-    preference.addEventListener("change", apply);
-    return () => preference.removeEventListener("change", apply);
-  }, [guided]);
-  const switchMode = () => {
-    video.current?.pause();
-    setFailed(false);
-    setPlaying(false);
-    setGuided(!guided);
-  };
-  const toggle = () => {
+  const [started, setStarted] = useState(false);
+  const source = "/product/belgobase-guided-demo.mp4";
+  const play = () => {
     if (!video.current) return;
-    if (video.current.paused) void video.current.play().catch(() => setPlaying(false));
-    else video.current.pause();
+    video.current.muted = false;
+    void video.current.play().catch(() => setPlaying(false));
   };
   return <figure id="product-demonstration" className="w-full min-w-0 scroll-mt-28">
-    <div className="overflow-hidden rounded-2xl border border-border bg-[#0a1730] shadow-[0_28px_80px_-32px_rgba(5,18,45,0.5)]">
-      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 text-white sm:px-7">
-        <span className="text-base font-medium">{nl ? "Van uw verhaal naar uw volgende prospectielijst" : "From your story to your next prospect list"}</span>
-        <button type="button" onClick={toggle} disabled={failed} aria-controls="hero-product-demo" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/30 px-4 py-2 text-sm hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:opacity-50">
-          {playing ? <Pause size={16} aria-hidden="true" /> : <Play size={16} aria-hidden="true" />}
-          {playing ? (nl ? "Pauzeren" : "Pause") : (nl ? "Afspelen" : "Play")}
-        </button>
-      </div>
-      <video key={guided ? "guided" : "preview"} ref={video} id="hero-product-demo" controls loop={!guided} muted={!guided} playsInline preload="metadata"
-        poster={guided ? "/product/belgobase-guided-poster.webp" : "/product/belgobase-journey-poster.webp"} width={1600} height={1000}
-        className="aspect-[8/5] h-auto w-full bg-[#f5f6fa] [&::cue]:text-xs sm:[&::cue]:text-base" aria-label={guided ? (nl ? "BelgoBase: stap voor stap met gesproken uitleg" : "BelgoBase: step-by-step tour with Dutch narration") : (nl ? "BelgoBase productdemo: drie voorbeelden van gesprek tot Excel" : "BelgoBase product demo: three examples from conversation to Excel")}
-        aria-describedby="hero-demo-transcript" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} onError={() => { setFailed(true); setPlaying(false); }}>
-        <source src={source} type="video/mp4" />
-        {!guided && <source src="/product/belgobase-journey-demo.webm" type="video/webm" />}
-        <track key={locale} kind="captions" src={guided ? `/product/belgobase-guided-captions-${locale}.vtt` : (nl ? "/product/belgobase-journey-captions.vtt" : "/product/belgobase-journey-captions-en.vtt")} srcLang={locale} label={nl ? "Nederlands" : "English"} default />
+    <div className="relative overflow-hidden rounded-2xl border border-border bg-[#0a1730] shadow-[0_28px_80px_-32px_rgba(5,18,45,0.5)]">
+      <video ref={element => {
+        video.current = element;
+        // A failed preload can precede hydration on a cached page.
+        if (element?.error) setFailed(true);
+      }} id="hero-product-demo" src={source} controls playsInline preload="metadata"
+        poster="/product/belgobase-guided-poster.webp" width={1600} height={1000}
+        className="aspect-[8/5] h-auto w-full bg-[#f5f6fa] [&::cue]:text-xs sm:[&::cue]:text-base" aria-label={nl ? "BelgoBase: stap voor stap met gesproken uitleg" : "BelgoBase: step-by-step tour with Dutch narration"}
+        aria-describedby="hero-demo-transcript" onPlay={() => { setPlaying(true); setStarted(true); }} onPause={() => setPlaying(false)} onEnded={() => { setPlaying(false); setStarted(false); }} onError={() => { setFailed(true); setPlaying(false); }}>
+        <track key={locale} kind="captions" src={`/product/belgobase-guided-captions-${locale}.vtt`} srcLang={locale} label={nl ? "Nederlands" : "English"} default />
         <a href={source}>{nl ? "Open de productdemo" : "Open the product demo"}</a>
       </video>
+      {!started && !playing && !failed && <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/15 pb-12">
+        <button type="button" onClick={play} aria-controls="hero-product-demo" className="pointer-events-auto inline-flex min-h-14 items-center gap-3 rounded-full bg-primary px-6 py-4 text-base font-semibold text-white shadow-xl hover:bg-primary-dark focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white sm:text-lg">
+          <Play size={24} aria-hidden="true" />
+          {nl ? "Bekijk de uitleg" : "Watch the Dutch walkthrough"}
+        </button>
+      </div>}
       {failed && <p role="status" className="p-5 text-base text-white">{nl ? "De video kan hier niet afspelen. Bekijk de werkwijze hieronder of" : "The video cannot play here. Explore the workflow below or"} <a className="underline" href={source}>{nl ? "open de video apart" : "open the video directly"}</a>.</p>}
-    </div>
-    <div className="mt-5 flex justify-center">
-      <button type="button" data-demo-mode aria-pressed={guided} onClick={switchMode} className="min-h-12 rounded-full border border-border bg-surface px-6 py-3 text-base font-medium text-foreground hover:bg-muted/10 focus-visible:outline-2 focus-visible:outline-offset-4">
-        {guided ? (nl ? "Terug naar de stille preview" : "Back to the silent preview") : (nl ? "Bekijk met gesproken uitleg" : "Watch the Dutch guided tour")}
-      </button>
     </div>
     <figcaption className="mt-4 text-center text-sm leading-6 text-muted">{nl ? "Productdemonstratie met fictieve voorbeeldgegevens." : "Product demonstration with fictional sample data. Interface in Dutch."}</figcaption>
     <details className="mx-auto mt-3 max-w-3xl text-left text-base leading-7 text-muted">
       <summary className="cursor-pointer text-center underline underline-offset-4">{nl ? "Lees de demonstratie" : "Read the demonstration"}</summary>
-      <p id="hero-demo-transcript" className="mt-4">{guided ? guidedTranscript[locale] : nl ? "Drie toepassingen volgen elkaar op: een verkoopteam beschrijft zijn aanbod en doelgroep; een marketingbureau voegt een voorbeeldklantenlijst toe; een accountant of business developer selecteert bedrijven, controleert beschikbare contactgegevens en downloadt Excel. Getoonde bedrijven en uitkomsten zijn fictieve voorbeelden." : "Three use cases follow each other: a sales team describes its offer and target market; a marketing agency adds a sample customer list; an accountant or business developer selects companies, checks available contact details and downloads Excel. The companies and results shown are fictional examples."}</p>
+      <p id="hero-demo-transcript" className="mt-4">{guidedTranscript[locale]}</p>
     </details>
   </figure>;
 }
