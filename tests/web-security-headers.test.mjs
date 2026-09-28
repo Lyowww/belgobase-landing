@@ -30,6 +30,9 @@ test("public pages deny framing and restrict active content", () => {
 
 test("client-side login navigation inherits a microphone-capable document", () => {
   assert.equal(publicPageSecurityHeaders["Permissions-Policy"], workspaceShellSecurityHeaders["Permissions-Policy"]);
+  assert.match(publicPageSecurityHeaders["Content-Security-Policy"], /https:\/\/www\.googletagmanager\.com/);
+  assert.match(publicPageSecurityHeaders["Content-Security-Policy"], /https:\/\/www\.googleadservices\.com/);
+  assert.doesNotMatch(workspaceShellSecurityHeaders["Content-Security-Policy"], /google|doubleclick/);
 });
 
 test("workspace shell can delegate microphone only to its same-origin iframe", async () => {

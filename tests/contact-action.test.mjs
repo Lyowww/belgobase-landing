@@ -9,9 +9,9 @@ import * as delivery from '../src/lib/contact-state.ts';
 
 const source = await readFile(new URL('../src/app/actions/contact.ts', import.meta.url), 'utf8');
 function action(result) {
-  const calls = [], module = {exports:{}};
+  const calls = [], commonJsModule = {exports:{}};
   vm.runInNewContext(ts.transpileModule(source, {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText, {
-    exports:module.exports, module, console:{error(){}},
+    exports:commonJsModule.exports, module:commonJsModule, console:{error(){}},
     require(id) {
       if(id==='@/lib/email/resend') return {sendDemoRequestEmail:async input=>{calls.push(input);return result;}};
       if(id==='@/lib/email/templates') return templates;
@@ -20,7 +20,7 @@ function action(result) {
       throw new Error('Unexpected dependency '+id);
     },
   });
-  return {submit:module.exports.submitContactForm,calls};
+  return {submit:commonJsModule.exports.submitContactForm,calls};
 }
 function form(overrides={}) {
   const data=new FormData();
@@ -36,11 +36,21 @@ test('contact action rejects invalid consent and phone before delivery',async()=
 });
 test('contact action reports actual delivery outcome without disclosing provider errors',async()=>{
   for(const ok of [false,true]) {
-    const {submit,calls}=action(ok?{ok:true,delivered:true}:{ok:false,errorDetail:'PRIVATE_PROVIDER_DETAIL'});
+    const {submit,calls}=action(ok?{ok:true,delivered:true,deliveryId:'22b598f7-790f-454d-bef6-bb1c85da898e'}:{ok:false,errorDetail:'PRIVATE_PROVIDER_DETAIL'});
     const result=await submit({},form());
     assert.equal(result.success,ok);assert.equal(calls.length,1);
     assert.equal(calls[0].customerEmail,'test@example.test');
     assert.equal(result.message,ok?'successMessage':'errorMessage');
+    assert.equal(result.conversionId,ok?'22b598f7-790f-454d-bef6-bb1c85da898e':undefined);
     assert.doesNotMatch(JSON.stringify(result),/PRIVATE_PROVIDER_DETAIL/);
   }
+  const {submit}=action({ok:true,delivered:false});
+  const unconfirmed=await submit({},form());
+  assert.equal(unconfirmed.success,false);
+  assert.equal(unconfirmed.conversionId,undefined);
+
+  const repeated=action({ok:true,delivered:true,deliveryId:'d667e101-1a5c-446f-a836-8f4a59c60cf8'});
+  const first=await repeated.submit({},form());
+  const retry=await repeated.submit({},form());
+  assert.equal(first.conversionId,retry.conversionId);
 });

@@ -129,4 +129,6 @@ test("public contact responses expose no provider detail or caller-addressed mai
   assert.doesNotMatch(form, /state\.errorDetail/);
   assert.doesNotMatch(action, /buildCustomerConfirmationHtml/);
   assert.doesNotMatch(mailer, /sendCustomerConfirmationEmail/);
+  assert.match(mailer, /deliveryId:\s*data\.id/);
+  assert.match(action, /conversionId:\s*result\.deliveryId/);
 });

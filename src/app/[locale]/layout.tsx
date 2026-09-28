@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { MarketingConsent } from "@/components/marketing/MarketingConsent";
 import { getDictionary } from "@/i18n/dictionaries";
 import { i18n, isLocale } from "@/i18n/config";
 import {
@@ -126,6 +127,7 @@ export default async function LocaleLayout({
           <MotionProvider>
             <TranslationsProvider locale={localeParam} dictionary={dictionary}>
               {children}
+              <MarketingConsent locale={localeParam} />
             </TranslationsProvider>
           </MotionProvider>
         </ThemeProvider>

@@ -18,7 +18,7 @@ const NON_RECEIVING_LOCAL_PARTS = new Set([
 ]);
 
 export type SendEmailResult =
-  | { ok: true; delivered: boolean }
+  | { ok: true; delivered: true; deliveryId: string }
   | { ok: false; errorDetail: string };
 
 /** @deprecated Prefer SendEmailResult */
@@ -205,7 +205,7 @@ async function sendViaResend(input: {
       return { ok: false, errorDetail };
     }
 
-    return { ok: true, delivered: true };
+    return { ok: true, delivered: true, deliveryId: data.id };
   } catch (error) {
     if (isIdempotencyConflict(error)) {
       const errorDetail = "Contact delivery budget reached for the current window";

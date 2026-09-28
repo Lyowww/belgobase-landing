@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { Footer } from "@/components/layout/Footer";
+import { MarketingMeasurementNotice } from "@/components/legal/MarketingMeasurementNotice";
 import type { Locale } from "@/i18n/config";
 
 export type LegalKind = "terms" | "privacy" | "cookies" | "legal";
@@ -138,6 +139,7 @@ export function LegalPage({ locale, kind }: { locale: Locale; kind: LegalKind })
 
         <section className="py-12 sm:py-16">
           <div className="mx-auto max-w-4xl space-y-5 px-4 sm:px-6 lg:px-8">
+            {(kind === "cookies" || kind === "privacy") && <MarketingMeasurementNotice locale={locale} />}
             {documents[kind].map((document) => (
               <article key={document.basename} className="rounded-3xl border border-border bg-surface p-6 shadow-sm sm:p-8">
                 <h2 className="text-xl font-bold text-deep-navy sm:text-2xl">{document.title[locale]}</h2>

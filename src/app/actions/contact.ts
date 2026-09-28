@@ -15,6 +15,7 @@ export type ContactFormState = {
   success: boolean;
   message: string;
   errors?: Partial<Record<keyof ContactFormData, string>>;
+  conversionId?: string;
 };
 
 export async function submitContactForm(
@@ -63,10 +64,16 @@ export async function submitContactForm(
     adminHtml: buildAdminNotificationHtml(fields),
   });
 
-  if (!result.ok) {
-    console.error("[contact] Failed to send admin notification:", result.errorDetail);
+  if (!result.ok || !result.delivered) {
+    console.error(
+      "[contact] Failed to send admin notification:",
+      result.ok ? "Provider did not confirm delivery" : result.errorDetail,
+    );
     return contactDeliveryState(false);
   }
 
-  return contactDeliveryState(true);
+  return {
+    ...contactDeliveryState(true),
+    conversionId: result.deliveryId,
+  };
 }

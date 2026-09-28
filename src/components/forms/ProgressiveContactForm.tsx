@@ -7,6 +7,7 @@ import { submitContactForm, type ContactFormState } from "@/app/actions/contact"
 import { MagneticButton } from "@/components/ui/MagneticButton";
 import { useTranslations } from "@/providers/TranslationsProvider";
 import { cn } from "@/lib/utils";
+import { trackGoogleAdsConversion } from "@/lib/marketing-measurement";
 import {
   CONTACT_FIELD_LIMITS,
   emailSchema,
@@ -57,6 +58,7 @@ export function ProgressiveContactForm({
 
   useEffect(() => {
     if (!state.success) return;
+    if (state.conversionId) trackGoogleAdsConversion(state.conversionId);
     const frame = window.requestAnimationFrame(() => {
       setValues(emptyValues);
       setFormError(null);
@@ -64,7 +66,7 @@ export function ProgressiveContactForm({
       formRef.current?.reset();
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [state.success]);
+  }, [state.conversionId, state.success]);
 
   const update = (field: keyof FormValues, value: string | boolean) => {
     setValues((prev) => ({ ...prev, [field]: value }));

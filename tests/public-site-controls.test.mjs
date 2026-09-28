@@ -47,6 +47,8 @@ test("public routes and section controls resolve to owned targets", async () => 
     );
   }
   assert.equal(footer.includes('href={`/${locale}#faq`}'), true);
+  assert.doesNotMatch(header, /<Link href=\{`\/\$\{locale\}\/app`\}/);
+  assert.equal((header.match(/<a href=\{`\/\$\{locale\}\/app`\}/g) ?? []).length, 2);
 
   for (const route of ["", "privacy", "terms", "cookies", "legal", "app"]) {
     const suffix = route ? `/${route}` : "";
@@ -130,7 +132,7 @@ test("contact validation, failure UI and notification HTML remain safe without s
   assert.match(form, /state\.errors\?\.phone/);
   assert.match(form, /translateError\("phoneMax"\)/);
   assert.match(form, /state\.message && !state\.errors/);
-  assert.match(action, /if \(!result\.ok\)/);
+  assert.match(action, /if \(!result\.ok \|\| !result\.delivered\)/);
   assert.match(action, /contactDeliveryState\(true\)/);
 });
 

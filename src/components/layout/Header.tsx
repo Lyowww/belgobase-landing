@@ -112,9 +112,9 @@ export function Header({ variant = "default" }: HeaderProps) {
 
         {!isComingSoon && (
           <div className="relative z-10 hidden items-center gap-3 lg:flex">
-            <Link href={`/${locale}/app`} className="rounded-full border border-border px-4 py-2.5 text-sm font-semibold text-deep-navy transition-colors hover:border-primary hover:text-primary">
+            <a href={`/${locale}/app`} className="rounded-full border border-border px-4 py-2.5 text-sm font-semibold text-deep-navy transition-colors hover:border-primary hover:text-primary">
               {t("nav.signIn")}
-            </Link>
+            </a>
             <a
               href={contactPhoneHref}
               className="inline-flex items-center justify-center rounded-full border border-border bg-surface-elevated p-2.5 text-deep-navy transition-colors hover:border-primary/30 hover:bg-surface-hover"
@@ -179,9 +179,9 @@ export function Header({ variant = "default" }: HeaderProps) {
             </a>
           ))}
           <div className="mt-3 space-y-3">
-            <Link href={`/${locale}/app`} onClick={() => setMobileOpen(false)} className="flex items-center justify-center rounded-full bg-primary px-4 py-3 text-sm font-semibold text-white">
+            <a href={`/${locale}/app`} onClick={() => setMobileOpen(false)} className="flex items-center justify-center rounded-full bg-primary px-4 py-3 text-sm font-semibold text-white">
               {t("nav.signIn")}
-            </Link>
+            </a>
             <a
               href={`/${locale}#contact`}
               onClick={() => setMobileOpen(false)}
