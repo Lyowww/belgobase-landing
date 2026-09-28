@@ -191,7 +191,7 @@ test("mobile and preference controls retain their keyboard escape path", async (
     assert.match(dropdown, /triggerRef\.current\?\.focus\(\)/);
   }
   assert.match(hero, /prefers-reduced-motion: reduce/);
-  assert.match(hero, /controls loop muted playsInline/);
+  assert.match(hero, /controls loop=\{!guided\} muted=\{!guided\} playsInline/);
   assert.match(hero, /aria-controls="hero-product-demo"/);
   assert.match(legal, /target="_blank" rel="noreferrer"/);
   assert.match(legal, /download hrefLang=/);
