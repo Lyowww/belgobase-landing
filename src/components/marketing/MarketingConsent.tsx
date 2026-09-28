@@ -16,7 +16,7 @@ import {
 const copy = {
   nl: {
     title: "Marketingmeting",
-    body: "Met uw toestemming meten we alleen of een aanvraag na een Google-advertentie is ontvangen. We delen geen formuliergegevens en gebruiken dit niet voor gepersonaliseerde advertenties.",
+    body: "Met uw toestemming gebruiken we Google Ads om advertentiebezoeken en aanvragen te meten. We delen geen formuliergegevens en gebruiken dit niet voor gepersonaliseerde advertenties.",
     accept: "Toestaan",
     reject: "Weigeren",
     settings: "Cookievoorkeuren",
@@ -24,7 +24,7 @@ const copy = {
   },
   en: {
     title: "Marketing measurement",
-    body: "With your permission, we only measure whether a request was received after a Google ad. We do not share form details or use this for personalised advertising.",
+    body: "With your permission, we use Google Ads to measure ad visits and enquiries. We do not share form details or use this for personalised advertising.",
     accept: "Allow",
     reject: "Reject",
     settings: "Cookie preferences",
