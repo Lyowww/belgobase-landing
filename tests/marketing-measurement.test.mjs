@@ -153,10 +153,14 @@ test("grant initializes Basic consent, sends one sanitized conversion, and withd
   }]);
   assert.deepEqual(commands[2], ["consent", "update", {
     ad_storage: "granted",
-    ad_user_data: "denied",
+    ad_user_data: "granted",
     ad_personalization: "denied",
     analytics_storage: "denied",
   }]);
+  assert.equal(
+    commands.some((command) => command[0] === "set" && command[1] === "user_data"),
+    false,
+  );
   assert.equal(JSON.stringify(commands).includes("person@example.com"), false);
 
   const conversionId = "f343d8ee-d4ad-4cab-9f49-a45d85f05132";
@@ -178,6 +182,15 @@ test("grant initializes Basic consent, sends one sanitized conversion, and withd
   assert.equal(browser.scripts.size, 0);
   assert.equal(browser.cookieJar.has("_gcl_au"), false);
   assert.equal(browser.reloads(), 1);
+  assert.deepEqual(
+    commands.filter((command) => command[0] === "consent" && command[1] === "update").at(-1),
+    ["consent", "update", {
+      ad_storage: "denied",
+      ad_user_data: "denied",
+      ad_personalization: "denied",
+      analytics_storage: "denied",
+    }],
+  );
   assert.equal(
     browser.cookieWrites.some((write) => write.includes("Domain=.belgobase.be")),
     true,

@@ -176,9 +176,11 @@ export function initializeMarketingMeasurement(
       analytics_storage: "denied",
     });
     gtag("set", "ads_data_redaction", true);
+    // Required for tag-based Ads conversion attribution after explicit consent.
+    // No user_data payload or enhanced-conversion fields are configured or sent.
     gtag("consent", "update", {
       ad_storage: "granted",
-      ad_user_data: "denied",
+      ad_user_data: "granted",
       ad_personalization: "denied",
       analytics_storage: "denied",
     });
