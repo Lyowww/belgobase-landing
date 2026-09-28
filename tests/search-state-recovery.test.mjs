@@ -55,6 +55,42 @@ function domFixture() {
   return { nodes, $: selector => nodes[selector] || node(), $$: () => [] };
 }
 
+test("website and discovery replies stay in the same advisory conversation", async () => {
+  const calls = [];
+  const app = { proposal: { status: "ready" } };
+  const context = vm.createContext({
+    state: app, journey: { mode: "upload" }, guidedStageOverride: null,
+    guidedStage: () => "clarify", guidedModeActive: () => true,
+    routeJourneyRequest: () => { calls.push("contact-panel"); return true; },
+    journeyAdvise: async text => calls.push(text),
+    aiSearch: async () => calls.push("filter-search"),
+  });
+  vm.runInContext(["guidedInputRoute", "looksLikeBusinessIntro", "isExplicitContactRequest", "dispatchComposerText"].map(functionSource).join("\n"), context);
+  await context.dispatchComposerText("Hier is mijn website https://voorbeeld.be/contact, help mijn klanten vinden");
+  await context.dispatchComposerText("Nee, vooral organisaties met een eigen verkoopteam");
+  assert.deepEqual(calls, [
+    "Hier is mijn website https://voorbeeld.be/contact, help mijn klanten vinden",
+    "Nee, vooral organisaties met een eigen verkoopteam",
+  ]);
+  assert.equal(app.proposal, null);
+  assert.equal(context.guidedInputRoute("results", null, false), "ai");
+  assert.equal(context.guidedInputRoute("clarify", null, false), "ai");
+  assert.equal(context.looksLikeBusinessIntro("Analyseer voorbeeld.be"), true);
+  await context.dispatchComposerText("Contactgegevens aanvullen");
+  assert.equal(calls.at(-1), "contact-panel");
+  assert.equal(context.isExplicitContactRequest("Wij verkopen contactgegevens aan bedrijven"), false);
+  context.guidedModeActive = () => false;
+  context.$ = () => ({checked:false});
+  context.snapshotFilters = () => ({query:"voorbeeld.be"});
+  context.search = async () => calls.push("manual-search");
+  await context.dispatchComposerText("voorbeeld.be");
+  assert.equal(calls.at(-1), "manual-search");
+  for (const text of ["Contactgegevens aanvullen", "Compléter les coordonnées", "Complete contact details", "Download contactgegevens", "Zoek telefoonnummer"]) {
+    await context.dispatchComposerText(text);
+    assert.equal(calls.at(-1), "contact-panel", text);
+  }
+});
+
 test("route inventory covers the non-AI workspace contract", () => {
   const called = new Set([
     ...html.matchAll(/(?:bridge|action)\(['"]([a-z_]+)['"]/g),

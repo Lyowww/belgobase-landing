@@ -29,7 +29,7 @@ export function Hero() {
             </h1>
 
           </div>
-          <div className="mx-auto w-full max-w-[min(64rem,calc(160svh_-_18rem))] min-w-0">
+          <div className="mx-auto w-full max-w-[min(64rem,calc(160svh_-_22rem))] min-w-0">
             <HeroVisualization />
           </div>
           <div className="mx-auto max-w-2xl text-center">
