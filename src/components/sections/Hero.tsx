@@ -27,9 +27,9 @@ export function Hero() {
               ) : null}
               {t("hero.titleLine2") ? <span className="block">{t("hero.titleLine2")}</span> : null}
             </h1>
-
+            <p className="mt-3 text-base leading-6 text-deep-navy dark:text-white sm:text-lg">{t("hero.enrichment")}</p>
           </div>
-          <div className="mx-auto w-full max-w-[min(64rem,calc(160svh_-_22rem))] min-w-0">
+          <div className="mx-auto w-full max-w-[min(64rem,calc(160svh_-_27rem))] min-w-0">
             <HeroVisualization />
           </div>
           <div className="mx-auto max-w-2xl text-center">
