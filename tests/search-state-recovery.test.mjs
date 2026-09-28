@@ -91,6 +91,54 @@ test("website and discovery replies stay in the same advisory conversation", asy
   }
 });
 
+test("advisory sources allow only safe public web links", () => {
+  const { safeJourneySources } = loadFunctions(["safeJourneySources"], { URL });
+  const sources = safeJourneySources([
+    { url: "https://research.example/path", title: "Verified research" },
+    { url: "http://public.example", title: "Public source" },
+    { url: "javascript:alert(1)", title: "Script" },
+    { url: "https://user:secret@private.example", title: "Credentials" },
+    { url: "https://research.example/path", title: "Duplicate" },
+    { url: "https://example.test/1" }, { url: "https://example.test/2" },
+    { url: "https://example.test/3" }, { url: "https://example.test/4" },
+    { url: "https://example.test/5" }, { url: "https://example.test/6" },
+  ]);
+
+  assert.equal(sources.length, 6);
+  assert.deepEqual(JSON.parse(JSON.stringify(sources.slice(0, 2))), [
+    { url: "https://research.example/path", title: "Verified research" },
+    { url: "http://public.example/", title: "Public source" },
+  ]);
+  assert.equal(sources.some(source => source.url.includes("secret") || source.url.startsWith("javascript:")), false);
+  assert.equal(sources[2].title, "example.test");
+  assert.match(html, /target="_blank" rel="noopener noreferrer"/);
+  assert.match(html, /journeySourcesMarkup\(advice\?\.sources\)/);
+});
+
+test("saved assistant turns keep their compact source row in the conversation DOM", () => {
+  const { nodes, $, $$ } = domFixture();
+  nodes["#ai-conversation"] = { hidden: false, classList: { toggle() {} } };
+  nodes["#toggle-conversation"] = { textContent: "", setAttribute() {} };
+  nodes["#ai-turns"] = { innerHTML: "", scrollTop: 0, scrollHeight: 42 };
+  const state = { conversationCollapsed: false, conversation: [
+    { role: "assistant", content: "Onderzoek afgerond", sources: [{ url: "https://research.example", title: "Research" }] },
+    { role: "user", content: "Dank je" },
+  ] };
+  const { renderConversation } = loadFunctions(["renderConversation"], {
+    state, $, $$,
+    t: (_key, fallback) => fallback,
+    esc: value => String(value).replace(/[<>&]/g, ""),
+    journeySourcesMarkup: sources => sources?.length ? '<div class="journey-sources">Research</div>' : "",
+    renderGuidedFlow() {},
+  });
+
+  renderConversation();
+
+  assert.match(nodes["#ai-turns"].innerHTML, /journey-sources/);
+  assert.equal((nodes["#ai-turns"].innerHTML.match(/journey-sources/g) || []).length, 1);
+  assert.equal(nodes["#ai-turns"].scrollTop, 42);
+});
+
 test("route inventory covers the non-AI workspace contract", () => {
   const called = new Set([
     ...html.matchAll(/(?:bridge|action)\(['"]([a-z_]+)['"]/g),
@@ -180,4 +228,19 @@ test("relaxation keeps the active query and commits UI changes only after search
   assert.equal(resets, 1);
   assert.equal(state.aiScope, "refine");
   assert.equal(state.refining, true);
+});
+
+test("new conversation resets server context before clearing visible work", async () => {
+  for (const fails of [false, true]) {
+    const events=[]; const state={busy:false,conversation:[{role:'user',content:'Old company'}]};
+    const ctx=vm.createContext({state,journey:{mode:'goal'},guidedStageOverride:null,
+      busy: value=>{state.busy=value;},journeyText:()=>'',
+      journeyCall:async command=>{events.push(command.command);if(fails)throw new Error('offline');return {profile:{},history:[],last_advice:null};},
+      mergeJourneyResult:()=>events.push('merged'),resetConversation:()=>{events.push('cleared');state.conversation=[];},
+      renderJourneyAdvice:()=>{},notice:message=>events.push(message),$:()=>({value:'',focus(){}})});
+    vm.runInContext(functionSource('startNewConversation'),ctx);
+    await ctx.startNewConversation();
+    assert.deepEqual(events,fails?['reset_profile','offline']:['reset_profile','merged','cleared']);
+    assert.equal(state.conversation.length,fails?1:0);assert.equal(state.busy,false);
+  }
 });
