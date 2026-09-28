@@ -18,15 +18,15 @@ try {
   report.publicFlows = await auditPublicSite({page,context,appOrigin:origin,artifactDirectory:output});
   const sitemap = await (await context.request.get(`${origin}/sitemap.xml`)).text();
   for (const locale of ["nl","en"]) {
-    for (const slug of ["prospectielijsten","klantenbestand-analyseren","bedrijfsanalyse"]) {
+    for (const slug of ["bedrijven-zoeken","prospectielijsten","klantenbestand-analyseren","bedrijfsanalyse"]) {
       const route = `/${locale}/${slug}`;
       const response = await page.goto(origin+route);
       assert.equal(response.status(),200);
       assert.equal(await page.locator("h1").count(),1);
       assert.ok((await page.locator("h1").innerText()).length>15);
       const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
-      assert.equal(canonical, `https://belgobase.com${route}`);
-      for (const lang of ["nl","en"]) assert.equal(await page.locator(`link[rel="alternate"][hreflang="${lang}"]`).getAttribute("href"),`https://belgobase.com/${lang}/${slug}`);
+      assert.equal(canonical, `https://www.belgobase.com${route}`);
+      for (const lang of ["nl","en"]) assert.equal(await page.locator(`link[rel="alternate"][hreflang="${lang}"]`).getAttribute("href"),`https://www.belgobase.com/${lang}/${slug}`);
       assert.ok(sitemap.includes(canonical));
       assert.ok((await page.locator('meta[name="description"]').getAttribute("content")).length>50);
       for (const width of [390,1440]) {

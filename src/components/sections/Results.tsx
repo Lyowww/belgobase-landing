@@ -8,7 +8,7 @@ export function Results() {
   return <section id="database" className="bg-surface py-16 sm:py-24">
     <div className="mx-auto max-w-7xl px-5 sm:px-8">
       <h2 className="max-w-3xl text-3xl font-semibold tracking-tight text-deep-navy sm:text-4xl">{nl ? "Waar wilt u mee beginnen?" : "Where would you like to start?"}</h2>
-      <div className="mt-10 grid gap-5 md:grid-cols-3">
+      <div className="mt-10 grid gap-5 md:grid-cols-2">
         {useCaseSlugs.map(slug => {
           const data = getUseCase(locale, slug);
           return <a key={slug} href={`/${locale}/${slug}`} className="group rounded-2xl border border-border p-6 transition-colors hover:border-primary focus-visible:outline-2 focus-visible:outline-primary sm:p-8">

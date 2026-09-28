@@ -1,10 +1,20 @@
 import type { Locale } from "@/i18n/config";
 
-export const useCaseSlugs = ["prospectielijsten", "klantenbestand-analyseren", "bedrijfsanalyse"] as const;
+export const useCaseSlugs = ["bedrijven-zoeken", "prospectielijsten", "klantenbestand-analyseren", "bedrijfsanalyse"] as const;
 export type UseCaseSlug = typeof useCaseSlugs[number];
-type UseCase = { title: string; description: string; question: string; intro: string; steps: [string, string][]; result: string; boundary: string };
+type UseCase = { title: string; description: string; question: string; intro: string; steps: [string, string][]; result: string; boundary: string; criteria?: [string, string][] };
 
 const nl: Record<UseCaseSlug, UseCase> = {
+  "bedrijven-zoeken": {
+    title: "Belgische bedrijven zoeken op sector en regio",
+    description: "Vind Belgische bedrijven op activiteit, postcode en beschikbare financiële gegevens. Bespreek uw doelgroep met AI, verfijn de selectie en exporteer naar Excel.",
+    question: "Ik lever aan bedrijven in de regio Mechelen. Help me een doelgroep kiezen die bij mijn aanbod past.",
+    intro: "Zoekt u één onderneming of wilt u een hele doelgroep samenstellen? Zoek rechtstreeks op bedrijfsnaam of ondernemingsnummer, of vertel de BelgoBase-assistent wat u verkoopt en welke bedrijven u wilt bereiken. U ziet de voorgestelde criteria en houdt zelf de controle over uw selectie.",
+    steps: [["Beschrijf wie u zoekt", "Vertel over uw aanbod, uw werkgebied en de kenmerken van een goede klant. U kunt ook zelf beginnen met de filters in Werkruimte."], ["Controleer de bedrijven", "Bekijk de voorgestelde doelgroep, combineer criteria en onderzoek de beschikbare bedrijfsgegevens. Verbreed of versmal uw selectie waar nodig."], ["Neem uw selectie mee", "Kies de kolommen die u nodig hebt en exporteer naar Excel. Wilt u contactgegevens toevoegen, dan kunt u beschikbare gegevens op bedrijfswebsites laten onderzoeken."]],
+    criteria: [["Sector en NACEBEL-activiteit", "Selecteer activiteiten die bij uw aanbod passen. Een activiteitencode beschrijft een geregistreerde activiteit; bekijk ook het bedrijf zelf voordat u het benadert."], ["Regio, gemeente en postcode", "Baken uw werkgebied af met Belgische locatiecriteria. De selectie volgt het beschikbare KBO-bedrijfsadres; dat is niet noodzakelijk iedere locatie waar een onderneming actief is."], ["Personeel en financiële gegevens", "Combineer uw doelgroep met beschikbare VTE- en financiële gegevens. VTE staat voor voltijdsequivalenten en is niet hetzelfde als het aantal personen. Niet ieder bedrijf publiceert omzet of een volledige jaarrekening."], ["Rechtsvorm en rechtstoestand", "Maak onderscheid tussen de rechtsvorm van een onderneming en haar juridische toestand. Gebruik de beschikbare opname- en uitsluitingsfilters om uw selectie verder te verfijnen."]],
+    result: "Een gerichte Belgische bedrijvenlijst met de velden die u zelf hebt gekozen. U kunt de selectie verder onderzoeken en gebruiken voor uw commerciële voorbereiding.",
+    boundary: "Een bedrijf dat aan uw criteria voldoet, heeft niet automatisch interesse in uw aanbod. De beschikbaarheid van contactgegevens en financiële cijfers verschilt per onderneming.",
+  },
   prospectielijsten: {
     title: "Een prospectielijst maken van Belgische bedrijven",
     description: "Beschrijf uw doelgroep aan BelgoBase. Verfijn Belgische bedrijven met AI, onderzoek beschikbare contactgegevens en exporteer uw prospectielijst naar Excel.",
@@ -34,6 +44,16 @@ const nl: Record<UseCaseSlug, UseCase> = {
   },
 };
 const en: Record<UseCaseSlug, UseCase> = {
+  "bedrijven-zoeken": {
+    title: "Find Belgian companies by industry and region",
+    description: "Find Belgian companies by activity, postcode and available financial data. Discuss your target market with AI, refine your selection and export to Excel.",
+    question: "I supply businesses around Mechelen. Help me choose a target market that fits my offer.",
+    intro: "Looking for one company or building an entire target list? Search directly by company name or enterprise number, or tell the BelgoBase assistant what you sell and who you want to reach. Review the proposed criteria and stay in control of your selection.",
+    steps: [["Describe your target", "Explain your offer, service area and the characteristics of a good customer. You can also start directly with the filters in Workspace."], ["Review the companies", "Check the proposed target market, combine criteria and examine the available company information. Broaden or narrow your selection where needed."], ["Export your selection", "Choose the columns you need and export to Excel. If you need contact details, you can research available information on company websites."]],
+    criteria: [["Industry and NACEBEL activity", "Select activities that fit your offer. An activity code describes a registered activity; review the business itself before approaching it."], ["Region, municipality and postcode", "Define your service area using Belgian location criteria. The selection follows the available KBO company address, which does not necessarily cover every location where a business operates."], ["Staff and financial information", "Combine your target criteria with available FTE and financial data. FTE means full-time equivalents, not headcount. Not every company publishes revenue or a complete set of annual accounts."], ["Legal form and legal status", "Distinguish a company's legal form from its legal status. Use the available inclusion and exclusion filters to refine your selection."]],
+    result: "A focused Belgian company list with the fields you chose. Continue researching your selection and use it to prepare your sales work.",
+    boundary: "Matching your criteria does not mean a company is interested in your offer. Contact details and financial figures are not available for every company.",
+  },
   prospectielijsten: {
     title: "Build a prospect list of Belgian companies",
     description: "Describe your target market to BelgoBase. Refine Belgian companies with AI, research available contact details and export your prospect list to Excel.",

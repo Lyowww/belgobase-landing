@@ -1,7 +1,9 @@
-const DEFAULT_SITE_URL = "https://belgobase.com";
+const DEFAULT_SITE_URL = "https://www.belgobase.com";
 
 function normalizeSiteUrl(url: string): string {
-  return url.replace(/\/+$/, "");
+  // Production redirects the apex to www. Normalize legacy environment values
+  // too, so canonical, hreflang, sitemap and structured data agree with it.
+  return url.replace(/^https?:\/\/belgobase\.com(?=\/|$)/i, DEFAULT_SITE_URL).replace(/\/+$/, "");
 }
 
 /** Canonical production origin — never falls back to Vercel preview URLs. */

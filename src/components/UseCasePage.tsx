@@ -33,6 +33,7 @@ export async function UseCasePage({ params, slug }: Props & { slug: UseCaseSlug 
       <a href={`/${locale}`} className="text-base text-primary hover:underline">← BelgoBase</a>
       <h1 className="mt-8 max-w-4xl text-4xl font-semibold leading-tight tracking-tight text-deep-navy sm:text-6xl">{data.title}</h1>
       <p className="mt-6 max-w-3xl text-lg leading-8 text-muted">{data.intro}</p>
+      <a href={`/${locale}#product-demonstration`} className="mt-6 inline-flex min-h-12 items-center rounded-full bg-primary px-6 py-3 font-semibold text-white">{nl ? "Bekijk hoe BelgoBase werkt" : "See how BelgoBase works"} →</a>
       <blockquote className="my-12 rounded-2xl border border-primary/20 bg-primary/5 p-7 text-xl leading-8 text-deep-navy sm:p-10">
         <p className="mb-3 text-sm font-semibold text-primary">{nl ? "Zo kan uw gesprek beginnen" : "Start your conversation like this"}</p>
         “{data.question}”
@@ -43,6 +44,15 @@ export async function UseCasePage({ params, slug }: Props & { slug: UseCaseSlug 
           <div><h2 className="text-2xl font-semibold text-deep-navy">{title}</h2><p className="mt-3 max-w-3xl text-base leading-8 text-muted">{body}</p></div>
         </li>)}
       </ol>
+      {data.criteria && <section className="mt-14 border-t border-border pt-10">
+        <h2 className="text-2xl font-semibold text-deep-navy">{nl ? "Waarop kunt u bedrijven selecteren?" : "Which criteria can you use?"}</h2>
+        <div className="mt-7 grid gap-8 sm:grid-cols-2">
+          {data.criteria.map(([title, body]) => <div key={title}>
+            <h3 className="text-xl font-semibold text-deep-navy">{title}</h3>
+            <p className="mt-3 text-base leading-8 text-muted">{body}</p>
+          </div>)}
+        </div>
+      </section>}
       <section className="my-12 rounded-2xl bg-[#0a1730] p-7 text-white sm:p-10">
         <h2 className="text-2xl font-semibold">{nl ? "Wat u overhoudt" : "Your result"}</h2>
         <p className="mt-4 text-lg leading-8">{data.result}</p>
