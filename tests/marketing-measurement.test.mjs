@@ -143,8 +143,11 @@ test("grant initializes Basic consent, sends one sanitized conversion, and withd
   assert.equal(setMarketingConsent("granted", config), true);
   assert.equal(browser.scripts.size, 1);
   assert.equal(browser.window.__bbGoogleAdsActive, true);
+  assert.equal(Array.isArray(browser.window.dataLayer[0]), false);
+  assert.equal(Object.prototype.toString.call(browser.window.dataLayer[0]), "[object Arguments]");
 
-  const commands = browser.window.dataLayer;
+  const queuedCommands = () => browser.window.dataLayer.map((command) => Array.from(command));
+  let commands = queuedCommands();
   assert.deepEqual(commands[0], ["consent", "default", {
     ad_storage: "denied",
     ad_user_data: "denied",
@@ -166,6 +169,7 @@ test("grant initializes Basic consent, sends one sanitized conversion, and withd
   const conversionId = "f343d8ee-d4ad-4cab-9f49-a45d85f05132";
   assert.equal(trackGoogleAdsConversion(conversionId, config), true);
   assert.equal(trackGoogleAdsConversion(conversionId, config), false);
+  commands = queuedCommands();
   const conversion = commands.find((command) => command[0] === "event");
   assert.deepEqual(conversion, ["event", "conversion", {
     currency: "EUR",
@@ -178,6 +182,7 @@ test("grant initializes Basic consent, sends one sanitized conversion, and withd
 
   browser.document.cookie = "_gcl_au=marketing-cookie; Path=/";
   assert.equal(setMarketingConsent("denied"), true);
+  commands = queuedCommands();
   assert.equal(browser.window.__bbGoogleAdsActive, false);
   assert.equal(browser.scripts.size, 0);
   assert.equal(browser.cookieJar.has("_gcl_au"), false);

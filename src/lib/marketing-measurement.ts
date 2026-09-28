@@ -30,7 +30,7 @@ type Gtag = (...args: unknown[]) => void;
 
 declare global {
   interface Window {
-    dataLayer?: unknown[][];
+    dataLayer?: unknown[];
     gtag?: Gtag;
     __bbGoogleAdsActive?: boolean;
   }
@@ -108,9 +108,11 @@ export function extractGoogleClickIds(rawUrl: string): Record<string, string> {
 
 function ensureGtag(): Gtag {
   window.dataLayer = window.dataLayer ?? [];
-  window.gtag = window.gtag ?? ((...args: unknown[]) => {
-    window.dataLayer?.push(args);
-  });
+  window.gtag = window.gtag ?? function gtag() {
+    // Match Google's supported snippet: it queues the function's IArguments object.
+    // eslint-disable-next-line prefer-rest-params
+    window.dataLayer?.push(arguments);
+  };
   return window.gtag;
 }
 
