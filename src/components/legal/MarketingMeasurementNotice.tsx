@@ -1,3 +1,4 @@
+import { PUBLIC_MARKETING_MEASUREMENT_ENABLED } from "@/lib/marketing-measurement-config";
 import type { Locale } from "@/i18n/config";
 
 const notices = {
@@ -28,6 +29,20 @@ const notices = {
 } as const;
 
 export function MarketingMeasurementNotice({ locale }: { locale: Locale }) {
+  if (!PUBLIC_MARKETING_MEASUREMENT_ENABLED) {
+    return (
+      <article className="rounded-3xl border border-border bg-surface p-6 shadow-sm sm:p-8">
+        <h2 className="text-xl font-bold text-deep-navy">
+          {locale === "nl" ? "Advertentiemeting uitgeschakeld" : "Advertising measurement disabled"}
+        </h2>
+        <p className="mt-4 text-base leading-7 text-muted">
+          {locale === "nl"
+            ? "Sinds 28 september 2026 is de Google-advertentiemeting op deze website uitgeschakeld. We laden geen Google Ads- of Google Analytics-tag en meten geen klikgedrag, scrollgedrag of leestijd met die diensten. Eerder door ons geplaatste, bereikbare meetcookies en de opgeslagen meetkeuze worden bij een nieuw paginabezoek verwijderd. Dit verwijdert niet automatisch gegevens die eerder met uw toestemming naar Google zijn verstuurd. Voor vragen of uw privacyrechten: legal@belgobase.be."
+            : "Google advertising measurement on this website has been disabled since 28 September 2026. We do not load a Google Ads or Google Analytics tag or use those services to measure clicks, scrolling or reading time. Accessible measurement cookies previously set by us and the stored measurement choice are removed on a new page visit. This does not automatically delete data previously sent to Google with your consent. For questions or privacy rights: legal@belgobase.be."}
+        </p>
+      </article>
+    );
+  }
   const notice = notices[locale];
   return (
     <article className="rounded-3xl border border-border bg-surface p-6 shadow-sm sm:p-8">

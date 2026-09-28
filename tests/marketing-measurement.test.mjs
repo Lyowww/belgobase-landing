@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  clearDisabledMarketingStorage,
   extractGoogleClickIds,
   getMarketingMeasurementConfig,
   initializeMarketingMeasurement,
@@ -13,7 +14,7 @@ import {
   trackGoogleAdsConversion,
 } from "../src/lib/marketing-measurement.ts";
 
-const config = getMarketingMeasurementConfig("AW-828167396", "XPY8CP6Gj4kdEOSp84oD");
+const config = getMarketingMeasurementConfig("AW-828167396", "XPY8CP6Gj4kdEOSp84oD", true);
 
 function installBrowser(pathname = "/nl", search = "") {
   const cookieJar = new Map();
@@ -221,4 +222,23 @@ test("a vendor exception stays isolated from the delivered form", () => {
     trackGoogleAdsConversion("95975f43-fcc6-4fc6-83f0-f16fb37253cd", config),
     false,
   );
+});
+
+test("disabled deployment ignores existing consent and configured Google IDs", () => {
+  const browser = installBrowser();
+  browser.document.cookie = "bb_marketing_consent=granted";
+  browser.document.cookie = "_gcl_au=old-cookie";
+  browser.document.cookie = "bb_theme=dark";
+  browser.session.set("bb-google-ads-conversion:old", "sent");
+  assert.equal(getMarketingMeasurementConfig("AW-828167396", "XPY8CP6Gj4kdEOSp84oD"), null);
+  assert.equal(initializeMarketingMeasurement(), false);
+  assert.equal(syncMarketingMeasurementForPath("/nl"), false);
+  assert.equal(trackGoogleAdsConversion("f343d8ee-d4ad-4cab-9f49-a45d85f05132"), false);
+  clearDisabledMarketingStorage();
+  assert.equal(browser.scripts.size, 0);
+  assert.equal(browser.window.gtag, undefined);
+  assert.equal(browser.cookieJar.has("_gcl_au"), false);
+  assert.equal(browser.cookieJar.has("bb_marketing_consent"), false);
+  assert.equal(browser.cookieJar.get("bb_theme"), "dark");
+  assert.equal(browser.session.size, 0);
 });

@@ -1,6 +1,7 @@
 import {
   PUBLIC_GOOGLE_ADS_CONVERSION_LABEL,
   PUBLIC_GOOGLE_ADS_ID,
+  PUBLIC_MARKETING_MEASUREMENT_ENABLED,
 } from "./marketing-measurement-config.ts";
 
 export const MARKETING_CONSENT_COOKIE = "bb_marketing_consent";
@@ -42,7 +43,9 @@ export function getMarketingMeasurementConfig(
   adsId = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID ?? PUBLIC_GOOGLE_ADS_ID,
   conversionLabel = process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL
     ?? PUBLIC_GOOGLE_ADS_CONVERSION_LABEL,
+  enabled: boolean = PUBLIC_MARKETING_MEASUREMENT_ENABLED,
 ): MarketingMeasurementConfig | null {
+  if (!enabled) return null;
   const normalizedAdsId = adsId?.trim() ?? "";
   const normalizedLabel = conversionLabel?.trim() ?? "";
 
@@ -291,4 +294,12 @@ export function trackGoogleAdsConversion(
   } catch {
     return false;
   }
+}
+
+// Local cleanup only: never load or notify Google when measurement is disabled.
+export function clearDisabledMarketingStorage() {
+  deleteGoogleMarketingCookies();
+  expireCookie(MARKETING_CONSENT_COOKIE);
+  clearConversionSessionState();
+  queuedConversionIds.clear();
 }

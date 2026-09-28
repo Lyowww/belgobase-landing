@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { Locale } from "@/i18n/config";
 import {
+  clearDisabledMarketingStorage,
   isMarketingPublicPathname,
   marketingMeasurementEnabled,
   readMarketingConsent,
@@ -41,7 +42,10 @@ export function MarketingConsent({ locale }: { locale: Locale }) {
   const text = copy[locale];
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      clearDisabledMarketingStorage();
+      return;
+    }
     syncMarketingMeasurementForPath(pathname);
     const frame = window.requestAnimationFrame(() => {
       const storedChoice = readMarketingConsent();
