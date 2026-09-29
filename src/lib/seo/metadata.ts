@@ -76,12 +76,12 @@ export function createLocalizedPageMetadata(pathWithoutLocale = "") {
     const pathname = buildLocalizedPath(locale, pathWithoutLocale);
     const dictionary = pathWithoutLocale ? null : await getDictionary(locale);
     const productImage = {
-      url: `${siteUrl}/product/belgobase-journey-poster.webp`,
-      width: 1600,
-      height: 1000,
+      url: `${siteUrl}/product/belgobase-excel-20260929.jpg`,
+      width: 1920,
+      height: 1080,
       alt: locale === "nl"
-        ? "BelgoBase: van gesprek naar prospectielijst met fictieve voorbeeldgegevens"
-        : "BelgoBase: from conversation to prospect list with fictional example data",
+        ? "BelgoBase: van Excelchaos naar overzicht met echte verwerkingsresultaten"
+        : "BelgoBase: from Excel chaos to clarity with real processing results",
     };
 
     return {

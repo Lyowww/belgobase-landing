@@ -24,15 +24,15 @@ export async function JsonLd({ locale, title, description }: JsonLdProps) {
       {
         "@type": "VideoObject",
         "@id": `${url}/#product-demo`,
-        name: locale === "nl" ? "BelgoBase: van gesprek naar prospectielijst" : "BelgoBase: from conversation to prospect list",
+        name: locale === "nl" ? "BelgoBase: van Excelchaos naar overzicht" : "BelgoBase: from Excel chaos to clarity",
         description: locale === "nl"
-          ? "Productdemonstratie van gesprek, klantenlijst uploaden, bedrijfsselectie, beschikbare contactgegevens controleren en Excel-export. Fictieve voorbeeldgegevens."
-          : "Product demonstration of conversation, customer list upload, company selection, available contact research and Excel export. Fictional sample data; interface in Dutch.",
-        thumbnailUrl: `${siteUrl}/product/belgobase-guided-poster.webp`,
-        contentUrl: `${siteUrl}/product/belgobase-guided-demo.mp4`,
-        uploadDate: "2026-09-28T07:22:52Z",
+          ? "Echte desktopproef met tien Excelbestanden: lijsten samenbrengen, belinformatie indelen en een AI-profiel beoordelen. Gegevens afgeschermd."
+          : "Real desktop trial with ten Excel files: merging lists, categorising calling information and reviewing an AI profile. Data concealed; Dutch narration.",
+        thumbnailUrl: `${siteUrl}/product/belgobase-excel-20260929.jpg`,
+        contentUrl: `${siteUrl}/product/belgobase-excel-20260929.mp4`,
+        uploadDate: "2026-09-29T13:40:00Z",
         inLanguage: "nl-NL",
-        duration: "PT1M25.612S",
+        duration: "PT2M27.417S",
         isFamilyFriendly: true,
       },
       {
