@@ -17,22 +17,37 @@ export async function JsonLd({ locale, title, description }: JsonLdProps) {
   if (pathname !== buildLocalizedPath(locale)) return null;
 
   const url = buildCanonicalUrl(pathname);
+  const nl = locale === "nl";
 
   const schema = {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "VideoObject",
-        "@id": `${url}/#product-demo`,
-        name: locale === "nl" ? "BelgoBase: van Excelchaos naar overzicht" : "BelgoBase: from Excel chaos to clarity",
-        description: locale === "nl"
-          ? "Echte desktopproef met tien Excelbestanden: lijsten samenbrengen, belinformatie indelen en een AI-profiel beoordelen. Gegevens afgeschermd."
-          : "Real desktop trial with ten Excel files: merging lists, categorising calling information and reviewing an AI profile. Data concealed; Dutch narration.",
-        thumbnailUrl: `${siteUrl}/product/belgobase-excel-20260929.jpg`,
-        contentUrl: `${siteUrl}/product/belgobase-excel-20260929.mp4`,
-        uploadDate: "2026-09-29T13:40:00Z",
+        "@id": `${url}/#prospecting-demo`,
+        name: nl ? "Vind passende bedrijven met BelgoBase" : "Find suitable companies with BelgoBase",
+        description: nl
+          ? "Demonstratie met fictieve voorbeeldgegevens: van gesprek over aanbod en doelgroep naar een voorstel, bedrijvenlijst, contactgegevens en Excel-export."
+          : "Demonstration with fictional example data: from a conversation about your offer and target market to a proposal, company list, contact details and Excel export.",
+        thumbnailUrl: `${siteUrl}/product/belgobase-guided-poster.webp`,
+        contentUrl: `${siteUrl}/product/belgobase-overview-20260929.mp4`,
+        uploadDate: "2026-09-29T00:00:00Z",
         inLanguage: "nl-NL",
-        duration: "PT2M27.417S",
+        duration: "PT1M37.81S",
+        isFamilyFriendly: true,
+      },
+      {
+        "@type": "VideoObject",
+        "@id": `${url}/#list-cleanup-demo`,
+        name: nl ? "Heb je al lijsten? Haal eruit wat erin zit." : "Already have lists? Get more from what is in them.",
+        description: nl
+          ? "Echte desktopproef met bestaande Excelbestanden: lijsten samenbrengen, belinformatie indelen en onzekere gegevens laten controleren. Persoonsgegevens zijn afgeschermd."
+          : "Real desktop trial with existing Excel files: merging lists, classifying calling information and reviewing uncertain data. Personal data is concealed.",
+        thumbnailUrl: `${siteUrl}/product/belgobase-lijsten-20260929.jpg`,
+        contentUrl: `${siteUrl}/product/belgobase-lijsten-20260929.mp4`,
+        uploadDate: "2026-09-29T00:00:00Z",
+        inLanguage: "nl-NL",
+        duration: "PT1M36.15S",
         isFamilyFriendly: true,
       },
       {
@@ -52,7 +67,7 @@ export async function JsonLd({ locale, title, description }: JsonLdProps) {
         url: siteUrl,
         name: "BelgoBase",
         description: title,
-        inLanguage: locale === "nl" ? "nl-BE" : "en-BE",
+        inLanguage: nl ? "nl-BE" : "en-BE",
         publisher: { "@id": `${siteUrl}/#organization` },
       },
       {
@@ -62,7 +77,7 @@ export async function JsonLd({ locale, title, description }: JsonLdProps) {
         name: title,
         description,
         isPartOf: { "@id": `${siteUrl}/#website` },
-        inLanguage: locale === "nl" ? "nl-BE" : "en-BE",
+        inLanguage: nl ? "nl-BE" : "en-BE",
       },
     ],
   };

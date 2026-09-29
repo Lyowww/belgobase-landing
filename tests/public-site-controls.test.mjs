@@ -36,9 +36,11 @@ test("public routes and section controls resolve to owned targets", async () => 
   ]);
   const targets = `${hero}\n${sections}`;
 
-  for (const id of ["process", "industries", "database", "pricing", "faq", "contact", "product-demonstration"]) {
+  for (const id of ["process", "industries", "database", "pricing", "faq", "contact"]) {
     assert.match(targets, new RegExp(`id=["']${id}["']`), id);
   }
+  assert.match(hero, /"product-demonstration"/);
+  assert.match(hero, /"list-cleanup-demo-card"/);
   for (const href of ["#process", "#industries", "#database", "#pricing", "#contact"]) {
     assert.equal(
       header.includes(`href: "${href}"`) || header.includes(`href="${href}"`) || header.includes("href={`/${locale}" + href + "`}"),
@@ -193,8 +195,20 @@ test("mobile and preference controls retain their keyboard escape path", async (
     assert.match(dropdown, /triggerRef\.current\?\.focus\(\)/);
   }
   assert.doesNotMatch(hero, /autoPlay|data-demo-mode|journey-demo/);
-  assert.match(hero, /controls playsInline/);
-  assert.match(hero, /aria-controls="hero-product-demo"/);
+  assert.equal((hero.match(/renderVideo\(\{/g) ?? []).length, 2);
+  assert.match(hero, /"hero-product-demo"/);
+  assert.match(hero, /aria-controls=\{videoId\}/);
+  assert.match(hero, /belgobase-overview-20260929\.mp4/);
+  assert.match(hero, /belgobase-lijsten-20260929\.mp4/);
+  assert.match(hero, /belgobase-guided-poster\.webp/);
+  assert.match(hero, /belgobase-lijsten-20260929\.jpg/);
+  assert.match(hero, /source\.replace\("\.mp4", ""\)/);
+  await Promise.all([
+    "belgobase-overview-20260929-nl.vtt",
+    "belgobase-overview-20260929-en.vtt",
+    "belgobase-lijsten-20260929-nl.vtt",
+    "belgobase-lijsten-20260929-en.vtt",
+  ].map((asset) => access(new URL(`public/product/${asset}`, root))));
   assert.match(legal, /target="_blank" rel="noreferrer"/);
   assert.match(legal, /download hrefLang=/);
 });
