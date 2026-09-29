@@ -27,13 +27,13 @@ export async function JsonLd({ locale, title, description }: JsonLdProps) {
         "@id": `${url}/#prospecting-demo`,
         name: nl ? "Vind passende bedrijven met BelgoBase" : "Find suitable companies with BelgoBase",
         description: nl
-          ? "Demonstratie met fictieve voorbeeldgegevens: van gesprek over aanbod en doelgroep naar een voorstel, bedrijvenlijst, contactgegevens en Excel-export."
-          : "Demonstration with fictional example data: from a conversation about your offer and target market to a proposal, company list, contact details and Excel export.",
-        thumbnailUrl: `${siteUrl}/product/belgobase-guided-poster.webp`,
-        contentUrl: `${siteUrl}/product/belgobase-overview-20260929.mp4`,
+          ? "Echte productdemonstratie: van gesprek en bevestigde criteria naar 239 bedrijven in postcode 2800 met minstens 20 VTE en de daadwerkelijke Excel-export."
+          : "Real product demonstration: from conversation and confirmed criteria to 239 companies in postcode 2800 with at least 20 FTE and the actual Excel export.",
+        thumbnailUrl: `${siteUrl}/product/belgobase-echte-demonstratie-20260929.jpg`,
+        contentUrl: `${siteUrl}/product/belgobase-echte-demonstratie-20260929.mp4`,
         uploadDate: "2026-09-29T00:00:00Z",
         inLanguage: "nl-NL",
-        duration: "PT1M37.81S",
+        duration: "PT1M39.1S",
         isFamilyFriendly: true,
       },
       {

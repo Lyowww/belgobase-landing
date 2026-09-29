@@ -198,14 +198,14 @@ test("mobile and preference controls retain their keyboard escape path", async (
   assert.equal((hero.match(/renderVideo\(\{/g) ?? []).length, 2);
   assert.match(hero, /"hero-product-demo"/);
   assert.match(hero, /aria-controls=\{videoId\}/);
-  assert.match(hero, /belgobase-overview-20260929\.mp4/);
+  assert.match(hero, /belgobase-echte-demonstratie-20260929\.mp4/);
   assert.match(hero, /belgobase-lijsten-20260929\.mp4/);
-  assert.match(hero, /belgobase-guided-poster\.webp/);
+  assert.match(hero, /belgobase-echte-demonstratie-20260929\.jpg/);
   assert.match(hero, /belgobase-lijsten-20260929\.jpg/);
   assert.match(hero, /source\.replace\("\.mp4", ""\)/);
   await Promise.all([
-    "belgobase-overview-20260929-nl.vtt",
-    "belgobase-overview-20260929-en.vtt",
+    "belgobase-echte-demonstratie-20260929-nl.vtt",
+    "belgobase-echte-demonstratie-20260929-en.vtt",
     "belgobase-lijsten-20260929-nl.vtt",
     "belgobase-lijsten-20260929-en.vtt",
   ].map((asset) => access(new URL(`public/product/${asset}`, root))));
