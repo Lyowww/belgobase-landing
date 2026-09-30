@@ -19,11 +19,11 @@
     "mainNavigation": "Hoofdnavigatie"
   },
   "hero": {
-    "badge": "Van bedrijfsverhaal naar gerichte prospectielijst",
-    "titleLine1": "Uw eigen prospectietool.",
+    "badge": "Voor uw B2B-prospectie in België",
+    "titleLine1": "Vind meer bedrijven",
     "titleHighlight": "",
-    "titleLine2": "Eenmalig aangekocht.",
-    "enrichment": "Vertel wat u zoekt. AI helpt passende bedrijven vinden en contactgegevens aanvullen.",
+    "titleLine2": "zoals uw beste klanten.",
+    "enrichment": "Vertel BelgoBase wie u wilt bereiken. Stel met AI uw doelgroep samen en werk verder met een gerichte Belgische bedrijvenlijst.",
     "description": "Vertel wat uw bedrijf doet of deel uw website. BelgoBase denkt mee over passende klanten en helpt u van doelgroep naar een bruikbare Excel-lijst.",
     "primaryCta": "Vraag een demo aan",
     "secondaryCta": "Bekijk hoe BelgoBase werkt",
@@ -50,7 +50,13 @@
     "vizCard2Location": "Gent",
     "vizCard3Name": "Voorbeeld Zorg",
     "vizCard3Sector": "Zorg",
-    "vizCard3Location": "Brussel"
+    "vizCard3Location": "Brussel",
+    "demoExpectation": "Bekijk samen met ons hoe u uw eigen doelgroep vindt.",
+    "videoLabel": "Van gesprek naar bedrijvenlijst · Bekijk de demo",
+    "benefitsLabel": "Wat u met BelgoBase kunt doen",
+    "benefit1": "Uw doelgroep bepalen in een gesprek",
+    "benefit2": "Beschikbare contactgegevens onderzoeken",
+    "benefit3": "Uw selectie meenemen naar Excel"
   },
   "socialProof": {
     "eyebrow": "Eén doorlopende werkwijze",
@@ -247,10 +253,10 @@
   },
   "finalCta": {
     "eyebrow": "Aan de slag",
-    "title": "Breng uw volgende prospectieopdracht van idee naar export",
+    "title": "Welke bedrijven wilt u bereiken?",
     "titleHighlight": "",
     "titleEnd": "",
-    "description": "Vertel ons welke bedrijven u wilt bereiken. We tonen hoe Gesprek en Werkruimte uw eigen scenario omzetten in een selectie die u kunt controleren en gebruiken."
+    "description": "Vertel ons wat u verkoopt en wie u zoekt. In de demo bekijken we samen hoe u uw doelgroep bepaalt, bedrijven selecteert en een bruikbare lijst samenstelt."
   },
   "footer": {
     "tagline": "Van bedrijfsverhaal naar een gerichte Belgische prospectielijst.",

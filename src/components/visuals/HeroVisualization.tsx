@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ArrowDown, Play } from "lucide-react";
+import { Play } from "lucide-react";
 import { useTranslations } from "@/providers/TranslationsProvider";
 
 type DemoId = "prospecting" | "cleanup";
@@ -11,7 +11,7 @@ const copy = {
     prospectingTitle: "Vind passende bedrijven met BelgoBase",
     prospectingDescription: "Vertel wat u doet, beoordeel het voorstel en werk verder met een gerichte bedrijvenlijst en beschikbare contactgegevens.",
     prospectingCaption: "Echte zoekopdracht en Excel-export. AI-voice-over.",
-    cleanupTitle: "Heb je al lijsten? Haal eruit wat erin zit.",
+    cleanupTitle: "Bestaande lijsten? Maak er weer werkbare contacten van.",
     cleanupDescription: "Bekijk een echte verwerking van bestaande Excelbestanden. Persoonsgegevens zijn afgeschermd.",
     cleanupCaption: "Echte Excel-proef in de desktopversie. Persoonsgegevens afgeschermd; AI-voice-over.",
     play: "Bekijk de uitleg",
@@ -41,7 +41,7 @@ const copy = {
   },
 };
 
-export function HeroVisualization() {
+export function HeroVisualization({ mode = "prospecting" }: { mode?: DemoId }) {
   const { locale } = useTranslations();
   const language = locale === "nl" ? "nl" : "en";
   const text = copy[language];
@@ -50,9 +50,9 @@ export function HeroVisualization() {
   const [failed, setFailed] = useState<Record<DemoId, boolean>>({ prospecting: false, cleanup: false });
 
   const pauseOther = (active: DemoId) => {
-    (Object.keys(videos.current) as DemoId[]).forEach(id => {
-      if (id !== active) videos.current[id]?.pause();
-    });
+    const otherId = active === "prospecting" ? "list-cleanup-demo" : "hero-product-demo";
+    const other = document.getElementById(otherId);
+    if (other instanceof HTMLVideoElement) other.pause();
   };
 
   const play = (id: DemoId) => {
@@ -87,8 +87,8 @@ export function HeroVisualization() {
     const videoId = id === "prospecting" ? "hero-product-demo" : "list-cleanup-demo";
     const transcriptId = `${videoId}-transcript`;
 
-    return <article id={id === "cleanup" ? "list-cleanup-demo-card" : "product-demonstration"} className="min-w-0 scroll-mt-28 rounded-2xl border border-border bg-white p-4 shadow-[0_28px_80px_-42px_rgba(5,18,45,0.38)] dark:bg-[#0a1730] sm:p-5">
-      <div className="mb-4 text-left">
+    return <article id={id === "cleanup" ? "list-cleanup-demo-card" : "product-demonstration"} className="demo-card min-w-0 scroll-mt-28 rounded-2xl border border-border bg-surface p-3 shadow-[0_28px_80px_-42px_rgba(5,18,45,0.38)] sm:p-4">
+      <div className={id === "prospecting" ? "sr-only" : "mb-4 text-left"}>
         <h2 className="text-xl font-semibold tracking-tight text-deep-navy dark:text-white sm:text-2xl">{title}</h2>
         <p className="mt-2 text-sm leading-6 text-muted sm:text-base">{description}</p>
       </div>
@@ -99,7 +99,7 @@ export function HeroVisualization() {
           src={source}
           controls
           playsInline
-          preload="metadata"
+          preload={id === "prospecting" ? "metadata" : "none"}
           poster={poster}
           width={width}
           height={height}
@@ -114,14 +114,14 @@ export function HeroVisualization() {
           <a href={source}>{text.open}</a>
         </video>
         {!started[id] && !failed[id] && <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/15">
-          <button type="button" onClick={() => play(id)} aria-controls={videoId} className="pointer-events-auto inline-flex min-h-14 items-center gap-3 rounded-full bg-primary px-6 py-4 text-base font-semibold text-white shadow-xl hover:bg-primary-dark focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white sm:text-lg">
+          <button type="button" onClick={() => play(id)} aria-controls={videoId} className="pointer-events-auto inline-flex min-h-12 items-center gap-3 rounded-full bg-white px-5 py-3 text-base font-semibold text-slate-900 shadow-xl hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">
             <Play size={24} aria-hidden="true" />
             {text.play}
           </button>
         </div>}
         {failed[id] && <p role="status" className="p-5 text-base text-white">{text.failed} <a className="underline" href={source}>{text.open}</a>.</p>}
       </div>
-      <p className="mt-3 text-center text-sm leading-6 text-muted">{caption}</p>
+      <p className="mt-3 text-center text-[15px] leading-6 text-muted">{caption}</p>
       <details className="mx-auto mt-3 max-w-3xl text-left text-sm leading-6 text-muted">
         <summary className="cursor-pointer text-center underline underline-offset-4">{text.transcript}</summary>
         <p id={transcriptId} className="mt-3">{transcript}</p>
@@ -130,7 +130,7 @@ export function HeroVisualization() {
   };
 
   return <section aria-label={language === "nl" ? "BelgoBase-demonstraties" : "BelgoBase demonstrations"} className="w-full min-w-0 space-y-5">
-    {renderVideo({
+    {mode === "prospecting" && renderVideo({
       id: "prospecting",
       title: text.prospectingTitle,
       description: text.prospectingDescription,
@@ -141,12 +141,7 @@ export function HeroVisualization() {
       width: 1920,
       height: 1080,
     })}
-    <div className="flex justify-center">
-      <a href="#list-cleanup-demo-card" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-white px-5 py-2.5 text-sm font-semibold text-deep-navy hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:bg-[#0a1730] dark:text-white">
-        {text.next}<ArrowDown size={18} aria-hidden="true" />
-      </a>
-    </div>
-    {renderVideo({
+    {mode === "cleanup" && renderVideo({
       id: "cleanup",
       title: text.cleanupTitle,
       description: text.cleanupDescription,
@@ -157,10 +152,5 @@ export function HeroVisualization() {
       width: 1920,
       height: 1080,
     })}
-    <div className="flex justify-center pt-1">
-      <a href="#contact" className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-7 py-3.5 text-base font-semibold text-white hover:bg-primary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-        {text.demo}
-      </a>
-    </div>
   </section>;
 }

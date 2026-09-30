@@ -9,6 +9,7 @@ import { Footer } from "@/components/layout/Footer";
 import { ScrollProgress } from "@/components/layout/ScrollProgress";
 import { ScrollRestoration } from "@/components/layout/ScrollRestoration";
 import { SectionSkeleton } from "@/components/ui/SectionSkeleton";
+import { HeroVisualization } from "@/components/visuals/HeroVisualization";
 import { Hero } from "@/components/sections/Hero";
 
 const Process = dynamic(
@@ -58,6 +59,9 @@ export default function Home() {
         <Hero />
         <div className="section-lazy section-lazy--process">
           <Process />
+        </div>
+        <div className="homepage-cleanup">
+          <HeroVisualization mode="cleanup" />
         </div>
         <div className="section-lazy section-lazy--default">
           <Industries />

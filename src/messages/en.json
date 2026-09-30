@@ -19,11 +19,11 @@
     "mainNavigation": "Main navigation"
   },
   "hero": {
-    "badge": "From your business story to a focused prospect list",
-    "titleLine1": "Your own prospecting tool.",
+    "badge": "For your B2B prospecting in Belgium",
+    "titleLine1": "Find more companies",
     "titleHighlight": "",
-    "titleLine2": "A one-time purchase.",
-    "enrichment": "Tell us what you need. AI helps find suitable companies and enrich contact details.",
+    "titleLine2": "like your best customers.",
+    "enrichment": "Tell BelgoBase who you want to reach. Define your audience with AI and build a focused list of Belgian companies.",
     "description": "Tell us what your business does or share your website. BelgoBase helps identify suitable customers and takes you from target market to a useful Excel list.",
     "primaryCta": "Request a demo",
     "secondaryCta": "See how BelgoBase works",
@@ -50,7 +50,13 @@
     "vizCard2Location": "Ghent",
     "vizCard3Name": "Care example",
     "vizCard3Sector": "Care",
-    "vizCard3Location": "Brussels"
+    "vizCard3Location": "Brussels",
+    "demoExpectation": "See with us how to find your own target companies.",
+    "videoLabel": "From conversation to company list · Watch the demo",
+    "benefitsLabel": "What you can do with BelgoBase",
+    "benefit1": "Define your audience in a conversation",
+    "benefit2": "Research available contact details",
+    "benefit3": "Take your selection into Excel"
   },
   "socialProof": {
     "eyebrow": "One continuous workflow",
@@ -247,10 +253,10 @@
   },
   "finalCta": {
     "eyebrow": "Get Started",
-    "title": "Take your next prospecting assignment from idea to export",
+    "title": "Which companies do you want to reach?",
     "titleHighlight": "",
     "titleEnd": "",
-    "description": "Tell us which companies you want to reach. We will show how Conversation and Workspace turn your own scenario into a selection you can review and use."
+    "description": "Tell us what you sell and who you want to reach. In the demo, we show how to define your audience, select companies and build a useful list."
   },
   "footer": {
     "tagline": "From your business story to a focused Belgian prospect list.",
