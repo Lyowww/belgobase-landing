@@ -388,6 +388,7 @@ test("journey target search starts without the prior AI session or filters", asy
   const h = adapterHarness([
     { body: { authenticated: true, csrf: "f".repeat(32) } },
     { body: { ok: true, proposal: aiProposal() } },
+    { body: { ok: true, proposal: { contract: AI_CONTRACT, status: "closed", session_id: AI_SESSION } } },
     { body: { ok: true, proposal: aiProposal() } },
   ]);
   await h.api.ai({ text: "oude zoekvraag", conversation: [], filters: { nace_prefix: "41" } });
@@ -395,7 +396,11 @@ test("journey target search starts without the prior AI session or filters", asy
     text: "bevestigde doelgroep", conversation: [{ role: "user", content: "zichtbaar gesprek" }],
     filters: {}, fresh_session: true,
   });
-  const payload = JSON.parse(h.calls.at(-1).options.body);
+  const payloads = h.calls.slice(1).map(call => JSON.parse(call.options.body));
+  assert.deepEqual(payloads.map(payload => payload.action), ["ask", "close", "ask"]);
+  assert.equal(payloads[1].session_id, AI_SESSION);
+  assert.equal(h.calls[2].options.keepalive, false);
+  const payload = payloads.at(-1);
   assert.equal(payload.action, "ask");
   assert.equal(payload.session_id, undefined);
   assert.equal(payload.reset, true);
@@ -404,10 +409,71 @@ test("journey target search starts without the prior AI session or filters", asy
   assert.equal("conversation" in payload, false);
 });
 
+test("expired auth during known-session cleanup does not keep stale local ownership", async () => {
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "f".repeat(32) } },
+    { body: { ok: true, proposal: aiProposal() } },
+    { status: 401, body: { ok: false, error: "auth_required" } },
+    { body: { authenticated: true, csrf: "g".repeat(32) } },
+    { body: { ok: true, proposal: aiProposal({ session_id: "00000000-0000-4000-8000-000000000002" }) } },
+  ]);
+  await h.api.ai({ text: "eerste", conversation: [], filters: {}, conversation_epoch: 0 });
+  const next = await h.api.ai({ text: "tweede", conversation: [], filters: {}, conversation_epoch: 1 });
+  assert.equal(next.proposal.status, "clarify");
+  const payloads = h.calls.filter(call => call.options.body).map(call => JSON.parse(call.options.body));
+  assert.deepEqual(payloads.map(payload => payload.action), ["ask", "close", "ask"]);
+  assert.equal(payloads[2].session_id, undefined);
+});
+
+test("five deliberate conversations close each known session before the next ask", async () => {
+  const session = index => `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`;
+  const replies = [
+    { body: { authenticated: true, csrf: "q".repeat(32) } },
+    { body: { ok: true, proposal: aiProposal({ session_id: session(1) }) } },
+  ];
+  for (let index = 2; index <= 5; index++) {
+    replies.push(
+      { body: { ok: true, proposal: { contract: AI_CONTRACT, status: "closed", session_id: session(index - 1) } } },
+      { body: { ok: true, proposal: aiProposal({ session_id: session(index) }) } },
+    );
+  }
+  const h = adapterHarness(replies);
+  for (let epoch = 0; epoch < 5; epoch++) {
+    await h.api.ai({ text: `gesprek ${epoch}`, conversation: [], filters: {}, fresh_session: true, conversation_epoch: epoch });
+  }
+  const payloads = h.calls.slice(1).map(call => JSON.parse(call.options.body));
+  assert.deepEqual(payloads.map(payload => payload.action),
+    ["ask", "close", "ask", "close", "ask", "close", "ask", "close", "ask"]);
+  assert.deepEqual(payloads.filter(payload => payload.action === "close").map(payload => payload.session_id),
+    [session(1), session(2), session(3), session(4)]);
+  assert.ok(payloads.filter(payload => payload.action === "ask").every(payload => payload.session_id === undefined));
+});
+
+test("explicit cancellation closes a known session after a lost follow-up", async () => {
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "c".repeat(32) } },
+    { body: { ok: true, proposal: aiProposal() } },
+    { error: new TypeError("follow-up reply lost") },
+    { body: { ok: true, cancelled: true } },
+    { body: { ok: true, proposal: { contract: AI_CONTRACT, status: "closed", session_id: AI_SESSION } } },
+  ]);
+  await h.api.ai({ text: "eerste", filters: {}, operation_id: "one" });
+  await assert.rejects(h.api.ai({ text: "vervolg", filters: {}, operation_id: "two" }));
+  await h.api.cancel_operation({ operation_id: "two" });
+  const bridge = h.calls.filter(call => call.options.body).map(call => ({
+    url: call.url,
+    payload: JSON.parse(call.options.body),
+  }));
+  assert.deepEqual(bridge.map(call => call.url.split("/").at(-1)), ["ai", "ai", "cancel_operation", "ai"]);
+  assert.equal(bridge[3].payload.action, "close");
+  assert.equal(bridge[3].payload.session_id, AI_SESSION);
+});
+
 test("AI rejects malformed canonical responses without retaining their session", async () => {
   const h = adapterHarness([
     { body: { authenticated: true, csrf: "r".repeat(32) } },
     { body: { ok: true, proposal: aiProposal({ expires_in_seconds: 0 }) } },
+    { body: { ok: true, proposal: { contract: AI_CONTRACT, status: "closed", session_id: AI_SESSION } } },
     { body: { ok: true, proposal: aiProposal({ session_id: "00000000-0000-4000-8000-000000000002" }) } },
   ]);
   await assert.rejects(h.api.ai({ text: "test", conversation: [], filters: {} }), error => {
@@ -415,9 +481,38 @@ test("AI rejects malformed canonical responses without retaining their session",
     assert.match(error.message, /geen geldig antwoord/);
     return true;
   });
-  await h.api.ai({ text: "retry", conversation: [{ role: "user", content: "test" }], filters: {} });
-  const retry = JSON.parse(h.calls[2].options.body);
+  await h.api.ai({ text: "test", conversation: [], filters: {} });
+  const payloads = h.calls.slice(1).map(call => JSON.parse(call.options.body));
+  assert.deepEqual(payloads.map(payload => payload.action), ["ask", "close", "ask"]);
+  assert.notEqual(payloads[0].request_id, payloads[2].request_id);
+  const retry = payloads[2];
   assert.equal(retry.session_id, undefined);
+});
+
+test("malformed follow-up closes the known session instead of a mismatched returned id", async () => {
+  const foreignSession = "00000000-0000-4000-8000-000000000009";
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "m".repeat(32) } },
+    { body: { ok: true, proposal: aiProposal() } },
+    { body: { ok: true, proposal: aiProposal({ session_id: foreignSession }) } },
+    { body: { ok: true, proposal: { contract: AI_CONTRACT, status: "closed", session_id: AI_SESSION } } },
+  ]);
+  await h.api.ai({ text: "eerste", filters: {} });
+  await assert.rejects(h.api.ai({ text: "vervolg", filters: {} }), error => error.code === "ai_invalid_response");
+  const payloads = h.calls.slice(1).map(call => JSON.parse(call.options.body));
+  assert.deepEqual(payloads.map(payload => payload.action), ["ask", "ask", "close"]);
+  assert.equal(payloads[2].session_id, AI_SESSION);
+  assert.notEqual(payloads[2].session_id, foreignSession);
+});
+
+test("an explicit AI error envelope never closes its unconfirmed session id", async () => {
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "u".repeat(32) } },
+    { body: { ok: true, proposal: aiProposal({ ok: false, error: "invalid_ai_request", http_status: 400 }) } },
+  ]);
+  await assert.rejects(h.api.ai({ text: "ongeldig", filters: {} }), error => error.code === "invalid_ai_request");
+  const payloads = h.calls.slice(1).map(call => JSON.parse(call.options.body));
+  assert.deepEqual(payloads.map(payload => payload.action), ["ask"]);
 });
 
 test("AI balance errors are human in every language and a paid request is never retried automatically", async () => {
@@ -498,6 +593,7 @@ test("workspace logout clears the AI session before another browser request", as
   const h = adapterHarness([
     { body: { authenticated: true, csrf: "l".repeat(32) } },
     { body: { ok: true, proposal: aiProposal() } },
+    { body: { ok: true, proposal: { contract: AI_CONTRACT, status: "closed", session_id: AI_SESSION } } },
     { body: { ok: true } },
     { body: { authenticated: true, csrf: "n".repeat(32) } },
     { body: { ok: true, proposal: aiProposal({ session_id: nextSession }) } },
@@ -506,6 +602,8 @@ test("workspace logout clears the AI session before another browser request", as
   await h.api.account_action({ action: "deactivate", confirmed: true });
   await h.api.ai({ text: "after logout", conversation: [{ role: "user", content: "old" }], filters: {} });
   const last = JSON.parse(h.calls.at(-1).options.body);
+  const aiPayloads = h.calls.filter(call => call.url.endsWith("/bridge/ai")).map(call => JSON.parse(call.options.body));
+  assert.deepEqual(aiPayloads.map(payload => payload.action), ["ask", "close", "ask"]);
   assert.equal(last.session_id, undefined);
 });
 

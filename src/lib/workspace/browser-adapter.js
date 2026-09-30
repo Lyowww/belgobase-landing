@@ -41,6 +41,7 @@
   let aiControlFilters = {};
   let aiGeneration = 0;
   let aiPending = null;
+  let aiClosing = false;
   let journeyQueue = Promise.resolve();
   let journeyLastStarted = 0;
   let journeyClosed = false;
@@ -150,6 +151,7 @@
     aiRetry = null;
     aiControlFilters = {};
     aiPending = null;
+    aiClosing = false;
     csrf = "";
     csrfLoad = null;
     notifyAuth("belgobase-web-auth-expired");
@@ -301,37 +303,59 @@
     return { proposal, sessionId: response.session_id };
   }
 
-  async function closeLateAiSession(response) {
-    const sessionId = response?.proposal?.contract === AI_CONTRACT && AI_UUID.test(response.proposal.session_id || "") ? response.proposal.session_id : null;
-    if (!sessionId) return;
+  async function closeKnownAiSession(sessionId, { keepalive = false } = {}) {
+    if (!AI_UUID.test(sessionId || "")) return;
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 3000);
     try {
-      await sendBridge("ai", { contract: AI_CONTRACT, action: "close", request_id: window.crypto.randomUUID(), session_id: sessionId, assistant: true });
-    } catch {}
+      await sendBridge("ai", { contract: AI_CONTRACT, action: "close", request_id: window.crypto.randomUUID(), session_id: sessionId, assistant: true }, { keepalive, signal: controller.signal });
+    } catch {
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  }
+
+  async function closeLateAiSession(response) {
+    const sessionId = response?.proposal?.contract === AI_CONTRACT ? response.proposal.session_id : null;
+    await closeKnownAiSession(sessionId);
+  }
+
+  function confirmedAiResponseSession(response) {
+    const proposal = response?.proposal;
+    if (!object(proposal) || proposal.contract !== AI_CONTRACT || !AI_UUID.test(proposal.session_id || "")) return null;
+    const status = Number.isInteger(proposal._http_status) ? proposal._http_status
+      : Number.isInteger(proposal.http_status) ? proposal.http_status : undefined;
+    if (proposal.ok === false || typeof proposal.error === "string" || (status !== undefined && status >= 400)) return null;
+    return proposal.session_id;
   }
 
   function cancelAiState(operationId) {
     if (!aiPending) {
-      if (!aiRetry || (operationId && aiRetry.operationId && operationId !== aiRetry.operationId)) return false;
+      if (!aiRetry || (operationId && aiRetry.operationId && operationId !== aiRetry.operationId)) return null;
+      const sessionToClose = aiSessionId;
       aiGeneration++;
       aiSessionId = null;
       aiControlFilters = {};
       aiRetry = null;
-      return true;
+      return sessionToClose;
     }
-    if (operationId && aiPending.operationId && operationId !== aiPending.operationId) return false;
+    if (operationId && aiPending.operationId && operationId !== aiPending.operationId) return null;
+    const sessionToClose = aiSessionId;
     aiGeneration++;
     aiSessionId = null;
     aiRetry = null;
     aiControlFilters = {};
     aiPending = null;
-    return true;
+    return sessionToClose;
   }
 
   async function aiBridge(request) {
-    if (aiPending) throw aiError("ai_session_busy", 409);
+    if (aiPending || aiClosing) throw aiError("ai_session_busy", 409);
+    let sessionToClose = null;
     if (request?.conversation_epoch !== undefined) {
       if (!Number.isSafeInteger(request.conversation_epoch) || request.conversation_epoch < 0) throw aiError("invalid_ai_request", 400);
       if (aiConversationEpoch !== request.conversation_epoch) {
+        sessionToClose = aiSessionId;
         aiConversationEpoch = request.conversation_epoch;
         aiRetry = null;
         aiSessionId = null;
@@ -340,9 +364,18 @@
       }
     }
     if (request?.fresh_session === true) {
+      sessionToClose ||= aiSessionId;
       aiGeneration++;
       aiSessionId = null;
       aiControlFilters = {};
+    }
+    if (sessionToClose) {
+      aiClosing = true;
+      try {
+        await closeKnownAiSession(sessionToClose);
+      } finally {
+        aiClosing = false;
+      }
     }
     const outgoing = canonicalAiRequest(request);
     const intent = { ...outgoing };
@@ -357,8 +390,9 @@
     const expectedSession = aiSessionId;
     const pending = { generation: aiGeneration, operationId: typeof request.operation_id === "string" ? request.operation_id : null };
     aiPending = pending;
+    let wrapped = null;
     try {
-      const wrapped = await sendBridge("ai", outgoing);
+      wrapped = await sendBridge("ai", outgoing);
       if (pending.generation !== aiGeneration || aiPending !== pending) {
         await closeLateAiSession(wrapped);
         throw aiError("ai_session_closed", 409);
@@ -374,7 +408,13 @@
       return result;
     } catch (error) {
       if (pending.generation === aiGeneration) {
-        if (error?.code === "ai_session_expired") { aiSessionId = null; aiRetry = null; }
+        const confirmedSession = error?.code === "ai_invalid_response" ? confirmedAiResponseSession(wrapped) : null;
+        if (confirmedSession) {
+          await closeKnownAiSession(expectedSession || confirmedSession);
+          aiSessionId = null;
+          aiRetry = null;
+          aiControlFilters = {};
+        } else if (error?.code === "ai_session_expired") { aiSessionId = null; aiRetry = null; }
         else if (error?.status >= 400 && error.status < 500 && ![408, 409, 429].includes(error.status)) aiRetry = null;
       }
       throw error;
@@ -506,8 +546,8 @@
     if (method === "journey_prepare_selection") return journeyPrepareSelection(payload);
     if (method === "journey_save_export") return journeyDownloadExport(payload);
     if (method === "cancel_operation") {
-      cancelAiState(payload?.operation_id);
-      return sendBridge(method, payload);
+      const sessionToClose = cancelAiState(payload?.operation_id);
+      return sendBridge(method, payload).finally(() => closeKnownAiSession(sessionToClose));
     }
     if (method !== "workspace_save") return sendBridge(method, payload);
     // Keep rapid edits from this browser in order. Other browsers still use
@@ -518,7 +558,7 @@
     return pending;
   }
 
-  async function sendBridge(method, payload, { skipAutodownload = false } = {}) {
+  async function sendBridge(method, payload, { skipAutodownload = false, keepalive = false, signal } = {}) {
     const token = await ensureCsrf();
     const outgoing = payload === undefined ? {} : { ...payload };
     if (method === "workspace_save") outgoing.workspace_revision = workspaceRevision;
@@ -533,6 +573,8 @@
           "X-BelgoBase-CSRF": token,
         },
         body: JSON.stringify(outgoing),
+        keepalive,
+        signal,
       });
     } catch {
       if (method === "ai") throw aiError("transport_error");
@@ -756,11 +798,14 @@
   }
 
   async function logoutFromWorkspace() {
+    const sessionToClose = aiSessionId;
     aiGeneration++;
     aiSessionId = null;
     aiRetry = null;
     aiControlFilters = {};
     aiPending = null;
+    aiClosing = false;
+    await closeKnownAiSession(sessionToClose);
     const token = await ensureCsrf();
     const response = await fetch(`${API_ROOT}/auth/logout`, {
       method: "POST",
@@ -803,11 +848,13 @@
   });
   window.pywebview = { api };
   window.addEventListener("pagehide", () => {
+    void closeKnownAiSession(aiSessionId, { keepalive: true });
     aiGeneration++;
     aiSessionId = null;
     aiRetry = null;
     aiControlFilters = {};
     aiPending = null;
+    aiClosing = false;
     journeyClosed = true;
     destroyVoice();
   });

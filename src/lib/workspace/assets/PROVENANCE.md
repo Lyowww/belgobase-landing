@@ -1,5 +1,7 @@
-# BelgoBase operational audit — 30 September 2026
+# BelgoBase second operational audit — 30 September 2026
 
-The desktop and web interfaces retain their existing platform adapters. This release preserves the conversation/search/export flow and distinguishes a manual retry from an intentional new conversation. Unsupported source selections are visibly unavailable. Shared behavioral tests execute against both actual HTML sources. The files are not byte-identical: existing web localization and browser-specific export/voice behavior is preserved.
+Desktop and web keep their platform adapters. Each UI operation now uses a fresh UUID so delayed cancellation or page reload cannot target a later operation with a recycled sequence number. The separate local sequence still suppresses stale visible results.
 
-The UI hash is in release.json. The authenticated deployed workspace hash also includes the translation catalog, browser adapters, CSS and Git commit. Local proof is distinct from production and PC1 proof.
+The browser adapter releases abandoned AI sessions; provider-free completion of paid proposals and operation/export lifecycle corrections are shared server behavior. Temporary customer-list imports preserve explicit numeric notation and do not convert foreign identifiers into Belgian enterprise numbers.
+
+The UI hash is in release.json. The deployed workspace hash also binds translation catalog, browser adapters, CSS and Git commit. Source/fixture, real PC1 parser, and published runtime evidence are recorded separately in the audit delivery.

@@ -220,7 +220,7 @@ function controls(){
 let operationPoll=null;
 let filterRefreshTimer=null, filterRevision=0, filterDraft=null, filterDraftQuery='', filterRefreshPending=false, operationKind=null;
 function busy(on,text='',cancel=false){state.busy=on;$('#busy').hidden=!on;$('#busy-text').textContent=text;$('#cancel-request').hidden=!cancel;controls();if(!on&&assistantUi.walletPending){assistantUi.walletPending=false;void loadWallet();}}
-function beginOperation(text,cancel=true){const seq=++state.request;state.operation='ui-'+seq;busy(true,text,cancel);pollOperation(state.operation);return seq;}
+function beginOperation(text,cancel=true){const seq=++state.request;state.operation='ui-'+crypto.randomUUID();busy(true,text,cancel);pollOperation(state.operation);return seq;}
 function endOperation(seq){if(seq!==state.request)return;clearTimeout(operationPoll);state.operation=null;busy(false);}
 async function pollOperation(id){clearTimeout(operationPoll);if(!id||id!==state.operation)return;operationPoll=setTimeout(async()=>{try{const r=await bridge('operation_status',{operation_id:id});if(id!==state.operation)return;if(r.stage)$('#busy-text').textContent=r.stage+(r.total?' · '+nf.format(r.completed||0)+' / '+nf.format(r.total):'');}catch(_){/* The original operation reports its own error. */}if(id===state.operation)pollOperation(id);},650);}
 
