@@ -36,6 +36,8 @@
   let workspaceRevision = null;
   let workspaceSaveQueue = Promise.resolve();
   let aiSessionId = null;
+  let aiRetry = null;
+  let aiConversationEpoch = null;
   let aiControlFilters = {};
   let aiGeneration = 0;
   let aiPending = null;
@@ -145,6 +147,7 @@
   function authExpired() {
     aiGeneration++;
     aiSessionId = null;
+    aiRetry = null;
     aiControlFilters = {};
     aiPending = null;
     csrf = "";
@@ -307,9 +310,18 @@
   }
 
   function cancelAiState(operationId) {
-    if (!aiPending || (operationId && aiPending.operationId && operationId !== aiPending.operationId)) return false;
+    if (!aiPending) {
+      if (!aiRetry || (operationId && aiRetry.operationId && operationId !== aiRetry.operationId)) return false;
+      aiGeneration++;
+      aiSessionId = null;
+      aiControlFilters = {};
+      aiRetry = null;
+      return true;
+    }
+    if (operationId && aiPending.operationId && operationId !== aiPending.operationId) return false;
     aiGeneration++;
     aiSessionId = null;
+    aiRetry = null;
     aiControlFilters = {};
     aiPending = null;
     return true;
@@ -317,12 +329,27 @@
 
   async function aiBridge(request) {
     if (aiPending) throw aiError("ai_session_busy", 409);
+    if (request?.conversation_epoch !== undefined) {
+      if (!Number.isSafeInteger(request.conversation_epoch) || request.conversation_epoch < 0) throw aiError("invalid_ai_request", 400);
+      if (aiConversationEpoch !== request.conversation_epoch) {
+        aiConversationEpoch = request.conversation_epoch;
+        aiRetry = null;
+        aiSessionId = null;
+        aiControlFilters = {};
+        aiGeneration++;
+      }
+    }
     if (request?.fresh_session === true) {
       aiGeneration++;
       aiSessionId = null;
       aiControlFilters = {};
     }
     const outgoing = canonicalAiRequest(request);
+    const intent = { ...outgoing };
+    delete intent.request_id;
+    const signature = JSON.stringify(intent);
+    if (aiRetry?.signature === signature) outgoing.request_id = aiRetry.requestId;
+    else aiRetry = { signature, requestId: outgoing.request_id, operationId: request.operation_id || null };
     const controls = outgoing.action === "ask"
       ? (Object.hasOwn(outgoing.current_filters || {}, ENTERPRISE_EXCLUSION_FIELD)
           ? { [ENTERPRISE_EXCLUSION_FIELD]: clone(outgoing.current_filters[ENTERPRISE_EXCLUSION_FIELD]) } : {})
@@ -341,11 +368,15 @@
       Object.assign(validated.proposal.filters, clone(controls));
       aiControlFilters = clone(controls);
       aiSessionId = validated.sessionId;
+      aiRetry = null;
       const result = { ...wrapped, proposal: validated.proposal };
       if (object(validated.proposal.wallet)) result.wallet = clone(validated.proposal.wallet);
       return result;
     } catch (error) {
-      if (error?.code === "ai_session_expired" && pending.generation === aiGeneration) aiSessionId = null;
+      if (pending.generation === aiGeneration) {
+        if (error?.code === "ai_session_expired") { aiSessionId = null; aiRetry = null; }
+        else if (error?.status >= 400 && error.status < 500 && ![408, 409, 429].includes(error.status)) aiRetry = null;
+      }
       throw error;
     } finally {
       if (aiPending === pending) aiPending = null;
@@ -727,6 +758,7 @@
   async function logoutFromWorkspace() {
     aiGeneration++;
     aiSessionId = null;
+    aiRetry = null;
     aiControlFilters = {};
     aiPending = null;
     const token = await ensureCsrf();
@@ -773,6 +805,7 @@
   window.addEventListener("pagehide", () => {
     aiGeneration++;
     aiSessionId = null;
+    aiRetry = null;
     aiControlFilters = {};
     aiPending = null;
     journeyClosed = true;

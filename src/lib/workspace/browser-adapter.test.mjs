@@ -710,3 +710,68 @@ test("manual stop while automatic transcription runs shares the same result", as
   assert.equal((await h.api.voice_stop()).text, "Antwerpen");
   assert.equal(h.calls.filter(call => call.url === "/api/web/voice").length, 1);
 });
+
+test("manual AI retry after a lost reply reuses its paid request identity", async () => {
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "r".repeat(32) } },
+    { error: new TypeError("reply lost") },
+    { body: { ok: true, proposal: aiProposal() } },
+    { body: { ok: true, proposal: aiProposal() } },
+  ]);
+  const request = { text: "bakkers", filters: {}, conversation: [] };
+  await assert.rejects(h.api.ai(request));
+  await h.api.ai(request);
+  const sent = h.calls.filter(call => call.options.body).map(call => JSON.parse(call.options.body));
+  assert.equal(sent.length, 2);
+  assert.equal(sent[0].request_id, sent[1].request_id);
+  await h.api.ai({ text: "ook in Gent", filters: {} });
+  const last = JSON.parse(h.calls.at(-1).options.body);
+  assert.notEqual(sent[0].request_id, last.request_id);
+});
+
+test("a different AI intent after a lost reply gets its own request identity", async () => {
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "r".repeat(32) } },
+    { error: new TypeError("reply lost") },
+    { body: { ok: true, proposal: aiProposal() } },
+  ]);
+  await assert.rejects(h.api.ai({ text: "bakkers", filters: {} }));
+  await h.api.ai({ text: "slagers", filters: {} });
+  const sent = h.calls.filter(call => call.options.body).map(call => JSON.parse(call.options.body));
+  assert.notEqual(sent[0].request_id, sent[1].request_id);
+});
+
+test("explicit cancel after a lost AI reply clears the retry identity", async () => {
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "r".repeat(32) } },
+    { error: new TypeError("reply lost") },
+    { body: { ok: true, cancelled: true } },
+    { body: { ok: true, proposal: aiProposal() } },
+  ]);
+  const request = { text: "bakkers", filters: {}, operation_id: "op-retry" };
+  await assert.rejects(h.api.ai(request));
+  await h.api.cancel_operation({ operation_id: "op-retry" });
+  await h.api.ai(request);
+  const sent = h.calls.filter(call => call.url.endsWith("/bridge/ai")).map(call => JSON.parse(call.options.body));
+  assert.notEqual(sent[0].request_id, sent[1].request_id);
+});
+
+test("explicit fresh conversation after a lost reply gets a new identity", async () => {
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "r".repeat(32) } },
+    { error: new TypeError("reply lost") },
+    { body: { ok: true, proposal: aiProposal() } },
+  ]);
+  const request = { text: "bakkers", filters: {}, fresh_session: true, conversation_epoch: 0 };
+  await assert.rejects(h.api.ai(request));
+  await h.api.ai({ ...request, conversation_epoch: 1 });
+  const sent = h.calls.filter(call => call.options.body).map(call => JSON.parse(call.options.body));
+  assert.notEqual(sent[0].request_id, sent[1].request_id);
+});
+
+ test("same journey target retry keeps identity despite fresh-session content", async () => {
+ const h=adapterHarness([{body:{authenticated:true,csrf:"r".repeat(32)}},{error:new TypeError("lost")},{body:{ok:true,proposal:aiProposal()}}]);
+ const request={text:"bakkers",filters:{},fresh_session:true,conversation_epoch:0};
+ await assert.rejects(h.api.ai(request));await h.api.ai(request);
+ const sent=h.calls.filter(c=>c.url.endsWith("/bridge/ai")).map(c=>JSON.parse(c.options.body));assert.equal(sent[0].request_id,sent[1].request_id);
+});
