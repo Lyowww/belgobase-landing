@@ -3,6 +3,10 @@
 .top .language-switch, .top label[for="language-switch"], .top .version { display: none; }
 .top { gap: 20px; }
 .top .actions { flex-shrink: 0; }
+.side-mode-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: -10px 0 0; padding: 0 6px; border: 0; background: transparent; }
+.side-mode-tabs button { min-width: 0; padding: 8px 7px; border: 1px solid #435877; border-radius: 8px; background: #172a45; color: #d7e2f2; font-size: 12px; font-weight: 600; }
+.side-mode-tabs button:hover:not(:disabled) { background: #1c2d48; color: white; }
+.side-mode-tabs button.selected { border-color: #7195ff; background: #253a5e; color: white; }
 .content { max-width: 1500px; }
 .intro p { max-width: 65ch; }
 .ghost { color: #52627a; }
@@ -30,7 +34,14 @@ input::placeholder, textarea::placeholder { color: #65748a; opacity: 1; }
 .search:focus-within { border-color: #7d9ced; box-shadow: 0 0 0 3px #2859df14; }
 .search input:focus-visible { outline: none; }
 .filterline { margin-bottom: 18px; }
+.chip { border: 1px solid #cfdbfb; border-radius: 8px; min-height: 30px; }
+.chip:not(button) { padding: 5px 9px; }
+.chip button, button.chip { border-radius: 8px; }
+.voice-info { display: block; width: max-content; max-width: 100%; margin: 5px 2px 16px auto; text-align: right; }
+.voice-info summary { justify-content: flex-end; }
+.voice-info p { right: 0; left: auto; text-align: left; }
 .region-quick { margin-top: 12px; }
+.region-button { border-radius: 8px; }
 .workbar { gap: 6px 14px; }
 .workbar .ghost { padding: 8px; }
 .results-head h2 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 9px; }
@@ -44,6 +55,16 @@ input::placeholder, textarea::placeholder { color: #65748a; opacity: 1; }
 .segment { flex-wrap: wrap; }
 .dialog-head h2 { min-width: 0; overflow-wrap: anywhere; }
 .dialog-footer { flex-wrap: wrap; }
+.journey-panel-head #journey-close,
+#dismiss-ai,
+#dialog-close,
+[data-dialog="close"],
+[data-tool="document-close"] { color: #b42318; border-color: #f0b7b1; }
+.journey-panel-head #journey-close:hover:not(:disabled),
+#dismiss-ai:hover:not(:disabled),
+#dialog-close:hover:not(:disabled),
+[data-dialog="close"]:hover:not(:disabled),
+[data-tool="document-close"]:hover:not(:disabled) { color: #8f1710; background: #fff1ef; }
 .bottom-note { line-height: 1.6; gap: 8px 24px; }
 /* The desktop compact sidebar hid the icon spans as well as the labels. */
 @media (min-width: 761px) and (max-width: 850px) {
@@ -55,7 +76,9 @@ input::placeholder, textarea::placeholder { color: #65748a; opacity: 1; }
   .side .brand { width: auto; padding: 0; justify-content: flex-start; font-size: 18px; }
   .side .brand>span:last-child { display: inline; }
   .brand-logo { width: 30px; height: 30px; }
-  .side nav { grid-column: 1 / -1; grid-row: 2; display: flex; gap: 6px; overflow-x: auto; padding: 3px 0 5px; scrollbar-width: thin; }
+  .side-mode-tabs { grid-column: 1 / -1; grid-row: 2; width: min(100%, 330px); margin: 0; padding: 0; }
+  .side-mode-tabs button { min-height: 40px; font-size: 13px; }
+  .side nav { grid-column: 1 / -1; grid-row: 3; display: flex; gap: 6px; overflow-x: auto; padding: 3px 0 5px; scrollbar-width: thin; }
   .side nav .nav { width: auto; flex: 0 0 auto; margin: 0; padding: 10px 12px; white-space: nowrap; font-size: 13px; gap: 7px; }
   .side nav .nav>span { display: inline-flex; overflow-wrap: normal; }
   .side nav .nav>b { display: inline; }

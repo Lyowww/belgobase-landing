@@ -73,7 +73,7 @@ test("web renders service-shaped saved advice and list metadata", () => {
   const esc = value => String(value ?? "");
   const journey = { data: {} };
   const advice = scriptFunction("renderJourneyAdvice", "renderJourneyFeedback", {
-    journey, journeyPanel, esc, journeyProfileMarkup: () => "", journeyText: key => key,
+    journey, journeyPanel, esc, journeyProfileMarkup: () => "", journeySourcesMarkup: () => "", journeyText: key => key,
   });
   advice({ assistant_message: "Bewaard advies", question: "Volgende vraag", hypotheses: [], search_brief: "Zoekbrief" });
   assert.match(panel.body, /Bewaard advies/);
@@ -183,8 +183,9 @@ test("web journey controls switch through the shared NL FR EN catalog", () => {
 
 test("web clears stale job state and sends the exact selected count to the prospects import", async () => {
   const journey = { mode: null, data: {}, job: { job_id: "old" }, viewingHistory: true };
+  const state = { conversation: [] };
   const mergeJourneyResult = scriptFunction("mergeJourneyResult", "updateJourney", {
-    journey, acceptWalletSnapshot() {},
+    journey, state, safeJourneySources: () => [], acceptWalletSnapshot() {},
   });
   mergeJourneyResult({ job: null });
   assert.equal(journey.job, null);

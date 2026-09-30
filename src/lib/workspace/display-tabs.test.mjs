@@ -13,7 +13,7 @@ function fixture({ conversation = true } = {}) {
     if (!nodes.has(id)) nodes.set(id, { hidden: false, value: '', textContent: '', attrs: {}, setAttribute(k, v) { this.attrs[k] = v; }, focus() { this.focused = true; } });
     return nodes.get(id);
   };
-  const tabs = ['conversation', 'workspace', 'conversation', 'workspace'].map(mode => ({ dataset: { appMode: mode }, classList: classList(new Set()), attrs: {}, setAttribute(k, v) { this.attrs[k] = v; }, focus() { this.focused = true; } }));
+  const tabs = ['conversation', 'workspace'].map(mode => ({ dataset: { appMode: mode }, classList: classList(new Set()), attrs: {}, setAttribute(k, v) { this.attrs[k] = v; }, focus() { this.focused = true; } }));
   $('#tools-view').hidden = $('#dossier-view').hidden = true;
   const state = { view: 'search', rows: [{ number: '0123456789' }], filters: { min_personeel_vte: 10 }, query: 'Mechelen', selectedRows: { '0123456789': true }, conversation: [{ role: 'user', content: 'Mijn verhaal' }], desktopCapabilities: new Set(), busy: false, recording: false };
   const storage = new Map();
@@ -83,8 +83,9 @@ test('rapid desktop tab changes save in order and busy work cannot be switched a
 
 test('keyboard tabs select the destination and update the shared panel label', () => {
   const f = fixture(); let prevented = false;
-  f.context.handleModeKey({ key: 'End', preventDefault() { prevented = true; } });
+  const sideTabs = { querySelector: selector => selector.includes('workspace') ? f.tabs[1] : f.tabs[0] };
+  f.context.handleModeKey({ key: 'End', preventDefault() { prevented = true; }, currentTarget: { closest: () => sideTabs } });
   assert.equal(prevented, true);
-  assert.equal(f.tabs[3].focused, true);
-  assert.equal(f.$('#app-panel').attrs['aria-labelledby'], 'workspace-tab');
+  assert.equal(f.tabs[1].focused, true);
+  assert.equal(f.$('#app-panel').attrs['aria-labelledby'], 'side-workspace-tab');
 });

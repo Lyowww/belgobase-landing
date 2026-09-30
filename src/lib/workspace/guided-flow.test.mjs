@@ -70,7 +70,7 @@ test("new step-one advice retires an older ready proposal before rendering the r
   let adviceCalls = 0;
   let aiCalls = 0;
   const harness = Function(
-    "state", "journey", "guidedStage", "guidedModeActive", "guidedInputRoute", "looksLikeBusinessIntro", "routeJourneyRequest", "journeyAdvise", "aiSearch", "$", "search", "snapshotFilters",
+    "state", "journey", "guidedStage", "guidedModeActive", "guidedInputRoute", "looksLikeBusinessIntro", "isExplicitContactRequest", "routeJourneyRequest", "journeyAdvise", "aiSearch", "$", "search", "snapshotFilters",
     `let guidedStageOverride = "goal"; ${dispatchSource}; return { dispatchComposerText, override: () => guidedStageOverride };`,
   )(
     state,
@@ -78,6 +78,7 @@ test("new step-one advice retires an older ready proposal before rendering the r
     () => "goal",
     () => true,
     inputRoute,
+    () => false,
     () => false,
     () => false,
     async () => { adviceCalls += 1; },
