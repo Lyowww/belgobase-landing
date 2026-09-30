@@ -20,9 +20,9 @@
   },
   "hero": {
     "badge": "Voor uw B2B-prospectie in België",
-    "titleLine1": "Vind meer bedrijven",
+    "titleLine1": "Vind de bedrijven",
     "titleHighlight": "",
-    "titleLine2": "zoals uw beste klanten.",
+    "titleLine2": "die bij uw doelgroep passen.",
     "enrichment": "Vertel BelgoBase wie u wilt bereiken. Stel met AI uw doelgroep samen en werk verder met een gerichte Belgische bedrijvenlijst.",
     "description": "Vertel wat uw bedrijf doet of deel uw website. BelgoBase denkt mee over passende klanten en helpt u van doelgroep naar een bruikbare Excel-lijst.",
     "primaryCta": "Vraag een demo aan",
@@ -52,7 +52,7 @@
     "vizCard3Sector": "Zorg",
     "vizCard3Location": "Brussel",
     "demoExpectation": "Bekijk samen met ons hoe u uw eigen doelgroep vindt.",
-    "videoLabel": "Van gesprek naar bedrijvenlijst · Bekijk de demo",
+    "videoLabel": "Echte demo: van gesprek naar bedrijvenlijst en Excel",
     "benefitsLabel": "Wat u met BelgoBase kunt doen",
     "benefit1": "Uw doelgroep bepalen in een gesprek",
     "benefit2": "Beschikbare contactgegevens onderzoeken",
@@ -86,8 +86,8 @@
   },
   "process": {
     "eyebrow": "Zo werkt BelgoBase",
-    "title": "Van eerste gesprek naar een gerichte export",
-    "description": "Gesprek helpt u het doel scherp te stellen. Werkruimte geeft u daarna alle ruimte om de selectie te controleren, bij te sturen en af te werken.",
+    "title": "Van zoekwerk naar een gerichte bedrijvenlijst",
+    "description": "Welke bedrijven passen bij uw aanbod? En welke filters hebt u daarvoor nodig? Begin met een gesprek, beoordeel het voorstel en kies daarna welke bedrijven u wilt benaderen.",
     "descriptionBefore": "",
     "descriptionHighlight": "",
     "descriptionAfter": "",
@@ -190,7 +190,7 @@
     "packageFeature6": "Selectie verfijnen en beschikbare websitecontactgegevens controleren",
     "packageFeature7": "Excel-export met zelfgekozen bedrijfs-, financiële en websitekolommen",
     "packageFeature8": "AI-tegoed zichtbaar en afzonderlijk beheerd per licentie",
-    "packageCta": "Vraag BelgoBase aan"
+    "packageCta": "Vraag een demo aan"
   },
   "addOns": {
     "eyebrow": "Gesprek en Werkruimte",
@@ -283,7 +283,7 @@
     "companyPlaceholder": "Uw bedrijf",
     "emailLabel": "Werk-e-mail",
     "emailPlaceholder": "u@bedrijf.com",
-    "phoneLabel": "Telefoon",
+    "phoneLabel": "Telefoon (optioneel)",
     "phonePlaceholder": "+32 XXX XX XX XX",
     "criteriaLabel": "Welke bedrijven zoekt u?",
     "criteriaPlaceholder": "Bijvoorbeeld: lokale productiebedrijven die passen bij onze onderhoudsdienst.",
@@ -308,14 +308,15 @@
     "step4Subtitle": "Bevestig uw tijdlijn — wij regelen de rest.",
     "back": "Terug",
     "continue": "Doorgaan",
-    "submit": "Boek mijn demo",
+    "nextStep": "Na uw aanvraag nemen we contact op om uw doelgroep en een passende demo te bespreken.",
+    "submit": "Vraag mijn demo aan",
     "submitting": "Verzenden...",
     "successTitle": "Aanvraag ontvangen!",
     "ariaLabel": "Demo-aanvraagformulier"
   },
   "stickyCta": {
     "label": "Klaar om uw doelgroep scherp te stellen?",
-    "button": "Boek een demo"
+    "button": "Vraag een demo aan"
   },
   "validation": {
     "emailRequired": "Voer uw e-mailadres in",

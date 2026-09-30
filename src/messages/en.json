@@ -20,9 +20,9 @@
   },
   "hero": {
     "badge": "For your B2B prospecting in Belgium",
-    "titleLine1": "Find more companies",
+    "titleLine1": "Find companies",
     "titleHighlight": "",
-    "titleLine2": "like your best customers.",
+    "titleLine2": "that fit your target audience.",
     "enrichment": "Tell BelgoBase who you want to reach. Define your audience with AI and build a focused list of Belgian companies.",
     "description": "Tell us what your business does or share your website. BelgoBase helps identify suitable customers and takes you from target market to a useful Excel list.",
     "primaryCta": "Request a demo",
@@ -52,7 +52,7 @@
     "vizCard3Sector": "Care",
     "vizCard3Location": "Brussels",
     "demoExpectation": "See with us how to find your own target companies.",
-    "videoLabel": "From conversation to company list · Watch the demo",
+    "videoLabel": "Real demo: from conversation to company list and Excel",
     "benefitsLabel": "What you can do with BelgoBase",
     "benefit1": "Define your audience in a conversation",
     "benefit2": "Research available contact details",
@@ -86,8 +86,8 @@
   },
   "process": {
     "eyebrow": "How BelgoBase works",
-    "title": "From the first conversation to a focused export",
-    "description": "Conversation helps you define the goal. Workspace then gives you room to review, adjust and complete the selection.",
+    "title": "From searching to a focused company list",
+    "description": "Which companies fit your offer? Which filters should you use? Start with a conversation, review the proposal and choose the companies you want to approach.",
     "descriptionBefore": "",
     "descriptionHighlight": "",
     "descriptionAfter": "",
@@ -190,7 +190,7 @@
     "packageFeature6": "Refine the selection and check available website contact details",
     "packageFeature7": "Excel export with chosen company, financial and website columns",
     "packageFeature8": "AI balance visible and managed separately per licence",
-    "packageCta": "Get BelgoBase"
+    "packageCta": "Request a demo"
   },
   "addOns": {
     "eyebrow": "Conversation and Workspace",
@@ -283,7 +283,7 @@
     "companyPlaceholder": "Your company",
     "emailLabel": "Work Email",
     "emailPlaceholder": "you@company.com",
-    "phoneLabel": "Telephone",
+    "phoneLabel": "Telephone (optional)",
     "phonePlaceholder": "+32 XXX XX XX XX",
     "criteriaLabel": "Which companies are you looking for?",
     "criteriaPlaceholder": "For example: local manufacturers that fit our maintenance service.",
@@ -308,14 +308,15 @@
     "step4Subtitle": "Confirm your timeline — we'll handle the rest.",
     "back": "Back",
     "continue": "Continue",
-    "submit": "Book My Demo",
+    "nextStep": "After your request, we will contact you to discuss your target audience and a suitable demo.",
+    "submit": "Request my demo",
     "submitting": "Submitting...",
     "successTitle": "Request received!",
     "ariaLabel": "Demo request form"
   },
   "stickyCta": {
     "label": "Ready to define your target market?",
-    "button": "Book a Demo"
+    "button": "Request a demo"
   },
   "validation": {
     "emailRequired": "Please enter your email address",

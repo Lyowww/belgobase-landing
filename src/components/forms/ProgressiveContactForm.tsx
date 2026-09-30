@@ -321,6 +321,9 @@ export function ProgressiveContactForm({
             </>
           )}
         </MagneticButton>
+        <p className="mt-3 text-sm leading-relaxed text-muted">
+          {t("form.nextStep")}
+        </p>
       </div>
     </m.form>
   );
