@@ -23,6 +23,44 @@ try:  # package import in the VPS; direct import keeps the focused tests standal
 except ImportError:  # pragma: no cover - exercised only when run as a script path
     from web_workspace import AuthContext, CoreCallbacks, WorkspaceError
 
+def selection_export_filters(numbers, source_filters=None):
+    if not isinstance(numbers, list) or not numbers or len(numbers) > 1000:
+        raise ValueError('Selecteer één tot maximaal 1000 bedrijven.')
+    if source_filters is None:
+        source_filters = {}
+    if not isinstance(source_filters, dict):
+        raise ValueError('De exportgegevens moeten een object zijn.')
+    metrics = source_filters.get('xbrl_metric_filters', [])
+    if not isinstance(metrics, list) or len(metrics) > 10:
+        raise ValueError('Kies maximaal tien extra jaarrekeninggegevens.')
+    result = {'ondernemingsnummers': list(numbers), 'max_rows': len(numbers), 'latest_only': True}
+    selected = []
+    for item in metrics:
+        if not isinstance(item, dict) or type(item.get('export', False)) is not bool:
+            raise ValueError('Een extra exportgegeven is ongeldig.')
+        if not item.get('export'):
+            continue
+        key = item.get('xbrl_metric_key')
+        label = item.get('filter_name') or key
+        if not isinstance(key, str) or not key.strip() or len(key) > 500:
+            raise ValueError('Kies een geldig gegeven uit de jaarrekeningcatalogus.')
+        if not isinstance(label, str) or not label.strip() or len(label) > 2000:
+            raise ValueError('Een extra exportkolom heeft een ongeldige naam.')
+        clean = {'xbrl_metric_key': key, 'filter_name': label, 'export': True,
+                 'numeric_min': None, 'numeric_max': None, 'text_contains': ''}
+        for field in ('year_min', 'year_max'):
+            value = item.get(field)
+            if value is not None and (type(value) is not int or not 1 <= value <= 9999):
+                raise ValueError('Vul een geldig boekjaar in.')
+            clean[field] = value
+        if clean['year_min'] is not None and clean['year_max'] is not None and clean['year_min'] > clean['year_max']:
+            raise ValueError('De ondergrens van het boekjaar mag niet groter zijn dan de bovengrens.')
+        selected.append(clean)
+    if selected:
+        result['xbrl_metric_filters'] = selected
+    return result
+
+
 # Frozen FINAL3 source: ICP_CRITERIA_SPECS, minus Tk variables. Target names are
 # the 30b normalized filter keys, so no desktop state is executed on the server.
 _ICP_SPECS = (
@@ -363,7 +401,7 @@ class WebCore:
             # The existing server contract permits at most 1000 explicit
             # enterprise numbers.  Tie the row limit to that exact list so a
             # selection is never silently cut to an unrelated default.
-            raw_filters={'ondernemingsnummers':payload['numbers'],'max_rows':len(payload['numbers']),'latest_only':True}
+            raw_filters=selection_export_filters(payload['numbers'], payload.get('filters'))
         if not isinstance(raw_filters, dict): raise WorkspaceError('De filters moeten een object zijn.')
         raw_filters = dict(raw_filters)
         if 'numbers' not in payload:
@@ -381,10 +419,11 @@ class WebCore:
         filters=self._normal(raw_filters); limit=int(filters.get('max_rows') or 5000); offset=0; all_rows=[]; columns=[]
         try:
             clean, _regions, preferences, postcodes = self.main.extract_selection(filters, {'filters':filters})
-            if filters.get('xbrl_metric_filters'):
+            if filters.get('xbrl_metric_filters') and 'numbers' not in payload:
                 total, _ = self.main.run_xbrl_count({'filters':filters, 'xbrl_metric_filters':filters['xbrl_metric_filters']})
             else:
-                total, _ = self.main.run_count(self.main.normalize_filters(clean), postcodes)
+                count_filters={key:value for key,value in clean.items() if key != 'xbrl_metric_filters'}
+                total, _ = self.main.run_count(self.main.normalize_filters(count_filters), postcodes)
             total = int(total)
             while len(all_rows) < limit:
                 page_filters=dict(filters); page_filters['max_rows']=min(1000,limit-len(all_rows))
@@ -393,6 +432,8 @@ class WebCore:
                 if filters.get('xbrl_metric_filters'):
                     xbrl_request = {'filters': page_filters, 'xbrl_metric_filters': filters['xbrl_metric_filters'],
                                     'selected_output_cols': selected, 'max_rows': page_filters['max_rows']}
+                    if 'numbers' in payload:
+                        xbrl_request['exact_selection_export'] = True
                     page_columns, rows, _ = self.main.run_xbrl_export(
                         xbrl_request, offset, deterministic_results_order=True, preferences=preferences)
                 else:

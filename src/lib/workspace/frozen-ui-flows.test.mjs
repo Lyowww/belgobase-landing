@@ -39,7 +39,7 @@ function functionSource(name) {
 }
 
 function loadFunctions(names, globals = {}) {
-  const context = vm.createContext({ structuredClone, ...globals });
+  const context = vm.createContext({ structuredClone, filterDraft: null, filterRevision: 0, ...globals });
   vm.runInContext(`${names.map(functionSource).join("\n")}\nglobalThis.result={${names.join(",")}};`, context);
   return context.result;
 }

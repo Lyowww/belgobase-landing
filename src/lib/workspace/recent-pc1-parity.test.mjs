@@ -56,6 +56,7 @@ test("manual mode keeps a labelled search button and submits empty filters", asy
   $("#ai-mode").checked = false;
   const calls = [];
   const context = vm.createContext({
+    filterDraft: null, filterRefreshPending: false, filterRefreshTimer: null,
     $, state: { ready: true, busy: false, conversation: [], aiScope: "new" },
     voice: { phase: "idle" }, guidedModeActive: () => false,
     t: (_key, fallback) => fallback, icon: name => `[${name}]`, esc: String,
@@ -82,6 +83,7 @@ test("guided empty submit retains the voice route and submit failures are visibl
   $("#ai-mode").checked = false;
   const calls = [];
   const context = vm.createContext({
+    filterDraft: null, filterRefreshPending: false, filterRefreshTimer: null,
     $, state: { ready: true, busy: false, conversation: [], aiScope: "new" },
     voice: { phase: "idle" }, guidedModeActive: () => true,
     t: (_key, fallback) => fallback, icon: name => `[${name}]`, esc: String,
@@ -107,6 +109,7 @@ test("operation identity has a secure fallback and mutates state only after succ
   const calls = [];
   const state = { request: 0, operation: null };
   const context = vm.createContext({
+    operationKind: null,
     crypto: { getRandomValues: webcrypto.getRandomValues.bind(webcrypto) }, state,
     t: (_key, fallback) => fallback, busy: (...args) => calls.push(["busy", ...args]),
     pollOperation: id => calls.push(["poll", id]), Uint8Array,
@@ -122,6 +125,7 @@ test("operation identity has a secure fallback and mutates state only after succ
 
   const missingState = { request: 0, operation: null };
   const missing = vm.createContext({
+    operationKind: null,
     crypto: undefined, state: missingState, t: (_key, fallback) => fallback,
     busy() { throw new Error("must not run"); }, pollOperation() { throw new Error("must not run"); }, Uint8Array,
   });

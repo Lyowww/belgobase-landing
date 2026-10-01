@@ -101,6 +101,32 @@ class WebCoreTests(unittest.TestCase):
     def test_export_preserves_ui_column_choice_as_existing_server_column(self):
         self.core.export({'filters':{'max_rows':2},'columns':['number','revenue']},self.auth)
         self.assertEqual(self.core.main.export_filters['selected_output_cols'],['ondernemingsnummer','omzet'])
+
+    def test_exact_export_retains_marked_metrics_without_reapplying_selection(self):
+        metrics=[{'xbrl_metric_key':'m1','filter_name':'Fixture','numeric_min':50,'text_contains':'old',
+                  'year_min':2023,'year_max':2025,'export':True}, {'xbrl_metric_key':'m2','export':False}]
+        self.core.export({'numbers':['0123456789'],'filters':{'naam':'old','regions':['vlaanderen'],
+                          'xbrl_metric_filters':metrics},'columns':['number']},self.auth)
+        sent=self.core.main.xbrl_export_payload
+        self.assertTrue(sent['exact_selection_export'])
+        self.assertEqual(sent['filters']['ondernemingsnummers'],['0123456789'])
+        self.assertNotIn('naam',sent['filters']); self.assertNotIn('regions',sent['filters'])
+        self.assertEqual(len(sent['xbrl_metric_filters']),1)
+        item=sent['xbrl_metric_filters'][0]
+        self.assertIsNone(item['numeric_min']); self.assertEqual(item['text_contains'],'')
+        self.assertEqual((item['year_min'],item['year_max']),(2023,2025))
+        self.assertFalse(hasattr(self.core.main,'xbrl_count_payload'))
+
+    def test_full_xbrl_export_keeps_original_filter_semantics(self):
+        self.core.export({'filters':{'xbrl_metric_filters':[{'xbrl_metric_key':'m1','numeric_min':50,'export':True}]}},self.auth)
+        self.assertNotIn('exact_selection_export',self.core.main.xbrl_export_payload)
+        self.assertEqual(self.core.main.xbrl_count_payload['xbrl_metric_filters'][0]['numeric_min'],50)
+
+    def test_exact_export_rejects_invalid_metric_years_and_metadata(self):
+        for metrics in ('bad',[{'xbrl_metric_key':'m1','export':True,'year_min':2025,'year_max':2023}],
+                        [{'xbrl_metric_key':'m1','export':'true'}]):
+            with self.assertRaises(ValueError):
+                self.core.export({'numbers':['0123456789'],'filters':{'xbrl_metric_filters':metrics}},self.auth)
     def test_export_applies_same_name_and_vat_query_contract_as_search(self):
         self.core.export({'filters':{'max_rows':2},'query':'Be Company'},self.auth)
         self.assertEqual(self.core.main.export_filters['naam'],'Be Company')
