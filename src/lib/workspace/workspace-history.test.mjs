@@ -26,17 +26,23 @@ test("history rows show a compact condition count without flattening stored filt
     cities: ["Antwerpen", "Gent", "Brugge"],
     nace_codes: ["62010", "62020", "63110"],
   };
-  const searchHistory = [{ id: "h1", query: "Accountants", filters: structuredClone(originalFilters), total: 42 }];
+  const epochSeconds = Date.parse("2026-10-01T12:00:00Z") / 1000;
+  const searchHistory = [
+    { id: "h1", query: "Accountants", filters: structuredClone(originalFilters), total: 42, saved_at: epochSeconds },
+    { id: "h2", query: "Bakkers", filters: {}, total: 12, saved_at: "2026-10-01T12:00:00Z" },
+    { id: "h3", query: "Bouw", filters: {}, total: 7, searched_at: epochSeconds * 1000 },
+  ];
+  const timestamps = [];
   let rendered;
   const renderSearchHistory = Function(
-    "t", "showDialog", "searchHistory", "esc", "searchHistoryDate", "nf",
+    "t", "showDialog", "searchHistory", "esc", "historyTimestamp", "nf",
     `"use strict";${lineFunction("renderSearchHistory")};return renderSearchHistory;`,
   )(
     translate,
     (title, body, footer) => { rendered = { title, body, footer }; },
     searchHistory,
     value => String(value),
-    () => "01/10/2026 18:00",
+    value => { timestamps.push(value); return `date:${value}`; },
     new Intl.NumberFormat("nl-BE"),
   );
 
@@ -49,6 +55,20 @@ test("history rows show a compact condition count without flattening stored filt
   assert.match(rendered.body, /data-history-load="h1"/);
   assert.match(rendered.body, /data-history-delete="h1"/);
   assert.deepEqual(searchHistory[0].filters, originalFilters, "rendering must retain every stored filter value");
+  assert.deepEqual(timestamps, [epochSeconds, "2026-10-01T12:00:00Z", epochSeconds * 1000]);
+});
+
+test("history timestamps accept ISO text, epoch seconds and epoch milliseconds", () => {
+  const historyTimestamp = Function(
+    "locale",
+    `"use strict";${lineFunction("historyTimestamp")};return historyTimestamp;`,
+  )("nl-BE");
+  const iso = "2026-10-01T12:00:00Z";
+  const milliseconds = Date.parse(iso);
+  const seconds = milliseconds / 1000;
+  const values = [historyTimestamp(iso), historyTimestamp(seconds), historyTimestamp(milliseconds)];
+  assert.ok(values[0]);
+  assert.equal(new Set(values).size, 1);
 });
 
 test("opening any workspace dialog resets its scrolling body to the top", () => {

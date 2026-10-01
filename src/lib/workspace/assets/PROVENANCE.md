@@ -21,3 +21,5 @@ The browser asset no longer contains desktop-only local Excel handlers for marku
 ## Successful bootstrap and compact account history — 1 October 2026
 
 The full browser bootstrap now includes the shared quick-filter label refresh used by language changes. Its strict DOM test completes a successful bootstrap and journey-state response, verifies that the connection warning closes and confirms that search unlocks. Search history shows a compact condition count, identifies the shared account correctly and resets the modal body to the top without changing stored filters or existing actions.
+
+Shared history timestamps prefer `searched_at` and fall back to `saved_at`, accepting ISO text, epoch seconds and epoch milliseconds without changing stored history records.
