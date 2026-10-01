@@ -5,6 +5,33 @@ import vm from "node:vm";
 
 const html = await readFile(new URL("./assets/frozen-ui.html", import.meta.url), "utf8");
 
+test("dossier refresh keeps the matching establishment and its custom address columns", () => {
+  const { mergeCompanyDetail } = loadFunctions(["mergeCompanyDetail"]);
+  const row = { number: "0000000001", postcode: "2000", city: "Antwerpen", values: { city: "Antwerpen", straat_nl: "Tweede vestiging", huisnummer: "20", bus: "A", ebitda: 100 } };
+  const before = JSON.stringify(row);
+  const detail = { number: row.number, postcode: "1000", city: "Brussel", values: { city: "Brussel", straat_nl: "Hoofdvestiging", huisnummer: "1", land: "BE", ebitda: null } };
+  const merged = mergeCompanyDetail(row, detail);
+  assert.equal(merged.postcode, "2000");
+  assert.equal(merged.city, "Antwerpen");
+  assert.equal(merged.values.city, "Antwerpen");
+  assert.equal(merged.values.straat_nl, "Tweede vestiging");
+  assert.equal(merged.values.huisnummer, "20");
+  assert.equal(merged.values.bus, "A");
+  assert.equal(Object.hasOwn(merged.values, "land"), false);
+  assert.equal(merged.values.ebitda, null);
+  assert.equal(JSON.stringify(row), before);
+});
+
+test("dossier refresh does not fill an unknown list address with canonical details", () => {
+  const { mergeCompanyDetail } = loadFunctions(["mergeCompanyDetail"]);
+  const merged = mergeCompanyDetail({ number: "0000000001", postcode: null, city: "", revenue: 100 }, { number: "0000000001", postcode: "1000", city: "Brussel", straat_nl: "Hoofdvestiging", name: "Updated", revenue: 0 });
+  assert.equal(merged.postcode, null);
+  assert.equal(merged.city, "");
+  assert.equal(Object.hasOwn(merged, "straat_nl"), false);
+  assert.equal(merged.revenue, 0);
+  assert.equal(merged.name, "Updated");
+});
+
 function functionSource(name) {
   const markers = [`function ${name}(`, `async function ${name}(`];
   const start = markers.map(marker => html.indexOf(marker)).filter(index => index >= 0).sort((a, b) => a - b)[0];
