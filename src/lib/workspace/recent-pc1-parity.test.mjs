@@ -148,20 +148,22 @@ test("guided upload, feedback and goal context stay visible until a successful a
 
   const nodes = { "#journey-panel": element(), "#ai-panel": element(), "#query": element(), "#ai-mode": element() };
   const state = { busy: false, recording: false, proposal: { status: "ready", filters: { kbo_status: "AC" } }, total: 1, refining: false, aiScope: "new" };
-  const journey = { mode: "upload", data: { filename: "context.xlsx" } };
+  const journey = { mode: "upload", data: { filename: "context.xlsx" }, contextRevision: 0, estimateRevision: 0, busyContext: null };
   const navigations = [];
   const context = vm.createContext({
     state, journey, guidedStageOverride: "confirm", $: selector => nodes[selector],
     search: async () => true, navigate: view => navigations.push(view), guidedModeActive: () => true,
     appendConversation() {}, t: (_key, fallback) => fallback, nf: new Intl.NumberFormat("nl-BE"), renderComposer() {},
+    stopJourneyPoll() {}, busy(value) { state.busy = value; },
   });
-  vm.runInContext(functionSource("applyAiProposal"), context);
+  vm.runInContext(`${functionSource("journeySetContext")}\n${functionSource("applyAiProposal")}`, context);
   const preserved = journey.data;
   assert.equal(await context.applyAiProposal(), true);
   assert.deepEqual(navigations, ["search"]);
   assert.equal(journey.mode, null);
   assert.equal(journey.data, preserved);
   assert.equal(nodes["#journey-panel"].hidden, true);
+  assert.equal(journey.contextRevision, 1);
 });
 
 test("large filter choices are compact, escaped and translated without changing filters", () => {

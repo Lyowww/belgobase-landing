@@ -21,6 +21,21 @@ function scriptFunction(name, nextName, dependencies) {
   return Function(...Object.keys(dependencies), `return (${script.slice(start, end).trim()});`)(...Object.values(dependencies));
 }
 
+function journeyContextFixture(journey, state = { busy: false, recording: false }) {
+  journey.contextRevision ??= 0;
+  journey.estimateRevision ??= 0;
+  journey.exportRevision ??= 0;
+  journey.busyContext ??= null;
+  const busy = value => { state.busy = value; };
+  const journeyCurrent = scriptFunction("journeyCurrent", "journeySetContext", { journey });
+  const journeySetContext = scriptFunction("journeySetContext", "journeyStart", {
+    journey, busy, stopJourneyPoll() {},
+  });
+  const journeyStart = scriptFunction("journeyStart", "journeyEnd", { state, journey, journeySetContext, busy });
+  const journeyEnd = scriptFunction("journeyEnd", "journeyMappingInput", { journey, busy });
+  return { journeyCurrent, journeyStart, journeyEnd };
+}
+
 test("browser journey bypasses the search proposal parser but uses authenticated AI bridge", () => {
   assert.match(adapter, /action:\s*"journey"/);
   assert.match(adapter, /journey:\s*snapshot/);
@@ -49,10 +64,10 @@ test("web journey UI exposes the same bounded explicit workflow", () => {
   assert.match(script, /missingWebsite=list\.website_missing_count/);
   assert.match(script, /missingWebsite===uniqueCount/);
   assert.match(script, /journey\.selectionImported=true/);
-  assert.match(script, /Number\.isInteger\(mapping\[key\]\)\?headers\[mapping\[key\]\]/);
+  assert.match(script, /Number\.isInteger\(mapping\[key\]\)\?mapping\[key\]/);
   assert.match(script, /input_phone/);
   assert.match(script, /email/);
-  assert.match(script, /select\.value\|\|null/);
+  assert.match(script, /select\.value===''\?null:Number\(select\.value\)/);
   assert.match(script, /actionName==='resume-job'\)startJourneyJob\(\{command:'job_resume'/);
   assert.match(script, /actionName==='start-job'\)startJourneyJob\(\{command:'job_start'/);
   assert.match(script, /command:'state'.*last_advice/s);
@@ -194,6 +209,7 @@ test("web clears stale job state and sends the exact selected count to the prosp
   let attempts = 0;
   const prepareJourneySelection = scriptFunction("prepareJourneySelection", "openJourneyContacts", {
     journey,
+    ...journeyContextFixture(journey, state),
     ensureJourneyState: async () => true,
     journeySelectionContext: () => ({ count: 2, numbers: ["0123456789", "0987654321"] }),
     journeyText: key => key, nf: new Intl.NumberFormat("nl-BE"),
@@ -225,6 +241,7 @@ test("web requests the server estimate with the selected options before paid sta
   const calls = [], notices = [];
   const requestJourneyEstimate = scriptFunction("requestJourneyEstimate", "startJourneyJob", {
     journey,
+    ...journeyContextFixture(journey),
     journeyContactOptions: () => ({ google_enabled: false, max_calls: 0, max_cost_eur: 0 }),
     async journeyCall(command) { calls.push(command); return { estimate: { rows: 3, estimated_cost_min_eur: 0, estimated_cost_max_eur: 0 } }; },
     renderJourneyJob() {},
@@ -280,6 +297,10 @@ test("web recovers service-shaped user-assistant advice without a second advise"
   const journey = { mode: null, data: null };
   const journeyAdvise = scriptFunction("journeyAdvise", "uploadJourneyFile", {
     journey,
+    ...journeyContextFixture(journey),
+    mergeJourneyResult: scriptFunction("mergeJourneyResult", "updateJourney", {
+      journey, state: { conversation }, safeJourneySources: () => [], acceptWalletSnapshot() {},
+    }),
     notice() { throw new Error("recovery should suppress the original transport error"); },
     appendConversation(role, content) { conversation.push({ role, content }); },
     $: selector => selector === "#notice" ? noticeNode : (assert.equal(selector, "#query"), query),
@@ -323,6 +344,7 @@ test("web maps contact statuses safely and strips transport fields before export
   let savedPayload;
   const exportJourney = scriptFunction("exportJourney", "confirmJourneyExport", {
     journey, busy() {},
+    ...journeyContextFixture(journey),
     async journeyCall() { return { ok: true, export_id: "export-1", size: 123, rows: 2, filename: "Contacten.xlsx" }; },
     async bridge(method, payload) { assert.equal(method, "journey_save_export"); savedPayload = payload; return { delivery_pending: true, export_id: "export-1" }; },
     notice() {}, journeyText: key => key, renderJourneyJob() {}, mergeJourneyResult() {},
@@ -330,7 +352,7 @@ test("web maps contact statuses safely and strips transport fields before export
   await exportJourney(true);
   assert.deepEqual(savedPayload, { export_id: "export-1", size: 123, rows: 2, filename: "Contacten.xlsx" });
   assert.equal("ok" in savedPayload, false);
-  assert.deepEqual(journey.pendingExport, { export_id: "export-1", filename: "Contacten.xlsx", rows: 2, savedLocally: false });
+  assert.deepEqual(journey.pendingExport, { job_id: "job-1", export_id: "export-1", filename: "Contacten.xlsx", rows: 2, savedLocally: false });
   assert.match(script, /command:'export_complete',export_id:pending\.export_id,confirmed:true/);
 });
 

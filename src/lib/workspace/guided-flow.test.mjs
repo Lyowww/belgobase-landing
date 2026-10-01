@@ -16,6 +16,14 @@ assert.ok(previousStageSource, "guided back navigation must expose its pure prev
 const previousStage = Function(`${previousStageSource}; return guidedPreviousStage;`)();
 const leaveContactSource = html.split(/\r?\n/).find(line => /^\s*function leaveGuidedContactContext\(/.test(line));
 assert.ok(leaveContactSource, "guided back navigation must isolate leaving the contact presentation");
+const contextSource = html.split(/\r?\n/).find(line => /^\s*function journeySetContext\(/.test(line));
+assert.ok(contextSource, "journey navigation must invalidate prior response context");
+function contextFor(journey, stopJourneyPoll = () => {}) {
+  journey.contextRevision ??= 0;
+  journey.estimateRevision ??= 0;
+  journey.busyContext ??= null;
+  return Function("journey", "stopJourneyPoll", "busy", `${contextSource}; return journeySetContext;`)(journey, stopJourneyPoll, () => {});
+}
 
 test("first use begins with the business question, without requiring prior data", () => {
   assert.equal(stage({ searched: false, conversation: [] }, { data: null }), "goal");
@@ -36,7 +44,8 @@ test("unfinished contact work stays in research rather than claiming the downloa
 
 test("completed research and a pending delivery have an explicit download step", () => {
   assert.equal(stage({ searched: true }, { mode: "contacts", job: { status: "completed" } }), "download");
-  assert.equal(stage({ searched: true }, { mode: "contacts", job: { status: "paused" }, pendingExport: { export_id: "pending" } }), "download");
+  assert.equal(stage({ searched: true }, { mode: "contacts", job: { job_id: "A", status: "paused" }, pendingExport: { job_id: "A", export_id: "pending" } }), "download");
+  assert.equal(stage({ searched: true }, { mode: "contacts", job: { job_id: "B", status: "paused" }, pendingExport: { job_id: "A", export_id: "pending" } }), "contacts", "a previous task delivery must not change the current task stage");
 });
 
 test("choosing a new contact source is not mistaken for downloading an older completed task", () => {
@@ -103,7 +112,7 @@ test("reviewing a resumed target clears clarify override and reaches confirmatio
   const elements = { "#query": { value: "" }, "#ai-mode": { checked: false } };
   let composerRenders = 0;
   const harness = Function(
-    "state", "journey", "$", "renderComposer", "aiSearch",
+    "state", "journey", "$", "renderComposer", "aiSearch", "journeySetContext",
     `let guidedStageOverride = "clarify"; ${targetSource}; return { searchJourneyTarget, override: () => guidedStageOverride };`,
   )(
     state,
@@ -111,6 +120,7 @@ test("reviewing a resumed target clears clarify override and reaches confirmatio
     selector => elements[selector],
     () => { composerRenders += 1; },
     async () => { state.proposal = { status: "ready", filters: { nace_prefix: "56" } }; },
+    contextFor(journey),
   );
 
   await harness.searchJourneyTarget("horecaleveranciers in Antwerpen");
@@ -158,7 +168,7 @@ test("leaving contacts for results preserves resumable work and allows a new pro
   };
   const preserved = structuredClone({ job: flow.job, data: flow.data, pendingExport: flow.pendingExport });
   let pollStopped = 0;
-  const leaveContact = Function("journey", "stopJourneyPoll", `${leaveContactSource}; return leaveGuidedContactContext;`)(flow, () => { pollStopped += 1; });
+  const leaveContact = Function("journey", "journeySetContext", `${leaveContactSource}; return leaveGuidedContactContext;`)(flow, contextFor(flow, () => { pollStopped += 1; }));
 
   assert.equal(previousStage("contacts", true), "results");
   leaveContact();
