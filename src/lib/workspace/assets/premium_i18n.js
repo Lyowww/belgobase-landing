@@ -2,6 +2,7 @@
 (function(global){
  'use strict';
  const messages={
+"filter.choiceCount":{"nl":"{label}: {count} gekozen","fr":"{label} : {count} sélectionnés","en":"{label}: {count} selected"},
 "mode.label":{"nl":"Weergave","fr":"Vue","en":"View"},
 "mode.conversation":{"nl":"Gesprek","fr":"Conversation","en":"Conversation"},
 "mode.workspace":{"nl":"Werkruimte","fr":"Espace de travail","en":"Workspace"},

@@ -166,25 +166,36 @@ test("returning from tools keeps the user's checked companies", () => {
   assert.equal(nodes["#tools-view"].hidden, true);
 });
 
-test("a rejected stored search stays in Saved and keeps its checked rows", async () => {
-  const { $, $$ } = domFixture();
+test("a rejected stored search stages its draft without showing stale checked rows", async () => {
+  const { nodes, $, $$ } = domFixture();
   const state = {
     request: 0,
     view: "saved",
+    filters: { kbo_status: "ST" }, query: "oud", rows: [{ number: "0123456789" }],
+    total: 1, page: 3, searched: true, sort: { key: "name", direction: -1 },
     selectedRows: { "0123456789": { number: "0123456789" } },
     workspace: { searches: [{ id: "stored", query: "Gent", filters: { kbo_status: "AC" } }] },
   };
-  const { loadSavedSearch } = loadFunctions(["navigate", "loadSavedSearch"], {
+  let editor;
+  const { loadSavedSearch } = loadFunctions(["navigate", "stageSavedSearchDraft", "loadSavedSearch"], {
     state, $, $$, t: (_key, fallback) => fallback,
     closeDialog() {}, renderRows() {}, renderAssistantContext() {}, renderComposer() {},
+    syncFilters() {}, clearTimeout() {}, resetConversation() {},
+    savedSearchIssue: null, filterDraft: null, filterRefreshPending: false, filterRefreshTimer: null,
+    lastSearchError: "De bewaarde selectie bevat een tegenstrijdigheid.",
     search: async () => false,
-    resetConversation() { throw new Error("must not reset after a rejected search"); },
+    openSavedSearchEditor: async (...args) => { editor = args; return true; },
   });
 
   await loadSavedSearch("stored");
 
-  assert.equal(state.view, "saved");
-  assert.deepEqual(Object.keys(state.selectedRows), ["0123456789"]);
+  assert.equal(state.view, "search");
+  assert.equal(state.searched, false);
+  assert.equal(state.rows.length, 0);
+  assert.equal(state.total, 0);
+  assert.deepEqual(Object.keys(state.selectedRows), []);
+  assert.equal(nodes["#query"].value, "Gent");
+  assert.deepEqual(editor, [{ kbo_status: "AC" }, "Gent", "De bewaarde selectie bevat een tegenstrijdigheid."]);
 });
 
 test("a rejected history search stays in Saved and keeps its checked rows", async () => {
