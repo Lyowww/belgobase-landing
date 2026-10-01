@@ -181,6 +181,7 @@ test("a rejected stored search stages its draft without showing stale checked ro
     state, $, $$, t: (_key, fallback) => fallback,
     closeDialog() {}, renderRows() {}, renderAssistantContext() {}, renderComposer() {},
     syncFilters() {}, clearTimeout() {}, resetConversation() {},
+    filterRevision: 0,
     savedSearchIssue: null, filterDraft: null, filterRefreshPending: false, filterRefreshTimer: null,
     lastSearchError: "De bewaarde selectie bevat een tegenstrijdigheid.",
     search: async () => false,
@@ -226,6 +227,7 @@ test("relaxation keeps the active query and commits UI changes only after search
   let resets = 0;
   const { applyRelaxation } = loadFunctions(["applyRelaxation"], {
     state,
+    filterRevision: 0,
     $: selector => { assert.equal(selector, "#query"); return query; },
     search: async (...args) => { searches.push(args); return searches.length > 1; },
     renderComposer() {}, resetConversation() { resets += 1; },
@@ -245,7 +247,7 @@ test("new conversation resets server context before clearing visible work", asyn
   for (const fails of [false, true]) {
     const events=[]; const state={busy:false,conversation:[{role:'user',content:'Old company'}]};
     const ctx=vm.createContext({state,journey:{mode:'goal'},guidedStageOverride:null,
-      busy: value=>{state.busy=value;},journeyText:()=>'',
+      journeyStart:()=>{state.busy=true;return 1;},journeyCurrent:()=>true,journeyEnd:()=>{state.busy=false;},journeyText:()=>'',
       journeyCall:async command=>{events.push(command.command);if(fails)throw new Error('offline');return {profile:{},history:[],last_advice:null};},
       mergeJourneyResult:()=>events.push('merged'),resetConversation:()=>{events.push('cleared');state.conversation=[];},
       renderJourneyAdvice:()=>{},notice:message=>events.push(message),$:()=>({value:'',focus(){}})});

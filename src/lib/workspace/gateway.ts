@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 
 const bridgeMethods = new Set([
   "bootstrap", "search", "company", "operation_status", "cancel_operation",
-  "export_results", "export_selection", "workspace_save", "search_history",
+  "export_results", "export_selection", "workspace_save", "workspace_load", "search_history",
   "relaxation_suggestions", "compare_companies", "ai", "workspace_data",
   "filters_apply", "xbrl_catalog", "similar_company", "similar_apply",
   "export_columns", "ai_usage", "set_ai_limit", "account_action",

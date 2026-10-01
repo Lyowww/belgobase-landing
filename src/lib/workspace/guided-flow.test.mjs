@@ -112,7 +112,7 @@ test("reviewing a resumed target clears clarify override and reaches confirmatio
   const elements = { "#query": { value: "" }, "#ai-mode": { checked: false } };
   let composerRenders = 0;
   const harness = Function(
-    "state", "journey", "$", "renderComposer", "aiSearch", "journeySetContext",
+    "state", "journey", "$", "renderComposer", "aiSearch", "journeySetContext", "setGuidedMode",
     `let guidedStageOverride = "clarify"; ${targetSource}; return { searchJourneyTarget, override: () => guidedStageOverride };`,
   )(
     state,
@@ -121,6 +121,7 @@ test("reviewing a resumed target clears clarify override and reaches confirmatio
     () => { composerRenders += 1; },
     async () => { state.proposal = { status: "ready", filters: { nace_prefix: "56" } }; },
     contextFor(journey),
+    enabled => { elements["#ai-mode"].checked = enabled; },
   );
 
   await harness.searchJourneyTarget("horecaleveranciers in Antwerpen");

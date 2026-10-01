@@ -9,3 +9,7 @@ The UI hash is in release.json. The deployed workspace hash also binds translati
 ## Logic repair — 1 October 2026
 
 Canceled and replaced searches no longer apply stale followups. Search preparation shares the guarded operation; failed pending criteria remain available for retry. Saved-list removals update selection only after successful storage. Exact exports carry marked metric metadata independently of selection criteria. UI provenance uses committed Git blob bytes; the delivered workspace version additionally binds translations, adapters, CSS and commit. Background UI fixtures, live-data server export and native authenticated screen proof remain distinct evidence.
+
+## Workspace organization and account sync — 1 October 2026
+
+The primary workspace keeps search, filters and results together. Secondary customer actions share one compact menu, regions are direct filter choices, and saved workspace routes refresh their account copy before opening it. Conflicting device and shared journey profiles require an explicit recoverable choice. The UI hash above is calculated from the normalized Git blob after combining these changes with the canceled-search, exact-export, journey-context, upload-mapping and export-draft repairs.
