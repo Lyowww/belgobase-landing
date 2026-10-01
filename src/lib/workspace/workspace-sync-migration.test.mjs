@@ -58,14 +58,17 @@ test("current and device migration choices use the explicit recoverable contract
 });
 
 test("workspace refresh keeps the active query, filters and results", async () => {
-  const oldWorkspace = { searches: [], lists: [{ id: "old", companies: [] }] };
+  const oldWorkspace = { searches: [], lists: [{ id: "old", companies: [] }], active_list_id: "old", result_columns: ["name"] };
   const state = {
     ready: true,
+    view: "search",
+    request: 0,
+    workspaceRevision: 4,
     workspace: oldWorkspace,
     saved: [],
     query: "bakker",
     filters: { regions: ["vlaanderen"] },
-    rows: [{ number: "1" }],
+    rows: [{ number: "1", name: "Fixture" }],
     total: 1,
     searched: true,
   };
@@ -76,24 +79,31 @@ test("workspace refresh keeps the active query, filters and results", async () =
     bridge: async (method, argument) => {
       assert.equal(method, "workspace_load");
       assert.equal(Object.keys(argument).length, 0);
-      return { workspace: nextWorkspace };
+      return { workspace: nextWorkspace, workspace_revision: 5 };
     },
-    acceptWorkspace: workspace => { state.workspace = workspace; state.saved = workspace.lists[0].companies; },
+    acceptWorkspace: (workspace, revision) => { state.workspace = workspace; state.workspaceRevision = revision; state.saved = workspace.lists[0].companies; },
     renderRows: () => renders.push(true),
     showWorkspaceMigrationNotice: () => {},
     notice: () => {},
     t: (_key, fallback) => fallback,
     Array,
+    filterRevision: 0,
+    filterDraft: null,
+    quickCityDirty: false,
+    quickFilterDirty: new Set(),
+    document: { activeElement: null },
+    $: () => ({ open: false }),
   });
-  vm.runInContext(`let workspaceRefreshPromise=null;${functionSource("refreshWorkspace")};this.refreshWorkspace=refreshWorkspace;`, context);
+  vm.runInContext(`let workspaceRefreshPromise=null;${functionSource("activeList")};${functionSource("workspaceFocusRefreshAllowed")};${functionSource("refreshWorkspace")};this.refreshWorkspace=refreshWorkspace;`, context);
   assert.equal(await context.refreshWorkspace(), true);
   assert.equal(state.workspace, nextWorkspace);
   assert.equal(state.query, "bakker");
   assert.deepEqual(state.filters, { regions: ["vlaanderen"] });
-  assert.deepEqual(state.rows, [{ number: "1" }]);
+  assert.deepEqual(state.rows, [{ number: "1", name: "Fixture" }]);
   assert.equal(state.total, 1);
   assert.equal(state.searched, true);
   assert.equal(renders.length, 1);
+  assert.equal(state.workspaceRevision, 5);
 });
 
 test("workspace routes refresh before opening shared saved data and parse epoch history", () => {

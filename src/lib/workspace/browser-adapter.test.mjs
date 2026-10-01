@@ -717,25 +717,54 @@ test("a bridge network interruption gives retry guidance without signing out", a
   assert.equal(h.messages.length, 0);
 });
 
-test("rapid saves use successive revisions while preserving each edit snapshot", async () => {
+test("rapid saves preserve each caller revision and require a fresh acknowledged draft after conflict", async () => {
   const h = adapterHarness([
     { body: { authenticated: true, csrf: "e".repeat(32) } },
     { body: { ok: true, workspace_revision: 4 } },
     { body: { ok: true, workspace_revision: 5 } },
+    { status: 409, body: { ok: false, error: "De werkruimte is gewijzigd. Herlaad de nieuwste versie." } },
     { body: { ok: true, workspace_revision: 6 } },
   ]);
   await h.api.bootstrap({});
-  const payload = { workspace: { lists: ["first"] } };
+  const payload = { workspace: { lists: ["first"] }, workspace_revision: 4 };
   const first = h.api.workspace_save(payload);
   payload.workspace.lists.push("second");
   const second = h.api.workspace_save(payload);
-  await Promise.all([first, second]);
+  const rejected = assert.rejects(second, /werkruimte is gewijzigd/i);
+  const acknowledged = await first;
+  await rejected;
   assert.deepEqual(JSON.parse(h.calls[2].options.body), {
     workspace: { lists: ["first"] }, workspace_revision: 4,
   });
   assert.deepEqual(JSON.parse(h.calls[3].options.body), {
+    workspace: { lists: ["first", "second"] }, workspace_revision: 4,
+  });
+  await h.api.workspace_save({ ...payload, workspace_revision: acknowledged.workspace_revision });
+  assert.deepEqual(JSON.parse(h.calls[4].options.body), {
     workspace: { lists: ["first", "second"] }, workspace_revision: 5,
   });
+});
+
+test("workspace save rejects missing or invalid caller revisions before any transport", async () => {
+  const h = adapterHarness([]);
+  for (const revision of [undefined, null, true, -1, 1.5, "4"]) {
+    await assert.rejects(h.api.workspace_save({ workspace: { lists: ["draft"] }, workspace_revision: revision }));
+  }
+  assert.equal(h.calls.length, 0);
+});
+
+test("a newer load response never replaces the revision attached to an older caller draft", async () => {
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "e".repeat(32) } },
+    { body: { ok: true, workspace_revision: 4 } },
+    { body: { ok: true, workspace_revision: 9 } },
+    { status: 409, body: { ok: false, error: "De werkruimte is gewijzigd. Herlaad de nieuwste versie." } },
+  ]);
+  await h.api.bootstrap({});
+  const oldDraft = { workspace: { lists: ["old"] }, workspace_revision: 4 };
+  await h.api.workspace_load({});
+  await assert.rejects(h.api.workspace_save(oldDraft), /werkruimte is gewijzigd/i);
+  assert.equal(JSON.parse(h.calls[3].options.body).workspace_revision, 4);
 });
 
 test("the login component retains the public auth contract", async () => {

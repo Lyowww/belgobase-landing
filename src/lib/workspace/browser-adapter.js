@@ -33,7 +33,6 @@
   let voice = null;
   let voiceGeneration = 0;
   let voiceStarting = 0;
-  let workspaceRevision = null;
   let workspaceSaveQueue = Promise.resolve();
   let aiSessionId = null;
   let aiRetry = null;
@@ -559,9 +558,9 @@
   }
 
   async function sendBridge(method, payload, { skipAutodownload = false, keepalive = false, signal } = {}) {
-    const token = await ensureCsrf();
     const outgoing = payload === undefined ? {} : { ...payload };
-    if (method === "workspace_save") outgoing.workspace_revision = workspaceRevision;
+    if (method === "workspace_save" && (!Number.isSafeInteger(outgoing.workspace_revision) || outgoing.workspace_revision < 0)) throw new Error(adapterMessage("retry"));
+    const token = await ensureCsrf();
     let response;
     try {
       response = await fetch(`${API_ROOT}/bridge/${encodeURIComponent(method)}`, {
@@ -591,7 +590,6 @@
       throw new Error(bridgeFailure(response.status, localized));
     }
     if (!skipAutodownload) triggerDownload(localized.download_url, ["export_results", "export_selection"].includes(method));
-    if ((method === "bootstrap" || method === "workspace_save" || method === "workspace_load") && Number.isInteger(localized.workspace_revision)) workspaceRevision = localized.workspace_revision;
     if ((method === "set_language" || method === "bootstrap") && ["nl", "fr", "en"].includes(localized.language)) {
       window.parent.postMessage({ type: "belgobase-web-language", language: localized.language }, window.location.origin);
     }
