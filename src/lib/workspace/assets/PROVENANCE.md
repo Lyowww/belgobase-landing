@@ -17,3 +17,7 @@ The primary workspace keeps search, filters and results together. Secondary cust
 ## Browser bootstrap repair — 1 October 2026
 
 The browser asset no longer contains desktop-only local Excel handlers for markup that is intentionally absent online. A strict full-script initialization test returns null for absent element IDs and verifies that the browser workspace can bind all delivered controls before bootstrap.
+
+## Successful bootstrap and compact account history — 1 October 2026
+
+The full browser bootstrap now includes the shared quick-filter label refresh used by language changes. Its strict DOM test completes a successful bootstrap and journey-state response, verifies that the connection warning closes and confirms that search unlocks. Search history shows a compact condition count, identifies the shared account correctly and resets the modal body to the top without changing stored filters or existing actions.

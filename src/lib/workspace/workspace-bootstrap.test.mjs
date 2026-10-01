@@ -52,7 +52,7 @@ function node(id = "") {
   };
 }
 
-test("the complete web workspace script initializes with desktop-only markup absent", () => {
+test("the complete web workspace script completes bootstrap with desktop-only markup absent", async () => {
   assert.equal(ids.has("local-excel-open"), false);
   assert.doesNotMatch(script, /localExcel|local-excel/);
 
@@ -70,10 +70,44 @@ test("the complete web workspace script initializes with desktop-only markup abs
     createElement(tagName) { const element = node(); element.tagName = String(tagName).toUpperCase(); return element; },
     addEventListener() {},
   };
+  const calls = [];
   const window = {
     document,
     addEventListener() {},
     localStorage: { getItem() { return null; }, setItem() {} },
+    pywebview: { api: {
+      async bootstrap() {
+        calls.push("bootstrap");
+        return {
+          ok: true,
+          language: "nl",
+          presentation_dictionary: {},
+          result_column_options: [],
+          default_result_columns: ["name", "city"],
+          desktop_capabilities: [],
+          saved: [],
+          workspace: {
+            searches: [],
+            lists: [{ id: "default", name: "Mijn bedrijven", companies: [] }],
+            active_list_id: "default",
+            result_columns: ["name", "city"],
+          },
+          filter_labels: {},
+          enum_labels: {},
+          activity_labels_by_version: {},
+          nace_language_catalog: {},
+          sectors: [],
+          legal_forms: [],
+          statuses: [],
+          account: { name: "Testaccount" },
+          display_tab: "workspace",
+        };
+      },
+      async journey() {
+        calls.push("journey");
+        return { ok: true, history: [], exclusions: {}, owner_migration: { journey: { status: "shared" }, memory: { status: "shared" } } };
+      },
+    } },
   };
   const context = {
     window,
@@ -87,6 +121,7 @@ test("the complete web workspace script initializes with desktop-only markup abs
     URL,
     Uint8Array,
     structuredClone,
+    performance: { now: () => 1000 },
     crypto: { randomUUID: () => "00000000-0000-4000-8000-000000000000" },
     requestAnimationFrame: callback => callback(),
     setTimeout: () => 1,
@@ -97,5 +132,10 @@ test("the complete web workspace script initializes with desktop-only markup abs
   context.globalThis = context;
 
   assert.doesNotThrow(() => vm.runInNewContext(script, context));
+  for (let index = 0; index < 5; index += 1) await new Promise(resolve => setImmediate(resolve));
   assert.equal(document.querySelector("#local-excel-open"), null, "absent desktop markup must stay absent in the DOM stub");
+  assert.deepEqual(calls, ["bootstrap", "journey"]);
+  assert.equal(nodes.get("connection").hidden, true, "a successful bootstrap must leave the connection warning hidden");
+  assert.equal(nodes.get("connection").textContent, "");
+  assert.equal(nodes.get("search-button").disabled, false, "successful bootstrap must unlock the primary search route");
 });
