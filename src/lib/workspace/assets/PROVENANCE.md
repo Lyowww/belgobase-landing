@@ -13,3 +13,7 @@ Canceled and replaced searches no longer apply stale followups. Search preparati
 ## Workspace organization and account sync — 1 October 2026
 
 The primary workspace keeps search, filters and results together. Secondary customer actions share one compact menu, regions are direct filter choices, and saved workspace routes refresh their account copy before opening it. Conflicting device and shared journey profiles require an explicit recoverable choice. The UI hash above is calculated from the normalized Git blob after combining these changes with the canceled-search, exact-export, journey-context, upload-mapping and export-draft repairs.
+
+## Browser bootstrap repair — 1 October 2026
+
+The browser asset no longer contains desktop-only local Excel handlers for markup that is intentionally absent online. A strict full-script initialization test returns null for absent element IDs and verifies that the browser workspace can bind all delivered controls before bootstrap.
