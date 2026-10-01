@@ -275,22 +275,25 @@ test("quick filters preserve untouched arrays and replace only a field the user 
     value: "",
     options: values.map(option),
     appendChild(item) { this.options.push(item); },
+    replaceChildren() { this.options = []; },
   });
   const city = control("INPUT", "gemeente_nl");
   const sector = control("SELECT", "nace_prefix", ["62", "63"]);
   const legal = control("SELECT", "juridical_form", ["014", "017"]);
   const controls = [city, sector, legal];
-  const state = { filters: {
+  const state = { activityLabels: {}, naceLanguageCatalog: {}, sectorOptions: [{value:"62"},{value:"63"}], filters: {
     gemeente_nl: ["Gent", "Antwerpen"],
     nace_prefix: ["62", "63"],
     juridical_form: ["014", "017"],
   } };
   const quickFilterDirty = new Set();
   const { snapshotFilters, syncFilters } = loadFunctions(
-    ["snapshotFilters", "syncFilters"],
+    ["snapshotFilters", "syncFilters", "refreshQuickSectorOptions", "naceFilterMeaning", "naceLabel"],
     {
       state,
       journeyApplyExclusions: filters => filters,
+      $: selector => selector === "#f-sector" ? sector : null,
+      i18n: { language: "nl" },
       quickCityDirty: false,
       quickCityKeys: ["gemeente_nl", "gemeente_fr"],
       quickFilterDirty,
@@ -409,6 +412,7 @@ test("language rerender restores the active dossier tab after rebuilding its cha
     $$: () => [],
     configureQuickCity: () => {},
     refreshQuickMultipleLabels: () => {},
+    refreshQuickSectorOptions: () => {},
     renderChips: () => {},
     renderComposer: () => {},
     renderAssistantContext: () => {},
@@ -489,7 +493,7 @@ test("account language changes redraw the mounted wallet without another request
   const t=(key,fallback,vars={})=>String(translations[i18n.language]?.[key]??fallback).replace(/\{(\w+)\}/g,(_match,name)=>String(vars[name]??""));
   let actions=0,context;
   function $(selector){return node(selector);}
-  context=vm.createContext({$,walletPanel,work,assistantUi,journey:{mode:null},state:{ready:true,view:"tools",filters:{}},filterDraft:null,i18n,locale:"nl-BE",nf:new Intl.NumberFormat("nl-BE"),compact:new Intl.NumberFormat("nl-BE"),esc:String,t,navigator:{},document:{},accountPublicLabel:row=>row.label,action:async()=>{actions+=1;return null;},$$:()=>[],configureQuickCity(){},refreshQuickMultipleLabels(){},renderChips(){},renderComposer(){},renderAssistantContext(){},renderConversation(){},renderRows(){},workspaceTitles:()=>({account:["Account",""]}),renderAssistantCredit(){},renderAccount(){context.renderUsage();},renderDetail(){},setTab(){},bridge(){throw new Error("language redraw must not fetch usage");}});
+  context=vm.createContext({$,walletPanel,work,assistantUi,journey:{mode:null},state:{ready:true,view:"tools",filters:{}},filterDraft:null,i18n,locale:"nl-BE",nf:new Intl.NumberFormat("nl-BE"),compact:new Intl.NumberFormat("nl-BE"),esc:String,t,navigator:{},document:{},accountPublicLabel:row=>row.label,action:async()=>{actions+=1;return null;},$$:()=>[],configureQuickCity(){},refreshQuickSectorOptions(){},refreshQuickMultipleLabels(){},renderChips(){},renderComposer(){},renderAssistantContext(){},renderConversation(){},renderRows(){},workspaceTitles:()=>({account:["Account",""]}),renderAssistantCredit(){},renderAccount(){context.renderUsage();},renderDetail(){},setTab(){},bridge(){throw new Error("language redraw must not fetch usage");}});
   vm.runInContext(`${walletSource}\n${functionSource("renderUsage")}\n${functionSource("refreshLanguage")}`,context);
   for(const [language,label] of [["fr","Disponible"],["en","Available"],["nl","Beschikbaar"]]){
     context.refreshLanguage(language);
