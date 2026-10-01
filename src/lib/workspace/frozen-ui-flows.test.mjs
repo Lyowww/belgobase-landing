@@ -81,87 +81,49 @@ test("confirmed AI export applies the newly selected row limit", () => {
   assert.match(functionSource("confirmProposalExport"), /exportContextWithLimit\(original/);
 });
 
-test("failed filter and history transitions keep the previous visible state", async () => {
-  const apply = functionSource("applyWorkspaceFilters");
-  assert.match(apply, /const applied=await search/);
-  assert.doesNotMatch(apply, /state\.filters\s*=/);
-  assert.match(functionSource("moveSelection"), /state\.sort=previousSort/);
-  assert.match(functionSource("moveSelection"), /\$\('#query'\)\.value=previousInput/);
-  assert.match(functionSource("loadSavedSearch"), /else\{\$\('#query'\)\.value=previousInput/);
-  assert.match(functionSource("loadHistory"), /else\{\$\('#query'\)\.value=previousInput/);
-
-  const query = { value: "oude zoektekst" };
-  const state = {
-    busy: false,
-    recording: false,
-    query: "oude zoektekst",
-    filters: { kbo_status: "AC", regions: ["vlaanderen"] },
-    rows: [{ number: "0123456789", name: "Bestaand bedrijf" }],
-    sort: { key: "name", direction: -1 },
-    workspace: {
-      searches: [{ id: "saved", query: "nieuwe bewaarde zoektekst", filters: { kbo_status: "ST" } }],
-    },
-  };
-  const selectionHistory = {
-    entries: [
-      { query: "oude zoektekst", filters: structuredClone(state.filters), sort: structuredClone(state.sort), page: 1 },
-      { query: "andere geschiedenisselectie", filters: { regions: ["wallonie"] }, sort: { key: "number", direction: 1 }, page: 2 },
-    ],
-    index: 0,
-  };
-  const searchHistory = [
-    { id: "history", query: "nieuwe geschiedeniszoektekst", filters: { kbo_status: "JU" } },
-  ];
-  const searchCalls = [];
-  const { applyWorkspaceFilters, loadSavedSearch, loadHistory, moveSelection } = loadFunctions(
-    ["applyWorkspaceFilters", "loadSavedSearch", "loadHistory", "moveSelection"],
-    {
-      state,
-      work: { filters: { kbo_status: "ST" } },
-      selectionHistory,
-      searchHistory,
-      $: selector => {
-        assert.equal(selector, "#query");
-        return query;
-      },
-      $$: selector => selector === "#tools-content input" ? [{ reportValidity: () => true }] : [],
-      action: async () => ({ filters: { kbo_status: "ST" } }),
-      search: async (...args) => { searchCalls.push(args); return false; },
-      t: (_key, fallback) => fallback,
-      closeDialog: () => {},
-      navigate: () => {},
-      resetConversation: () => { throw new Error("failed transition must not reset the conversation"); },
-      renderComposer: () => {},
-      renderRows: () => {},
-      refreshSelectionNavigation: () => {},
-    },
-  );
-  const expected = JSON.stringify({
-    query: state.query,
-    filters: state.filters,
-    rows: state.rows,
-    sort: state.sort,
-    navigationIndex: selectionHistory.index,
-    visibleQuery: query.value,
+test("rejected saved search exposes its complete draft and blocks stale results", async () => {
+  const filters={juridical_situation:["001","002"],juridical_situation_exclude:["001"],future_code:["999"]};
+  const state={view:"saved",query:"oud",filters:{kbo_status:"AC"},rows:[{number:"0123456789"}],total:1,page:3,searched:true,selectedRows:{"0123456789":{}},sort:{key:"name",direction:-1},workspace:{searches:[{id:"saved",query:"Gent",filters}]}};
+  const query={value:"oud"};let editor;
+  const {stageSavedSearchDraft,loadSavedSearch}=loadFunctions(["stageSavedSearchDraft","loadSavedSearch"],{
+    state,structuredClone,savedSearchIssue:null,filterDraft:null,filterRefreshPending:false,filterRefreshTimer:null,lastSearchError:"Dezelfde rechtstoestand kan niet tegelijk opgenomen en uitgesloten worden: 001",
+    $:selector=>{assert.equal(selector,"#query");return query;},clearTimeout(){},closeDialog(){},resetConversation(){},syncFilters(){},navigate(view){state.view=view;},renderComposer(){},
+    search:async()=>false,openSavedSearchEditor:async(draft,savedQuery,message)=>{editor={draft,savedQuery,message};},
   });
-  const assertOldState = () => assert.equal(JSON.stringify({
-    query: state.query,
-    filters: state.filters,
-    rows: state.rows,
-    sort: state.sort,
-    navigationIndex: selectionHistory.index,
-    visibleQuery: query.value,
-  }), expected);
-
-  await applyWorkspaceFilters({ kbo_status: "ST" });
-  assertOldState();
   await loadSavedSearch("saved");
-  assertOldState();
-  await loadHistory("history");
-  assertOldState();
-  await moveSelection(1);
-  assertOldState();
-  assert.equal(searchCalls.length, 4, "each transition reaches the rejected search path");
+  assert.equal(state.view,"search");
+  assert.equal(state.searched,false);
+  assert.equal(state.total,0);
+  assert.equal(state.rows.length,0);
+  assert.equal(Object.keys(state.selectedRows).length,0);
+  assert.equal(query.value,"Gent");
+  assert.deepEqual(JSON.parse(JSON.stringify(editor.draft)),filters);
+  assert.match(editor.message,/opgenomen en uitgesloten/);
+  assert.match(functionSource("openSavedSearchEditor"),/workspace_data',\{section:'filters',filters:\{\}\}/);
+  assert.match(functionSource("openSavedSearchEditor"),/work\.filters=structuredClone\(filters\)/);
+  assert.match(functionSource("controls"),/state\.searched&&state\.total/);
+});
+
+test("saved multi-select values absent from the current catalogue remain checked",()=>{
+  const target={innerHTML:""};
+  const {fieldControl}=loadFunctions(["fieldControl"],{
+    esc:String,present:String,state:{filterLabels:{}},filterNames:{},t:(_key,fallback,vars={})=>fallback.replace("{value}",String(vars.value??"")),multilineFilterKey:()=>false,
+  });
+  const markup=fieldControl({key:"juridical_situation",label:"Rechtstoestand opnemen",type:"select",multiple:true,options:[{value:"001",label:"001 — Actief"}]},["001","999"]);
+  assert.match(markup,/value="001" checked/);
+  assert.match(markup,/value="999" checked/);
+  assert.match(markup,/999 — bewaarde waarde/);
+});
+
+test("saved-search repair state is isolated and refreshes the shown validation error",()=>{
+  assert.match(functionSource("openWorkspace"),/if\(!data&&section==='filters'\).*workspace_data',\{section:'filters',filters:\{\}\}/);
+  assert.match(functionSource("openWorkspace"),/preserveFilters=true;savedSearchIssue=\{message,query:/);
+  assert.match(functionSource("openWorkspace"),/preserveFilters&&!keepDraft\?state\.filters/);
+  assert.match(functionSource("openWorkspace"),/else\{if\(!keepDraft\)savedSearchIssue=null;if\(!data\)return;\}/);
+  assert.match(functionSource("loadSavedSearch"),/if\(state\.busy\|\|state\.recording\)return/);
+  assert.match(functionSource("newSearch"),/savedSearchIssue=null;lastSearchError=''/);
+  assert.match(functionSource("action"),/lastActionError=e\.message\|\|''/);
+  assert.match(functionSource("applyWorkspaceFilters"),/savedSearchIssue=\{message:lastActionError,query:/);
 });
 
 test("a rejected AI proposal search leaves the proposal and visible query unchanged", async () => {
@@ -534,4 +496,84 @@ test("account language changes redraw the mounted wallet without another request
     assert.equal(node("#ai-usage-card").children[0],walletPanel);
   }
   assert.equal(actions,0);
+});
+
+test("failed ordinary filter and history transitions still keep the previous visible state", async () => {
+  const apply = functionSource("applyWorkspaceFilters");
+  assert.match(apply, /applied=await search/);
+  assert.doesNotMatch(apply, /state\.filters\s*=/);
+  assert.match(functionSource("moveSelection"), /state\.sort=previousSort/);
+  assert.match(functionSource("moveSelection"), /\$\('#query'\)\.value=previousInput/);
+  assert.match(functionSource("loadHistory"), /else\{\$\('#query'\)\.value=previousInput/);
+
+  const query = { value: "oude zoektekst" };
+  const state = {
+    busy: false,
+    recording: false,
+    query: "oude zoektekst",
+    filters: { kbo_status: "AC", regions: ["vlaanderen"] },
+    rows: [{ number: "0123456789", name: "Bestaand bedrijf" }],
+    sort: { key: "name", direction: -1 },
+    workspace: {
+      searches: [{ id: "saved", query: "nieuwe bewaarde zoektekst", filters: { kbo_status: "ST" } }],
+    },
+  };
+  const selectionHistory = {
+    entries: [
+      { query: "oude zoektekst", filters: structuredClone(state.filters), sort: structuredClone(state.sort), page: 1 },
+      { query: "andere geschiedenisselectie", filters: { regions: ["wallonie"] }, sort: { key: "number", direction: 1 }, page: 2 },
+    ],
+    index: 0,
+  };
+  const searchHistory = [
+    { id: "history", query: "nieuwe geschiedeniszoektekst", filters: { kbo_status: "JU" } },
+  ];
+  const searchCalls = [];
+  const { applyWorkspaceFilters, loadHistory, moveSelection } = loadFunctions(
+    ["applyWorkspaceFilters", "loadHistory", "moveSelection"],
+    {
+      state, savedSearchIssue: null,
+      work: { filters: { kbo_status: "ST" } },
+      selectionHistory,
+      searchHistory,
+      $: selector => {
+        assert.equal(selector, "#query");
+        return query;
+      },
+      $$: selector => selector === "#tools-content input" ? [{ reportValidity: () => true }] : [],
+      action: async () => ({ filters: { kbo_status: "ST" } }),
+      search: async (...args) => { searchCalls.push(args); return false; },
+      t: (_key, fallback) => fallback,
+      closeDialog: () => {},
+      navigate: () => {},
+      resetConversation: () => { throw new Error("failed transition must not reset the conversation"); },
+      renderComposer: () => {},
+      renderRows: () => {},
+      refreshSelectionNavigation: () => {},
+    },
+  );
+  const expected = JSON.stringify({
+    query: state.query,
+    filters: state.filters,
+    rows: state.rows,
+    sort: state.sort,
+    navigationIndex: selectionHistory.index,
+    visibleQuery: query.value,
+  });
+  const assertOldState = () => assert.equal(JSON.stringify({
+    query: state.query,
+    filters: state.filters,
+    rows: state.rows,
+    sort: state.sort,
+    navigationIndex: selectionHistory.index,
+    visibleQuery: query.value,
+  }), expected);
+
+  await applyWorkspaceFilters({ kbo_status: "ST" });
+  assertOldState();
+  await loadHistory("history");
+  assertOldState();
+  await moveSelection(1);
+  assertOldState();
+  assert.equal(searchCalls.length, 3, "each transition reaches the rejected search path");
 });
