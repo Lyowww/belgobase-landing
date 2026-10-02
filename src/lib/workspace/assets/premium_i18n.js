@@ -132,6 +132,7 @@
 ,"journey.usageChat":{"nl":"Gesprekken en analyses","fr":"Conversations et analyses","en":"Conversations and analyses"}
 ,"journey.usageContacts":{"nl":"Contactonderzoek","fr":"Recherche de contacts","en":"Contact research"}
 ,"journey.usageVoice":{"nl":"Spraak","fr":"Voix","en":"Voice"}
+,"journey.usageWeb":{"nl":"Websiteonderzoek","fr":"Recherche sur le Web","en":"Web research"}
 ,"journey.usageReserved":{"nl":"Gereserveerd","fr":"Réservé","en":"Reserved"}
 ,"journey.contactChoose":{"nl":"Kies de huidige zoekselectie, een geüploade lijst of een eerdere contacttaak.","fr":"Choisissez la sélection actuelle, une liste importée ou une tâche de contact précédente.","en":"Choose the current search selection, an uploaded list, or an earlier contact task."}
 ,"journey.exportChoose":{"nl":"Kies hieronder de kolommen en statussen voor de contacten-Excel.","fr":"Choisissez ci-dessous les colonnes et statuts pour l’Excel de contacts.","en":"Choose the columns and statuses for the contacts Excel below."}
