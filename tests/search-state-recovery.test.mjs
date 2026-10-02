@@ -61,8 +61,8 @@ test("automatic location changes retain unapplied inputs and the appropriate que
     dom.nodes["#query"].value = aiMode ? "Zoek nu klanten in heel België" : "Alpha";
     dom.nodes["#ai-mode"] = { checked: aiMode };
     const inputs = [
-      { dataset: { filter: "kbo_postcode" }, value: "2150", type: "text" },
-      { dataset: { filter: "gemeente_nl" }, value: "Borsbeek", type: "text" },
+      { dataset: { filter: "kbo_postcode" }, value: "2150", type: "text", reportValidity: () => true },
+      { dataset: { filter: "gemeente_nl" }, value: "Borsbeek", type: "text", reportValidity: () => true },
     ];
     const context = vm.createContext({
       structuredClone, Set, state: { ready: true, busy: false, recording: false, filters: {}, query: "confirmed", selectedRows: {} },
@@ -73,7 +73,7 @@ test("automatic location changes retain unapplied inputs and the appropriate que
       journeyApplyExclusions: filters => structuredClone(filters), regionLabels: () => ({ vlaanderen: "Vlaanderen" }),
       renderChips() {}, controls() {}, scheduleFilterRefresh() {},
     });
-    vm.runInContext(["snapshotFilters", "toggleRegion", "removeFilter"].map(functionSource).join("\n"), context);
+    vm.runInContext(["quickFiltersValid", "snapshotFilters", "toggleRegion", "removeFilter"].map(functionSource).join("\n"), context);
     context.toggleRegion("vlaanderen");
     assert.deepEqual(JSON.parse(JSON.stringify(context.filterDraft)), {
       kbo_postcode: "2150", gemeente_nl: "Borsbeek", regions: ["vlaanderen"],
@@ -117,6 +117,7 @@ test("website and discovery replies stay in the same advisory conversation", asy
   assert.equal(context.isExplicitContactRequest("Wij verkopen contactgegevens aan bedrijven"), false);
   context.guidedModeActive = () => false;
   context.$ = () => ({checked:false});
+  context.quickFiltersValid = () => true;
   context.snapshotFilters = () => ({query:"voorbeeld.be"});
   context.search = async () => calls.push("manual-search");
   await context.dispatchComposerText("voorbeeld.be");
@@ -292,4 +293,25 @@ test("new conversation resets server context before clearing visible work", asyn
     assert.deepEqual(events,fails?['reset_profile','offline']:['reset_profile','merged','cleared']);
     assert.equal(state.conversation.length,fails?1:0);assert.equal(state.busy,false);
   }
+});
+
+
+test("invalid numeric drafts cannot erase an existing bound through another action", async () => {
+  const calls = [];
+  const context = vm.createContext({
+    structuredClone, Set, state: {ready:true,busy:false,recording:false,filters:{min_omzet:100,kbo_postcode:"2150"},selectedRows:{}},
+    filterDraft:null,filterDraftQuery:"",filterRevision:0,filterRefreshPending:false,
+    $$:()=>[{reportValidity:()=>false}], $:()=>({checked:false,value:"Alpha"}),
+    regionLabels:()=>({vlaanderen:"Vlaanderen"}),renderRegionButtons:()=>calls.push("reset-checkbox"),
+    guidedModeActive:()=>false,isExplicitContactRequest:()=>false,
+    snapshotFilters:()=>{throw Error("Invalid draft must never be snapshotted");},
+    search:async()=>calls.push("search"),
+  });
+  vm.runInContext(["quickFiltersValid","toggleRegion","removeFilter","dispatchComposerText"].map(functionSource).join("\n"),context);
+  context.toggleRegion("vlaanderen");
+  context.removeFilter("kbo_postcode");
+  assert.equal(await context.dispatchComposerText("Alpha"),false);
+  assert.equal(context.filterDraft,null);
+  assert.deepEqual(JSON.parse(JSON.stringify(context.state.filters)),{min_omzet:100,kbo_postcode:"2150"});
+  assert.equal(calls.includes("search"),false);
 });
