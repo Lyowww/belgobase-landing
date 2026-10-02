@@ -55,6 +55,42 @@ function domFixture() {
   return { nodes, $: selector => nodes[selector] || node(), $$: () => [] };
 }
 
+test("automatic location changes retain unapplied inputs and the appropriate query", () => {
+  for (const aiMode of [false, true]) {
+    const dom = domFixture();
+    dom.nodes["#query"].value = aiMode ? "Zoek nu klanten in heel België" : "Alpha";
+    dom.nodes["#ai-mode"] = { checked: aiMode };
+    const inputs = [
+      { dataset: { filter: "kbo_postcode" }, value: "2150", type: "text" },
+      { dataset: { filter: "gemeente_nl" }, value: "Borsbeek", type: "text" },
+    ];
+    const context = vm.createContext({
+      structuredClone, Set, state: { ready: true, busy: false, recording: false, filters: {}, query: "confirmed", selectedRows: {} },
+      filterDraft: null, filterDraftQuery: "", filterRevision: 0, filterRefreshPending: false,
+      quickCityDirty: true, quickCityKeys: ["gemeente_nl", "gemeente_fr"],
+      quickFilterDirty: new Set(["kbo_postcode", "gemeente_nl"]),
+      $: dom.$, $$: () => inputs, guidedModeActive: () => false,
+      journeyApplyExclusions: filters => structuredClone(filters), regionLabels: () => ({ vlaanderen: "Vlaanderen" }),
+      renderChips() {}, controls() {}, scheduleFilterRefresh() {},
+    });
+    vm.runInContext(["snapshotFilters", "toggleRegion", "removeFilter"].map(functionSource).join("\n"), context);
+    context.toggleRegion("vlaanderen");
+    assert.deepEqual(JSON.parse(JSON.stringify(context.filterDraft)), {
+      kbo_postcode: "2150", gemeente_nl: "Borsbeek", regions: ["vlaanderen"],
+    });
+    assert.equal(context.filterDraftQuery, aiMode ? "confirmed" : "Alpha");
+    context.filterDraft = null;
+    context.state.filters = { kbo_postcode: "2150", regions: ["vlaanderen"] };
+    inputs[0].value = "2160";
+    inputs[1].value = "Antwerpen";
+    context.removeFilter("kbo_postcode");
+    assert.deepEqual(JSON.parse(JSON.stringify(context.filterDraft)), {
+      gemeente_nl: "Antwerpen", regions: ["vlaanderen"],
+    });
+    assert.equal(context.filterDraftQuery, aiMode ? "confirmed" : "Alpha");
+  }
+});
+
 test("website and discovery replies stay in the same advisory conversation", async () => {
   const calls = [];
   const app = { proposal: { status: "ready" } };

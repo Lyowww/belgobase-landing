@@ -368,7 +368,7 @@ function scheduleFilterRefresh(){clearTimeout(filterRefreshTimer);filterRefreshT
 function renderRegionButtons(){const regions=(filterDraft??state.filters).regions||[];$$('input[data-region]').forEach(input=>{input.checked=regions.includes(input.dataset.region);input.disabled=!state.ready||state.recording||(state.busy&&operationKind!=='search');});}
 function toggleRegion(region){
  if(!regionLabels()[region]||!state.ready||state.recording||(state.busy&&operationKind!=='search'))return;
- if(filterDraft===null){filterDraft=structuredClone(state.filters);filterDraftQuery=state.query||'';}
+ if(filterDraft===null){filterDraft=snapshotFilters();filterDraftQuery=guidedModeActive()||$('#ai-mode').checked?state.query||'':$('#query').value.trim();}
  const regions=new Set(filterDraft.regions||[]);regions.has(region)?regions.delete(region):regions.add(region);
  if(regions.size)filterDraft.regions=[...regions];else delete filterDraft.regions;
  filterRevision++;filterRefreshPending=true;state.selectedRows={};renderChips();
@@ -377,7 +377,7 @@ function toggleRegion(region){
 $('#region-quick').onchange=e=>{const input=e.target.closest('input[data-region]');if(input)toggleRegion(input.dataset.region);};
 function removeFilter(key){
  if(!state.ready||state.recording||(state.busy&&operationKind!=='search'))return;
- if(filterDraft===null){filterDraft=structuredClone(state.filters);filterDraftQuery=state.query||'';}
+ if(filterDraft===null){filterDraft=snapshotFilters();filterDraftQuery=guidedModeActive()||$('#ai-mode').checked?state.query||'':$('#query').value.trim();}
  delete filterDraft[key];
  if(quickCityKeys.includes(key)){quickCityDirty=false;configureQuickCity({filters:filterDraft});$('#f-city').value=filterDraft[$('#f-city').dataset.filter]??'';}
  if(['naam','ondernemingsnummer'].includes(key)){filterDraftQuery='';$('#query').value='';}
