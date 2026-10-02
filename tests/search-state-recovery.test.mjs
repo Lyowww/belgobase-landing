@@ -326,3 +326,18 @@ test("invalid numeric drafts cannot erase an existing bound through another acti
   assert.deepEqual(JSON.parse(JSON.stringify(context.state.filters)),{min_omzet:100,kbo_postcode:"2150"});
   assert.equal(calls.includes("search"),false);
 });
+
+test("invalid stored supplementary settings remain explicit and escaped until the user removes them", () => {
+  for (const [language, title] of [["nl", "Aanvullende bewaarde instellingen"], ["fr", "Paramètres supplémentaires enregistrés"], ["en", "Additional saved settings"]]) {
+    const filters = { kbo_postcode: "2150", max_rows: true, preferences: { bad: true }, xbrl_metric_filters: [null], selected_output_cols: ["<img src=x onerror=alert(1)>"] };
+    const prior = JSON.stringify(filters);
+    const globals = { work: { filters }, savedSearchSpecialFilterKeys: new Set(["xbrl_metric_filters", "preferences", "max_rows", "selected_output_cols"]), i18n: { language }, filterNames: {}, display: JSON.stringify, esc: value => String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;") };
+    const { savedSearchSupplementalMarkup } = loadFunctions(["savedSearchSupplementalMarkup"], { ...globals, savedSearchIssue: { message: "invalid" } });
+    const markup = savedSearchSupplementalMarkup();
+    assert(markup.includes(title));assert(!markup.includes("<img"));assert(markup.includes("&lt;img"));
+    for (const key of ["xbrl_metric_filters", "preferences", "max_rows", "selected_output_cols"]) assert(markup.includes(`data-unknown-filter="${key}"`));
+    assert.equal(JSON.stringify(filters), prior);
+    const normal = loadFunctions(["savedSearchSupplementalMarkup"], { ...globals, savedSearchIssue: null });
+    assert.equal(normal.savedSearchSupplementalMarkup(), "");
+  }
+});
