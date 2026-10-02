@@ -214,7 +214,7 @@ test("a rejected stored search stages its draft without showing stale checked ro
     workspace: { searches: [{ id: "stored", query: "Gent", filters: { kbo_status: "AC" } }] },
   };
   let editor;
-  const { loadSavedSearch } = loadFunctions(["navigate", "stageSavedSearchDraft", "loadSavedSearch"], {
+  const { loadSavedSearch } = loadFunctions(["navigate", "stageSavedSearchDraft", "loadStoredSearch", "loadSavedSearch"], {
     state, $, $$, t: (_key, fallback) => fallback,
     closeDialog() {}, renderRows() {}, renderAssistantContext() {}, renderComposer() {},
     syncFilters() {}, clearTimeout() {}, resetConversation() {},
@@ -236,25 +236,36 @@ test("a rejected stored search stages its draft without showing stale checked ro
   assert.deepEqual(editor, [{ kbo_status: "AC" }, "Gent", "De bewaarde selectie bevat een tegenstrijdigheid."]);
 });
 
-test("a rejected history search stays in Saved and keeps its checked rows", async () => {
-  const { $, $$ } = domFixture();
-  const state = {
-    request: 0,
-    view: "saved",
-    selectedRows: { "0123456789": { number: "0123456789" } },
-  };
-  const { loadHistory } = loadFunctions(["navigate", "loadHistory"], {
-    state, work: { returnView: "saved" }, $, $$, t: (_key, fallback) => fallback,
-    searchHistory: [{ id: "history", query: "Gent", filters: { kbo_status: "AC" } }],
-    closeDialog() {}, renderRows() {}, renderAssistantContext() {}, renderComposer() {},
+test("a rejected history search restores the stored conditions for explicit repair", async () => {
+  const { nodes, $, $$ } = domFixture();
+  const state = { request: 0, view: "saved", filters: { kbo_status: "ST" }, query: "old", rows: [{ number: "0123456789" }], total: 1, searched: true, selectedRows: { "0123456789": { number: "0123456789" } } };
+  let editor;
+  const { loadHistory } = loadFunctions(["navigate", "stageSavedSearchDraft", "loadStoredSearch", "loadHistory"], {
+    state, $, $$, t: (_key, fallback) => fallback,
+    searchHistory: [{ id: "history", query: "Gent", filters: { kbo_status: "AC", min_omzet: 100, juridical_situation: "000", juridical_situation_exclude: "000" } }],
+    closeDialog() {}, renderRows() {}, renderAssistantContext() {}, renderComposer() {}, syncFilters() {}, clearTimeout() {}, resetConversation() {},
+    filterRevision: 0, savedSearchIssue: null, filterDraft: null, filterRefreshPending: false, filterRefreshTimer: null,
+    lastSearchError: "Dezelfde rechtstoestand is opgenomen en uitgesloten.",
     search: async () => false,
-    resetConversation() { throw new Error("must not reset after a rejected search"); },
+    openSavedSearchEditor: async (...args) => { editor = args; return true; },
   });
-
   await loadHistory("history");
+  assert.equal(state.view, "search");assert.equal(state.searched, false);assert.equal(state.total, 0);assert.deepEqual(Object.keys(state.selectedRows), []);
+  assert.equal(nodes["#query"].value, "Gent");assert.equal(editor[0].min_omzet, 100);assert.equal(editor[0].kbo_status, "AC");
+  assert.equal(editor[0].juridical_situation, "000");assert.equal(editor[0].juridical_situation_exclude, "000");assert.match(editor[2], /opgenomen en uitgesloten/);
+});
 
-  assert.equal(state.view, "saved");
-  assert.deepEqual(Object.keys(state.selectedRows), ["0123456789"]);
+test("a cancelled stored search never opens a stale repair editor", async () => {
+  const state = { busy: false, recording: false, request: 0 };
+  let editors = 0;
+  const { loadStoredSearch } = loadFunctions(["loadStoredSearch"], {
+    state, filterRevision: 0, lastSearchError: "stale", closeDialog() {},
+    stageSavedSearchDraft: item => ({ filters: item.filters, query: item.query }),
+    search: async () => { await Promise.resolve();state.request++;return false; },
+    openSavedSearchEditor: async () => { editors++; },
+  });
+  assert.equal(await loadStoredSearch({ filters: { kbo_status: "AC" }, query: "Gent" }), false);
+  assert.equal(editors, 0);
 });
 
 test("relaxation keeps the active query and commits UI changes only after search succeeds", async () => {
