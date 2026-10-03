@@ -59,6 +59,7 @@ test("manual mode keeps a labelled search button and submits empty filters", asy
     filterDraft: null, filterRefreshPending: false, filterRefreshTimer: null,
     $, state: { ready: true, busy: false, conversation: [], aiScope: "new" },
     voice: { phase: "idle" }, guidedModeActive: () => false,
+    quickFiltersValid: () => true,
     t: (_key, fallback) => fallback, icon: name => `[${name}]`, esc: String,
     renderGuidedFlow() {}, snapshotFilters: () => ({ postcode_include: ["2150"] }),
     search: async (...args) => calls.push(["search", ...args]),
