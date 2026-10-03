@@ -26,35 +26,31 @@ function functionSource(name) {
   throw new Error(`${name} has no closing brace`);
 }
 
-test("current and device migration choices use the explicit recoverable contract", async () => {
-  assert.match(html, /Gedeelde versie behouden/);
-  assert.match(html, /Versie van dit apparaat gebruiken/);
-  assert.match(html, /De vorige gedeelde versie wordt eerst gearchiveerd/);
-  assert.match(html, /De apparaatversie blijft herstelbaar/);
-  assert.match(script, /active&&\(choice==='legacy'\|\|currentMissing\)/);
-  assert.match(script, /owner_migration_resolve/);
-
-  const calls = [];
-  const context = vm.createContext({
-    state: { busy: false },
-    journey: { data: { last_advice: null } },
-    busy: () => {},
-    journeyMigrationText: key => key,
-    journeyCall: async command => { calls.push(command); return { owner_migration: { journey: { status: "shared" }, memory: { status: "shared" } } }; },
-    mergeJourneyResult: () => {},
-    renderJourneyMigrationConflict: () => false,
-    clearJourneyMigrationPresentation: () => {},
-    renderJourneyAdvice: () => {},
-    notice: () => {},
-    journeyMigrationConflicts: () => [],
-  });
-  vm.runInContext(`${functionSource("resolveJourneyOwnerMigration")};this.resolveJourneyOwnerMigration=resolveJourneyOwnerMigration;`, context);
-  await context.resolveJourneyOwnerMigration("journey", "current");
-  await context.resolveJourneyOwnerMigration("memory", "legacy");
-  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [
-    { command: "owner_migration_resolve", scope: "journey", choice: "current", confirmed: true },
-    { command: "owner_migration_resolve", scope: "memory", choice: "legacy", confirmed: true },
+test("startup has no session picker or resume entry and keeps shared account data", async () => {
+  assert.doesNotMatch(html, /Kies welke bewaarde gegevens|Versie van dit apparaat gebruiken|id="guided-resume"|owner-migration-resolve/);
+  assert.match(html, /id="open-history"/);
+  assert.match(html, /id="open-searches"/);
+  const calls=[];
+  const shared={owner_migration:{journey:{status:"shared"},memory:{status:"shared"}},exclusions:{},history:[]};
+  const context=vm.createContext({t:(_key,fallback)=>fallback,journeyRequest:async command=>{calls.push(command);return shared;}});
+  vm.runInContext(`${functionSource("useSharedJourneyData")};this.useSharedJourneyData=useSharedJourneyData;`,context);
+  assert.equal(await context.useSharedJourneyData(shared),shared);
+  assert.equal(calls.length,0,"normal startup has no additional requests");
+  const conflict={owner_migration:{journey:{status:"conflict"},memory:{status:"conflict"}}};
+  assert.equal(await context.useSharedJourneyData(conflict),shared);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)),[
+    {command:"owner_migration_resolve",scope:"journey",choice:"current",confirmed:true},
+    {command:"owner_migration_resolve",scope:"memory",choice:"current",confirmed:true},
   ]);
+});
+
+test("failed owner preparation never replaces shared data or retries a paid command", async()=>{
+  const calls=[];
+  const context=vm.createContext({t:(_key,fallback)=>fallback,journeyRequest:async command=>{calls.push(command);throw new Error("unavailable");}});
+  vm.runInContext(`${functionSource("useSharedJourneyData")};this.useSharedJourneyData=useSharedJourneyData;`,context);
+  await assert.rejects(context.useSharedJourneyData({owner_migration:{journey:{status:"conflict"}}}),/unavailable/);
+  assert.equal(calls.length,1);
+  assert.equal(calls[0].choice,"current");
 });
 
 test("workspace refresh keeps the active query, filters and results", async () => {
