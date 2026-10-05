@@ -42,7 +42,7 @@ export function LeadPreview() {
     >
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
-          eyebrow={t("leadPreview.eyebrow")}
+
           title={t("leadPreview.title")}
           description={t("leadPreview.description")}
         />

@@ -19,7 +19,7 @@ const copy = {
     failed: "De video kan hier niet afspelen.",
     next: "Bekijk hoe je bestaande lijsten opschoont",
     demo: "Bekijk dit met uw eigen vraag",
-    transcript: "Lees de beschrijving",
+    transcript: "Over deze video",
     prospectingTranscript: "De eerste minuut gaat over de kost van verkeerde prospects: beluren, herhaald zoekwerk, gemiste passende bedrijven, versnipperde lijsten en klanten die veel opvolging vragen. Daarna volgt de echte proef van 29 september: een leverancier van fruit op het werk bespreekt zijn doelgroep en bevestigt postcode 2800 met minstens 20 VTE. De zoekopdracht levert 239 bedrijven op om zelf te beoordelen, gevolgd door de echte Excel-export. VTE bewijst geen aanwezigheid op kantoor of koopinteresse. Contactonderzoek wordt genoemd als aparte vervolgstap, niet uitgevoerd. Accountgegevens zijn afgeschermd; de opname is gemonteerd en wachttijden zijn ingekort.",
     cleanupTranscript: "In deze echte desktopproef worden bestaande Excelbestanden samengebracht met behoud van herkomst en notities. Belinformatie wordt ingedeeld, onzekere gegevens gaan naar controle en u kunt daarna gericht met de bruikbare contacten verder werken.",
   },
@@ -35,7 +35,7 @@ const copy = {
     failed: "The video cannot play here.",
     next: "See how to clean up existing lists",
     demo: "See it with your own question",
-    transcript: "Read the description",
+    transcript: "About this video",
     prospectingTranscript: "The first minute explores the cost of the wrong prospects: calling hours, repeated research, missed suitable companies, scattered lists and customers who need extensive follow-up. Then the real 29 September trial shows a workplace fruit supplier discussing his target market and confirming postcode 2800 with at least 20 FTE. The search returns 239 companies for review, followed by the actual Excel export. FTE does not prove office attendance or buying interest. Contact research is mentioned as a separate next step, not executed. Account details are concealed; footage is edited and waiting time shortened.",
     cleanupTranscript: "This real desktop trial combines existing Excel files while retaining source information and notes. Calling information is classified, uncertain data is sent for review, and you can then continue with the useful contacts.",
   },
@@ -121,9 +121,9 @@ export function HeroVisualization({ mode = "prospecting" }: { mode?: DemoId }) {
         </div>}
         {failed[id] && <p role="status" className="p-5 text-base text-white">{text.failed} <a className="underline" href={source}>{text.open}</a>.</p>}
       </div>
-      <p className="mt-3 text-center text-[15px] leading-6 text-muted">{caption}</p>
-      <details className="mx-auto mt-3 max-w-3xl text-left text-sm leading-6 text-muted">
+      <details className="mx-auto mt-3 max-w-3xl text-left text-base leading-7 text-muted">
         <summary className="cursor-pointer text-center underline underline-offset-4">{text.transcript}</summary>
+        <p className="mt-3">{caption}</p>
         <p id={transcriptId} className="mt-3">{transcript}</p>
       </details>
     </article>;

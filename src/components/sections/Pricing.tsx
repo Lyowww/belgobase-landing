@@ -25,7 +25,7 @@ export function Pricing() {
     <section id="pricing" className="section-alt noise-overlay relative py-16 sm:py-24 md:py-32">
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
-          eyebrow={t("pricing.eyebrow")}
+
           title={t("pricing.title")}
           description={t("pricing.description")}
         />

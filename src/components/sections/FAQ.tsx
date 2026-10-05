@@ -95,9 +95,6 @@ export function FAQ() {
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid items-start gap-12 lg:grid-cols-[2fr_3fr] lg:gap-16 xl:gap-24">
           <SectionReveal className="lg:sticky lg:top-28 lg:self-start">
-            <p className="mb-3 text-xs font-medium tracking-[0.15em] text-primary uppercase sm:mb-4 sm:text-sm sm:tracking-[0.2em]">
-              {t("faq.eyebrow")}
-            </p>
             <h2 className="text-3xl font-semibold tracking-tight text-balance text-deep-navy sm:text-4xl lg:text-5xl">
               {t("faq.title")}
             </h2>

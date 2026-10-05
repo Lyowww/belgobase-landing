@@ -34,7 +34,7 @@ export function Industries() {
     <section id="industries" className="noise-overlay relative bg-surface py-16 sm:py-24 md:py-32">
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
-          eyebrow={t("industries.eyebrow")}
+
           title={t("industries.title")}
           description={t("industries.description")}
         />

@@ -10,21 +10,18 @@ export function Process() {
   const steps = [
     {
       number: "01",
-      label: t("process.step1Label"),
       icon: MessageSquare,
       title: t("process.step1Title"),
       description: t("process.step1Description"),
     },
     {
       number: "02",
-      label: t("process.step2Label"),
       icon: ListFilter,
       title: t("process.step2Title"),
       description: t("process.step2Description"),
     },
     {
       number: "03",
-      label: t("process.step3Label"),
       icon: FileSpreadsheet,
       title: t("process.step3Title"),
       description: t("process.step3Description"),
@@ -35,7 +32,7 @@ export function Process() {
     <section id="process" className="section-alt relative py-16 sm:py-24 md:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
-          eyebrow={t("process.eyebrow")}
+
           title={t("process.title")}
           description={t("process.description")}
         />
@@ -47,8 +44,8 @@ export function Process() {
               className="relative overflow-hidden rounded-2xl border border-border bg-surface p-6 shadow-[0_16px_40px_-32px_rgba(15,35,70,0.45)] sm:p-7"
             >
               <div className="flex items-center justify-between gap-4">
-                <span className="text-xs font-semibold tracking-[0.16em] text-primary uppercase">
-                  {step.number} · {step.label}
+                <span className="text-base font-semibold text-primary">
+                  {step.number}
                 </span>
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/[0.08] text-primary">
                   <step.icon className="h-5 w-5" aria-hidden="true" />
@@ -57,7 +54,7 @@ export function Process() {
               <h3 className="mt-8 text-xl font-semibold tracking-tight text-deep-navy sm:text-2xl">
                 {step.title}
               </h3>
-              <p className="mt-3 text-sm leading-6 text-muted sm:text-base sm:leading-7">
+              <p className="mt-3 text-base leading-7 text-muted">
                 {step.description}
               </p>
             </li>
