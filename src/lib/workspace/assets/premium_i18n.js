@@ -2,6 +2,10 @@
 (function(global){
  'use strict';
  const messages={
+"journey.actionsLabel":{"nl":"Acties","fr":"Actions","en":"Actions"},
+"journey.menuLabel":{"nl":"Klantreis","fr":"Parcours client","en":"Customer journey"},
+"nav.excelClean":{"nl":"Excel opschonen","fr":"Nettoyer un fichier Excel","en":"Clean up Excel"},
+
 "filter.choiceCount":{"nl":"{label}: {count} gekozen","fr":"{label} : {count} sélectionnés","en":"{label}: {count} selected"},
 "mode.label":{"nl":"Weergave","fr":"Vue","en":"View"},
 "mode.conversation":{"nl":"Gesprek","fr":"Conversation","en":"Conversation"},
