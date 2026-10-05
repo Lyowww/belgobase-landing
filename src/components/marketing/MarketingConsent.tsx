@@ -11,32 +11,49 @@ import {
   readMarketingConsent,
   setMarketingConsent,
   syncMarketingMeasurementForPath,
-  type MarketingConsentChoice,
+  type MarketingConsentPreferences,
 } from "@/lib/marketing-measurement";
 
 const copy = {
   nl: {
-    title: "Marketingmeting",
-    body: "Met uw toestemming gebruiken we Google Ads om advertentiebezoeken en aanvragen te meten. We delen geen formuliergegevens en gebruiken dit niet voor gepersonaliseerde advertenties.",
-    accept: "Toestaan",
+    title: "Uw privacykeuze",
+    body: "Met uw toestemming meten we gebruik van de openbare website en het resultaat van advertenties. Formulierinhoud en werkruimtegegevens gaan niet naar Google.",
     reject: "Weigeren",
+    acceptAll: "Alles toestaan",
+    configure: "Instellen",
+    save: "Keuze opslaan",
     settings: "Cookievoorkeuren",
     more: "Cookieverklaring",
+    analyticsTitle: "Website-analyse",
+    analyticsBody: "GA4 meet veilige paginaweergaven, betrokken tijd en beperkte scroll-, knop- en videoacties.",
+    adsTitle: "Advertentiemeting",
+    adsBody: "Google Ads koppelt advertentiebezoeken aan een geslaagde aanvraag, zonder formuliergegevens.",
   },
   en: {
-    title: "Marketing measurement",
-    body: "With your permission, we use Google Ads to measure ad visits and enquiries. We do not share form details or use this for personalised advertising.",
-    accept: "Allow",
+    title: "Your privacy choice",
+    body: "With your permission, we measure use of the public website and advertising results. Form contents and workspace data are not sent to Google.",
     reject: "Reject",
+    acceptAll: "Allow all",
+    configure: "Configure",
+    save: "Save choice",
     settings: "Cookie preferences",
     more: "Cookie notice",
+    analyticsTitle: "Website analytics",
+    analyticsBody: "GA4 measures safe page views, engaged time and limited scroll, button and video actions.",
+    adsTitle: "Advertising measurement",
+    adsBody: "Google Ads links ad visits to a successfully received enquiry, without form details.",
   },
 } as const;
 
+const denied: MarketingConsentPreferences = { version: 2, analytics: false, ads: false };
+const granted: MarketingConsentPreferences = { version: 2, analytics: true, ads: true };
+
 export function MarketingConsent({ locale }: { locale: Locale }) {
   const pathname = usePathname();
-  const [choice, setChoice] = useState<MarketingConsentChoice | null>(null);
+  const [choice, setChoice] = useState<MarketingConsentPreferences | null>(null);
+  const [draft, setDraft] = useState<MarketingConsentPreferences>(denied);
   const [open, setOpen] = useState(false);
+  const [detailed, setDetailed] = useState(false);
   const enabled = marketingMeasurementEnabled();
   const isMarketingPage = enabled && isMarketingPublicPathname(pathname);
   const text = copy[locale];
@@ -50,6 +67,8 @@ export function MarketingConsent({ locale }: { locale: Locale }) {
     const frame = window.requestAnimationFrame(() => {
       const storedChoice = readMarketingConsent();
       setChoice(storedChoice);
+      setDraft(storedChoice ?? denied);
+      setDetailed(false);
       setOpen(isMarketingPublicPathname(pathname) && storedChoice === null);
     });
     return () => window.cancelAnimationFrame(frame);
@@ -57,14 +76,20 @@ export function MarketingConsent({ locale }: { locale: Locale }) {
 
   if (!isMarketingPage) return null;
 
-  const choose = (nextChoice: MarketingConsentChoice) => {
-    setMarketingConsent(nextChoice);
-    setChoice(nextChoice);
+  const choose = (preferences: MarketingConsentPreferences) => {
+    setMarketingConsent(preferences);
+    setChoice(preferences);
+    setDraft(preferences);
     setOpen(false);
+    setDetailed(false);
   };
-
-  const choiceButtonClass =
-    "min-h-10 flex-1 rounded-lg border border-primary/40 bg-surface px-4 py-2 text-sm font-semibold text-deep-navy transition-colors hover:border-primary hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
+  const openSettings = () => {
+    setDraft(choice ?? denied);
+    setDetailed(true);
+    setOpen(true);
+  };
+  const buttonClass =
+    "min-h-10 rounded-lg border border-primary/40 bg-surface px-4 py-2 text-sm font-semibold text-deep-navy transition-colors hover:border-primary hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
 
   return (
     <>
@@ -76,27 +101,64 @@ export function MarketingConsent({ locale }: { locale: Locale }) {
           <h2 className="text-sm font-semibold text-deep-navy">{text.title}</h2>
           <p className="mt-1.5 text-xs leading-relaxed text-muted sm:text-sm">
             {text.body}{" "}
-            <Link
-              href={`/${locale}/cookies`}
-              className="font-medium text-primary underline underline-offset-2"
-            >
+            <Link href={`/${locale}/cookies`} className="font-medium text-primary underline underline-offset-2">
               {text.more}
             </Link>
           </p>
-          <div className="mt-4 flex gap-3">
-            <button type="button" className={choiceButtonClass} onClick={() => choose("denied")}>
+          {detailed && (
+            <fieldset className="mt-4 space-y-3">
+              <legend className="sr-only">{text.configure}</legend>
+              <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3">
+                <input
+                  type="checkbox"
+                  checked={draft.analytics}
+                  onChange={(event) => setDraft({ ...draft, analytics: event.target.checked })}
+                  className="mt-1 h-4 w-4"
+                />
+                <span>
+                  <span className="block text-sm font-semibold text-deep-navy">{text.analyticsTitle}</span>
+                  <span className="mt-1 block text-xs leading-relaxed text-muted">{text.analyticsBody}</span>
+                </span>
+              </label>
+              <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3">
+                <input
+                  type="checkbox"
+                  checked={draft.ads}
+                  onChange={(event) => setDraft({ ...draft, ads: event.target.checked })}
+                  className="mt-1 h-4 w-4"
+                />
+                <span>
+                  <span className="block text-sm font-semibold text-deep-navy">{text.adsTitle}</span>
+                  <span className="mt-1 block text-xs leading-relaxed text-muted">{text.adsBody}</span>
+                </span>
+              </label>
+            </fieldset>
+          )}
+          <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <button type="button" className={buttonClass} onClick={() => choose(denied)}>
               {text.reject}
             </button>
-            <button type="button" className={choiceButtonClass} onClick={() => choose("granted")}>
-              {text.accept}
-            </button>
+            {detailed ? (
+              <button type="button" className={`${buttonClass} sm:col-span-2`} onClick={() => choose(draft)}>
+                {text.save}
+              </button>
+            ) : (
+              <>
+                <button type="button" className={buttonClass} onClick={() => setDetailed(true)}>
+                  {text.configure}
+                </button>
+                <button type="button" className={buttonClass} onClick={() => choose(granted)}>
+                  {text.acceptAll}
+                </button>
+              </>
+            )}
           </div>
         </aside>
       ) : choice ? (
         <button
           type="button"
           className="fixed bottom-3 left-3 z-[70] rounded-full border border-border bg-surface-elevated px-3 py-2 text-xs font-medium text-muted shadow-lg transition-colors hover:text-deep-navy sm:bottom-5 sm:left-5"
-          onClick={() => setOpen(true)}
+          onClick={openSettings}
         >
           {text.settings}
         </button>

@@ -1,15 +1,25 @@
 import {
+  PUBLIC_GA4_MEASUREMENT_ID,
   PUBLIC_GOOGLE_ADS_CONVERSION_LABEL,
   PUBLIC_GOOGLE_ADS_ID,
   PUBLIC_MARKETING_MEASUREMENT_ENABLED,
 } from "./marketing-measurement-config.ts";
 
-export const MARKETING_CONSENT_COOKIE = "bb_marketing_consent";
+export const MARKETING_CONSENT_COOKIE = "bb_marketing_consent_v2";
+export const LEGACY_MARKETING_CONSENT_COOKIE = "bb_marketing_consent";
 export const MARKETING_CONSENT_MAX_AGE_SECONDS = 60 * 60 * 24 * 180;
 
-const GOOGLE_TAG_SCRIPT_ID = "bb-google-ads-tag";
-const CONVERSION_STORAGE_PREFIX = "bb-google-ads-conversion:";
-const GOOGLE_COOKIE_PREFIXES = ["_gcl_", "_gac_", "_gads", "_gpi"];
+const GOOGLE_TAG_SCRIPT_ID = "bb-google-measurement-tag";
+const LEAD_STORAGE_PREFIX = "bb-google-lead:";
+const GOOGLE_COOKIE_PREFIXES = ["_ga", "_gid", "_gat", "_gcl_", "_gac_", "_gads", "_gpi"];
+const GA4_EVENT_NAMES = new Set([
+  "cta_click",
+  "generate_lead",
+  "page_view",
+  "scroll_depth",
+  "video_complete",
+  "video_start",
+]);
 
 const marketingPageSlugs = new Set([
   "",
@@ -19,43 +29,69 @@ const marketingPageSlugs = new Set([
   "prospectielijsten",
 ]);
 
-export type MarketingConsentChoice = "granted" | "denied";
+const trackedCtaTargets = new Map([
+  ["contact", "contact"],
+  ["pricing", "pricing"],
+  ["product-demonstration", "product_demo"],
+  ["process", "process"],
+]);
+
+export type MarketingConsentPreferences = {
+  version: 2;
+  analytics: boolean;
+  ads: boolean;
+};
 
 export type MarketingMeasurementConfig = {
   adsId: string;
   conversionLabel: string;
   conversionDestination: string;
+  ga4MeasurementId: string | null;
 };
 
 type Gtag = (...args: unknown[]) => void;
+type ActiveMeasurement = { analytics: boolean; ads: boolean };
 
 declare global {
   interface Window {
     dataLayer?: unknown[];
     gtag?: Gtag;
-    __bbGoogleAdsActive?: boolean;
+    __bbGoogleMeasurementActive?: ActiveMeasurement;
+    __bbLastGa4PageUrl?: string;
   }
 }
 
-const queuedConversionIds = new Set<string>();
+const queuedLeadIds = new Set<string>();
+let removeInteractionTracking: (() => void) | null = null;
+let reachedScrollDepths = new Set<number>();
 
 export function getMarketingMeasurementConfig(
   adsId = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID ?? PUBLIC_GOOGLE_ADS_ID,
   conversionLabel = process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL
     ?? PUBLIC_GOOGLE_ADS_CONVERSION_LABEL,
-  enabled: boolean = PUBLIC_MARKETING_MEASUREMENT_ENABLED,
+  ga4MeasurementIdOrEnabled: string | boolean =
+    process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID ?? PUBLIC_GA4_MEASUREMENT_ID,
+  enabled = PUBLIC_MARKETING_MEASUREMENT_ENABLED,
 ): MarketingMeasurementConfig | null {
-  if (!enabled) return null;
+  const effectiveEnabled = typeof ga4MeasurementIdOrEnabled === "boolean"
+    ? ga4MeasurementIdOrEnabled
+    : enabled;
+  const ga4MeasurementId = typeof ga4MeasurementIdOrEnabled === "string"
+    ? ga4MeasurementIdOrEnabled.trim()
+    : PUBLIC_GA4_MEASUREMENT_ID;
+
+  if (!effectiveEnabled) return null;
   const normalizedAdsId = adsId?.trim() ?? "";
   const normalizedLabel = conversionLabel?.trim() ?? "";
-
   if (!/^AW-\d{6,20}$/.test(normalizedAdsId)) return null;
   if (!/^[A-Za-z0-9_-]{4,100}$/.test(normalizedLabel)) return null;
+  if (ga4MeasurementId && !/^G-[A-Z0-9]{4,20}$/.test(ga4MeasurementId)) return null;
 
   return {
     adsId: normalizedAdsId,
     conversionLabel: normalizedLabel,
     conversionDestination: `${normalizedAdsId}/${normalizedLabel}`,
+    ga4MeasurementId: ga4MeasurementId || null,
   };
 }
 
@@ -70,19 +106,26 @@ export function isMarketingPublicPathname(pathname: string): boolean {
   return marketingPageSlugs.has(parts[1] ?? "");
 }
 
-export function readMarketingConsent(cookieString = document.cookie): MarketingConsentChoice | null {
+const preferenceValue = (preferences: MarketingConsentPreferences) =>
+  `v2:a${preferences.analytics ? "1" : "0"}:d${preferences.ads ? "1" : "0"}`;
+
+export function readMarketingConsent(
+  cookieString = document.cookie,
+): MarketingConsentPreferences | null {
   const encodedName = `${encodeURIComponent(MARKETING_CONSENT_COOKIE)}=`;
   const entry = cookieString
     .split(";")
     .map((item) => item.trim())
     .find((item) => item.startsWith(encodedName));
   const value = entry ? decodeURIComponent(entry.slice(encodedName.length)) : "";
-  return value === "granted" || value === "denied" ? value : null;
+  const match = /^v2:a([01]):d([01])$/.exec(value);
+  if (!match) return null;
+  return { version: 2, analytics: match[1] === "1", ads: match[2] === "1" };
 }
 
-function consentCookie(choice: MarketingConsentChoice): string {
+function consentCookie(preferences: MarketingConsentPreferences): string {
   const secure = window.location.protocol === "https:" ? "; Secure" : "";
-  return `${encodeURIComponent(MARKETING_CONSENT_COOKIE)}=${choice}; Path=/; Max-Age=${MARKETING_CONSENT_MAX_AGE_SECONDS}; SameSite=Lax${secure}`;
+  return `${encodeURIComponent(MARKETING_CONSENT_COOKIE)}=${preferenceValue(preferences)}; Path=/; Max-Age=${MARKETING_CONSENT_MAX_AGE_SECONDS}; SameSite=Lax${secure}`;
 }
 
 export function sanitizePageUrl(rawUrl: string): string {
@@ -90,6 +133,16 @@ export function sanitizePageUrl(rawUrl: string): string {
     const url = new URL(rawUrl);
     if (url.protocol !== "https:" && url.protocol !== "http:") return "";
     return `${url.origin}${url.pathname}`;
+  } catch {
+    return "";
+  }
+}
+
+export function sanitizeReferrerHost(rawUrl: string): string {
+  try {
+    const url = new URL(rawUrl);
+    if (url.protocol !== "https:" && url.protocol !== "http:") return "";
+    return url.origin;
   } catch {
     return "";
   }
@@ -151,73 +204,197 @@ export function deleteGoogleMarketingCookies() {
   }
 }
 
-function clearConversionSessionState() {
+function clearLeadSessionState() {
   try {
     for (let index = window.sessionStorage.length - 1; index >= 0; index -= 1) {
       const key = window.sessionStorage.key(index);
-      if (key?.startsWith(CONVERSION_STORAGE_PREFIX)) window.sessionStorage.removeItem(key);
+      if (key?.startsWith(LEAD_STORAGE_PREFIX)) window.sessionStorage.removeItem(key);
     }
   } catch {
     // Storage can be unavailable in privacy modes; the in-memory guard remains.
   }
 }
 
+function ga4Active(config: MarketingMeasurementConfig): boolean {
+  return Boolean(
+    config.ga4MeasurementId
+      && window.__bbGoogleMeasurementActive?.analytics
+      && readMarketingConsent()?.analytics,
+  );
+}
+
+function emitGa4Event(
+  name: string,
+  parameters: Record<string, string | number>,
+  config = getMarketingMeasurementConfig(),
+): boolean {
+  if (!config?.ga4MeasurementId || !GA4_EVENT_NAMES.has(name) || !ga4Active(config)) return false;
+  if (!isMarketingPublicPathname(window.location.pathname)) return false;
+  try {
+    ensureGtag()("event", name, {
+      ...parameters,
+      page_location: sanitizePageUrl(window.location.href),
+      send_to: config.ga4MeasurementId,
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function resetPageInteractionState() {
+  reachedScrollDepths = new Set<number>();
+}
+
+function installInteractionTracking(config: MarketingMeasurementConfig) {
+  if (removeInteractionTracking || typeof window.addEventListener !== "function"
+    || typeof document.addEventListener !== "function") return;
+
+  const onScroll = () => {
+    const root = document.documentElement;
+    const available = Math.max(1, root.scrollHeight - window.innerHeight);
+    const depth = Math.min(100, Math.round((window.scrollY / available) * 100));
+    for (const threshold of [50, 90]) {
+      if (depth >= threshold && !reachedScrollDepths.has(threshold)) {
+        reachedScrollDepths.add(threshold);
+        emitGa4Event("scroll_depth", { percent_scrolled: threshold }, config);
+      }
+    }
+  };
+  const onClick = (event: Event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const anchor = target.closest("a[href]");
+    if (!anchor) return;
+    const href = anchor.getAttribute("href") ?? "";
+    let ctaName = "";
+    if (href.startsWith("#")) ctaName = trackedCtaTargets.get(href.slice(1)) ?? "";
+    else if (/^\/(?:nl|en)\/app(?:[/?#]|$)/.test(href)) ctaName = "open_workspace";
+    if (ctaName) emitGa4Event("cta_click", { cta_name: ctaName }, config);
+  };
+  const onVideo = (event: Event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLVideoElement)) return;
+    if (target.closest("figure")?.id !== "product-demonstration") return;
+    emitGa4Event(event.type === "ended" ? "video_complete" : "video_start", {
+      video_id: "product_demonstration",
+    }, config);
+  };
+  window.addEventListener("scroll", onScroll, { passive: true });
+  document.addEventListener("click", onClick);
+  document.addEventListener("play", onVideo, true);
+  document.addEventListener("ended", onVideo, true);
+  removeInteractionTracking = () => {
+    window.removeEventListener("scroll", onScroll);
+    document.removeEventListener("click", onClick);
+    document.removeEventListener("play", onVideo, true);
+    document.removeEventListener("ended", onVideo, true);
+    removeInteractionTracking = null;
+  };
+}
+
+export function trackMarketingPageView(
+  config = getMarketingMeasurementConfig(),
+): boolean {
+  if (!config?.ga4MeasurementId || !ga4Active(config)) return false;
+  const pageUrl = sanitizePageUrl(window.location.href);
+  if (!pageUrl || window.__bbLastGa4PageUrl === pageUrl) return false;
+  const referrer = window.__bbLastGa4PageUrl
+    ? sanitizeReferrerHost(window.__bbLastGa4PageUrl)
+    : sanitizeReferrerHost(document.referrer);
+  const sent = emitGa4Event("page_view", { page_referrer: referrer }, config);
+  if (sent) {
+    window.__bbLastGa4PageUrl = pageUrl;
+    resetPageInteractionState();
+  }
+  return sent;
+}
+
 export function initializeMarketingMeasurement(
   config = getMarketingMeasurementConfig(),
 ): boolean {
   if (!config || !isMarketingPublicPathname(window.location.pathname)) return false;
-  if (readMarketingConsent() !== "granted") return false;
-  if (window.__bbGoogleAdsActive) return true;
+  const preferences = readMarketingConsent();
+  if (!preferences) return false;
+  const analytics = Boolean(preferences.analytics && config.ga4MeasurementId);
+  const ads = preferences.ads;
+  if (!analytics && !ads) return false;
 
   try {
+    const previous = window.__bbGoogleMeasurementActive;
     const gtag = ensureGtag();
     const safePageUrl = sanitizePageUrl(window.location.href);
-    const clickIds = extractGoogleClickIds(window.location.href);
-
-    gtag("consent", "default", {
-      ad_storage: "denied",
-      ad_user_data: "denied",
-      ad_personalization: "denied",
-      analytics_storage: "denied",
-    });
-    gtag("set", "ads_data_redaction", true);
-    // Required for tag-based Ads conversion attribution after explicit consent.
-    // No user_data payload or enhanced-conversion fields are configured or sent.
+    const safeReferrer = window.__bbLastGa4PageUrl
+      ? sanitizeReferrerHost(window.__bbLastGa4PageUrl)
+      : sanitizeReferrerHost(document.referrer);
+    if (!previous) {
+      gtag("consent", "default", {
+        ad_storage: "denied",
+        ad_user_data: "denied",
+        ad_personalization: "denied",
+        analytics_storage: "denied",
+      });
+      gtag("set", "ads_data_redaction", true);
+      gtag("js", new Date());
+    }
     gtag("consent", "update", {
-      ad_storage: "granted",
-      ad_user_data: "granted",
+      ad_storage: ads ? "granted" : "denied",
+      ad_user_data: ads ? "granted" : "denied",
       ad_personalization: "denied",
-      analytics_storage: "denied",
+      analytics_storage: analytics ? "granted" : "denied",
     });
     gtag("set", {
-      ...clickIds,
+      ...(ads ? extractGoogleClickIds(window.location.href) : {}),
       page_location: safePageUrl,
-      page_referrer: "",
-    });
-    gtag("js", new Date());
-    gtag("config", config.adsId, {
-      allow_ad_personalization_signals: false,
-      page_location: safePageUrl,
-      page_referrer: "",
-      send_page_view: false,
+      page_referrer: safeReferrer,
     });
 
-    const script = document.createElement("script");
-    script.id = GOOGLE_TAG_SCRIPT_ID;
-    script.async = true;
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(config.adsId)}`;
-    document.head.appendChild(script);
-    window.__bbGoogleAdsActive = true;
+    if (ads && !previous?.ads) {
+      gtag("config", config.adsId, {
+        allow_ad_personalization_signals: false,
+        page_location: safePageUrl,
+        page_referrer: safeReferrer,
+        send_page_view: false,
+      });
+    }
+    if (analytics && !previous?.analytics) {
+      gtag("config", config.ga4MeasurementId, {
+        allow_ad_personalization_signals: false,
+        allow_google_signals: false,
+        anonymize_ip: true,
+        cookie_expires: MARKETING_CONSENT_MAX_AGE_SECONDS,
+        page_location: safePageUrl,
+        page_referrer: safeReferrer,
+        send_page_view: false,
+      });
+    }
+
+    window.__bbGoogleMeasurementActive = { analytics, ads };
+    if (!document.getElementById(GOOGLE_TAG_SCRIPT_ID)) {
+      const script = document.createElement("script");
+      script.id = GOOGLE_TAG_SCRIPT_ID;
+      script.async = true;
+      script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(
+        analytics && config.ga4MeasurementId ? config.ga4MeasurementId : config.adsId,
+      )}`;
+      document.head.appendChild(script);
+    }
+    if (analytics) {
+      installInteractionTracking(config);
+      trackMarketingPageView(config);
+    }
     return true;
   } catch {
     removeGoogleScript();
-    window.__bbGoogleAdsActive = false;
+    removeInteractionTracking?.();
+    window.__bbGoogleMeasurementActive = undefined;
     return false;
   }
 }
 
 export function suspendMarketingMeasurement({ reloadDocument = false } = {}) {
-  if (window.__bbGoogleAdsActive) {
+  const hadActiveTag = Boolean(window.__bbGoogleMeasurementActive);
+  if (hadActiveTag) {
     try {
       window.gtag?.("consent", "update", {
         ad_storage: "denied",
@@ -229,25 +406,37 @@ export function suspendMarketingMeasurement({ reloadDocument = false } = {}) {
       // A vendor failure must never block navigation or the contact form.
     }
   }
-
-  const hadActiveTag = Boolean(window.__bbGoogleAdsActive);
-  window.__bbGoogleAdsActive = false;
+  window.__bbGoogleMeasurementActive = undefined;
+  window.__bbLastGa4PageUrl = undefined;
+  removeInteractionTracking?.();
   removeGoogleScript();
   deleteGoogleMarketingCookies();
-
   if (reloadDocument && hadActiveTag) window.location.reload();
 }
 
 export function setMarketingConsent(
-  choice: MarketingConsentChoice,
+  preferences: MarketingConsentPreferences,
   config = getMarketingMeasurementConfig(),
 ): boolean {
-  document.cookie = consentCookie(choice);
-  if (choice === "granted") return initializeMarketingMeasurement(config);
-
-  clearConversionSessionState();
-  suspendMarketingMeasurement({ reloadDocument: true });
-  return true;
+  const previous = readMarketingConsent();
+  document.cookie = consentCookie(preferences);
+  expireCookie(LEGACY_MARKETING_CONSENT_COOKIE);
+  const revoked = Boolean(
+    previous && ((previous.analytics && !preferences.analytics) || (previous.ads && !preferences.ads)),
+  );
+  if (revoked) {
+    clearLeadSessionState();
+    queuedLeadIds.clear();
+    suspendMarketingMeasurement({ reloadDocument: true });
+    return true;
+  }
+  if (!preferences.analytics && !preferences.ads) {
+    clearLeadSessionState();
+    queuedLeadIds.clear();
+    suspendMarketingMeasurement();
+    return true;
+  }
+  return initializeMarketingMeasurement(config);
 }
 
 export function syncMarketingMeasurementForPath(pathname: string): boolean {
@@ -255,7 +444,27 @@ export function syncMarketingMeasurementForPath(pathname: string): boolean {
     suspendMarketingMeasurement({ reloadDocument: true });
     return false;
   }
-  return readMarketingConsent() === "granted" ? initializeMarketingMeasurement() : false;
+  return initializeMarketingMeasurement();
+}
+
+function leadAlreadySent(provider: "ads" | "ga4", conversionId: string): boolean {
+  const key = `${provider}:${conversionId}`;
+  if (queuedLeadIds.has(key)) return true;
+  try {
+    return window.sessionStorage.getItem(`${LEAD_STORAGE_PREFIX}${key}`) === "sent";
+  } catch {
+    return false;
+  }
+}
+
+function rememberLead(provider: "ads" | "ga4", conversionId: string) {
+  const key = `${provider}:${conversionId}`;
+  queuedLeadIds.add(key);
+  try {
+    window.sessionStorage.setItem(`${LEAD_STORAGE_PREFIX}${key}`, "sent");
+  } catch {
+    // Storage failure does not make the successfully delivered form fail.
+  }
 }
 
 export function trackGoogleAdsConversion(
@@ -263,43 +472,41 @@ export function trackGoogleAdsConversion(
   config = getMarketingMeasurementConfig(),
 ): boolean {
   if (!config || !/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(conversionId)) return false;
-  if (!window.__bbGoogleAdsActive || readMarketingConsent() !== "granted") return false;
-  if (!isMarketingPublicPathname(window.location.pathname)) return false;
+  if (!window.__bbGoogleMeasurementActive || !isMarketingPublicPathname(window.location.pathname)) return false;
+  const preferences = readMarketingConsent();
+  if (!preferences) return false;
+  let sent = false;
 
-  const storageKey = `${CONVERSION_STORAGE_PREFIX}${conversionId}`;
-  if (queuedConversionIds.has(conversionId)) return false;
-  try {
-    if (window.sessionStorage.getItem(storageKey) === "sent") return false;
-  } catch {
-    // Continue with the in-memory deduplication guard.
+  if (preferences.analytics && config.ga4MeasurementId && !leadAlreadySent("ga4", conversionId)) {
+    if (emitGa4Event("generate_lead", { currency: "EUR", value: 0 }, config)) {
+      rememberLead("ga4", conversionId);
+      sent = true;
+    }
   }
-
-  queuedConversionIds.add(conversionId);
-  try {
-    window.sessionStorage.setItem(storageKey, "sent");
-  } catch {
-    // Storage failure does not make the successfully delivered form fail.
+  if (preferences.ads && window.__bbGoogleMeasurementActive.ads
+    && !leadAlreadySent("ads", conversionId)) {
+    try {
+      ensureGtag()("event", "conversion", {
+        currency: "EUR",
+        page_location: sanitizePageUrl(window.location.href),
+        send_to: config.conversionDestination,
+        transaction_id: conversionId,
+        value: 0,
+      });
+      rememberLead("ads", conversionId);
+      sent = true;
+    } catch {
+      // The form remains successful when the optional vendor call fails.
+    }
   }
-
-  try {
-    ensureGtag()("event", "conversion", {
-      currency: "EUR",
-      page_location: sanitizePageUrl(window.location.href),
-      page_referrer: "",
-      send_to: config.conversionDestination,
-      transaction_id: conversionId,
-      value: 0,
-    });
-    return true;
-  } catch {
-    return false;
-  }
+  return sent;
 }
 
 // Local cleanup only: never load or notify Google when measurement is disabled.
 export function clearDisabledMarketingStorage() {
-  deleteGoogleMarketingCookies();
+  suspendMarketingMeasurement();
   expireCookie(MARKETING_CONSENT_COOKIE);
-  clearConversionSessionState();
-  queuedConversionIds.clear();
+  expireCookie(LEGACY_MARKETING_CONSENT_COOKIE);
+  clearLeadSessionState();
+  queuedLeadIds.clear();
 }

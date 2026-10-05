@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
   clearDisabledMarketingStorage,
@@ -9,21 +10,33 @@ import {
   MARKETING_CONSENT_MAX_AGE_SECONDS,
   readMarketingConsent,
   sanitizePageUrl,
+  sanitizeReferrerHost,
   setMarketingConsent,
   syncMarketingMeasurementForPath,
   trackGoogleAdsConversion,
 } from "../src/lib/marketing-measurement.ts";
+import {
+  publicPageSecurityHeaders,
+  workspaceShellSecurityHeaders,
+} from "../src/lib/security-headers.ts";
 
-const config = getMarketingMeasurementConfig("AW-828167396", "XPY8CP6Gj4kdEOSp84oD", true);
+const adsId = "AW-828167396";
+const label = "XPY8CP6Gj4kdEOSp84oD";
+const ga4Id = "G-Q1NX0JS1G8";
+const config = getMarketingMeasurementConfig(adsId, label, ga4Id, true);
+const none = { version: 2, analytics: false, ads: false };
+const analyticsOnly = { version: 2, analytics: true, ads: false };
+const adsOnly = { version: 2, analytics: false, ads: true };
+const all = { version: 2, analytics: true, ads: true };
 
-function installBrowser(pathname = "/nl", search = "") {
+function installBrowser(pathname = "/nl", search = "", referrer = "") {
   const cookieJar = new Map();
   const scripts = new Map();
   const session = new Map();
   const cookieWrites = [];
   let reloads = 0;
-
   const document = {
+    referrer,
     get cookie() {
       return [...cookieJar].map(([name, value]) => `${name}=${value}`).join("; ");
     },
@@ -45,14 +58,10 @@ function installBrowser(pathname = "/nl", search = "") {
         async: false,
         id: "",
         src: "",
-        remove() {
-          scripts.delete(this.id);
-        },
+        remove() { scripts.delete(this.id); },
       };
     },
-    getElementById(id) {
-      return scripts.get(id) ?? null;
-    },
+    getElementById(id) { return scripts.get(id) ?? null; },
     head: {
       appendChild(element) {
         scripts.set(element.id, element);
@@ -60,18 +69,14 @@ function installBrowser(pathname = "/nl", search = "") {
       },
     },
   };
-
   const location = {
     protocol: "https:",
     hostname: "www.belgobase.be",
     origin: "https://www.belgobase.be",
     pathname,
     href: `https://www.belgobase.be${pathname}${search}`,
-    reload() {
-      reloads += 1;
-    },
+    reload() { reloads += 1; },
   };
-
   const window = {
     location,
     sessionStorage: {
@@ -82,23 +87,26 @@ function installBrowser(pathname = "/nl", search = "") {
       key(index) { return [...session.keys()][index] ?? null; },
     },
   };
-
   globalThis.document = document;
   globalThis.window = window;
-
   return { cookieJar, cookieWrites, document, location, scripts, session, window, reloads: () => reloads };
 }
 
-test("measurement configuration and route allowlist fail closed", () => {
+const commands = (browser) =>
+  (browser.window.dataLayer ?? []).map((command) => Array.from(command));
+
+test("configuration, explicit kill switches and route allowlist fail closed", () => {
   assert.deepEqual(config, {
-    adsId: "AW-828167396",
-    conversionLabel: "XPY8CP6Gj4kdEOSp84oD",
-    conversionDestination: "AW-828167396/XPY8CP6Gj4kdEOSp84oD",
+    adsId,
+    conversionLabel: label,
+    conversionDestination: `${adsId}/${label}`,
+    ga4MeasurementId: ga4Id,
   });
-  assert.equal(getMarketingMeasurementConfig("G-123", "validLabel"), null);
-  assert.equal(getMarketingMeasurementConfig("AW-828167396", "bad/label"), null);
-  assert.equal(getMarketingMeasurementConfig("", ""), null);
-  assert.equal(getMarketingMeasurementConfig("", "XPY8CP6Gj4kdEOSp84oD"), null);
+  assert.equal(getMarketingMeasurementConfig(adsId, label, "", true)?.ga4MeasurementId, null);
+  assert.equal(getMarketingMeasurementConfig(adsId, label, "G-bad", true), null);
+  assert.equal(getMarketingMeasurementConfig(adsId, label, ga4Id, false), null);
+  assert.equal(getMarketingMeasurementConfig("G-123", label, ga4Id, true), null);
+  assert.equal(getMarketingMeasurementConfig(adsId, "bad/label", ga4Id, true), null);
   assert.equal(isMarketingPublicPathname("/nl"), true);
   assert.equal(isMarketingPublicPathname("/en/prospectielijsten"), true);
   assert.equal(isMarketingPublicPathname("/nl/app"), false);
@@ -107,106 +115,118 @@ test("measurement configuration and route allowlist fail closed", () => {
   assert.equal(MARKETING_CONSENT_MAX_AGE_SECONDS, 15_552_000);
 });
 
-test("an explicit empty public environment value remains a kill switch", () => {
-  const originalId = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
-  const originalLabel = process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL;
-  try {
-    process.env.NEXT_PUBLIC_GOOGLE_ADS_ID = "";
-    process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL = "";
-    assert.equal(getMarketingMeasurementConfig(), null);
-  } finally {
-    if (originalId === undefined) delete process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
-    else process.env.NEXT_PUBLIC_GOOGLE_ADS_ID = originalId;
-    if (originalLabel === undefined) delete process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL;
-    else process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL = originalLabel;
-  }
-});
-
-test("page URL drops every query value while allowlisted click IDs remain available locally", () => {
+test("safe URLs discard queries and referrers retain only a valid origin", () => {
   const raw = "https://www.belgobase.be/nl?gclid=abc_123&utm_term=private+search&email=person@example.com#contact";
   assert.equal(sanitizePageUrl(raw), "https://www.belgobase.be/nl");
+  assert.equal(sanitizeReferrerHost("https://partner.example/private/path?email=x@y.be"), "https://partner.example");
+  assert.equal(sanitizeReferrerHost("javascript:alert(1)"), "");
   assert.deepEqual(extractGoogleClickIds(raw), { gclid: "abc_123" });
   assert.deepEqual(extractGoogleClickIds("https://www.belgobase.be/nl?gclid=bad%20value"), {});
 });
 
-test("reject makes no Google object or network-capable script", () => {
+test("legacy consent is ignored and rejecting creates no Google network-capable object", () => {
   const browser = installBrowser();
+  browser.document.cookie = "bb_marketing_consent=granted; Path=/";
+  assert.equal(readMarketingConsent(), null);
   assert.equal(initializeMarketingMeasurement(config), false);
-  assert.equal(setMarketingConsent("denied"), true);
-  assert.equal(readMarketingConsent(), "denied");
+  assert.equal(setMarketingConsent(none, config), true);
+  assert.deepEqual(readMarketingConsent(), none);
   assert.equal(browser.scripts.size, 0);
   assert.equal(browser.window.dataLayer, undefined);
   assert.equal(browser.window.gtag, undefined);
+  assert.equal(browser.cookieJar.has("bb_marketing_consent"), false);
 });
 
-test("grant initializes Basic consent, sends one sanitized conversion, and withdrawal stops it", () => {
-  const browser = installBrowser("/nl", "?gclid=click_123&email=person@example.com#contact");
-  assert.equal(setMarketingConsent("granted", config), true);
-  assert.equal(browser.scripts.size, 1);
-  assert.equal(browser.window.__bbGoogleAdsActive, true);
-  assert.equal(Array.isArray(browser.window.dataLayer[0]), false);
-  assert.equal(Object.prototype.toString.call(browser.window.dataLayer[0]), "[object Arguments]");
-
-  const queuedCommands = () => browser.window.dataLayer.map((command) => Array.from(command));
-  let commands = queuedCommands();
-  assert.deepEqual(commands[0], ["consent", "default", {
-    ad_storage: "denied",
-    ad_user_data: "denied",
-    ad_personalization: "denied",
-    analytics_storage: "denied",
-  }]);
-  assert.deepEqual(commands[2], ["consent", "update", {
-    ad_storage: "granted",
-    ad_user_data: "granted",
-    ad_personalization: "denied",
-    analytics_storage: "denied",
-  }]);
-  assert.equal(
-    commands.some((command) => command[0] === "set" && command[1] === "user_data"),
-    false,
+test("analytics-only consent configures privacy controls and one safe initial page view", () => {
+  const browser = installBrowser(
+    "/nl",
+    "?email=person@example.com&utm_term=private#contact",
+    "https://partner.example/private/path?client=secret",
   );
-  assert.equal(JSON.stringify(commands).includes("person@example.com"), false);
-
-  const conversionId = "f343d8ee-d4ad-4cab-9f49-a45d85f05132";
-  assert.equal(trackGoogleAdsConversion(conversionId, config), true);
-  assert.equal(trackGoogleAdsConversion(conversionId, config), false);
-  commands = queuedCommands();
-  const conversion = commands.find((command) => command[0] === "event");
-  assert.deepEqual(conversion, ["event", "conversion", {
-    currency: "EUR",
-    page_location: "https://www.belgobase.be/nl",
-    page_referrer: "",
-    send_to: "AW-828167396/XPY8CP6Gj4kdEOSp84oD",
-    transaction_id: conversionId,
-    value: 0,
-  }]);
-
-  browser.document.cookie = "_gcl_au=marketing-cookie; Path=/";
-  assert.equal(setMarketingConsent("denied"), true);
-  commands = queuedCommands();
-  assert.equal(browser.window.__bbGoogleAdsActive, false);
-  assert.equal(browser.scripts.size, 0);
-  assert.equal(browser.cookieJar.has("_gcl_au"), false);
-  assert.equal(browser.reloads(), 1);
-  assert.deepEqual(
-    commands.filter((command) => command[0] === "consent" && command[1] === "update").at(-1),
-    ["consent", "update", {
+  assert.equal(setMarketingConsent(analyticsOnly, config), true);
+  assert.equal(browser.scripts.size, 1);
+  assert.match([...browser.scripts.values()][0].src, /G-Q1NX0JS1G8/);
+  const queued = commands(browser);
+  assert.deepEqual(queued.find((item) => item[0] === "consent" && item[1] === "update"), [
+    "consent", "update", {
       ad_storage: "denied",
       ad_user_data: "denied",
       ad_personalization: "denied",
-      analytics_storage: "denied",
-    }],
-  );
-  assert.equal(
-    browser.cookieWrites.some((write) => write.includes("Domain=.belgobase.be")),
-    true,
-  );
-  assert.equal(trackGoogleAdsConversion("2fc534ef-f51f-42c8-8aec-3596efff1ff3", config), false);
+      analytics_storage: "granted",
+    },
+  ]);
+  const gaConfig = queued.find((item) => item[0] === "config" && item[1] === ga4Id);
+  assert.deepEqual(gaConfig[2], {
+    allow_ad_personalization_signals: false,
+    allow_google_signals: false,
+    anonymize_ip: true,
+    cookie_expires: 15_552_000,
+    page_location: "https://www.belgobase.be/nl",
+    page_referrer: "https://partner.example",
+    send_page_view: false,
+  });
+  const pageView = queued.find((item) => item[0] === "event" && item[1] === "page_view");
+  assert.deepEqual(pageView[2], {
+    page_referrer: "https://partner.example",
+    page_location: "https://www.belgobase.be/nl",
+    send_to: ga4Id,
+  });
+  assert.equal(JSON.stringify(queued).includes("person@example.com"), false);
+  assert.equal(queued.some((item) => item[0] === "event" && item[1] === "engagement_time"), false);
+  assert.equal(queued.some((item) => item[0] === "config" && item[1] === adsId), false);
 });
 
-test("client navigation to a private route unloads the inherited tag with one hard reload", () => {
+test("GA4 collection hosts are limited to public pages", () => {
+  const publicCsp = publicPageSecurityHeaders["Content-Security-Policy"];
+  assert.match(publicCsp, /https:\/\/www\.google-analytics\.com/);
+  assert.match(publicCsp, /https:\/\/region1\.google-analytics\.com/);
+  assert.doesNotMatch(workspaceShellSecurityHeaders["Content-Security-Policy"], /google-analytics/);
+});
+
+test("ads-only consent never grants analytics and sends only the direct Ads lead", () => {
+  const browser = installBrowser("/nl", "?gclid=click_123&email=person@example.com");
+  setMarketingConsent(adsOnly, config);
+  const id = "f343d8ee-d4ad-4cab-9f49-a45d85f05132";
+  assert.equal(trackGoogleAdsConversion(id, config), true);
+  assert.equal(trackGoogleAdsConversion(id, config), false);
+  const queued = commands(browser);
+  assert.equal(queued.some((item) => item[0] === "event" && item[1] === "generate_lead"), false);
+  assert.deepEqual(queued.find((item) => item[0] === "event" && item[1] === "conversion"), [
+    "event", "conversion", {
+      currency: "EUR",
+      page_location: "https://www.belgobase.be/nl",
+      send_to: `${adsId}/${label}`,
+      transaction_id: id,
+      value: 0,
+    },
+  ]);
+  assert.equal(JSON.stringify(queued).includes("person@example.com"), false);
+});
+
+test("combined consent emits one GA4 lead and one primary direct Ads conversion", () => {
   const browser = installBrowser();
-  setMarketingConsent("granted", config);
+  setMarketingConsent(all, config);
+  const id = "2fc534ef-f51f-42c8-8aec-3596efff1ff3";
+  assert.equal(trackGoogleAdsConversion(id, config), true);
+  assert.equal(trackGoogleAdsConversion(id, config), false);
+  const leadEvents = commands(browser).filter((item) =>
+    item[0] === "event" && (item[1] === "generate_lead" || item[1] === "conversion"));
+  assert.equal(leadEvents.filter((item) => item[1] === "generate_lead").length, 1);
+  assert.equal(leadEvents.filter((item) => item[1] === "conversion").length, 1);
+  assert.equal(leadEvents.find((item) => item[1] === "generate_lead")[2].transaction_id, undefined);
+});
+
+test("SPA marketing navigation sends one page view per safe path and protects workspace", () => {
+  const browser = installBrowser();
+  setMarketingConsent(analyticsOnly, config);
+  browser.location.pathname = "/nl/bedrijven-zoeken";
+  browser.location.href = "https://www.belgobase.be/nl/bedrijven-zoeken?utm_source=secret";
+  assert.equal(syncMarketingMeasurementForPath(browser.location.pathname), true);
+  assert.equal(syncMarketingMeasurementForPath(browser.location.pathname), true);
+  let pageViews = commands(browser).filter((item) => item[0] === "event" && item[1] === "page_view");
+  assert.equal(pageViews.length, 2);
+  assert.equal(pageViews[1][2].page_location, "https://www.belgobase.be/nl/bedrijven-zoeken");
+  assert.equal(pageViews[1][2].page_referrer, "https://www.belgobase.be");
   browser.location.pathname = "/nl/app";
   browser.location.href = "https://www.belgobase.be/nl/app";
   assert.equal(syncMarketingMeasurementForPath("/nl/app"), false);
@@ -214,31 +234,57 @@ test("client navigation to a private route unloads the inherited tag with one ha
   assert.equal(browser.reloads(), 1);
 });
 
-test("a vendor exception stays isolated from the delivered form", () => {
+test("withdrawal denies both storages, removes _ga and _gcl cookies, and reloads", () => {
   const browser = installBrowser();
-  setMarketingConsent("granted", config);
-  browser.window.gtag = () => { throw new Error("vendor unavailable"); };
-  assert.equal(
-    trackGoogleAdsConversion("95975f43-fcc6-4fc6-83f0-f16fb37253cd", config),
-    false,
+  setMarketingConsent(all, config);
+  browser.document.cookie = "_ga=analytics-cookie; Path=/";
+  browser.document.cookie = "_gcl_au=ads-cookie; Path=/";
+  assert.equal(setMarketingConsent(adsOnly, config), true);
+  assert.equal(browser.window.__bbGoogleMeasurementActive, undefined);
+  assert.equal(browser.scripts.size, 0);
+  assert.equal(browser.cookieJar.has("_ga"), false);
+  assert.equal(browser.cookieJar.has("_gcl_au"), false);
+  assert.equal(browser.reloads(), 1);
+  assert.deepEqual(
+    commands(browser).filter((item) => item[0] === "consent" && item[1] === "update").at(-1),
+    ["consent", "update", {
+      ad_storage: "denied",
+      ad_user_data: "denied",
+      ad_personalization: "denied",
+      analytics_storage: "denied",
+    }],
   );
+  assert.equal(browser.cookieWrites.some((write) => write.includes("Domain=.belgobase.be")), true);
 });
 
-test("disabled deployment ignores existing consent and configured Google IDs", () => {
+test("disabled candidate cleans stored measurement state without loading Google", () => {
   const browser = installBrowser();
-  browser.document.cookie = "bb_marketing_consent=granted";
-  browser.document.cookie = "_gcl_au=old-cookie";
+  browser.document.cookie = "bb_marketing_consent_v2=v2:a1:d1";
+  browser.document.cookie = "_ga=old-analytics-cookie";
+  browser.document.cookie = "_gcl_au=old-ads-cookie";
   browser.document.cookie = "bb_theme=dark";
-  browser.session.set("bb-google-ads-conversion:old", "sent");
-  assert.equal(getMarketingMeasurementConfig("AW-828167396", "XPY8CP6Gj4kdEOSp84oD"), null);
-  assert.equal(initializeMarketingMeasurement(), false);
-  assert.equal(syncMarketingMeasurementForPath("/nl"), false);
-  assert.equal(trackGoogleAdsConversion("f343d8ee-d4ad-4cab-9f49-a45d85f05132"), false);
+  browser.session.set("bb-google-lead:ads:old", "sent");
+  const disabled = getMarketingMeasurementConfig(adsId, label, ga4Id, false);
+  assert.equal(initializeMarketingMeasurement(disabled), false);
   clearDisabledMarketingStorage();
   assert.equal(browser.scripts.size, 0);
   assert.equal(browser.window.gtag, undefined);
+  assert.equal(browser.cookieJar.has("_ga"), false);
   assert.equal(browser.cookieJar.has("_gcl_au"), false);
-  assert.equal(browser.cookieJar.has("bb_marketing_consent"), false);
+  assert.equal(browser.cookieJar.has("bb_marketing_consent_v2"), false);
   assert.equal(browser.cookieJar.get("bb_theme"), "dark");
   assert.equal(browser.session.size, 0);
+});
+
+test("consent UI exposes equal reject, configure and allow-all choices", async () => {
+  const source = await readFile(
+    new URL("../src/components/marketing/MarketingConsent.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(source, /reject: "Weigeren"/);
+  assert.match(source, /acceptAll: "Alles toestaan"/);
+  assert.match(source, /configure: "Instellen"/);
+  assert.match(source, /analyticsTitle: "Website-analyse"/);
+  assert.match(source, /adsTitle: "Advertentiemeting"/);
+  assert.doesNotMatch(source, /person@example\.com|debug_mode|formData/);
 });
