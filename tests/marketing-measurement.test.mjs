@@ -7,9 +7,11 @@ import {
   getMarketingMeasurementConfig,
   initializeMarketingMeasurement,
   isMarketingPublicPathname,
+  marketingVideoId,
   MARKETING_CONSENT_MAX_AGE_SECONDS,
   readMarketingConsent,
   sanitizePageUrl,
+  sanitizeMeasurementPageUrl,
   sanitizeReferrerHost,
   setMarketingConsent,
   syncMarketingMeasurementForPath,
@@ -118,6 +120,16 @@ test("configuration, explicit kill switches and route allowlist fail closed", ()
 test("safe URLs discard queries and referrers retain only a valid origin", () => {
   const raw = "https://www.belgobase.be/nl?gclid=abc_123&utm_term=private+search&email=person@example.com#contact";
   assert.equal(sanitizePageUrl(raw), "https://www.belgobase.be/nl");
+  assert.equal(sanitizeMeasurementPageUrl(raw, false), "https://www.belgobase.be/nl");
+  assert.equal(sanitizeMeasurementPageUrl(raw, true), "https://www.belgobase.be/nl?gclid=abc_123");
+  assert.equal(
+    sanitizeMeasurementPageUrl("https://www.belgobase.be/nl?gbraid=braid.1&wbraid=w~2&utm_term=secret&email=x@y.be#contact", true),
+    "https://www.belgobase.be/nl?gbraid=braid.1&wbraid=w%7E2",
+  );
+  assert.equal(
+    sanitizeMeasurementPageUrl("https://www.belgobase.be/nl?gclid=bad%20value&email=x@y.be", true),
+    "https://www.belgobase.be/nl",
+  );
   assert.equal(sanitizeReferrerHost("https://partner.example/private/path?email=x@y.be"), "https://partner.example");
   assert.equal(sanitizeReferrerHost("javascript:alert(1)"), "");
   assert.deepEqual(extractGoogleClickIds(raw), { gclid: "abc_123" });
@@ -195,7 +207,7 @@ test("ads-only consent never grants analytics and sends only the direct Ads lead
   assert.deepEqual(queued.find((item) => item[0] === "event" && item[1] === "conversion"), [
     "event", "conversion", {
       currency: "EUR",
-      page_location: "https://www.belgobase.be/nl",
+      page_location: "https://www.belgobase.be/nl?gclid=click_123",
       send_to: `${adsId}/${label}`,
       transaction_id: id,
       value: 0,
@@ -204,8 +216,8 @@ test("ads-only consent never grants analytics and sends only the direct Ads lead
   assert.equal(JSON.stringify(queued).includes("person@example.com"), false);
 });
 
-test("combined consent emits one GA4 lead and one primary direct Ads conversion", () => {
-  const browser = installBrowser();
+test("combined consent preserves only a validated click ID for GA4 and Ads leads", () => {
+  const browser = installBrowser("/nl", "?gclid=click_456&utm_term=secret&email=person@example.com#contact");
   setMarketingConsent(all, config);
   const id = "2fc534ef-f51f-42c8-8aec-3596efff1ff3";
   assert.equal(trackGoogleAdsConversion(id, config), true);
@@ -214,7 +226,18 @@ test("combined consent emits one GA4 lead and one primary direct Ads conversion"
     item[0] === "event" && (item[1] === "generate_lead" || item[1] === "conversion"));
   assert.equal(leadEvents.filter((item) => item[1] === "generate_lead").length, 1);
   assert.equal(leadEvents.filter((item) => item[1] === "conversion").length, 1);
-  assert.equal(leadEvents.find((item) => item[1] === "generate_lead")[2].transaction_id, undefined);
+  const gaLead = leadEvents.find((item) => item[1] === "generate_lead");
+  assert.equal(gaLead[2].transaction_id, undefined);
+  assert.equal(gaLead[2].page_location, "https://www.belgobase.be/nl?gclid=click_456");
+  assert.equal(JSON.stringify(leadEvents).includes("person@example.com"), false);
+  const pageView = commands(browser).find((item) => item[0] === "event" && item[1] === "page_view");
+  assert.equal(pageView[2].page_location, "https://www.belgobase.be/nl?gclid=click_456");
+});
+
+test("only the two real demo wrappers map to fixed video event IDs", () => {
+  assert.equal(marketingVideoId("product-demonstration"), "product_demonstration");
+  assert.equal(marketingVideoId("list-cleanup-demo-card"), "list_cleanup");
+  assert.equal(marketingVideoId("customer-supplied-id"), "");
 });
 
 test("SPA marketing navigation sends one page view per safe path and protects workspace", () => {

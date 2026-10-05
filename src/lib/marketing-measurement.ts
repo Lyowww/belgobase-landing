@@ -35,6 +35,10 @@ const trackedCtaTargets = new Map([
   ["product-demonstration", "product_demo"],
   ["process", "process"],
 ]);
+const trackedVideoIds = new Map([
+  ["product-demonstration", "product_demonstration"],
+  ["list-cleanup-demo-card", "list_cleanup"],
+]);
 
 export type MarketingConsentPreferences = {
   version: 2;
@@ -162,6 +166,26 @@ export function extractGoogleClickIds(rawUrl: string): Record<string, string> {
   }
 }
 
+export function sanitizeMeasurementPageUrl(
+  rawUrl: string,
+  includeGoogleClickIds: boolean,
+): string {
+  const cleanUrl = sanitizePageUrl(rawUrl);
+  if (!cleanUrl || !includeGoogleClickIds) return cleanUrl;
+  const clickIds = extractGoogleClickIds(rawUrl);
+  if (Object.keys(clickIds).length === 0) return cleanUrl;
+  const url = new URL(cleanUrl);
+  for (const name of ["gclid", "gbraid", "wbraid"] as const) {
+    const value = clickIds[name];
+    if (value) url.searchParams.set(name, value);
+  }
+  return url.toString();
+}
+
+export function marketingVideoId(wrapperId: string): string {
+  return trackedVideoIds.get(wrapperId) ?? "";
+}
+
 function ensureGtag(): Gtag {
   window.dataLayer = window.dataLayer ?? [];
   window.gtag = window.gtag ?? function gtag() {
@@ -231,9 +255,10 @@ function emitGa4Event(
   if (!config?.ga4MeasurementId || !GA4_EVENT_NAMES.has(name) || !ga4Active(config)) return false;
   if (!isMarketingPublicPathname(window.location.pathname)) return false;
   try {
+    const includeGoogleClickIds = Boolean(readMarketingConsent()?.ads);
     ensureGtag()("event", name, {
       ...parameters,
-      page_location: sanitizePageUrl(window.location.href),
+      page_location: sanitizeMeasurementPageUrl(window.location.href, includeGoogleClickIds),
       send_to: config.ga4MeasurementId,
     });
     return true;
@@ -275,9 +300,11 @@ function installInteractionTracking(config: MarketingMeasurementConfig) {
   const onVideo = (event: Event) => {
     const target = event.target;
     if (!(target instanceof HTMLVideoElement)) return;
-    if (target.closest("figure")?.id !== "product-demonstration") return;
+    const wrapper = target.closest("#product-demonstration, #list-cleanup-demo-card");
+    const videoId = marketingVideoId(wrapper?.id ?? "");
+    if (!videoId) return;
     emitGa4Event(event.type === "ended" ? "video_complete" : "video_start", {
-      video_id: "product_demonstration",
+      video_id: videoId,
     }, config);
   };
   window.addEventListener("scroll", onScroll, { passive: true });
@@ -323,7 +350,7 @@ export function initializeMarketingMeasurement(
   try {
     const previous = window.__bbGoogleMeasurementActive;
     const gtag = ensureGtag();
-    const safePageUrl = sanitizePageUrl(window.location.href);
+    const safePageUrl = sanitizeMeasurementPageUrl(window.location.href, ads);
     const safeReferrer = window.__bbLastGa4PageUrl
       ? sanitizeReferrerHost(window.__bbLastGa4PageUrl)
       : sanitizeReferrerHost(document.referrer);
@@ -344,7 +371,6 @@ export function initializeMarketingMeasurement(
       analytics_storage: analytics ? "granted" : "denied",
     });
     gtag("set", {
-      ...(ads ? extractGoogleClickIds(window.location.href) : {}),
       page_location: safePageUrl,
       page_referrer: safeReferrer,
     });
@@ -488,7 +514,7 @@ export function trackGoogleAdsConversion(
     try {
       ensureGtag()("event", "conversion", {
         currency: "EUR",
-        page_location: sanitizePageUrl(window.location.href),
+        page_location: sanitizeMeasurementPageUrl(window.location.href, true),
         send_to: config.conversionDestination,
         transaction_id: conversionId,
         value: 0,
