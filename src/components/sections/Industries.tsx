@@ -60,9 +60,6 @@ export function Industries() {
                       key={benefit}
                       className="flex items-center gap-2 text-sm text-deep-navy"
                     >
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                        ✓
-                      </span>
                       {benefit}
                     </li>
                   ))}

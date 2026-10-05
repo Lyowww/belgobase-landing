@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { HeroVisualization } from "@/components/visuals/HeroVisualization";
 import { useTranslations } from "@/providers/TranslationsProvider";
 
@@ -24,7 +24,7 @@ export function Hero() {
         </div>
       </div>
       <ul className="homepage-benefits" aria-label={t("hero.benefitsLabel")}>
-        {["benefit1", "benefit2", "benefit3"].map(key => <li key={key}><Check size={19} aria-hidden="true" />{t(`hero.${key}`)}</li>)}
+        {["benefit1", "benefit2", "benefit3"].map(key => <li key={key}>{t(`hero.${key}`)}</li>)}
       </ul>
     </section>
   );
