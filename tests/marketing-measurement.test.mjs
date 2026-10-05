@@ -180,7 +180,8 @@ test("GA4 collection hosts are limited to public pages", () => {
   const publicCsp = publicPageSecurityHeaders["Content-Security-Policy"];
   assert.match(publicCsp, /https:\/\/www\.google-analytics\.com/);
   assert.match(publicCsp, /https:\/\/region1\.google-analytics\.com/);
-  assert.doesNotMatch(workspaceShellSecurityHeaders["Content-Security-Policy"], /google-analytics/);
+  assert.match(publicCsp, /https:\/\/region1\.analytics\.google\.com/);
+  assert.doesNotMatch(workspaceShellSecurityHeaders["Content-Security-Policy"], /(?:google-analytics|analytics\.google)/);
 });
 
 test("ads-only consent never grants analytics and sends only the direct Ads lead", () => {
