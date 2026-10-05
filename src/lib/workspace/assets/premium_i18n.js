@@ -2,6 +2,26 @@
 (function(global){
  'use strict';
  const messages={
+"assistant.viewConversation":{"nl": "Gesprek bekijken", "fr": "Voir la conversation", "en": "View conversation"},
+"notice.actionFailed":{"nl": "Deze actie kon niet worden afgerond. Probeer het opnieuw.", "fr": "Cette action n’a pas pu être effectuée. Réessayez.", "en": "This action could not be completed. Please try again."},
+"filter.additional":{"nl": "Aanvullend filter", "fr": "Filtre supplémentaire", "en": "Additional filter"},
+"workspace.migrationNotice":{"nl": "Afwijkende zoekopdrachten van deze PC zijn apart bewaard met (PC1) in de naam. Je gedeelde gegevens zijn behouden.", "fr": "Les recherches différentes de ce PC sont enregistrées séparément avec (PC1) dans leur nom. Vos données partagées sont conservées.", "en": "Different searches from this PC were saved separately with (PC1) in their names. Your shared data has been kept."},
+"workspace.refreshInvalid":{"nl": "De gedeelde werkruimte gaf geen bruikbare gegevens terug.", "fr": "L’espace partagé n’a pas renvoyé de données utilisables.", "en": "The shared workspace returned no usable data."},
+"workspace.refreshFailed":{"nl": "De nieuwste gedeelde werkruimte kon niet worden geladen. Je huidige gegevens blijven zichtbaar.", "fr": "Impossible de charger la dernière version de l’espace partagé. Vos données actuelles restent affichées.", "en": "The latest shared workspace could not be loaded. Your current data remains visible."},
+"busy.searching":{"nl": "Bedrijven zoeken…", "fr": "Recherche d’entreprises…", "en": "Searching companies…"},
+"savedSearch.invalidFallback":{"nl": "Deze bewaarde zoekopdracht kan niet worden uitgevoerd.", "fr": "Cette recherche enregistrée ne peut pas être exécutée.", "en": "This saved search cannot be run."},
+"workspace.refreshRequired":{"nl": "Ververs je gedeelde werkruimte voordat je wijzigingen bewaart.", "fr": "Actualisez votre espace partagé avant d’enregistrer les modifications.", "en": "Refresh your shared workspace before saving changes."},
+"dialog.sharedWorkspace":{"nl": "Bewaard in je gedeelde BelgoBase-werkruimte.", "fr": "Enregistré dans votre espace BelgoBase partagé.", "en": "Saved in your shared BelgoBase workspace."},
+"dialog.saveSearch":{"nl": "Zoekopdracht bewaren", "fr": "Enregistrer la recherche", "en": "Save search"},
+"dialog.listMissing":{"nl": "Deze lijst bestaat niet meer. Herlaad je werkruimte.", "fr": "Cette liste n’existe plus. Rechargez votre espace de travail.", "en": "This list no longer exists. Reload your workspace."},
+"filter.label":{"nl": "Filter", "fr": "Filtre", "en": "Filter"},
+"savedSearch.retainedValue":{"nl": "{value} — bewaarde waarde (niet in huidige lijst)", "fr": "{value} — valeur enregistrée (absente de la liste actuelle)", "en": "{value} — saved value (not in the current list)"},
+"savedSearch.unknownTitle":{"nl": "Niet-herkende bewaarde filters", "fr": "Filtres enregistrés non reconnus", "en": "Unrecognised saved filters"},
+"savedSearch.removeUnknown":{"nl": "Deze filter verwijderen", "fr": "Supprimer ce filtre", "en": "Remove this filter"},
+"savedSearch.reviewTitle":{"nl": "Bewaarde zoekopdracht controleren", "fr": "Vérifier la recherche enregistrée", "en": "Review saved search"},
+"savedSearch.reviewCopy":{"nl": "Alle bewaarde keuzes staan hieronder. Pas de conflicterende keuze aan en klik opnieuw op Toepassen en zoeken. Er worden geen resultaten getoond of geëxporteerd zolang de filters ongeldig zijn.", "fr": "Tous les choix enregistrés figurent ci-dessous. Corrigez le choix en conflit, puis cliquez à nouveau sur Appliquer et rechercher. Aucun résultat ne sera affiché ou exporté tant que les filtres sont invalides.", "en": "All saved choices are shown below. Correct the conflicting choice, then click Apply and search again. No results will be shown or exported while the filters are invalid."},
+"filter.legalForm":{"nl": "Rechtsvorm", "fr": "Forme juridique", "en": "Legal form"},
+
 "journey.actionsLabel":{"nl":"Acties","fr":"Actions","en":"Actions"},
 "journey.menuLabel":{"nl":"Klantreis","fr":"Parcours client","en":"Customer journey"},
 "nav.excelClean":{"nl":"Excel opschonen","fr":"Nettoyer un fichier Excel","en":"Clean up Excel"},
