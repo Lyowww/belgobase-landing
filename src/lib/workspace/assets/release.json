@@ -1,6 +1,6 @@
 {
-  "release": "UI_PARITY_NL_FR_EN_20261006",
-  "ui_sha256": "ac63113beceb62816e0bea0dc2503ca024441bd63f0a03bdf30643ac47b6e99e",
+  "release": "MOBILE_READING_20261006",
+  "ui_sha256": "8d08ca64354cf030fbd358f426f30aa68370a3bed689856e66557d801e8123ec",
   "logo_sha256": "9d29aa57e01e8957b9575d94873efa1250b139e3736d8d055579313acb7d8695",
   "contract_sha256": "717f1bbc4606dbe10b01ab509f38a45006cedef5d07ae312f89ccdc1dc64858f"
 }

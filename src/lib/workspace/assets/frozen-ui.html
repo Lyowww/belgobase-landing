@@ -567,19 +567,20 @@ function startAssistantReading(){
  const synth=window.speechSynthesis,Utterance=window.SpeechSynthesisUtterance;
  if(!synth||typeof synth.speak!=='function'||typeof Utterance!=='function'){notice(t('read.unavailable','Voorlezen is niet beschikbaar op dit toestel. De tekst blijft leesbaar.'),true);return false;}
  const generation=++assistantReading.generation,language=i18n.locales[i18n.language]||'nl-BE';
- const fail=()=>{if(generation!==assistantReading.generation)return;stopAssistantReading();notice(t('read.failed','Het voorlezen kon niet worden afgespeeld. Controleer het geluid en de spraakstem van je toestel en probeer opnieuw.'),true);};
+ const fail=(event)=>{if(generation!==assistantReading.generation)return;stopAssistantReading();const code=['audio-busy','audio-hardware','network','synthesis-unavailable','synthesis-failed','language-unavailable','voice-unavailable','not-allowed','start-timeout','canceled','interrupted','text-too-long','invalid-argument'].includes(event?.error)?event.error:'unknown';assistantReading.failureMessage=t('read.error.'+code,t('read.failed','Het voorlezen kon niet worden afgespeeld.'))+' ('+code+')';notice(assistantReading.failureMessage,true);};
  try{
   const voices=synth.getVoices(),matching=voices.filter(item=>item.lang?.toLowerCase().split('-')[0]===language.split('-')[0]);
   const selected=matching.find(item=>item.lang.toLowerCase()===language.toLowerCase()&&item.localService)||matching.find(item=>item.localService)||matching[0];
   // Clear stale platform work and resume within the user's play gesture.
   if(synth.speaking||synth.pending)synth.cancel();if(synth.paused&&typeof synth.resume==='function')synth.resume();
+  if(assistantReading.failureMessage&&$('#notice').textContent===assistantReading.failureMessage)$('#notice').hidden=true;assistantReading.failureMessage=null;
   const chunks=assistantSpeechChunks(text);assistantReading.active=true;assistantReading.started=false;
   assistantReading.utterances=chunks.map((chunk,index)=>{const utterance=new Utterance(chunk);utterance.lang=selected?.lang||({nl:'nl-NL',fr:'fr-FR',en:'en-GB'}[i18n.language]||language);utterance.volume=1;utterance.rate=1;if(selected)utterance.voice=selected;
    utterance.onstart=()=>{if(generation===assistantReading.generation){assistantReading.started=true;clearTimeout(assistantReading.timer);assistantReading.timer=null;renderAssistantReading();}};
    utterance.onerror=fail;
    utterance.onend=()=>{if(generation===assistantReading.generation&&index===chunks.length-1){assistantReading.active=false;assistantReading.utterances=[];clearTimeout(assistantReading.timer);assistantReading.timer=null;renderAssistantReading();}};
    return utterance;});
-  renderAssistantReading();assistantReading.timer=setTimeout(fail,12000);
+  renderAssistantReading();assistantReading.timer=setTimeout(()=>fail({error:'start-timeout'}),12000);
   // Queue from this explicit click. A new reply or database result never interrupts speech.
   for(const utterance of assistantReading.utterances)synth.speak(utterance);
   return true;

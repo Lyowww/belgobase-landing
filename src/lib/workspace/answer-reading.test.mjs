@@ -23,9 +23,18 @@ for(const [name,html] of [['web',web],['PC1',pc]]){
  test(`${name}: play reads current answer and follow-up question even while searching`,()=>{
   const h=speech();assert.equal(h.spoken.length,0);assert.equal(h.context.startAssistantReading(),true);
   assert.equal(h.spoken.map(x=>x.text).join(' '),'Frituren zijn mogelijke klanten. Waar lever je?');
-  assert.equal(h.spoken[0].voice.lang,'nl-NL');assert.equal(h.nodes.get('#stop-reading').disabled,false);
+  assert.equal(h.spoken[0].voice.lang,'nl-NL');assert.equal(h.spoken[0].lang,'nl-NL');assert.equal(h.spoken[0].volume,1);assert.equal(h.nodes.get('#stop-reading').disabled,false);
   assert.equal(h.context.startAssistantReading(),false);assert.equal(h.spoken.length,1);
   h.spoken[0].onstart();assert.equal(h.timers.size,0);h.spoken[0].onend();assert.equal(h.nodes.get('#stop-reading').hidden,true);
+ });
+ test(`${name}: resume paused device speech and discard stale queue on explicit play`,()=>{
+  const h=speech(),synth=h.context.window.speechSynthesis;let resumes=0;synth.paused=true;synth.pending=true;
+  synth.resume=()=>{resumes++;synth.paused=false;};synth.speak=u=>{assert.equal(synth.paused,false);h.spoken.push(u);};
+  assert.equal(h.context.startAssistantReading(),true);assert.equal(resumes,1);assert.equal(h.cancelled,1);assert.equal(h.spoken.length,1);
+ });
+ test(`${name}: an initially empty voice catalogue uses a widely supported speech locale`,()=>{
+  const h=speech();h.context.window.speechSynthesis.getVoices=()=>[];
+  assert.equal(h.context.startAssistantReading(),true);assert.equal(h.spoken[0].lang,'nl-NL');assert.equal(h.spoken[0].volume,1);
  });
  test(`${name}: newer answer does not interrupt playing text; stop cancels the full queue`,()=>{
   const h=speech();h.context.state.conversation.at(-1).content='Een lange zin over klanten. '.repeat(35);
@@ -39,6 +48,11 @@ for(const [name,html] of [['web',web],['PC1',pc]]){
   const unsupported=speech();delete unsupported.context.window.speechSynthesis;assert.equal(unsupported.context.startAssistantReading(),false);assert.equal(unsupported.notices.length,1);
   const h=speech();h.context.startAssistantReading();h.spoken[0].onerror();assert.equal(h.cancelled,1);assert.equal(h.notices.length,1);assert.equal(h.nodes.get('#read-answer').disabled,false);
   h.context.startAssistantReading();[...h.timers.values()][0]();assert.equal(h.notices.length,2);
+ });
+ test(`${name}: browser error code survives into a diagnostic message; stale warning clears on retry`,()=>{
+  const h=speech();h.context.startAssistantReading();h.spoken[0].onerror({error:'voice-unavailable'});
+  const message=h.notices.at(-1)[0];assert.match(message,/\(voice-unavailable\)/);h.context.$('#notice').textContent=message;
+  h.context.startAssistantReading();assert.equal(h.nodes.get('#notice').hidden,true);[...h.timers.values()][0]();assert.match(h.notices.at(-1)[0],/\(start-timeout\)/);
  });
  test(`${name}: recording cannot start playback; page exit cancels it; no question repeated`,()=>{
   const h=speech();h.context.state.recording=true;assert.equal(h.context.startAssistantReading(),false);

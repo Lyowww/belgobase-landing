@@ -527,6 +527,54 @@
   const locales={nl:'nl-BE',fr:'fr-BE',en:'en-GB'};
  let language='nl';
  const normalize=value=>['nl','fr','en'].includes(String(value||'').toLowerCase())?String(value).toLowerCase():'nl';
+
+Object.assign(messages,{
+  "read.error.audio-busy": {
+    "nl": "De spraakdienst krijgt geen toegang tot het geluid. Stop een actief gesprek of opname in een andere app en probeer opnieuw.",
+    "fr": "Le service vocal ne peut pas accéder au son. Arrêtez un appel ou enregistrement dans une autre application, puis réessayez.",
+    "en": "The speech service cannot access audio. Stop an active call or recording in another app, then retry."
+  },
+  "read.error.audio-hardware": {
+    "nl": "De browser vindt geen geluidsuitgang voor spraak. Controleer de luidspreker of bluetoothverbinding.",
+    "fr": "Le navigateur ne trouve pas de sortie audio pour la voix. Vérifiez le haut-parleur ou la connexion Bluetooth.",
+    "en": "The browser cannot find an audio output for speech. Check the speaker or Bluetooth connection."
+  },
+  "read.error.network": {
+    "nl": "De stem kon niet worden geladen via internet. Controleer de verbinding en probeer opnieuw.",
+    "fr": "La voix n’a pas pu être chargée via Internet. Vérifiez la connexion et réessayez.",
+    "en": "The voice could not load over the network. Check your connection and retry."
+  },
+  "read.error.synthesis-unavailable": {
+    "nl": "De spraakdienst van dit toestel is niet beschikbaar.",
+    "fr": "Le service vocal de cet appareil est indisponible.",
+    "en": "The speech service on this device is unavailable."
+  },
+  "read.error.synthesis-failed": {
+    "nl": "De spraakdienst van dit toestel geeft een fout terug.",
+    "fr": "Le service vocal de cet appareil renvoie une erreur.",
+    "en": "The speech service on this device returned an error."
+  },
+  "read.error.language-unavailable": {
+    "nl": "Er is geen bruikbare stem beschikbaar voor deze taal op dit toestel.",
+    "fr": "Aucune voix utilisable dans cette langue n’est disponible sur cet appareil.",
+    "en": "No usable voice for this language is available on this device."
+  },
+  "read.error.voice-unavailable": {
+    "nl": "De gekozen stem is niet beschikbaar op dit toestel.",
+    "fr": "La voix sélectionnée est indisponible sur cet appareil.",
+    "en": "The selected voice is unavailable on this device."
+  },
+  "read.error.not-allowed": {
+    "nl": "De browser blokkeert het voorlezen. Herlaad de pagina en druk opnieuw op Voorlezen.",
+    "fr": "Le navigateur bloque la lecture vocale. Rechargez la page et appuyez de nouveau sur Lire.",
+    "en": "The browser blocked speech playback. Reload the page and press Read aloud again."
+  },
+  "read.error.start-timeout": {
+    "nl": "De spraakdienst van dit toestel is niet gestart. Herlaad de pagina en probeer opnieuw.",
+    "fr": "Le service vocal de cet appareil n’a pas démarré. Rechargez la page et réessayez.",
+    "en": "The speech service on this device did not start. Reload the page and retry."
+  }
+});
  const t=(key,fallback='',vars={})=>{
   let text=messages[key]?.[language]||messages[key]?.nl||fallback||key;
   return String(text).replace(/\{(\w+)\}/g,(_,name)=>String(vars[name]??''));

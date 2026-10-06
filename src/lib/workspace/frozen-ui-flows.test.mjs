@@ -133,7 +133,7 @@ test("rejected saved search exposes its complete draft and blocks stale results"
 
 test("saved multi-select values absent from the current catalogue remain checked",()=>{
   const target={innerHTML:""};
-  const {fieldControl}=loadFunctions(["fieldControl"],{
+  const {fieldControl}=loadFunctions(["filterDirectionalLabel","fieldOptionLabel","fieldControl"],{
     esc:String,present:String,state:{filterLabels:{}},filterNames:{},t:(_key,fallback,vars={})=>fallback.replace("{value}",String(vars.value??"")),multilineFilterKey:()=>false,
   });
   const markup=fieldControl({key:"juridical_situation",label:"Rechtstoestand opnemen",type:"select",multiple:true,options:[{value:"001",label:"001 — Actief"}]},["001","999"]);
@@ -271,7 +271,7 @@ test("French and English chips translate municipality and enterprise values befo
     "Rechtspersoon": "Legal entity",
     Ja: "Yes",
   };
-  const { filterLabel } = loadFunctions(["filterLabel"], {
+  const { filterLabel } = loadFunctions(["filterDirectionalLabel","filterLabel"], {
     state: { filters: {}, activityLabels: {}, enumLabels: {}, filterLabels: {
       gemeente_nl_match: "Sélection de commune",
       type_of_enterprise: "Enterprise type",
