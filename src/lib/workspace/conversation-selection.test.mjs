@@ -35,6 +35,13 @@ for(const [surface,html] of [['web',web],['PC1',pc1]]){
  test(`${surface}: greeting or missing brief never searches the entire database`,async()=>{
   const h=harness();assert.equal(await h.searchAdviceSelection({search_brief:''},1),false);assert.equal(h.calls.length,0);
  });
+ test(`${surface}: a failed unchanged refresh preserves and labels the last real selection`,async()=>{
+  const h=harness();await h.searchAdviceSelection({search_brief:'Frituren'},1);
+  h.search=async()=>false;await h.searchAdviceSelection({search_brief:'Frituren'},1,{retained:true});
+  assert.equal(h.journey.autoSelection.status,'ready');assert.equal(h.journey.autoSelection.refreshError,true);
+  assert.equal(h.journey.autoSelection.retained,true);assert.equal(h.state.rows[0].number,'real');
+  assert.equal(h.calls.filter(([kind])=>kind==='ai').length,1);
+ });
  test(`${surface}: ambiguous, empty and export proposals never execute`,async()=>{
   for(const p of [{status:'clarify',question:'Welke sector?'},{status:'ready',filters:{latest_only:true,max_rows:5000}},{status:'ready',action:'export_selection',filters:{nace_prefix:'56'},export_proposal:{}}]){
    const h=harness(p);await h.searchAdviceSelection({search_brief:'Een doelgroep'},1);assert.equal(h.journey.autoSelection.status,'error');assert.equal(h.calls.some(([kind])=>kind==='search'),false);
@@ -55,7 +62,8 @@ for(const [surface,html] of [['web',web],['PC1',pc1]]){
  test(`${surface}: result visibility is tied to the current successful advice selection`,()=>{
   assert.match(html,/toggle\('guided-live-selection',journey.mode==='goal'&&journey.autoSelection\?\.status==='ready'\)/);
   assert.match(html,/guided-stage-clarify\.guided-live-selection \.results\{display:block!important\}/);
-  assert.match(html,/if\(answered&&journeyCurrent\(revision\)&&advice\?\.search_brief\)await searchAdviceSelection\(advice,revision\)/);
+  assert.match(html,/if\(answered&&journeyCurrent\(revision\)\)/);
+  assert.match(html,/if\(advice\?\.search_brief\)await searchAdviceSelection\(advice,revision\)/);
   assert.match(html,/revision===filterRevision&&isCurrent\(\)/);
  });
 }

@@ -32,7 +32,7 @@ test("microphone preserves the chosen workspace AI route", async () => {
     const $ = nodes();
     $("#ai-mode").checked = checked;
     const context = vm.createContext({
-      $, state: { ready: true, busy: false }, voice: { phase: "idle", revision: 0 },
+      $, state: { ready: true, busy: false }, voice: { phase: "idle", revision: 0 }, assistantReading: {active:false},
       guidedModeActive: () => false, renderVoiceLevel() {}, controls() {},
       bridge: async () => ({ ok: true }), voiceCurrent: () => true,
       scheduleVoicePoll() {}, voiceFailure() { assert.fail("microphone should start"); },

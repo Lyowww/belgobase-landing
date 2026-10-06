@@ -443,6 +443,45 @@
     "en": "Companies could not be loaded. Your conversation has been kept."
   }
 });
+  Object.assign(messages,{
+  "read.play": {
+    "nl": "▶ Voorlezen",
+    "fr": "▶ Lire à voix haute",
+    "en": "▶ Read aloud"
+  },
+  "read.stop": {
+    "nl": "■ Stop voorlezen",
+    "fr": "■ Arrêter la lecture",
+    "en": "■ Stop reading"
+  },
+  "read.speaking": {
+    "nl": "Antwoord wordt voorgelezen.",
+    "fr": "Lecture de la réponse en cours.",
+    "en": "Reading the answer aloud."
+  },
+  "read.unavailable": {
+    "nl": "Voorlezen is niet beschikbaar op dit toestel. De tekst blijft leesbaar.",
+    "fr": "La lecture vocale est indisponible sur cet appareil. Le texte reste accessible.",
+    "en": "Read aloud is not available on this device. The text remains available."
+  },
+  "read.failed": {
+    "nl": "Het voorlezen kon niet worden afgespeeld. Controleer het geluid en de spraakstem van je toestel en probeer opnieuw.",
+    "fr": "La lecture vocale a échoué. Vérifiez le son et la voix de votre appareil, puis réessayez.",
+    "en": "The answer could not be played. Check your device sound and speech voice, then try again."
+  },
+  "read.stopBeforeRecording": {
+    "nl": "Stop eerst het voorlezen om een nieuwe opname te maken.",
+    "fr": "Arrêtez la lecture avant de commencer un nouvel enregistrement.",
+    "en": "Stop reading aloud before starting a new recording."
+  },
+  "conversation.selectionRetained": {
+    "nl": "Je laatste selectie is opnieuw geladen. Er zijn nog geen nieuwe zoekcriteria toegepast.",
+    "fr": "Votre dernière sélection a été rechargée. Aucun nouveau critère de recherche n’a encore été appliqué.",
+    "en": "Your last selection has been reloaded. No new search criteria have been applied yet."
+  }
+});
+  Object.assign(messages,{"read.starting":{"nl":"Voorlezen starten…","fr":"Démarrage de la lecture…","en":"Starting read aloud…"}});
+  Object.assign(messages,{"conversation.selectionRefreshFailed":{"nl":"Opnieuw laden is niet gelukt. Je ziet nog de vorige selectie.","fr":"Le rechargement a échoué. La sélection précédente reste affichée.","en":"Reloading failed. You are still viewing the previous selection."}});
   const locales={nl:'nl-BE',fr:'fr-BE',en:'en-GB'};
  let language='nl';
  const normalize=value=>['nl','fr','en'].includes(String(value||'').toLowerCase())?String(value).toLowerCase():'nl';

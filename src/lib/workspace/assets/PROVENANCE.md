@@ -33,3 +33,5 @@ Microphone input preserves the chosen conversational route. Accepted speech reta
 The workspace submit route recognises business introductions and conversational questions before plain company-name search, opens the existing conversation tab and passes the exact text to the existing advisor. Keyboard dictation and typed text share this route. Direct company names and enterprise numbers still use the ordinary search. Tests include the reported potato-farmer question on both web and PC1 sources.
 
 2026-10-06: Conversation advice automatically compiles a provisional search through the existing filter service and displays real BelgoBase results. Each follow-up replaces the selection; errors hide stale previews. PC1 UI and NL/FR/EN parity maintained.
+
+2026-10-06: Explicit answer read-aloud / Stop controls use device speech synthesis without another model request. Reading remains independent from automatic searches. Empty-brief follow-ups refresh the last real selection with a clear unchanged-criteria label. PC1/web NL/FR/EN parity.

@@ -129,7 +129,7 @@ body{background:#f7f9fc}.side{background:#fbfdff;color:#3c5578;border-right:1px 
   <section id="search-view">
    <div class="intro"><div><div class="eyebrow" data-i18n="dashboard.eyebrow">BEDRIJVEN ONTDEKKEN</div><h1 id="page-title" data-i18n="dashboard.title">Vind je volgende klant.</h1></div></div>
     <div id="search-controls"><div id="assistant-home-slot"></div>
-     <section class="ai-conversation" id="ai-conversation" aria-label="Gesprek over je selectie" data-i18n-aria-label="assistant.conversation" hidden><div class="ai-conversation-head"><h2 data-i18n="assistant.search">Slim zoeken</h2><div class="actions"><button class="ghost" id="toggle-conversation" aria-expanded="true" data-i18n="assistant.collapse">Gesprek inklappen</button><button class="ghost" id="new-ai" data-lock data-i18n="assistant.newChat">Nieuw gesprek</button></div></div><ol class="ai-turns" id="ai-turns" aria-live="polite"></ol></section>
+     <section class="ai-conversation" id="ai-conversation" aria-label="Gesprek over je selectie" data-i18n-aria-label="assistant.conversation" hidden><div class="ai-conversation-head"><h2 data-i18n="assistant.search">Slim zoeken</h2><div class="actions"><button type="button" class="secondary" id="read-answer" data-i18n="read.play">▶ Voorlezen</button><button type="button" class="secondary" id="stop-reading" data-i18n="read.stop" hidden>■ Stop voorlezen</button><span id="read-status" class="sr-only" role="status"></span><button class="ghost" id="toggle-conversation" aria-expanded="true" data-i18n="assistant.collapse">Gesprek inklappen</button><button class="ghost" id="new-ai" data-lock data-i18n="assistant.newChat">Nieuw gesprek</button></div></div><ol class="ai-turns" id="ai-turns" aria-live="polite"></ol></section>
      <form class="search" id="search-form"><div class="composer-input"><span data-icon="search"></span><label for="query" class="sr-only" data-i18n="search.queryLabel">Zoekopdracht of vervolgvraag</label><input id="query" autocomplete="off" placeholder="Zoek op bedrijfsnaam of ondernemingsnummer…" data-i18n-placeholder="search.placeholder"><div id="voice-meter" class="voice-meter" hidden><div class="voice-levels" id="voice-levels" aria-hidden="true"></div><span class="voice-timing" id="voice-timing" role="status" data-i18n="voice.starting">Microfoon starten…</span></div></div><button type="button" class="icon-button composer-minor" id="voice-cancel" title="Opname annuleren; getypte tekst behouden" data-i18n-title="voice.cancelTitle" aria-label="Opname annuleren" data-i18n-aria-label="voice.cancel" hidden><span data-icon="close"></span></button><button type="button" class="icon-button composer-minor composer-stop" id="voice-stop" title="Stoppen en tekst klaarzetten" data-i18n-title="voice.stopTitle" aria-label="Stoppen en tekst klaarzetten" data-i18n-aria-label="voice.stop" hidden><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg></button><button type="button" class="icon-button composer-minor" id="voice-start" title="Tekst aanvullen met spraak" data-i18n-title="voice.startTitle" aria-label="Tekst aanvullen met spraak" data-i18n-aria-label="voice.start" hidden><span data-icon="mic"></span></button><button class="primary composer-send" type="submit" id="search-button" aria-label="Zoekopdracht inspreken" data-i18n-aria-label="search.voiceButton" title="Zoekopdracht inspreken" data-i18n-title="search.voiceButton"><span data-icon="mic"></span></button></form>
      <details class="voice-info" id="voice-info" hidden><summary data-i18n="search.voiceInfo">Spraakinfo</summary><p data-i18n="voice.privacy">Spreek maximaal 60 seconden. De tekst verschijnt in het invoerveld en wordt pas verstuurd wanneer je daarvoor kiest.</p></details>
      <div class="guided-context-actions"><button class="secondary" id="guided-upload" type="button" data-i18n="guided.uploadContext" hidden>Klantenlijst als context</button><button class="primary" id="guided-contacts" type="button" data-i18n="guided.contacts" hidden>Contactgegevens aanvullen</button><button class="primary" id="guided-download" type="button" data-i18n="guided.download" hidden>Downloaden</button></div>
@@ -240,7 +240,7 @@ const filterValueLabels={niet_beschikbaar:'Niet beschikbaar',invalid_source:'Bro
 function notice(message,error=false){$('#notice-text').textContent=message;$('#notice').classList.toggle('error',error);$('#notice').hidden=false;}
 $('#dismiss-notice').onclick=()=>$('#notice').hidden=true;
 async function bridge(method,arg){if(!window.pywebview?.api?.[method])throw new Error('De verbinding met BelgoBase is nog niet beschikbaar.');const r=arg===undefined?await window.pywebview.api[method]():await window.pywebview.api[method](arg);if(!r||r.ok!==true)throw new Error(r?.error||'Deze actie kon niet worden afgerond. Probeer het opnieuw.');return r;}
-function controls(){
+function controls(){renderAssistantReading();
  renderRegionButtons();const locked=!state.ready||state.busy||state.recording||filterDraft!==null;$$('[data-lock],[data-workspace],[data-save],[data-company],[data-choice],[data-filter],[data-clear],#query,#back,[data-view]').forEach(el=>el.disabled=locked);$('#prev').disabled=locked||state.view==='saved'||state.page<=1;$('#next').disabled=locked||state.view==='saved'||state.page*state.pageSize>=state.total;$('#export').disabled=locked||!(Object.keys(state.selectedRows).length||(state.view==='saved'?state.saved.length:state.searched&&state.total));$('#save-search').disabled=locked||!state.searched;$('#apply-ai').disabled=locked||state.proposal?.status!=='ready'||!state.proposal?.filters;$('#tools-back').disabled=locked;$$('[data-clear]').forEach(el=>el.disabled=!state.ready||state.recording||(state.busy&&operationKind!=='search'));$('#new-search').disabled=!state.ready||state.recording||(state.busy&&operationKind!=='search');$('#brand-home').disabled=locked;$('#breadcrumb-home').disabled=locked;$('#undo-selection').disabled=locked||selectionHistory.index<=0;$('#selection-forward').disabled=locked||selectionHistory.index<0||selectionHistory.index>=selectionHistory.entries.length-1;if($('#catalog-prev'))$('#catalog-prev').disabled=locked||work.catalogOffset===0;if($('#catalog-next'))$('#catalog-next').disabled=locked||!work.catalogMore;$$('[data-wallet-contact]').forEach(el=>el.disabled=state.busy||assistantUi.walletLoading||walletTopup.loading);const enrich=$('#journey-enrich-selection'),selection=journeySelectionContext(false);enrich.hidden=!(state.view==='search'&&state.searched&&state.total);enrich.textContent=journeyText('enrichSelection',{count:nf.format(selection.count)});enrich.title=selection.count>5000?journeyText('tooMany',{count:nf.format(selection.count)}):'';enrich.disabled=locked;const migrationLocked=journeyMigrationConflicts().length>0;if(migrationLocked){$$('.journey-actions button').forEach(button=>button.disabled=true);$('#journey-close').hidden=true;$('#journey-close').disabled=true;$$('[data-migration-disabled]').forEach(button=>button.disabled=true);}renderComposer();}
 let operationPoll=null;
 let filterRefreshTimer=null, filterRevision=0, filterDraft=null, filterDraftQuery='', filterRefreshPending=false, operationKind=null;
@@ -535,8 +535,55 @@ $('#refine-ai').onclick=()=>setAiScope('refine');
 function guidedInputRoute(stage,flowMode,businessIntro=false){return stage==='goal'||['goal','upload','feedback'].includes(flowMode)||businessIntro?'advice':'ai';}
 async function dispatchComposerText(text){text=String(text||'').trim();if(!text)return false;if(isExplicitContactRequest(text)&&routeJourneyRequest(text))return true;if(!guidedModeActive()&&!$('#ai-mode').checked&&looksLikeBusinessIntro(text)){setGuidedMode(true);state.proposal=null;guidedStageOverride='clarify';return await journeyAdvise(text);}if(!guidedModeActive()&&!$('#ai-mode').checked){if(!quickFiltersValid())return false;await search(1,snapshotFilters());return true;}const stage=guidedStage(state,journey,guidedStageOverride),route=guidedModeActive()?guidedInputRoute(stage,journey.mode,looksLikeBusinessIntro(text)):guidedInputRoute('',journey.mode,looksLikeBusinessIntro(text));guidedStageOverride=null;if(route!=='advice'&&routeJourneyRequest(text))return true;if(route==='advice'){state.proposal=null;guidedStageOverride='clarify';await journeyAdvise(text);return true;}if($('#ai-mode').checked)await aiSearch();else {if(!quickFiltersValid())return false;await search(1,snapshotFilters());}return true;}
 $('#search-form').onsubmit=async e=>{try{e.preventDefault();if(!state.ready||state.busy)return;if(filterDraft!==null){if(!quickFiltersValid())return;await search(1,snapshotFilters(),filterDraftQuery);return;}if(voice.phase==='recording'){stopVoice(true);return;}if(voice.phase!=='idle')return;if(!guidedModeActive()&&!$('#ai-mode').checked&&!quickFiltersValid())return;const text=$('#query').value.trim();if(!text){if(guidedModeActive()||$('#ai-mode').checked)startVoice();else await search(1,snapshotFilters(),'');return;}await dispatchComposerText(text);}catch(error){notice(t('notice.actionFailed','Deze actie kon niet worden afgerond. Probeer het opnieuw.'),true);}};
-function renderConversation(){$('#ai-conversation').classList.toggle('collapsed',state.conversationCollapsed);$('#toggle-conversation').textContent=state.conversationCollapsed?t('ai.showConversation',"Gesprek bekijken"):t('ai.hideConversation',"Gesprek inklappen");$('#toggle-conversation').setAttribute('aria-expanded',String(!state.conversationCollapsed));const turns=state.conversation.slice(-40);$('#ai-conversation').hidden=!turns.length;$('#ai-turns').innerHTML=turns.map(turn=>`<li class="${turn.role==='assistant'?'assistant':'user'}"><strong>${turn.role==='assistant'?'BelgoBase':t('ai.you',"Jij")}</strong><p>${esc(turn.content)}</p>${turn.role==='assistant'?journeySourcesMarkup(turn.sources):''}</li>`).join('');$('#ai-turns').scrollTop=$('#ai-turns').scrollHeight;renderGuidedFlow();}
-function resetConversation(){journey.autoSelection=null;state.aiConversationEpoch=(state.aiConversationEpoch||0)+1;state.conversation=[];state.proposal=null;$('#ai-panel').hidden=true;renderConversation();controls();}
+const assistantReading={active:false,started:false,generation:0,utterances:[],timer:null};
+function assistantReadText(){
+ const turn=[...state.conversation].reverse().find(item=>item.role==='assistant'&&String(item.content||'').trim());
+ if(!turn)return '';
+ const text=String(turn.content).trim(),advice=journey.data?.last_advice,question=advice?.assistant_message===turn.content?String(advice.question||'').trim():'';
+ return question&&!text.includes(question)?text+'\n\n'+question:text;
+}
+function assistantSpeechChunks(text){
+ const words=String(text||'').trim().split(/\s+/),chunks=[];let chunk='';
+ for(const word of words){if(chunk&&chunk.length+word.length>240){chunks.push(chunk);chunk='';}chunk+=(chunk?' ':'')+word;}
+ if(chunk)chunks.push(chunk);return chunks;
+}
+function renderAssistantReading(){
+ const play=$('#read-answer'),stop=$('#stop-reading');if(!play||!stop)return;
+ play.hidden=assistantReading.active;stop.hidden=!assistantReading.active;stop.disabled=false;
+ play.disabled=state.recording||!assistantReadText();
+ $('#read-status').textContent=assistantReading.active?(assistantReading.started?t('read.speaking','Antwoord wordt voorgelezen.'):t('read.starting','Voorlezen starten…')):'';
+}
+function stopAssistantReading(){
+ const wasActive=assistantReading.active;assistantReading.generation++;assistantReading.active=false;assistantReading.utterances=[];clearTimeout(assistantReading.timer);assistantReading.timer=null;
+ if(wasActive){try{window.speechSynthesis?.cancel();}catch(_){}}
+ renderAssistantReading();
+}
+function startAssistantReading(){
+ if(assistantReading.active||state.recording)return false;
+ const text=assistantReadText();if(!text)return false;
+ const synth=window.speechSynthesis,Utterance=window.SpeechSynthesisUtterance;
+ if(!synth||typeof synth.speak!=='function'||typeof Utterance!=='function'){notice(t('read.unavailable','Voorlezen is niet beschikbaar op dit toestel. De tekst blijft leesbaar.'),true);return false;}
+ const generation=++assistantReading.generation,language=i18n.locales[i18n.language]||'nl-BE';
+ const fail=()=>{if(generation!==assistantReading.generation)return;stopAssistantReading();notice(t('read.failed','Het voorlezen kon niet worden afgespeeld. Controleer het geluid en de spraakstem van je toestel en probeer opnieuw.'),true);};
+ try{
+  const voices=synth.getVoices(),matching=voices.filter(item=>item.lang?.toLowerCase().split('-')[0]===language.split('-')[0]);
+  const selected=matching.find(item=>item.lang.toLowerCase()===language.toLowerCase()&&item.localService)||matching.find(item=>item.localService)||matching[0];
+  const chunks=assistantSpeechChunks(text);assistantReading.active=true;assistantReading.started=false;
+  assistantReading.utterances=chunks.map((chunk,index)=>{const utterance=new Utterance(chunk);utterance.lang=language;utterance.rate=1;if(selected)utterance.voice=selected;
+   utterance.onstart=()=>{if(generation===assistantReading.generation){assistantReading.started=true;clearTimeout(assistantReading.timer);assistantReading.timer=null;renderAssistantReading();}};
+   utterance.onerror=fail;
+   utterance.onend=()=>{if(generation===assistantReading.generation&&index===chunks.length-1){assistantReading.active=false;assistantReading.utterances=[];clearTimeout(assistantReading.timer);assistantReading.timer=null;renderAssistantReading();}};
+   return utterance;});
+  renderAssistantReading();assistantReading.timer=setTimeout(fail,12000);
+  // Queue from this explicit click. A new reply or database result never interrupts speech.
+  for(const utterance of assistantReading.utterances)synth.speak(utterance);
+  return true;
+ }catch(_){fail();return false;}
+}
+$('#read-answer').onclick=startAssistantReading;$('#stop-reading').onclick=stopAssistantReading;
+window.addEventListener('pagehide',stopAssistantReading);
+function renderConversation(){renderAssistantReading();$('#ai-conversation').classList.toggle('collapsed',state.conversationCollapsed);$('#toggle-conversation').textContent=state.conversationCollapsed?t('ai.showConversation',"Gesprek bekijken"):t('ai.hideConversation',"Gesprek inklappen");$('#toggle-conversation').setAttribute('aria-expanded',String(!state.conversationCollapsed));const turns=state.conversation.slice(-40);$('#ai-conversation').hidden=!turns.length;$('#ai-turns').innerHTML=turns.map(turn=>`<li class="${turn.role==='assistant'?'assistant':'user'}"><strong>${turn.role==='assistant'?'BelgoBase':t('ai.you',"Jij")}</strong><p>${esc(turn.content)}</p>${turn.role==='assistant'?journeySourcesMarkup(turn.sources):''}</li>`).join('');$('#ai-turns').scrollTop=$('#ai-turns').scrollHeight;renderGuidedFlow();}
+function resetConversation(){stopAssistantReading();journey.autoSelection=null;state.aiConversationEpoch=(state.aiConversationEpoch||0)+1;state.conversation=[];state.proposal=null;$('#ai-panel').hidden=true;renderConversation();controls();}
 async function startNewConversation(){const revision=journeyStart('goal',journeyText('profileUpdating'));if(revision===null)return false;try{const result=await journeyCall({command:'reset_profile'});if(!journeyCurrent(revision))return false;mergeJourneyResult(result);guidedStageOverride='goal';state.aiScope='new';resetConversation();renderJourneyAdvice(null);$('#query').value='';$('#query').focus();return true;}catch(error){if(journeyCurrent(revision))notice(error.message,true);return false;}finally{journeyEnd(revision);}}
 $('#new-ai').onclick=()=>{void startNewConversation();};
 $('#toggle-conversation').onclick=()=>{state.conversationCollapsed=!state.conversationCollapsed;renderConversation();};
@@ -671,11 +718,14 @@ function journeyEnd(revision){if(journey.busyContext===revision){journey.busyCon
 function journeyMappingInput(){return Object.fromEntries($$('[data-journey-map]').map(select=>[select.dataset.journeyMap,select.value===''?null:Number(select.value)]));}
 async function journeyState(){const revision=journey.contextRevision,result=await journeyCall({command:'state'});if(journeyCurrent(revision))updateJourney(result);return result;}
 async function journeyAdvise(text){
- text=String(text||'').trim();if(!text||text.length>2000){notice(journeyText('goalLength'),true);return false;}const revision=journeyStart('goal',journeyText('goalDiscussing'));if(revision===null)return false;$('#notice').hidden=true;appendConversation('user',text);$('#query').value='';journey.autoSelection=null;renderGuidedFlow();let answered=false,advice=null;
+ text=String(text||'').trim();if(!text||text.length>2000){notice(journeyText('goalLength'),true);return false;}const revision=journeyStart('goal',journeyText('goalDiscussing'));if(revision===null)return false;const previousSelection=journey.autoSelection?.status==='ready'&&journey.autoSelection.filters?structuredClone(journey.autoSelection):null;$('#notice').hidden=true;appendConversation('user',text);$('#query').value='';journey.autoSelection=null;renderGuidedFlow();let answered=false,advice=null;
  try{const result=await journeyCall({command:'advise',text});if(!journeyCurrent(revision))return false;updateJourney(result);advice=result.advice;answered=true;}
  catch(error){if(!journeyCurrent(revision))return false;let recovered=false;try{const stateResult=await journeyCall({command:'state'});if(!journeyCurrent(revision))return false;const history=Array.isArray(stateResult?.history)?stateResult.history:[];let userIndex=-1;for(let index=history.length-1;index>=0;index--){if(history[index]?.role==='user'){userIndex=index;break;}}const lastUser=history[userIndex],linkedAssistant=history[userIndex+1],savedAdvice=stateResult?.last_advice;if(lastUser?.content===text&&linkedAssistant?.role==='assistant'&&linkedAssistant.content===savedAdvice?.assistant_message&&savedAdvice){mergeJourneyResult(stateResult);appendConversation('assistant',savedAdvice.assistant_message||savedAdvice.question||journeyText('goalUpdated'),savedAdvice.sources);renderJourneyAdvice(savedAdvice);advice=savedAdvice;recovered=true;}}catch{}if(journeyCurrent(revision)&&!recovered){notice(error.message,true);$('#query').value=text;}answered=recovered;}
  finally{journeyEnd(revision);if(journeyCurrent(revision))$('#query').focus();}
- if(answered&&journeyCurrent(revision)&&advice?.search_brief)await searchAdviceSelection(advice,revision);
+ if(answered&&journeyCurrent(revision)){
+  if(advice?.search_brief)await searchAdviceSelection(advice,revision);
+  else if(previousSelection){journey.autoSelection=previousSelection;await searchAdviceSelection({...advice,search_brief:previousSelection.brief},revision,{retained:true});}
+ }
  return answered;
 }
 async function uploadJourneyFile(file,mapping=null,purpose='customers'){
@@ -718,7 +768,7 @@ $('#journey-content').onclick=event=>{
  else if(actionName==='select-job'){journey.viewingHistory=true;journeyJobCommand({command:'job_select',job_id:button.dataset.jobId});}
  else if(actionName==='clear-list')journeyJobCommand({command:'clear_list'});
  else if(actionName==='search-target')searchJourneyTarget(button.dataset.brief);
- else if(actionName==='retry-selection')searchAdviceSelection(journey.data?.last_advice,journey.contextRevision);
+ else if(actionName==='retry-selection')searchAdviceSelection({...journey.data?.last_advice,search_brief:journey.autoSelection?.brief||journey.data?.last_advice?.search_brief},journey.contextRevision,{retained:journey.autoSelection?.retained===true});
  else if(actionName==='create-job'){journey.viewingHistory=false;journeyJobCommand({command:'job_create',only_new:journey.onlyNew!==false});}
  else if(actionName==='candidate-preview')loadCandidatePreview();
  else if(actionName==='candidate-review'){if(button.dataset.candidateJob!==journey.job?.job_id)return;const reason=window.prompt(journeyText('candidateReasonPrompt'),'');if(reason&&reason.trim())journeyJobCommand({command:'candidate_review',job_id:journey.job.job_id,source_row_id:button.dataset.candidateRow,decision:button.dataset.decision,reason:reason.trim().slice(0,500),confirmed:true}).then(ok=>{if(ok)loadCandidatePreview();});}
@@ -749,12 +799,12 @@ function adviceSelectionMarkup(){
  if(selection.status==='error')return `<div class="notice error" role="alert">${esc(selection.error)} <button class="secondary" data-journey-action="retry-selection">${esc(t('conversation.selectionRetry','Selectie opnieuw laden'))}</button></div>`;
  if(selection.status!=='ready')return '';
  const filters=Object.entries(state.filters||{}).filter(([key,value])=>!['max_rows','selected_output_cols','ondernemingsnummers_exclude'].includes(key)&&value!==null&&value!==''&&value!==false&&value!==undefined&&(!Array.isArray(value)||value.length));
- return `<div class="journey-list-summary"><strong>${esc(t('conversation.liveSelection','Voorlopige selectie: {count} bedrijven',{count:nf.format(state.total)}))}</strong><p>${esc(selection.brief)}</p><details><summary>${esc(t('conversation.selectionFilters','Gebruikte filters'))}</summary><div class="chips">${filters.map(([key,value])=>`<span class="chip">${esc(filterLabel(key,value,state.filters))}</span>`).join('')}</div></details></div>`;
+ return `<div class="journey-list-summary"><strong>${esc(t('conversation.liveSelection','Voorlopige selectie: {count} bedrijven',{count:nf.format(state.total)}))}</strong>${selection.refreshError?`<p role="alert">${esc(t('conversation.selectionRefreshFailed','Opnieuw laden is niet gelukt. Je ziet nog de vorige selectie.'))} <button class="secondary" data-journey-action="retry-selection">${esc(t('conversation.selectionRetry','Selectie opnieuw laden'))}</button></p>`:selection.retained?`<p>${esc(t('conversation.selectionRetained','Je laatste selectie is opnieuw geladen. Er zijn nog geen nieuwe zoekcriteria toegepast.'))}</p>`:''}<p>${esc(selection.brief)}</p><details><summary>${esc(t('conversation.selectionFilters','Gebruikte filters'))}</summary><div class="chips">${filters.map(([key,value])=>`<span class="chip">${esc(filterLabel(key,value,state.filters))}</span>`).join('')}</div></details></div>`;
 }
-async function searchAdviceSelection(advice,revision){
+async function searchAdviceSelection(advice,revision,{retained=false}={}){
  const brief=String(advice?.search_brief||'').trim();if(!brief||!journeyCurrent(revision))return false;
  const previous=journey.autoSelection;let filters=previous?.brief===brief&&previous.filters?structuredClone(previous.filters):null;
- journey.autoSelection={status:'pending',brief};$('#notice').hidden=true;renderJourneyAdvice(advice);
+ journey.autoSelection={status:'pending',brief,retained};$('#notice').hidden=true;renderJourneyAdvice(advice);
  const seq=beginOperation(t('conversation.selectionLoading','Ik zoek de bedrijven die hierbij passen…'),true,'advice-selection');
  const current=()=>seq===state.request&&journeyCurrent(revision);
  try{
@@ -765,11 +815,11 @@ async function searchAdviceSelection(advice,revision){
   const proposal=result.proposal||{},candidate=proposal.filters;
   if(proposal.status!=='ready'||(proposal.action&&proposal.action!=='proposal')||proposal.export_proposal||!candidate||typeof candidate!=='object'||Array.isArray(candidate)||!Object.entries(candidate).some(([key,value])=>!['latest_only','max_rows','selected_output_cols','ondernemingsnummers_exclude'].includes(key)&&value!==null&&value!==''&&value!==false&&value!==undefined&&(!Array.isArray(value)||value.length)))throw new Error(proposal.question||proposal.message||t('conversation.selectionUnclear','De selectie is nog niet duidelijk genoeg. Vertel welk type klant je wilt bereiken.'));
   filters=candidate;}
- }catch(error){if(current())journey.autoSelection={status:'error',brief,error:error.message};}
+ }catch(error){if(current())journey.autoSelection={status:'error',brief,retained,error:error.message};}
  finally{if(seq===state.request){operationKind=null;endOperation(seq);}}
  if(!current())return false;
- if(filters){const loaded=await search(1,filters,'',{selectionMode:'preserve',recordHistory:false,isCurrent:()=>journeyCurrent(revision)});if(!journeyCurrent(revision))return false;if(loaded&&state.view!=='search')navigate('search');journey.autoSelection=loaded?{status:'ready',brief,filters}:{status:'error',brief,filters,error:lastSearchError||t('conversation.selectionFailed','De bedrijven konden niet worden geladen. Je gesprek is behouden.')};}
- state.proposal=null;guidedStageOverride='clarify';state.conversationCollapsed=false;renderConversation();renderJourneyAdvice(advice);return journey.autoSelection.status==='ready';
+ if(filters){const loaded=await search(1,filters,'',{selectionMode:'preserve',recordHistory:false,isCurrent:()=>journeyCurrent(revision)});if(!journeyCurrent(revision))return false;if(loaded&&state.view!=='search')navigate('search');journey.autoSelection=loaded?{status:'ready',brief,filters,retained}:retained&&previous?.status==='ready'?{...previous,retained:true,refreshError:true}:{status:'error',brief,filters,retained,error:lastSearchError||t('conversation.selectionFailed','De bedrijven konden niet worden geladen. Je gesprek is behouden.')};}
+ state.proposal=null;guidedStageOverride='clarify';state.conversationCollapsed=false;renderConversation();renderJourneyAdvice(journey.data?.last_advice||advice);return journey.autoSelection.status==='ready';
 }
 window.addEventListener('pagehide',()=>{journeySetContext(null);journey.closed=true;});
 function isSimpleExcelRequest(text){return /^(?:(?:maak|geef|exporteer|download|bewaar|zet)(?: mij| me)?(?: deze| die| de| mijn)?(?: lijst| selectie| resultaten)?(?: als| in| naar)?(?: een)? excel(?:bestand)?|export(?:er)?(?: cette| la| ma)?(?: liste| sélection| selection)?(?: en| vers)? excel|(?:make|export|download|save)(?: this| the| my)?(?: list| selection| results)?(?: as| to| an)? excel(?: file)?)[.!?]*$/i.test(text.trim());}
@@ -857,6 +907,7 @@ async function pollVoice(revision){
  finally{if(revision===voice.revision){voice.polling=false;scheduleVoicePoll(revision);}}
 }
 async function startVoice(){
+ if(assistantReading.active){notice(t('read.stopBeforeRecording','Stop eerst het voorlezen om een nieuwe opname te maken.'));return;}
  if(!state.ready||state.busy||voice.phase!=='idle')return;
  const revision=++voice.revision;voice.draft=$('#query').value;voice.phase='starting';voice.consumed=false;voice.stopPending=false;voice.sendAfterStop=false;voice.polling=false;voice.elapsed=0;voice.levels=Array(24).fill(0);state.recording=true;
  if(guidedModeActive())$('#ai-mode').checked=true;$('#notice').hidden=true;renderVoiceLevel(0);controls();
@@ -1053,9 +1104,25 @@ function metricValue(metric){if(!number(metric?.value))return esc(display(metric
 const profileCopy={overview:{nl:'Overzicht',fr:'Aperçu',en:'Overview'},contact:{nl:'Contact',fr:'Contact',en:'Contact'},figures:{nl:'Cijfers',fr:'Chiffres',en:'Figures'},activity:{nl:'Activiteit',fr:'Activité',en:'Activity'},companyData:{nl:'Bedrijfsgegevens',fr:'Données de l’entreprise',en:'Company details'},allData:{nl:'Alle bedrijfsgegevens',fr:'Toutes les données de l’entreprise',en:'All company details'},contactData:{nl:'Contactgegevens',fr:'Coordonnées',en:'Contact details'},address:{nl:'Adres',fr:'Adresse',en:'Address'},website:{nl:'Website',fr:'Site web',en:'Website'},phone:{nl:'Telefoon',fr:'Téléphone',en:'Phone'},email:{nl:'E-mail',fr:'E-mail',en:'Email'},municipality:{nl:'Gemeente',fr:'Commune',en:'Municipality'},financialDetail:{nl:'Financiële gegevens en herkomst',fr:'Données financières et provenance',en:'Financial data and source'},noYears:{nl:'Geen historische bronjaren beschikbaar.',fr:'Aucune année source historique disponible.',en:'No historical source years available.'},yearValue:{nl:'Waarde voor bronjaar {year}',fr:'Valeur pour l’année source {year}',en:'Value for source year {year}'}};
 function profileText(key,vars={}){const language=['nl','fr','en'].includes(i18n.language)?i18n.language:'nl';return String(profileCopy[key]?.[language]||profileCopy[key]?.nl||key).replace(/\{(\w+)\}/g,(_m,name)=>String(vars[name]??''));}
 function normalizedFieldLabel(value){return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();}
-function findField(fields,labels){const wanted=new Set(labels.map(normalizedFieldLabel));return (fields||[]).find(field=>wanted.has(normalizedFieldLabel(field.label)));}
+const detailFieldKeys={
+ 'adres':['adres','address'],'adresse':['adres','address'],'address':['adres','address'],
+ 'straat nl':['straat_nl'],'straat fr':['straat_fr'],'straat':['straat_nl','straat_fr','straat','street'],'rue':['straat_nl','straat_fr','straat','street'],
+ 'huisnummer':['huisnummer','house_number'],'numero':['huisnummer','house_number'],'bus':['bus','unit'],'boite':['bus','unit'],
+ 'postcode kbo':['kbo_postcode','postcode'],'postcode':['kbo_postcode','postcode'],
+ 'gemeente nl':['gemeente_nl'],'gemeente fr':['gemeente_fr'],'gemeente':['gemeente_nl','gemeente_fr','city'],'commune':['gemeente_nl','gemeente_fr','city'],
+ 'land':['land','country'],'pays':['land','country'],
+ 'ondernemingsnummer':['ondernemingsnummer','enterprise_number','number'],'rechtsvorm':['rechtsvorm','juridical_form','legal_form'],
+ 'kbo status':['kbo_status','status'],'status':['kbo_status','status'],'startdatum':['startdatum','start_date'],
+ 'nace code':['nace_code','nace'],'sector':['sector','nace_prefix'],'activiteitgroep':['activity_group','activiteitgroep'],
+ 'activiteitclassificatie':['activity_classification','classification','activiteitclassificatie'],
+ 'website':['website','webadres','url'],'webadres':['website','webadres','url'],'site web':['website','webadres','url'],
+ 'telefoon':['telefoon','telefoonnummer','phone','telephone'],'telefoonnummer':['telefoon','telefoonnummer','phone','telephone'],'telephone':['telefoon','telefoonnummer','phone','telephone'],'phone':['telefoon','telefoonnummer','phone','telephone'],
+ 'e mail':['email','e_mail'],'email':['email','e_mail'],'courriel':['email','e_mail']
+};
+function fieldMatches(field,labels){const wanted=new Set(labels.map(normalizedFieldLabel));if(field.key){const keys=new Set([...wanted].flatMap(label=>detailFieldKeys[label]||[]));return keys.has(String(field.key).toLowerCase());}return wanted.has(normalizedFieldLabel(canonicalPresentation(field.label)));}
+function findField(fields,labels){return (fields||[]).find(field=>fieldMatches(field,labels));}
 function fieldValue(fields,labels){const value=findField(fields,labels)?.value;return value===null||value===undefined||value===''?'':String(value).trim();}
-function fieldsFor(fields,labels){const wanted=new Set(labels.map(normalizedFieldLabel));return (fields||[]).filter(field=>wanted.has(normalizedFieldLabel(field.label)));}
+function fieldsFor(fields,labels){return (fields||[]).filter(field=>fieldMatches(field,labels));}
 function safeContactHref(value,kind){const text=String(value||'').trim();if(!text||text==='—'||/[\r\n]/.test(text))return '';try{if(kind==='website'){const url=new URL(/^[a-z][a-z0-9+.-]*:/i.test(text)?text:`https://${text}`);return ['http:','https:'].includes(url.protocol)&&url.hostname?url.href:'';}if(kind==='email'&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text))return `mailto:${encodeURIComponent(text)}`;if(kind==='phone'){const clean=text.replace(/[^\d+]/g,'');return clean.replace(/\D/g,'').length>=5?`tel:${clean}`:'';}}catch(_){return '';}return '';}
 function contactRow(label,value,kind){const shown=display(value),href=safeContactHref(value,kind),content=href?`<a href="${esc(href)}"${kind==='website'?' target="_blank" rel="noopener noreferrer"':''}>${esc(shown)}</a>`:esc(shown);return `<div class="contact-row"><span>${esc(label)}</span><strong>${content}</strong></div>`;}
 function addressValue(c,fields){const full=fieldValue(fields,['Adres','Adresse','Address']);if(full)return full;const street=fieldValue(fields,['Straat (NL)','Straat (FR)','Straat','Rue']),house=fieldValue(fields,['Huisnummer','Numéro']),bus=fieldValue(fields,['Bus','Boîte']),postcode=c.postcode||fieldValue(fields,['Postcode (KBO)','Postcode']),city=c.city||fieldValue(fields,['Gemeente (NL)','Gemeente (FR)','Gemeente','Commune']),country=fieldValue(fields,['Land','Pays']),unit=({nl:'bus',fr:'boîte',en:'unit'}[i18n.language]||'bus');const first=[street,house,bus?`${unit} ${bus}`:''].filter(Boolean).join(' '),second=[postcode,city].filter(Boolean).join(' ');return [first,second,country].filter(Boolean).join('\n');}

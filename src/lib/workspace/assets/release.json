@@ -1,6 +1,6 @@
 {
-  "release": "SHARED_HISTORY_TIMESTAMP_REPAIR_20261001",
-  "ui_sha256": "3c11602ab32ca38419fc9c8b219bee9adf5393e3c339bd2bf3ed6cf047757dd3",
+  "release": "ANSWER_READING_20261006",
+  "ui_sha256": "64c7ceb772db01ad77eabb6e47672564a7f0ca0af100dccad16b53735128bf0e",
   "logo_sha256": "9d29aa57e01e8957b9575d94873efa1250b139e3736d8d055579313acb7d8695",
   "contract_sha256": "717f1bbc4606dbe10b01ab509f38a45006cedef5d07ae312f89ccdc1dc64858f"
 }
