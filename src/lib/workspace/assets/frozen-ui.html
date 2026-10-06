@@ -129,7 +129,7 @@ body{background:#f7f9fc}.side{background:#fbfdff;color:#3c5578;border-right:1px 
   <section id="search-view">
    <div class="intro"><div><div class="eyebrow" data-i18n="dashboard.eyebrow">BEDRIJVEN ONTDEKKEN</div><h1 id="page-title" data-i18n="dashboard.title">Vind je volgende klant.</h1></div></div>
     <div id="search-controls"><div id="assistant-home-slot"></div>
-     <section class="ai-conversation" id="ai-conversation" aria-label="Gesprek over je selectie" data-i18n-aria-label="assistant.conversation" hidden><div class="ai-conversation-head"><h2 data-i18n="assistant.search">Slim zoeken</h2><div class="actions"><button type="button" class="secondary" id="read-answer" data-i18n="read.play">▶ Voorlezen</button><button type="button" class="secondary" id="stop-reading" data-i18n="read.stop" hidden>■ Stop voorlezen</button><span id="read-status" class="sr-only" role="status"></span><button class="ghost" id="toggle-conversation" aria-expanded="true" data-i18n="assistant.collapse">Gesprek inklappen</button><button class="ghost" id="new-ai" data-lock data-i18n="assistant.newChat">Nieuw gesprek</button></div></div><ol class="ai-turns" id="ai-turns" aria-live="polite"></ol></section>
+     <section class="ai-conversation" id="ai-conversation" aria-label="Gesprek over je selectie" data-i18n-aria-label="assistant.conversation" hidden><div class="ai-conversation-head"><h2 data-i18n="assistant.search">Slim zoeken</h2><div class="actions"><button type="button" class="secondary" id="read-answer" title="AI-stem. Het aanmaken van audio gebruikt je AI-tegoed." data-i18n-title="read.credit" data-i18n="read.play">▶ Voorlezen (AI)</button><button type="button" class="secondary" id="stop-reading" data-i18n="read.stop" hidden>■ Stop voorlezen</button><span id="read-status" role="status" hidden></span><button class="ghost" id="toggle-conversation" aria-expanded="true" data-i18n="assistant.collapse">Gesprek inklappen</button><button class="ghost" id="new-ai" data-lock data-i18n="assistant.newChat">Nieuw gesprek</button></div></div><ol class="ai-turns" id="ai-turns" aria-live="polite"></ol></section>
      <form class="search" id="search-form"><div class="composer-input"><span data-icon="search"></span><label for="query" class="sr-only" data-i18n="search.queryLabel">Zoekopdracht of vervolgvraag</label><input id="query" autocomplete="off" placeholder="Zoek op bedrijfsnaam of ondernemingsnummer…" data-i18n-placeholder="search.placeholder"><div id="voice-meter" class="voice-meter" hidden><div class="voice-levels" id="voice-levels" aria-hidden="true"></div><span class="voice-timing" id="voice-timing" role="status" data-i18n="voice.starting">Microfoon starten…</span></div></div><button type="button" class="icon-button composer-minor" id="voice-cancel" title="Opname annuleren; getypte tekst behouden" data-i18n-title="voice.cancelTitle" aria-label="Opname annuleren" data-i18n-aria-label="voice.cancel" hidden><span data-icon="close"></span></button><button type="button" class="icon-button composer-minor composer-stop" id="voice-stop" title="Stoppen en tekst klaarzetten" data-i18n-title="voice.stopTitle" aria-label="Stoppen en tekst klaarzetten" data-i18n-aria-label="voice.stop" hidden><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg></button><button type="button" class="icon-button composer-minor" id="voice-start" title="Tekst aanvullen met spraak" data-i18n-title="voice.startTitle" aria-label="Tekst aanvullen met spraak" data-i18n-aria-label="voice.start" hidden><span data-icon="mic"></span></button><button class="primary composer-send" type="submit" id="search-button" aria-label="Zoekopdracht inspreken" data-i18n-aria-label="search.voiceButton" title="Zoekopdracht inspreken" data-i18n-title="search.voiceButton"><span data-icon="mic"></span></button></form>
      <details class="voice-info" id="voice-info" hidden><summary data-i18n="search.voiceInfo">Spraakinfo</summary><p data-i18n="voice.privacy">Spreek maximaal 60 seconden. De tekst verschijnt in het invoerveld en wordt pas verstuurd wanneer je daarvoor kiest.</p></details>
      <div class="guided-context-actions"><button class="secondary" id="guided-upload" type="button" data-i18n="guided.uploadContext" hidden>Klantenlijst als context</button><button class="primary" id="guided-contacts" type="button" data-i18n="guided.contacts" hidden>Contactgegevens aanvullen</button><button class="primary" id="guided-download" type="button" data-i18n="guided.download" hidden>Downloaden</button></div>
@@ -538,7 +538,7 @@ $('#refine-ai').onclick=()=>setAiScope('refine');
 function guidedInputRoute(stage,flowMode,businessIntro=false){return stage==='goal'||['goal','upload','feedback'].includes(flowMode)||businessIntro?'advice':'ai';}
 async function dispatchComposerText(text){text=String(text||'').trim();if(!text)return false;if(isExplicitContactRequest(text)&&routeJourneyRequest(text))return true;if(!guidedModeActive()&&!$('#ai-mode').checked&&looksLikeBusinessIntro(text)){setGuidedMode(true);state.proposal=null;guidedStageOverride='clarify';return await journeyAdvise(text);}if(!guidedModeActive()&&!$('#ai-mode').checked){if(!quickFiltersValid())return false;await search(1,snapshotFilters());return true;}const stage=guidedStage(state,journey,guidedStageOverride),route=guidedModeActive()?guidedInputRoute(stage,journey.mode,looksLikeBusinessIntro(text)):guidedInputRoute('',journey.mode,looksLikeBusinessIntro(text));guidedStageOverride=null;if(route!=='advice'&&routeJourneyRequest(text))return true;if(route==='advice'){state.proposal=null;guidedStageOverride='clarify';await journeyAdvise(text);return true;}if($('#ai-mode').checked)await aiSearch();else {if(!quickFiltersValid())return false;await search(1,snapshotFilters());}return true;}
 $('#search-form').onsubmit=async e=>{try{e.preventDefault();if(!state.ready||state.busy)return;if(filterDraft!==null){if(!quickFiltersValid())return;await search(1,snapshotFilters(),filterDraftQuery);return;}if(voice.phase==='recording'){stopVoice(true);return;}if(voice.phase!=='idle')return;if(!guidedModeActive()&&!$('#ai-mode').checked&&!quickFiltersValid())return;const text=$('#query').value.trim();if(!text){if(guidedModeActive()||$('#ai-mode').checked)startVoice();else await search(1,snapshotFilters(),'');return;}await dispatchComposerText(text);}catch(error){notice(t('notice.actionFailed','Deze actie kon niet worden afgerond. Probeer het opnieuw.'),true);}};
-const assistantReading={active:false,started:false,generation:0,utterances:[],timer:null};
+const assistantReading={active:false,started:false,generation:0,timer:null,context:null,source:null,finish:null,cache:new Map()};
 function assistantReadText(){
  const turn=[...state.conversation].reverse().find(item=>item.role==='assistant'&&String(item.content||'').trim());
  if(!turn)return '';
@@ -546,48 +546,83 @@ function assistantReadText(){
  return question&&!text.includes(question)?text+'\n\n'+question:text;
 }
 function assistantSpeechChunks(text){
- const words=String(text||'').trim().split(/\s+/),chunks=[];let chunk='';
- for(const word of words){if(chunk&&chunk.length+word.length>240){chunks.push(chunk);chunk='';}chunk+=(chunk?' ':'')+word;}
- if(chunk)chunks.push(chunk);return chunks;
+ // Bound each provider request without dropping the end of a long answer.
+ const chunks=[];let rest=String(text||'').trim();
+ while(rest.length>3500){let end=rest.lastIndexOf(' ',3500);if(end<1000)end=3500;chunks.push(rest.slice(0,end));rest=rest.slice(end).trim();}
+ if(rest)chunks.push(rest);return chunks;
 }
 function renderAssistantReading(){
  const play=$('#read-answer'),stop=$('#stop-reading');if(!play||!stop)return;
  play.hidden=assistantReading.active;stop.hidden=!assistantReading.active;stop.disabled=false;
  play.disabled=state.recording||!assistantReadText();
- $('#read-status').textContent=assistantReading.active?(assistantReading.started?t('read.speaking','Antwoord wordt voorgelezen.'):t('read.starting','Voorlezen starten…')):'';
+ const status=$('#read-status');status.hidden=!assistantReading.active||assistantReading.started;
+ status.textContent=assistantReading.active?(assistantReading.started?t('read.speaking','Antwoord wordt voorgelezen.'):t('read.starting','Audio voorbereiden…')):'';
 }
 function stopAssistantReading(){
- const wasActive=assistantReading.active;assistantReading.generation++;assistantReading.active=false;assistantReading.utterances=[];clearTimeout(assistantReading.timer);assistantReading.timer=null;
- if(wasActive){try{window.speechSynthesis?.cancel();}catch(_){}}
+ assistantReading.generation++;assistantReading.active=false;assistantReading.started=false;
+ clearTimeout(assistantReading.timer);assistantReading.timer=null;
+ const source=assistantReading.source;assistantReading.source=null;
+ if(source){source.onended=null;try{source.stop();}catch(_){}try{source.disconnect();}catch(_){}}
+ const finish=assistantReading.finish;assistantReading.finish=null;if(finish)finish();
  renderAssistantReading();
+}
+function assistantAudio(text,language,context){
+ const key=language+'\n'+text;
+ if(assistantReading.cache.has(key))return assistantReading.cache.get(key);
+ const pending=(async()=>{
+  const result=await bridge('journey',{command:'read_aloud',text,language});
+  if(typeof result?.audio_base64!=='string'||result.audio_base64.length>8*1024*1024||!['audio/mpeg','audio/wav'].includes(result.mime_type))throw new Error(t('read.failed','Het voorlezen kon niet worden afgespeeld.'));
+  const binary=atob(result.audio_base64),bytes=new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+  const buffer=await context.decodeAudioData(bytes.buffer);
+  if(!Number.isFinite(buffer.duration)||buffer.duration<=0||buffer.duration>600)throw new Error(t('read.failed','Het voorlezen kon niet worden afgespeeld.'));
+  return buffer;
+ })();
+ assistantReading.cache.set(key,pending);
+ pending.catch(()=>{if(assistantReading.cache.get(key)===pending)assistantReading.cache.delete(key);});
+ while(assistantReading.cache.size>6)assistantReading.cache.delete(assistantReading.cache.keys().next().value);
+ return pending;
 }
 function startAssistantReading(){
  if(assistantReading.active||state.recording)return false;
  const text=assistantReadText();if(!text)return false;
- const synth=window.speechSynthesis,Utterance=window.SpeechSynthesisUtterance;
- if(!synth||typeof synth.speak!=='function'||typeof Utterance!=='function'){notice(t('read.unavailable','Voorlezen is niet beschikbaar op dit toestel. De tekst blijft leesbaar.'),true);return false;}
- const generation=++assistantReading.generation,language=i18n.locales[i18n.language]||'nl-BE';
- const fail=(event)=>{if(generation!==assistantReading.generation)return;stopAssistantReading();const code=['audio-busy','audio-hardware','network','synthesis-unavailable','synthesis-failed','language-unavailable','voice-unavailable','not-allowed','start-timeout','canceled','interrupted','text-too-long','invalid-argument'].includes(event?.error)?event.error:'unknown';assistantReading.failureMessage=t('read.error.'+code,t('read.failed','Het voorlezen kon niet worden afgespeeld.'))+' ('+code+')';notice(assistantReading.failureMessage,true);};
+ const AudioContext=window.AudioContext||window.webkitAudioContext;
+ if(!AudioContext){notice(t('read.unavailable','Voorlezen is niet beschikbaar op dit toestel. De tekst blijft leesbaar.'),true);return false;}
+ const generation=++assistantReading.generation,language=i18n.language,live=()=>generation===assistantReading.generation;
+ const fail=error=>{if(!live())return;stopAssistantReading();assistantReading.failureMessage=error?.message||t('read.failed','Het voorlezen kon niet worden afgespeeld.');notice(assistantReading.failureMessage,true);};
  try{
-  const voices=synth.getVoices(),matching=voices.filter(item=>item.lang?.toLowerCase().split('-')[0]===language.split('-')[0]);
-  const selected=matching.find(item=>item.lang.toLowerCase()===language.toLowerCase()&&item.localService)||matching.find(item=>item.localService)||matching[0];
-  // Clear stale platform work and resume within the user's play gesture.
-  if(synth.speaking||synth.pending)synth.cancel();if(synth.paused&&typeof synth.resume==='function')synth.resume();
   if(assistantReading.failureMessage&&$('#notice').textContent===assistantReading.failureMessage)$('#notice').hidden=true;assistantReading.failureMessage=null;
-  const chunks=assistantSpeechChunks(text);assistantReading.active=true;assistantReading.started=false;
-  assistantReading.utterances=chunks.map((chunk,index)=>{const utterance=new Utterance(chunk);utterance.lang=selected?.lang||({nl:'nl-NL',fr:'fr-FR',en:'en-GB'}[i18n.language]||language);utterance.volume=1;utterance.rate=1;if(selected)utterance.voice=selected;
-   utterance.onstart=()=>{if(generation===assistantReading.generation){assistantReading.started=true;clearTimeout(assistantReading.timer);assistantReading.timer=null;renderAssistantReading();}};
-   utterance.onerror=fail;
-   utterance.onend=()=>{if(generation===assistantReading.generation&&index===chunks.length-1){assistantReading.active=false;assistantReading.utterances=[];clearTimeout(assistantReading.timer);assistantReading.timer=null;renderAssistantReading();}};
-   return utterance;});
-  renderAssistantReading();assistantReading.timer=setTimeout(()=>fail({error:'start-timeout'}),12000);
-  // Queue from this explicit click. A new reply or database result never interrupts speech.
-  for(const utterance of assistantReading.utterances)synth.speak(utterance);
+  // Unlock the real audio output synchronously in the user's click, before the network request.
+  const context=assistantReading.context?.state!=='closed'&&assistantReading.context||new AudioContext();assistantReading.context=context;
+  const unlocked=context.resume();
+  assistantReading.active=true;assistantReading.started=false;renderAssistantReading();
+  assistantReading.timer=setTimeout(()=>fail(new Error(t('read.timeout','De audio kon niet tijdig starten. Probeer opnieuw.'))),65000);
+  (async()=>{
+   await unlocked;if(!live())return;
+   if(context.state!=='running')throw new Error(t('read.blocked','Je browser houdt het geluid tegen. Druk opnieuw op Voorlezen.'));
+   for(const chunk of assistantSpeechChunks(text)){
+    const buffer=await assistantAudio(chunk,language,context);if(!live())return;
+    if(context.state!=='running')throw new Error(t('read.blocked','Je browser houdt het geluid tegen. Druk opnieuw op Voorlezen.'));
+    await new Promise((resolve,reject)=>{
+     const source=context.createBufferSource();source.buffer=buffer;source.connect(context.destination);assistantReading.source=source;
+     assistantReading.finish=resolve;
+     source.onended=()=>{source.disconnect();if(live()){assistantReading.source=null;assistantReading.finish=null;}resolve();};
+     try{source.start();assistantReading.started=true;clearTimeout(assistantReading.timer);
+      assistantReading.timer=setTimeout(()=>fail(new Error(t('read.failed','Het afspelen is onderbroken. Probeer opnieuw.'))),(buffer.duration+15)*1000);renderAssistantReading();
+     }catch(error){reject(error);}
+    });
+    if(!live())return;
+    assistantReading.started=false;renderAssistantReading();clearTimeout(assistantReading.timer);
+    assistantReading.timer=setTimeout(()=>fail(new Error(t('read.timeout','De audio kon niet tijdig starten. Probeer opnieuw.'))),65000);
+   }
+   if(live())stopAssistantReading();
+  })().catch(fail);
   return true;
- }catch(_){fail();return false;}
+ }catch(error){fail(error);return false;}
 }
 $('#read-answer').onclick=startAssistantReading;$('#stop-reading').onclick=stopAssistantReading;
-window.addEventListener('pagehide',stopAssistantReading);
+window.addEventListener('pagehide',()=>{stopAssistantReading();assistantReading.cache.clear();});
+
 function renderConversation(){renderAssistantReading();$('#ai-conversation').classList.toggle('collapsed',state.conversationCollapsed);$('#toggle-conversation').textContent=state.conversationCollapsed?t('ai.showConversation',"Gesprek bekijken"):t('ai.hideConversation',"Gesprek inklappen");$('#toggle-conversation').setAttribute('aria-expanded',String(!state.conversationCollapsed));const turns=state.conversation.slice(-40);$('#ai-conversation').hidden=!turns.length;$('#ai-turns').innerHTML=turns.map(turn=>`<li class="${turn.role==='assistant'?'assistant':'user'}"><strong>${turn.role==='assistant'?'BelgoBase':t('ai.you',"Jij")}</strong><p>${esc(turn.content)}</p>${turn.role==='assistant'?journeySourcesMarkup(turn.sources):''}</li>`).join('');$('#ai-turns').scrollTop=$('#ai-turns').scrollHeight;renderGuidedFlow();}
 function resetConversation(){stopAssistantReading();journey.autoSelection=null;state.aiConversationEpoch=(state.aiConversationEpoch||0)+1;state.conversation=[];state.proposal=null;$('#ai-panel').hidden=true;renderConversation();controls();}
 async function startNewConversation(){const revision=journeyStart('goal',journeyText('profileUpdating'));if(revision===null)return false;try{const result=await journeyCall({command:'reset_profile'});if(!journeyCurrent(revision))return false;mergeJourneyResult(result);guidedStageOverride='goal';state.aiScope='new';resetConversation();renderJourneyAdvice(null);$('#query').value='';$('#query').focus();return true;}catch(error){if(journeyCurrent(revision))notice(error.message,true);return false;}finally{journeyEnd(revision);}}

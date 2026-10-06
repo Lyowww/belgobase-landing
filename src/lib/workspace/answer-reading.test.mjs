@@ -7,57 +7,78 @@ const pc=await readFile('C:/Users/David1/Desktop/1 codes/BelgoBase_CENTRAAL/Belg
 for(const [name,html] of [['web',web],['PC1',pc]]){
  if(!html)continue;
  const part=(start,end)=>html.slice(html.indexOf(start),html.indexOf(end,html.indexOf(start)));
- function speech(){
-  const nodes=new Map(),spoken=[],events={},timers=new Map(),notices=[];let timer=0,cancelled=0;
+ function deferred(){let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return {promise,resolve,reject};}
+ function audioHarness(){
+  const nodes=new Map(),events={},timers=new Map(),notices=[],calls=[],sources=[],decoded=[],base64Inputs=[];let timer=0,resumeCalls=0,starts=0;
+  const resumeGate=deferred(),fetchGate=deferred();let bridgeImpl=()=>fetchGate.promise;
+  const audio={state:'suspended',destination:{},resume(){resumeCalls++;this.state='running';return resumeGate.promise;},
+   decodeAudioData(bytes){decoded.push([...new Uint8Array(bytes)]);return Promise.resolve({duration:1,bytes:[...new Uint8Array(bytes)]});},
+   createBufferSource(){const source={connect(){},disconnect(){},start(){starts++;},stop(){source.stopped=true;},onended:null};sources.push(source);return source;}};
   const context=vm.createContext({$:id=>{if(!nodes.has(id))nodes.set(id,{});return nodes.get(id);},
    state:{conversation:[{role:'user',content:'Mijn vraag'},{role:'assistant',content:'Frituren zijn mogelijke klanten.'}],recording:false,busy:true},
    journey:{data:{last_advice:{assistant_message:'Frituren zijn mogelijke klanten.',question:'Waar lever je?'}}},
    i18n:{language:'nl',locales:{nl:'nl-BE',fr:'fr-BE',en:'en-GB'}},t:(_,text)=>text,
    notice:(...args)=>notices.push(args),clearTimeout:id=>timers.delete(id),setTimeout:fn=>{timers.set(++timer,fn);return timer;},
-   window:{SpeechSynthesisUtterance:class {constructor(text){this.text=text;}},addEventListener:(name,fn)=>events[name]=fn,
-    speechSynthesis:{getVoices:()=>[{lang:'en-US',localService:true},{lang:'nl-NL',localService:true}],speak:u=>spoken.push(u),cancel:()=>cancelled++}}
+   bridge:async(...args)=>{calls.push(args);return bridgeImpl(...args);},
+   atob:value=>{base64Inputs.push(value);return Buffer.from(value,'base64').toString('binary');},
+   Buffer,
+   window:{AudioContext:class {constructor(){return audio;}},addEventListener:(name,fn)=>events[name]=fn}
   });
   vm.runInContext(part('const assistantReading=','function renderConversation('),context);
-  return {context,nodes,spoken,events,timers,notices,get cancelled(){return cancelled;}};
+  const encoded=bytes=>Buffer.from(bytes).toString('base64');
+  return {context,nodes,events,timers,notices,calls,sources,decoded,base64Inputs,audio,fetchGate,resumeGate,encoded,
+   get resumeCalls(){return resumeCalls;},get starts(){return starts;},setBridge(fn){bridgeImpl=fn;}};
  }
- test(`${name}: play reads current answer and follow-up question even while searching`,()=>{
-  const h=speech();assert.equal(h.spoken.length,0);assert.equal(h.context.startAssistantReading(),true);
-  assert.equal(h.spoken.map(x=>x.text).join(' '),'Frituren zijn mogelijke klanten. Waar lever je?');
-  assert.equal(h.spoken[0].voice.lang,'nl-NL');assert.equal(h.spoken[0].lang,'nl-NL');assert.equal(h.spoken[0].volume,1);assert.equal(h.nodes.get('#stop-reading').disabled,false);
-  assert.equal(h.context.startAssistantReading(),false);assert.equal(h.spoken.length,1);
-  h.spoken[0].onstart();assert.equal(h.timers.size,0);h.spoken[0].onend();assert.equal(h.nodes.get('#stop-reading').hidden,true);
+ const flush=async()=>{for(let i=0;i<30;i++)await Promise.resolve();};
+ test(`${name}: unlock is synchronous in the click; decode returned base64 bytes before first play`,async()=>{
+  const h=audioHarness(),bytes=[0,1,127,128,255],order=[];
+  h.audio.resume=()=>{order.push('resume');h.audio.state='running';return h.resumeGate.promise;};
+  h.setBridge(()=>{order.push('bridge');return h.fetchGate.promise;});
+  assert.equal(h.context.startAssistantReading(),true);assert.deepEqual(order,['resume']);assert.equal(h.resumeCalls,0);
+  assert.equal(h.nodes.get('#stop-reading').hidden,false);assert.equal(h.starts,0);
+  h.resumeGate.resolve();await flush();assert.deepEqual(order,['resume','bridge']);assert.equal(h.starts,0);
+  h.fetchGate.resolve({audio_base64:h.encoded(bytes),mime_type:'audio/wav'});await flush();
+  assert.deepEqual(h.base64Inputs,[h.encoded(bytes)]);assert.deepEqual(h.decoded,[bytes]);assert.equal(h.starts,1);
  });
- test(`${name}: resume paused device speech and discard stale queue on explicit play`,()=>{
-  const h=speech(),synth=h.context.window.speechSynthesis;let resumes=0;synth.paused=true;synth.pending=true;
-  synth.resume=()=>{resumes++;synth.paused=false;};synth.speak=u=>{assert.equal(synth.paused,false);h.spoken.push(u);};
-  assert.equal(h.context.startAssistantReading(),true);assert.equal(resumes,1);assert.equal(h.cancelled,1);assert.equal(h.spoken.length,1);
+ test(`${name}: play remains available while search is busy and waits for a real click before playback`,async()=>{
+  const h=audioHarness();assert.equal(h.context.state.busy,true);assert.equal(h.context.startAssistantReading(),true);
+  assert.equal(h.starts,0);h.resumeGate.resolve();await flush();h.fetchGate.resolve({audio_base64:h.encoded([1,2]),mime_type:'audio/mpeg'});await flush();
+  assert.equal(h.starts,1);assert.equal(h.nodes.get('#read-answer').hidden,true);assert.equal(h.nodes.get('#stop-reading').hidden,false);
  });
- test(`${name}: an initially empty voice catalogue uses a widely supported speech locale`,()=>{
-  const h=speech();h.context.window.speechSynthesis.getVoices=()=>[];
-  assert.equal(h.context.startAssistantReading(),true);assert.equal(h.spoken[0].lang,'nl-NL');assert.equal(h.spoken[0].volume,1);
+ test(`${name}: stop before fetch resolves prevents playback; replay shares pending audio`,async()=>{
+  const h=audioHarness();h.context.startAssistantReading();h.resumeGate.resolve();await flush();assert.equal(h.calls.length,1);
+  h.context.stopAssistantReading();assert.equal(h.nodes.get('#stop-reading').hidden,true);
+  assert.equal(h.context.startAssistantReading(),true);await flush();assert.equal(h.calls.length,1);assert.equal(h.starts,0);
+  h.fetchGate.resolve({audio_base64:h.encoded([9,8,7]),mime_type:'audio/wav'});await flush();
+  assert.equal(h.starts,1);assert.equal(h.nodes.get('#stop-reading').hidden,false);
  });
- test(`${name}: newer answer does not interrupt playing text; stop cancels the full queue`,()=>{
-  const h=speech();h.context.state.conversation.at(-1).content='Een lange zin over klanten. '.repeat(35);
-  h.context.startAssistantReading();assert.ok(h.spoken.length>1);const old=h.spoken.at(-1);
-  const snapshot=h.spoken.map(x=>x.text).join(' ');h.context.state.conversation.push({role:'assistant',content:'Nieuw antwoord'});h.context.renderAssistantReading();
-  assert.equal(h.cancelled,0);assert.equal(h.spoken.map(x=>x.text).join(' '),snapshot);
-  h.context.stopAssistantReading();assert.equal(h.cancelled,1);assert.equal(h.nodes.get('#stop-reading').hidden,true);
-  h.context.startAssistantReading();old.onend();old.onerror();assert.equal(h.nodes.get('#stop-reading').hidden,false);assert.equal(h.notices.length,0);
+ test(`${name}: timeout and invalid audio restore the play control with a visible error`,async()=>{
+  const timeout=audioHarness();timeout.context.startAssistantReading();timeout.resumeGate.resolve();await flush();
+  const timer=[...timeout.timers.values()][0];timer();assert.equal(timeout.nodes.get('#stop-reading').hidden,true);assert.equal(timeout.nodes.get('#read-answer').disabled,false);assert.equal(timeout.notices.length,1);
+  timeout.fetchGate.resolve({audio_base64:'!',mime_type:'audio/wav'});await flush();assert.equal(timeout.starts,0);
+  const invalid=audioHarness();invalid.context.startAssistantReading();invalid.resumeGate.resolve();await flush();
+  invalid.fetchGate.resolve({audio_base64:invalid.encoded([1]),mime_type:'text/plain'});await flush();
+  assert.equal(invalid.nodes.get('#stop-reading').hidden,true);assert.equal(invalid.notices.length,1);assert.equal(invalid.starts,0);
  });
- test(`${name}: unsupported synthesis, engine error and silent start expose recoverable errors`,()=>{
-  const unsupported=speech();delete unsupported.context.window.speechSynthesis;assert.equal(unsupported.context.startAssistantReading(),false);assert.equal(unsupported.notices.length,1);
-  const h=speech();h.context.startAssistantReading();h.spoken[0].onerror();assert.equal(h.cancelled,1);assert.equal(h.notices.length,1);assert.equal(h.nodes.get('#read-answer').disabled,false);
-  h.context.startAssistantReading();[...h.timers.values()][0]();assert.equal(h.notices.length,2);
+ test(`${name}: a later assistant reply does not interrupt audio already started`,async()=>{
+  const h=audioHarness();h.context.startAssistantReading();h.resumeGate.resolve();await flush();h.fetchGate.resolve({audio_base64:h.encoded([4,5]),mime_type:'audio/mpeg'});await flush();
+  const source=h.sources[0];h.context.state.conversation.push({role:'assistant',content:'Nieuw antwoord'});h.context.renderAssistantReading();
+  assert.equal(source.stopped,undefined);assert.equal(h.starts,1);assert.equal(h.nodes.get('#stop-reading').hidden,false);assert.equal(h.notices.length,0);
+  h.context.stopAssistantReading();assert.equal(source.stopped,true);
  });
- test(`${name}: browser error code survives into a diagnostic message; stale warning clears on retry`,()=>{
-  const h=speech();h.context.startAssistantReading();h.spoken[0].onerror({error:'voice-unavailable'});
-  const message=h.notices.at(-1)[0];assert.match(message,/\(voice-unavailable\)/);h.context.$('#notice').textContent=message;
-  h.context.startAssistantReading();assert.equal(h.nodes.get('#notice').hidden,true);[...h.timers.values()][0]();assert.match(h.notices.at(-1)[0],/\(start-timeout\)/);
+ test(`${name}: page deactivation cancels pending playback and clears cached audio`,async()=>{
+  const h=audioHarness();h.context.startAssistantReading();h.resumeGate.resolve();await flush();assert.equal(h.calls.length,1);
+  h.events.pagehide();h.fetchGate.resolve({audio_base64:h.encoded([6]),mime_type:'audio/wav'});await flush();
+  assert.equal(h.starts,0);assert.equal(h.nodes.get('#stop-reading').hidden,true);
  });
- test(`${name}: recording cannot start playback; page exit cancels it; no question repeated`,()=>{
-  const h=speech();h.context.state.recording=true;assert.equal(h.context.startAssistantReading(),false);
-  h.context.state.recording=false;h.context.state.conversation.at(-1).content+=' Waar lever je?';assert.equal(h.context.assistantReadText().match(/Waar lever je/g).length,1);
-  h.context.startAssistantReading();h.events.pagehide();assert.equal(h.cancelled,1);
+ test(`${name}: long answer chunks cover all source text in order`,async()=>{
+  const h=audioHarness(),text=('Zin met unieke inhoud. '.repeat(500)).trim();h.context.state.conversation.at(-1).content=text;
+  h.setBridge(async(_route,payload)=>({audio_base64:h.encoded([payload.text.length%255]),mime_type:'audio/wav'}));
+  h.context.startAssistantReading();h.resumeGate.resolve();await flush();
+  let ended=0,guard=0;while(!h.nodes.get('#stop-reading').hidden&&guard++<12){await flush();if(h.sources[ended]?.onended){h.sources[ended].onended();ended++;}}
+  await flush();assert.ok(h.calls.length>1);const requested=h.calls.map(args=>args[1].text);
+  assert.ok(requested.every(chunk=>chunk.length<=3500));assert.equal(requested.join('').replace(/\s/g,'').length,text.replace(/\s/g,'').length);
+  assert.equal(h.sources.length,requested.length);
  });
  test(`${name}: follow-up with no new criteria refreshes previous filters and marks them retained`,async()=>{
   const prior={status:'ready',brief:'Frituren in Antwerpen',filters:{naam:'frituur',gemeente_nl:'Antwerpen'}};
