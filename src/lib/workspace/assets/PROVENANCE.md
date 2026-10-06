@@ -27,3 +27,7 @@ Shared history timestamps prefer `searched_at` and fall back to `saved_at`, acce
 ## Voice reply recovery — 6 October 2026
 
 Microphone input preserves the chosen conversational route. Accepted speech retains its transcript and displays submission failures, and the advice panel retains its follow-up question. Browser AI and transcription waits are bounded after the gateway deadline, without automatic paid retries. PC1 uses the same composer routing and speech error handling.
+
+## Workspace conversation routing — 6 October 2026
+
+The workspace submit route recognises business introductions and conversational questions before plain company-name search, opens the existing conversation tab and passes the exact text to the existing advisor. Keyboard dictation and typed text share this route. Direct company names and enterprise numbers still use the ordinary search. Tests include the reported potato-farmer question on both web and PC1 sources.

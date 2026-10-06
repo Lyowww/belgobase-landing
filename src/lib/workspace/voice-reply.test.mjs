@@ -93,3 +93,46 @@ test("desktop workspace dispatch respects its selected AI mode", { skip: desktop
     assert.deepEqual(calls, [ai ? "ai" : "search"]);
   }
 });
+
+
+const potatoQuestion = "Aardappelen verkopen. Gigantische veel aardappelen. Ik ben zelf aardappelboer. Help me eigenlijk om ideale klanten te vinden. Aan wie zou ik dat eigenlijk kunnen verkopen, mijn aardappelen?";
+test("workspace submit sends dictated advice questions to conversation, not company-name search", async () => {
+  for (const document of [html, ...(desktop ? [desktop] : [])]) {
+    for (const text of [potatoQuestion, "Je suis agriculteur. Aidez-moi à trouver des clients.", "I am a potato farmer. Help me find ideal customers.", "Hoe kan ik geschikte klanten vinden?"]) {
+      const $=nodes(), calls=[];
+      $("#query").value=text;
+      let guided=false;
+      const context=vm.createContext({
+        $, state:{ready:true,busy:false}, voice:{phase:"idle"}, filterDraft:null,
+        journey:{mode:null},guidedStageOverride:null,
+        guidedModeActive:()=>guided,
+        setGuidedMode:enabled=>{guided=enabled;$("#ai-mode").checked=enabled;calls.push("conversation");},
+        isExplicitContactRequest:()=>false,routeJourneyRequest:()=>false,
+        quickFiltersValid:()=>true,snapshotFilters:()=>({kbo_status:"AC"}),
+        journeyAdvise:async value=>{calls.push(value);return true;},
+        search:async()=>calls.push("company-name-search"),
+        notice:()=>assert.fail("submit must not fail"),t:(_key,fallback)=>fallback,
+      });
+      for(const prefix of ["function looksLikeBusinessIntro(","async function dispatchComposerText(","$('#search-form').onsubmit="]){
+        vm.runInContext(document.split(/\r?\n/).find(line=>line.startsWith(prefix)),context);
+      }
+      await $("#search-form").onsubmit({preventDefault(){}});
+      assert.deepEqual(calls,["conversation",text]);
+      assert.equal($("#query").value,text,"routing itself must not discard dictation");
+    }
+  }
+});
+
+test("workspace company names and enterprise numbers remain direct searches", async () => {
+  for(const document of [html,...(desktop?[desktop]:[])]){
+    for(const text of ["NovaVenture","Aardappelhandel Janssens","1006303437","BE 1006.303.437"]){
+      const $=nodes(),calls=[];
+      const context=vm.createContext({$,state:{},guidedModeActive:()=>false,
+        setGuidedMode:()=>assert.fail("ordinary names must not switch to paid AI"),
+        isExplicitContactRequest:()=>false,routeJourneyRequest:()=>false,
+        quickFiltersValid:()=>true,snapshotFilters:()=>({}),search:async()=>calls.push("search")});
+      for(const prefix of ["function looksLikeBusinessIntro(","async function dispatchComposerText("]){vm.runInContext(document.split(/\r?\n/).find(line=>line.startsWith(prefix)),context);}
+      await context.dispatchComposerText(text);assert.deepEqual(calls,["search"]);
+    }
+  }
+});
