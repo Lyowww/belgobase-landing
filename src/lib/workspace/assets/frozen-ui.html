@@ -671,7 +671,7 @@ function journeyEnd(revision){if(journey.busyContext===revision){journey.busyCon
 function journeyMappingInput(){return Object.fromEntries($$('[data-journey-map]').map(select=>[select.dataset.journeyMap,select.value===''?null:Number(select.value)]));}
 async function journeyState(){const revision=journey.contextRevision,result=await journeyCall({command:'state'});if(journeyCurrent(revision))updateJourney(result);return result;}
 async function journeyAdvise(text){
- text=String(text||'').trim();if(!text||text.length>2000){notice(journeyText('goalLength'),true);return false;}const revision=journeyStart('goal',journeyText('goalDiscussing'));if(revision===null)return false;$('#notice').hidden=true;appendConversation('user',text);$('#query').value='';journey.autoSelection=null;let answered=false,advice=null;
+ text=String(text||'').trim();if(!text||text.length>2000){notice(journeyText('goalLength'),true);return false;}const revision=journeyStart('goal',journeyText('goalDiscussing'));if(revision===null)return false;$('#notice').hidden=true;appendConversation('user',text);$('#query').value='';journey.autoSelection=null;renderGuidedFlow();let answered=false,advice=null;
  try{const result=await journeyCall({command:'advise',text});if(!journeyCurrent(revision))return false;updateJourney(result);advice=result.advice;answered=true;}
  catch(error){if(!journeyCurrent(revision))return false;let recovered=false;try{const stateResult=await journeyCall({command:'state'});if(!journeyCurrent(revision))return false;const history=Array.isArray(stateResult?.history)?stateResult.history:[];let userIndex=-1;for(let index=history.length-1;index>=0;index--){if(history[index]?.role==='user'){userIndex=index;break;}}const lastUser=history[userIndex],linkedAssistant=history[userIndex+1],savedAdvice=stateResult?.last_advice;if(lastUser?.content===text&&linkedAssistant?.role==='assistant'&&linkedAssistant.content===savedAdvice?.assistant_message&&savedAdvice){mergeJourneyResult(stateResult);appendConversation('assistant',savedAdvice.assistant_message||savedAdvice.question||journeyText('goalUpdated'),savedAdvice.sources);renderJourneyAdvice(savedAdvice);advice=savedAdvice;recovered=true;}}catch{}if(journeyCurrent(revision)&&!recovered){notice(error.message,true);$('#query').value=text;}answered=recovered;}
  finally{journeyEnd(revision);if(journeyCurrent(revision))$('#query').focus();}
@@ -753,21 +753,22 @@ function adviceSelectionMarkup(){
 }
 async function searchAdviceSelection(advice,revision){
  const brief=String(advice?.search_brief||'').trim();if(!brief||!journeyCurrent(revision))return false;
- journey.autoSelection={status:'pending',brief};renderJourneyAdvice(advice);
+ const previous=journey.autoSelection;let filters=previous?.brief===brief&&previous.filters?structuredClone(previous.filters):null;
+ journey.autoSelection={status:'pending',brief};$('#notice').hidden=true;renderJourneyAdvice(advice);
  const seq=beginOperation(t('conversation.selectionLoading','Ik zoek de bedrijven die hierbij passen…'),true,'advice-selection');
- const current=()=>seq===state.request&&journeyCurrent(revision);let filters=null;
+ const current=()=>seq===state.request&&journeyCurrent(revision);
  try{
   if(!journey.exclusionsReady&&!await ensureJourneyState({isCurrent:current}))throw new Error(journeyText('exclusionsUnavailable'));
   if(!current())return false;
-  const result=await bridge('ai',{text:brief,conversation:[],filters:journeyApplyExclusions({}),fresh_session:true,conversation_epoch:state.aiConversationEpoch||0,operation_id:state.operation});
+  if(!filters){const result=await bridge('ai',{text:brief,conversation:[],filters:journeyApplyExclusions({}),fresh_session:true,conversation_epoch:state.aiConversationEpoch||0,operation_id:state.operation});
   if(!current())return false;acceptWalletSnapshot(result.wallet);
   const proposal=result.proposal||{},candidate=proposal.filters;
   if(proposal.status!=='ready'||(proposal.action&&proposal.action!=='proposal')||proposal.export_proposal||!candidate||typeof candidate!=='object'||Array.isArray(candidate)||!Object.entries(candidate).some(([key,value])=>!['latest_only','max_rows','selected_output_cols','ondernemingsnummers_exclude'].includes(key)&&value!==null&&value!==''&&value!==false&&value!==undefined&&(!Array.isArray(value)||value.length)))throw new Error(proposal.question||proposal.message||t('conversation.selectionUnclear','De selectie is nog niet duidelijk genoeg. Vertel welk type klant je wilt bereiken.'));
-  filters=candidate;
+  filters=candidate;}
  }catch(error){if(current())journey.autoSelection={status:'error',brief,error:error.message};}
  finally{if(seq===state.request){operationKind=null;endOperation(seq);}}
  if(!current())return false;
- if(filters){const loaded=await search(1,filters,'',{selectionMode:'preserve',recordHistory:false,isCurrent:()=>journeyCurrent(revision)});if(!journeyCurrent(revision))return false;if(loaded&&state.view!=='search')navigate('search');journey.autoSelection=loaded?{status:'ready',brief}:{status:'error',brief,error:lastSearchError||t('conversation.selectionFailed','De bedrijven konden niet worden geladen. Je gesprek is behouden.')};}
+ if(filters){const loaded=await search(1,filters,'',{selectionMode:'preserve',recordHistory:false,isCurrent:()=>journeyCurrent(revision)});if(!journeyCurrent(revision))return false;if(loaded&&state.view!=='search')navigate('search');journey.autoSelection=loaded?{status:'ready',brief,filters}:{status:'error',brief,filters,error:lastSearchError||t('conversation.selectionFailed','De bedrijven konden niet worden geladen. Je gesprek is behouden.')};}
  state.proposal=null;guidedStageOverride='clarify';state.conversationCollapsed=false;renderConversation();renderJourneyAdvice(advice);return journey.autoSelection.status==='ready';
 }
 window.addEventListener('pagehide',()=>{journeySetContext(null);journey.closed=true;});

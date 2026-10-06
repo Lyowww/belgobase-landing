@@ -296,7 +296,7 @@ test("web recovers service-shaped user-assistant advice without a second advise"
   let rendered = null;
   const journey = { mode: null, data: null };
   const journeyAdvise = scriptFunction("journeyAdvise", "uploadJourneyFile", {
-    journey,
+    journey, renderGuidedFlow() {},
     ...journeyContextFixture(journey),
     mergeJourneyResult: scriptFunction("mergeJourneyResult", "updateJourney", {
       journey, state: { conversation }, safeJourneySources: () => [], acceptWalletSnapshot() {},

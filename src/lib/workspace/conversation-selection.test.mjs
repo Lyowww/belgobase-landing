@@ -10,7 +10,7 @@ for(const [surface,html] of [['web',web],['PC1',pc1]]){
   const calls=[],journey={contextRevision:1,mode:'goal',exclusionsReady:true},state={view:'search',request:0,busy:false,filters:{old:true},rows:[{number:'old'}],total:3};
   const context={journey,state,calls,operationKind:null,guidedStageOverride:null,lastSearchError:'server error',
    journeyCurrent:revision=>revision===journey.contextRevision,
-   t:(key,fallback)=>fallback,journeyText:key=>key,renderJourneyAdvice(){},renderConversation(){},
+   structuredClone,$:()=>({hidden:false}),t:(key,fallback)=>fallback,journeyText:key=>key,renderJourneyAdvice(){},renderConversation(){},
    beginOperation(){state.busy=true;return ++state.request;},endOperation(){state.busy=false;},
    ensureJourneyState:async()=>true,journeyApplyExclusions:filters=>({...filters,ondernemingsnummers_exclude:['excluded']}),
    navigate:view=>{state.view=view;state.request++;},acceptWalletSnapshot:wallet=>calls.push(['wallet',wallet]),
@@ -31,6 +31,7 @@ for(const [surface,html] of [['web',web],['PC1',pc1]]){
   assert.equal(h.state.filters.gemeente_nl,'Antwerpen');assert.equal(h.calls.filter(([kind])=>kind==='search').length,2);
  });
  test(`${surface}: saved view cannot masquerade as fresh search results`,async()=>{const h=harness();h.state.view='saved';await h.searchAdviceSelection({search_brief:'Frituren'},1);assert.equal(h.state.view,'search');assert.equal(h.state.rows[0].number,'real');});
+ test(`${surface}: retrying failed database lookup reuses compiled filters`,async()=>{const h=harness();h.search=async()=>false;await h.searchAdviceSelection({search_brief:'Frituren'},1);const calls=h.calls.filter(([kind])=>kind==='ai').length;h.search=async()=>true;await h.searchAdviceSelection({search_brief:'Frituren'},1);assert.equal(h.calls.filter(([kind])=>kind==='ai').length,calls);assert.equal(h.journey.autoSelection.status,'ready');});
  test(`${surface}: greeting or missing brief never searches the entire database`,async()=>{
   const h=harness();assert.equal(await h.searchAdviceSelection({search_brief:''},1),false);assert.equal(h.calls.length,0);
  });
