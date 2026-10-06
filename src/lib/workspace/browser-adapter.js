@@ -66,6 +66,7 @@
     aiSessionLimit: { nl: "Er staan al zoekgesprekken open. Ga verder in een bestaand gesprek; je filters blijven behouden.", fr: "Des conversations de recherche sont déjà ouvertes. Continuez dans une conversation existante ; vos filtres sont conservés.", en: "Search conversations are already open. Continue in an existing conversation; your filters are preserved." },
     aiAccessDenied: { nl: "Slim Zoeken kon je toegang niet bevestigen. Meld je opnieuw aan; je filters blijven behouden.", fr: "La recherche intelligente n’a pas pu confirmer votre accès. Reconnectez-vous ; vos filtres sont conservés.", en: "Smart Search could not confirm your access. Sign in again; your filters are preserved." },
     aiInvalidRequest: { nl: "Slim Zoeken kon deze vraag niet verwerken. Controleer je invoer; je filters blijven behouden.", fr: "La recherche intelligente n’a pas pu traiter cette demande. Vérifiez votre saisie ; vos filtres sont conservés.", en: "Smart Search could not process this request. Check your input; your filters are preserved." },
+    voiceTimeout: { nl: "Het omzetten duurde te lang. Probeer opnieuw; je getypte tekst is behouden.", fr: "La transcription a pris trop de temps. Réessayez ; votre texte saisi est conservé.", en: "Transcription took too long. Try again; your typed text is preserved." },
     aiTimeout: { nl: "Slim Zoeken antwoordde niet op tijd. Verstuur de vraag niet automatisch opnieuw; je filters blijven behouden.", fr: "La recherche intelligente n’a pas répondu à temps. Ne renvoyez pas automatiquement la demande ; vos filtres sont conservés.", en: "Smart Search did not respond in time. Do not resend the request automatically; your filters are preserved." },
     aiInvalidResponse: { nl: "Slim Zoeken gaf geen geldig antwoord. Je filters blijven behouden.", fr: "La recherche intelligente a renvoyé une réponse non valide. Vos filtres sont conservés.", en: "Smart Search returned an invalid response. Your filters are preserved." },
     aiClosed: { nl: "Dit zoekgesprek is gesloten. Start een nieuw gesprek; je huidige filters blijven behouden.", fr: "Cette conversation de recherche est fermée. Démarrez une nouvelle conversation ; vos filtres actuels sont conservés.", en: "This search conversation is closed. Start a new conversation; your current filters are preserved." },
@@ -557,10 +558,36 @@
     return pending;
   }
 
-  async function sendBridge(method, payload, { skipAutodownload = false, keepalive = false, signal } = {}) {
+  // The gateway allows 90 seconds. Bound the browser too, including session lookup
+  // and response body reads, so a broken connection cannot leave controls locked.
+  async function boundedRequest(run, controller, timeoutError) {
+    let timer;
+    const deadline = new Promise((_, reject) => {
+      timer = window.setTimeout(() => {
+        reject(timeoutError());
+        controller.abort();
+      }, 100_000);
+    });
+    try { return await Promise.race([run(controller.signal), deadline]); }
+    finally { window.clearTimeout(timer); }
+  }
+
+  async function sendBridge(method, payload, options = {}) {
+    if (method !== "ai") return executeBridge(method, payload, options);
+    const controller = new AbortController();
+    const abort = () => controller.abort();
+    if (options.signal?.aborted) abort();
+    else options.signal?.addEventListener("abort", abort, { once: true });
+    try {
+      return await boundedRequest(signal => executeBridge(method, payload, { ...options, signal }), controller, () => aiError("ai_timeout", 504));
+    } finally { options.signal?.removeEventListener("abort", abort); }
+  }
+
+  async function executeBridge(method, payload, { skipAutodownload = false, keepalive = false, signal } = {}) {
     const outgoing = payload === undefined ? {} : { ...payload };
     if (method === "workspace_save" && (!Number.isSafeInteger(outgoing.workspace_revision) || outgoing.workspace_revision < 0)) throw new Error(adapterMessage("retry"));
     const token = await ensureCsrf();
+    if (signal?.aborted) throw aiError("ai_timeout", 504);
     let response;
     try {
       response = await fetch(`${API_ROOT}/bridge/${encodeURIComponent(method)}`, {
@@ -737,8 +764,10 @@
     if (samples.length < TARGET_RATE / 2) throw new Error(adapterMessage("recordingShort"));
     const controller = new AbortController();
     active.request = controller;
+    return boundedRequest(async () => {
     const token = await ensureCsrf();
     if (active.cancelled) return { ok: true, cancelled: true };
+    if (controller.signal.aborted) throw new Error(adapterMessage("aiTimeout"));
     const response = await fetch(`${API_ROOT}/voice`, {
       method: "POST",
       credentials: "same-origin",
@@ -768,6 +797,7 @@
     active.result = data;
     active.state = "complete";
     return data;
+    }, controller, () => new Error(adapterMessage("voiceTimeout")));
   }
 
   async function voiceStop() {

@@ -23,3 +23,7 @@ The browser asset no longer contains desktop-only local Excel handlers for marku
 The full browser bootstrap now includes the shared quick-filter label refresh used by language changes. Its strict DOM test completes a successful bootstrap and journey-state response, verifies that the connection warning closes and confirms that search unlocks. Search history shows a compact condition count, identifies the shared account correctly and resets the modal body to the top without changing stored filters or existing actions.
 
 Shared history timestamps prefer `searched_at` and fall back to `saved_at`, accepting ISO text, epoch seconds and epoch milliseconds without changing stored history records.
+
+## Voice reply recovery — 6 October 2026
+
+Microphone input preserves the chosen conversational route. Accepted speech retains its transcript and displays submission failures, and the advice panel retains its follow-up question. Browser AI and transcription waits are bounded after the gateway deadline, without automatic paid retries. PC1 uses the same composer routing and speech error handling.

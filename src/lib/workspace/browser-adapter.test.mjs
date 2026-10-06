@@ -180,7 +180,7 @@ test("journey throttles request starts without blocking pause behind slow advice
     { wait: slowAdvice, body: { ok: true, proposal: { status: "journey", contract: AI_CONTRACT, journey: { advice: {} } } } },
     { body: { ok: true, proposal: { status: "journey", contract: AI_CONTRACT, journey: { job: { status: "paused" } } } } },
   ]);
-  h.window.setTimeout = callback => { queueMicrotask(callback); return 1; };
+  h.window.setTimeout = (callback, delay) => { if (delay < 100_000) queueMicrotask(callback); return 1; };
 
   let adviceDone = false;
   const advice = h.api.journey({ command: "advise", text: "test" }).then(result => {
@@ -260,7 +260,7 @@ test("journey selection import preserves the exact count and marks the upload as
     journeyReply({ offset: 3 }),
     journeyReply({ list: { purpose: "prospects", unique_count: 2 }, job: null }),
   ]);
-  h.window.setTimeout = callback => { queueMicrotask(callback); return 1; };
+  h.window.setTimeout = (callback, delay) => { if (delay < 100_000) queueMicrotask(callback); return 1; };
 
   const result = await h.api.journey_prepare_selection({ numbers: ["0123456789", "0987654321"], expected_count: 2 });
 
@@ -901,4 +901,50 @@ test("explicit fresh conversation after a lost reply gets a new identity", async
  const request={text:"bakkers",filters:{},fresh_session:true,conversation_epoch:0};
  await assert.rejects(h.api.ai(request));await h.api.ai(request);
  const sent=h.calls.filter(c=>c.url.endsWith("/bridge/ai")).map(c=>JSON.parse(c.options.body));assert.equal(sent[0].request_id,sent[1].request_id);
+});
+
+
+test("a stalled AI response times out, releases ownership and keeps the retry identity", async () => {
+  const h = adapterHarness([{body:{authenticated:true,csrf:"t".repeat(32)}}]);
+  let expire, signal, attempt = 0;
+  h.window.setTimeout = (callback, delay) => { if (delay === 100_000) expire = callback; return 1; };
+  const original = h.context.fetch;
+  h.context.fetch = async (url, options) => {
+    if (String(url).endsWith("/auth/session")) return original(url, options);
+    h.calls.push({url:String(url),options});
+    signal = options.signal;
+    if (++attempt === 1) return {ok:true,status:200,json:()=>new Promise(()=>{})};
+    return {ok:true,status:200,json:async()=>({ok:true,proposal:aiProposal()})};
+  };
+  const request={text:"Zoek bakkers",filters:{},conversation:[]};
+  const pending=h.api.ai(request);
+  await new Promise(resolve=>setImmediate(resolve));
+  const failed=assert.rejects(pending, error=>error.code==="ai_timeout");
+  expire(); await failed;
+  assert.equal(signal.aborted,true);
+  await h.api.ai(request);
+  assert.equal(h.calls.length,3,"no automatic paid retry");
+  assert.equal(JSON.parse(h.calls[1].options.body).request_id,JSON.parse(h.calls[2].options.body).request_id);
+});
+
+test("stalled transcription releases recording and allows another recording", async () => {
+  const h=adapterHarness([{body:{authenticated:true,csrf:"v".repeat(32)}}]);
+  let expire, signal;
+  h.window.setTimeout=(callback,delay)=>{if(delay===100_000)expire=callback;return 1;};
+  const original=h.context.fetch;
+  h.context.fetch=async(url,options)=>{
+    if(String(url).endsWith("/auth/session"))return original(url,options);
+    signal=options.signal;
+    return new Promise(()=>{});
+  };
+  await h.api.voice_start();
+  h.getProcessor().onaudioprocess({inputBuffer:{getChannelData:()=>new Float32Array(24000).fill(.1)}});
+  const stopping=h.api.voice_stop();
+  await new Promise(resolve=>setImmediate(resolve));
+  const failed=assert.rejects(stopping,/duurde te lang/);
+  expire();await failed;
+  assert.equal(signal.aborted,true);
+  assert.equal((await h.api.voice_status()).state,"idle");
+  assert.equal(h.tracks[0].stopped,true);
+  await h.api.voice_start();await h.api.voice_cancel();
 });
