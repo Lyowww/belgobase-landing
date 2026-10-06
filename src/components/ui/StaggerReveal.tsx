@@ -1,6 +1,6 @@
 "use client";
 
-import { m, useInView, useReducedMotion } from "framer-motion";
+import { m, useInView } from "framer-motion";
 import { useRef, type ReactNode } from "react";
 import { usePerformanceMode } from "@/hooks/usePerformanceMode";
 import { fadeUp, staggerContainer, smoothEase } from "@/lib/motion";
@@ -21,8 +21,7 @@ export function StaggerReveal({
 }: StaggerRevealProps) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-60px" });
-  const prefersReducedMotion = useReducedMotion();
-  const { isMobile } = usePerformanceMode();
+  const { isMobile, prefersReducedMotion } = usePerformanceMode();
 
   if (prefersReducedMotion) {
     return <div className={cn(className)}>{children}</div>;

@@ -1,12 +1,11 @@
 "use client";
 
-import { m, useReducedMotion, useScroll, useSpring } from "framer-motion";
+import { m, useScroll, useSpring } from "framer-motion";
 import { usePerformanceMode } from "@/hooks/usePerformanceMode";
 
 export function ScrollProgress() {
   const { scrollYProgress } = useScroll();
-  const prefersReducedMotion = useReducedMotion();
-  const { isMobile } = usePerformanceMode();
+  const { isMobile, prefersReducedMotion } = usePerformanceMode();
   const scaleXSpring = useSpring(scrollYProgress, {
     stiffness: 100,
     damping: 30,
