@@ -344,3 +344,18 @@ test("invalid stored supplementary settings remain explicit and escaped until th
     assert.equal(normal.savedSearchSupplementalMarkup(), "");
   }
 });
+
+
+test("offering introductions reach the advisor while direct names and numbers keep search", () => {
+  const { looksLikeBusinessIntro } = loadFunctions(["looksLikeBusinessIntro"]);
+  for (const text of [
+    "Ik bied beheersoftware aan kleine ondernemingen aan.",
+    "Ik help bedrijven met hun administratie.",
+    "Nous fournissons des logiciels de gestion aux petites entreprises.",
+    "Je propose des services aux entreprises.",
+    "I provide management software to small companies.",
+    "I offer bookkeeping services to businesses.",
+  ]) assert.equal(looksLikeBusinessIntro(text), true, text);
+  for (const text of ["Alpha Management", "Special Ad", "0123456789", "BE 0123.456.789"])
+    assert.equal(looksLikeBusinessIntro(text), false, text);
+});
