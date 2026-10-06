@@ -166,9 +166,9 @@ test("web journey controls switch through the shared NL FR EN catalog", () => {
 
   i18n.setLanguage("fr", { persist: false });
   assert.deepEqual(controls.map(control => control.textContent), [
-    "Discuter de l’objectif", "Ajouter une liste de clients", "Compléter les coordonnées",
+    "Discuter de l’objectif", "Ajouter une liste de clients", "Trouver les coordonnées",
   ]);
-  assert.equal(journeyText("enrichSelection", { count: 12 }), "Enrichir cette sélection (12)");
+  assert.equal(journeyText("enrichSelection", { count: 12 }), "Trouver les coordonnées (12)");
   assert.equal(journeyText("prospects"), "Sélection de prospects");
   assert.equal(journeyText("source"), "Source");
   assert.equal(journeyText("chooseAnotherFile"), "Choisir un autre fichier");
@@ -180,7 +180,7 @@ test("web journey controls switch through the shared NL FR EN catalog", () => {
 
   i18n.setLanguage("en", { persist: false });
   assert.deepEqual(controls.map(control => control.textContent), [
-    "Discuss your goal", "Add customer list", "Complete contact details",
+    "Discuss your goal", "Add customer list", "Find contact details",
   ]);
   assert.equal(journeyText("currentSelection"), "Current search selection");
   assert.equal(journeyText("customers"), "Customer list");
@@ -210,6 +210,7 @@ test("web clears stale job state and sends the exact selected count to the prosp
   const prepareJourneySelection = scriptFunction("prepareJourneySelection", "openJourneyContacts", {
     journey,
     ...journeyContextFixture(journey, state),
+    journeyPanel() {}, esc: String, $: () => ({ scrollIntoView() {} }),
     ensureJourneyState: async () => true,
     journeySelectionContext: () => ({ count: 2, numbers: ["0123456789", "0987654321"] }),
     journeyText: key => key, nf: new Intl.NumberFormat("nl-BE"),
@@ -395,4 +396,38 @@ test("web journey applies persistent exclusions and exposes review, feedback and
   assert.match(script, /feedback_status/);
   assert.match(script, /feedback_reason/);
   assert.match(script, /\$\$\('\[data-journey-action\]'\).*button\.dataset\.lock=''/);
+});
+
+test("contact preparation is visible before network completion and keeps errors visible", async () => {
+  const journey = { exclusionsReady: true }, state = { busy: false }, panels = [], notices = [];
+  let rejectRequest, scrolled = 0;
+  const pending = new Promise((_resolve, reject) => { rejectRequest = reject; });
+  const prepare = scriptFunction("prepareJourneySelection", "openJourneyContacts", {
+    journey, state, ...journeyContextFixture(journey, state),
+    journeyText: key => key, nf: new Intl.NumberFormat("nl-BE"), esc: String,
+    journeyPanel: (...args) => panels.push(args), $: () => ({ scrollIntoView() { scrolled++; } }),
+    journeySelectionContext: () => ({ count: 1, numbers: ["0123456789"] }),
+    notice: (...args) => notices.push(args), bridge: () => pending,
+  });
+  const completion = prepare(true);
+  assert.equal(panels[0][0], "contactsTitle");
+  assert.match(panels[0][2], /role="status"/);
+  assert.equal(scrolled, 1);
+  rejectRequest(new Error("Verbinding onderbroken"));
+  assert.equal(await completion, false);
+  assert.deepEqual(notices, [["Verbinding onderbroken", true]]);
+  assert.equal(state.busy, false);
+});
+
+test("explicit contact selections above the server limit are rejected before export", async () => {
+  const journey = { exclusionsReady: true }, state = { busy: false }, notices = [];
+  const prepare = scriptFunction("prepareJourneySelection", "openJourneyContacts", {
+    journey, state, ...journeyContextFixture(journey, state),
+    journeyText: key => key, nf: new Intl.NumberFormat("nl-BE"), esc: String,
+    journeyPanel() {}, $: () => ({ scrollIntoView() {} }),
+    journeySelectionContext: () => ({ count: 1001, numbers: Array(1001).fill("0123456789") }),
+    notice: (...args) => notices.push(args), bridge: () => { throw new Error("must not export"); },
+  });
+  assert.equal(await prepare(true), false);
+  assert.deepEqual(notices, [["tooManyChecked", true]]);
 });

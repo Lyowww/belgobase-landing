@@ -948,3 +948,45 @@ test("stalled transcription releases recording and allows another recording", as
   assert.equal(h.tracks[0].stopped,true);
   await h.api.voice_start();await h.api.voice_cancel();
 });
+
+test("account preference edits share one revision queue across columns, language and tab", async () => {
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "a".repeat(32) } },
+    { body: { ok: true, preference_revision: 7, preferences: { language: "nl" } } },
+    { body: { ok: true, preference_revision: 8, selected: ["naam", "straat_nl"] } },
+    { body: { ok: true, preference_revision: 9, language: "fr" } },
+    { body: { ok: true, preference_revision: 10, display_tab: "workspace" } },
+  ]);
+  await h.api.bootstrap();
+  await Promise.all([
+    h.api.export_columns({ columns: ["naam", "straat_nl"], save_default: true }),
+    h.api.set_language({ language: "fr" }),
+    h.api.set_display_tab({ tab: "workspace" }),
+  ]);
+  const writes = h.calls.filter(x => /bridge\/(export_columns|set_language|set_display_tab)$/.test(x.url));
+  assert.deepEqual(writes.map(x => JSON.parse(x.options.body).preference_revision), [7, 8, 9]);
+  assert.deepEqual(JSON.parse(writes[0].options.body).columns, ["naam", "straat_nl"]);
+});
+
+test("a stale preference save is not retried over another device's choices", async () => {
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "a".repeat(32) } },
+    { body: { ok: true, preference_revision: 2 } },
+    { status: 409, body: { ok: false, error: "Voorkeuren gewijzigd. Laad opnieuw." } },
+  ]);
+  await h.api.bootstrap();
+  await assert.rejects(h.api.export_columns({ action: "load_default" }));
+  assert.equal(h.calls.length, 3);
+  assert.equal(JSON.parse(h.calls[2].options.body).preference_revision, 2);
+});
+
+test("preference mutation without bootstrap first reads the account revision", async () => {
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "a".repeat(32) } },
+    { body: { ok: true, preference_revision: 4 } },
+    { body: { ok: true, preference_revision: 5, display_tab: "workspace" } },
+  ]);
+  await h.api.set_display_tab({ tab: "workspace" });
+  assert.match(h.calls[1].url, /preferences_load$/);
+  assert.equal(JSON.parse(h.calls[2].options.body).preference_revision, 4);
+});

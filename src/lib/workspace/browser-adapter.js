@@ -34,6 +34,8 @@
   let voiceGeneration = 0;
   let voiceStarting = 0;
   let workspaceSaveQueue = Promise.resolve();
+  let preferenceSaveQueue = Promise.resolve();
+  let preferenceRevision = null;
   let aiSessionId = null;
   let aiRetry = null;
   let aiConversationEpoch = null;
@@ -57,6 +59,7 @@
     unavailable: { nl: "BelgoBase is tijdelijk niet beschikbaar. Probeer het later opnieuw.", fr: "BelgoBase est temporairement indisponible. Réessayez plus tard.", en: "BelgoBase is temporarily unavailable. Try again later." },
     denied: { nl: "Deze actie is niet beschikbaar voor je account. Vernieuw de pagina of neem contact op met BelgoBase.", fr: "Cette action n’est pas disponible pour votre compte. Actualisez la page ou contactez BelgoBase.", en: "This action is not available for your account. Refresh the page or contact BelgoBase." },
     retry: { nl: "Deze actie kon niet worden afgerond. Probeer het opnieuw.", fr: "Cette action n’a pas pu être terminée. Réessayez.", en: "This action could not be completed. Try again." },
+    selectedLimit: { nl: "Vink maximaal 1.000 bedrijven tegelijk aan. Zonder vinkjes kun je de volledige zoekselectie tot 5.000 bedrijven gebruiken.", fr: "Sélectionnez au maximum 1 000 entreprises à la fois. Sans cases cochées, vous pouvez utiliser toute la recherche, jusqu’à 5 000 entreprises.", en: "Select up to 1,000 companies at a time. With no boxes checked, you can use the full search selection of up to 5,000 companies." },
     aiInsufficient: { nl: "Je AI-tegoed is onvoldoende voor deze opdracht. Neem contact op met BelgoBase om bij te laden.", fr: "Votre solde IA est insuffisant pour cette demande. Contactez BelgoBase pour le recharger.", en: "Your AI balance is insufficient for this request. Contact BelgoBase to top it up." },
     aiWalletUnavailable: { nl: "Je AI-tegoed kan niet worden gecontroleerd. Er is geen nieuwe betaalde aanvraag gestart.", fr: "Votre solde IA ne peut pas être vérifié. Aucune nouvelle demande payante n’a été lancée.", en: "Your AI balance could not be checked. No new paid request was started." },
     aiSessionExpired: { nl: "Dit zoekgesprek is verlopen. Start een nieuw gesprek; je huidige filters blijven behouden.", fr: "Cette conversation de recherche a expiré. Démarrez une nouvelle conversation ; vos filtres actuels sont conservés.", en: "This search conversation has expired. Start a new conversation; your current filters are preserved." },
@@ -464,6 +467,7 @@
     const hasNumbers = Array.isArray(request.numbers);
     const numbers = hasNumbers ? request.numbers : [];
     const expectedCount = request.expected_count;
+    if (hasNumbers && numbers.length > 1000) throw new Error(adapterMessage("selectedLimit"));
     if (!Number.isInteger(expectedCount) || expectedCount < 1 || expectedCount > 5000) {
       throw new Error("Kies één tot maximaal 5.000 bedrijven om te verrijken.");
     }
@@ -541,6 +545,18 @@
   }
 
   function bridge(method, payload) {
+    const changesPreferences = ["set_language", "set_display_tab", "preferences_save"].includes(method)
+      || (method === "export_columns" && (payload?.action === "load_default" || Array.isArray(payload?.columns)));
+    if (changesPreferences) {
+      const snapshot = JSON.parse(JSON.stringify(payload ?? {}));
+      const pending = preferenceSaveQueue.then(async () => {
+        if (preferenceRevision === null) await sendBridge("preferences_load", {});
+        if (!Number.isSafeInteger(preferenceRevision)) throw new Error(adapterMessage("retry"));
+        return sendBridge(method, { ...snapshot, preference_revision: preferenceRevision });
+      });
+      preferenceSaveQueue = pending.catch(() => {});
+      return pending;
+    }
     if (method === "ai") return aiBridge(payload);
     if (method === "journey") return journeyBridge(payload);
     if (method === "journey_prepare_selection") return journeyPrepareSelection(payload);
@@ -615,6 +631,9 @@
     if (!response.ok || localized.ok !== true) {
       if (method === "ai") throw aiError(typeof localized.error === "string" ? localized.error : "ai_unavailable", response.status);
       throw new Error(bridgeFailure(response.status, localized));
+    }
+    if (Number.isSafeInteger(localized.preference_revision) && localized.preference_revision >= 0) {
+      preferenceRevision = Math.max(preferenceRevision ?? 0, localized.preference_revision);
     }
     if (!skipAutodownload) triggerDownload(localized.download_url, ["export_results", "export_selection"].includes(method));
     if ((method === "set_language" || method === "bootstrap") && ["nl", "fr", "en"].includes(localized.language)) {
