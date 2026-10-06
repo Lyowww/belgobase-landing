@@ -65,3 +65,17 @@ for(const [name,html] of [['web',web],['PC1',pc]]){
   await context.journeyAdvise('Toch Mechelen');assert.deepEqual(calls,['Frituren in Mechelen']);
  });
 }
+
+for(const [name,html] of [['web',web],['PC1',pc]]){
+ if(!html)continue;
+ test(`${name}: reopening displays saved conversation and resumes advice without calling providers`,()=>{
+  const advice={assistant_message:'Frituren zijn mogelijke klanten.',search_brief:'Frituren'},seen=[];
+  const context=vm.createContext({state:{conversation:[{role:'assistant',content:advice.assistant_message}]},journey:{mode:null,data:{last_advice:advice}},
+   guidedModeActive:()=>true,renderJourneyAdvice:value=>seen.push(value),renderConversation:()=>seen.push('conversation')});
+  vm.runInContext(html.slice(html.indexOf('function restoreJourneyConversation('),html.indexOf('let booting=false;')),context);
+  context.restoreJourneyConversation();assert.equal(context.journey.mode,'goal');assert.deepEqual(seen,[advice,'conversation']);
+  seen.length=0;context.guidedModeActive=()=>false;context.restoreJourneyConversation();assert.deepEqual(seen,['conversation']);
+  context.state.conversation=[];context.journey.mode=null;context.restoreJourneyConversation();assert.equal(context.journey.mode,null);
+  assert.match(html,/setGuidedMode\(\(r.display_tab\|\|storedDisplayTab\(\)\)!=='workspace',\{persist:false\}\);restoreJourneyConversation\(\)/);
+ });
+}
