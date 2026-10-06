@@ -777,6 +777,7 @@
     });
     const data = await json(response);
     if (active.cancelled) return { ok: true, cancelled: true };
+    if (controller.signal.aborted) throw new Error(adapterMessage("voiceTimeout"));
     if (response.status === 401) {
       authExpired();
       throw new Error(adapterMessage("sessionExpired"));
