@@ -15,6 +15,20 @@ import {
 } from "@/lib/marketing-measurement";
 
 const copy = {
+  fr: {
+    "title": "Votre choix de confidentialité",
+    "body": "Avec votre accord, nous mesurons l’usage du site public et les résultats publicitaires. Le contenu des formulaires et les données de l’espace de travail ne sont pas envoyés à Google.",
+    "reject": "Refuser",
+    "acceptAll": "Tout autoriser",
+    "configure": "Configurer",
+    "save": "Enregistrer le choix",
+    "settings": "Préférences de cookies",
+    "more": "Déclaration relative aux cookies",
+    "analyticsTitle": "Analyse du site",
+    "analyticsBody": "GA4 mesure des pages vues filtrées, le temps d’engagement et un nombre limité d’actions de défilement, de boutons et de vidéos.",
+    "adsTitle": "Mesure publicitaire",
+    "adsBody": "Google Ads relie les visites publicitaires à une demande reçue, sans données du formulaire."
+},
   nl: {
     title: "Uw privacykeuze",
     body: "Met uw toestemming meten we gebruik van de openbare website en het resultaat van advertenties. Formulierinhoud en werkruimtegegevens gaan niet naar Google.",

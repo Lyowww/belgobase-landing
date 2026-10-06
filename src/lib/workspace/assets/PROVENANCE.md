@@ -35,3 +35,7 @@ The workspace submit route recognises business introductions and conversational 
 2026-10-06: Conversation advice automatically compiles a provisional search through the existing filter service and displays real BelgoBase results. Each follow-up replaces the selection; errors hide stale previews. PC1 UI and NL/FR/EN parity maintained.
 
 2026-10-06: Explicit answer read-aloud / Stop controls use device speech synthesis without another model request. Reading remains independent from automatic searches. Empty-brief follow-ups refresh the last real selection with a clear unchanged-criteria label. PC1/web NL/FR/EN parity.
+
+## Customer interface parity — 6 October 2026
+
+Known company-field identities survive label translation, juridical situation include/exclude controls retain direction and official option codes in NL/FR/EN, and selecting an imported contact list reaches the existing job creation step. PC1 keeps language selection available in both modes and retains local Excel drafts and limits during language changes. The public site supports the existing French routes and avoids long-label header overlap; subscription copy and primary video metadata reflect the actual offer and asset. Current source-bound inert DOM checks and a production build are recorded in QA_AUDITS/2026-10-06_ui_full. Native authenticated sessions, providers and the desktop-only local Excel workflow are separate evidence boundaries.

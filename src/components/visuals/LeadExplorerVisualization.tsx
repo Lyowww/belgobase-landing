@@ -14,7 +14,7 @@ export function LeadExplorerVisualization() {
           caption: "Echte BelgoBase-interface met duidelijk fictieve voorbeeldgegevens.",
           badges: ["NBB-jaarrekeningen", "Financiële kerncijfers", "Export naar Excel"],
         }
-      : {
+      : locale === "fr" ? {"eyebrow": "Vue réelle du produit", "title": "Analyse financière d’entreprise dans BelgoBase", "caption": "Interface réelle de BelgoBase avec des données d’exemple clairement fictives ; interface présentée en néerlandais.", "badges": ["Comptes annuels BNB", "Indicateurs financiers", "Export Excel"]} : {
           eyebrow: "Actual product view",
           title: "Company financial analysis in BelgoBase",
           caption:
@@ -49,7 +49,7 @@ export function LeadExplorerVisualization() {
       <div className="bg-[#e8edf4] p-1.5 sm:p-2.5">
         <Image
           src="/product/belgobase-financial.webp"
-          alt={locale === "nl" ? "BelgoBase-bedrijfsfiche met omzet, resultaat, VTE en historische grafiek; fictieve voorbeeldcijfers" : "BelgoBase company profile with revenue, profit, FTE and historical chart; fictional example figures"}
+          alt={locale === "nl" ? "BelgoBase-bedrijfsfiche met omzet, resultaat, VTE en historische grafiek; fictieve voorbeeldcijfers" : locale === "fr" ? "Fiche d’entreprise BelgoBase avec chiffre d’affaires, résultat, ETP et graphique historique ; chiffres d’exemple fictifs" : "BelgoBase company profile with revenue, profit, FTE and historical chart; fictional example figures"}
           width={1600}
           height={1000}
           sizes="(min-width: 1280px) 1024px, (min-width: 768px) 88vw, 94vw"

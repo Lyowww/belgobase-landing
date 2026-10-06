@@ -2,6 +2,22 @@ import { PUBLIC_MARKETING_MEASUREMENT_ENABLED } from "@/lib/marketing-measuremen
 import type { Locale } from "@/i18n/config";
 
 const notices = {
+  fr: {
+    "title": "Complément : mesure facultative du site et des publicités",
+    "date": "5 octobre 2026 · complément du site 2.0",
+    "paragraphs": [
+        "Ce complément concerne les pages publiques de présentation lorsque la mesure Google est activée. Pour cette mesure, il remplace le complément du 28 septembre 2026 et la mention « aucun cookie publicitaire » dans les documents du 19 septembre 2026. Les autres informations, notamment vos droits et nos coordonnées, restent applicables.",
+        "Vous choisissez séparément l’analyse du site et la mesure publicitaire. Sans votre accord, nous ne chargeons aucune balise Google et ne faisons aucune requête réseau Google. Avec votre accord, GA4 mesure des pages vues filtrées, le temps d’engagement et un nombre limité d’actions de défilement, de boutons et de vidéos sur les pages publiques. Avec un accord distinct, Google Ads mesure les visites publicitaires et les demandes reçues par le site. Cette mesure n’est pas active dans l’espace de travail connecté.",
+        "Google reçoit des données techniques telles que l’adresse IP et des informations sur le navigateur, une adresse de page sans paramètres libres et un nombre limité de noms d’événements fixes. Seulement si vous autorisez la mesure publicitaire, cette adresse peut contenir un identifiant de clic Google validé (gclid, gbraid ou wbraid) pour l’attribution publicitaire ; les autres paramètres et le fragment sont supprimés. Une référence pertinente est transmise au maximum sous forme d’origine et d’hôte sans paramètres. Pour une demande reçue, GA4 reçoit le type generate_lead et Google Ads la conversion directe avec un identifiant d’événement aléatoire. Nom, adresse e-mail, téléphone, contenu de formulaire, recherches libres et données de l’espace de travail ne sont pas ajoutés. Le consentement est la base des deux finalités facultatives.",
+        "Le cookie bb_marketing_consent_v2 mémorise les deux choix pendant au maximum 180 jours. Un ancien choix publicitaire unique n’est pas réutilisé comme consentement. Après accord, Google peut placer notamment des cookies _ga et _gcl_ ; notre configuration GA4 limite le cookie _ga à 180 jours maximum. Le stockage de session temporaire préfixé bb-google-lead: évite de signaler deux fois la même demande. Google peut traiter des données hors de l’EEE ; les informations sur les destinataires, la conservation et les transferts figurent dans les informations Google ci-dessous.",
+        "Vous pouvez refuser les deux finalités ou en choisir une et continuer à utiliser le site. Les « Préférences de cookies » d’une page de présentation permettent de changer votre choix. En cas de retrait, nous arrêtons la balise, supprimons les cookies _ga et _gcl_ accessibles et rechargeons la page. Cela n’efface pas automatiquement les données reçues auparavant par Google avec votre accord. Pour vos questions ou droits : legal@belgobase.be."
+    ],
+    "links": [
+        "Google : cookies et conservation",
+        "Google Analytics : confidentialité",
+        "Google : données publicitaires et confidentialité"
+    ]
+},
   nl: {
     title: "Aanvulling: optionele website- en advertentiemeting",
     date: "5 oktober 2026 · website-aanvulling 2.0",
@@ -33,12 +49,12 @@ export function MarketingMeasurementNotice({ locale }: { locale: Locale }) {
     return (
       <article className="rounded-3xl border border-border bg-surface p-6 shadow-sm sm:p-8">
         <h2 className="text-xl font-bold text-deep-navy">
-          {locale === "nl" ? "Google-meting uitgeschakeld" : "Google measurement disabled"}
+          {locale === "nl" ? "Google-meting uitgeschakeld" : locale === "fr" ? "Mesure Google désactivée" : "Google measurement disabled"}
         </h2>
         <p className="mt-4 text-base leading-7 text-muted">
           {locale === "nl"
             ? "De centrale schakelaar voor Google Analytics en Google Ads-meting staat uit. De website laadt geen Google-tag. Bereikbare meetcookies en de opgeslagen meetkeuze worden bij een nieuw bezoek verwijderd. Dit wist niet automatisch gegevens die eerder met uw toestemming zijn verzonden. Voor vragen of privacyrechten: legal@belgobase.be."
-            : "The central switch for Google Analytics and Google Ads measurement is off. The website does not load a Google tag. Accessible measurement cookies and the stored choice are removed on a new visit. This does not automatically erase data previously sent with your consent. For questions or privacy rights: legal@belgobase.be."}
+            : locale === "fr" ? "Le réglage central de Google Analytics et de la mesure Google Ads est désactivé. Le site ne charge aucune balise Google. Les cookies de mesure accessibles et le choix enregistré sont supprimés lors d’une nouvelle visite. Cela n’efface pas automatiquement les données précédemment envoyées avec votre accord. Pour vos questions ou droits : legal@belgobase.be." : "The central switch for Google Analytics and Google Ads measurement is off. The website does not load a Google tag. Accessible measurement cookies and the stored choice are removed on a new visit. This does not automatically erase data previously sent with your consent. For questions or privacy rights: legal@belgobase.be."}
         </p>
       </article>
     );

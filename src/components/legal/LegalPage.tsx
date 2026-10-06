@@ -32,19 +32,27 @@ const documents: Record<LegalKind, LegalDocument[]> = {
   terms: [
     {
       basename: "belgobase-algemene-voorwaarden-b2b",
-      title: { nl: "BelgoBase Algemene Voorwaarden B2B", en: "BelgoBase B2B General Terms and Conditions" },
+      title: { nl: "BelgoBase Algemene Voorwaarden B2B", en: "BelgoBase B2B General Terms and Conditions", fr: "Conditions générales B2B BelgoBase" },
     },
     {
       basename: "belgobase-gebruiksvoorwaarden",
-      title: { nl: "BelgoBase Gebruiksvoorwaarden", en: "BelgoBase Terms of Use" },
+      title: { nl: "BelgoBase Gebruiksvoorwaarden", en: "BelgoBase Terms of Use", fr: "Conditions d’utilisation BelgoBase" },
     },
   ],
-  privacy: [{ basename: "belgobase-privacyverklaring", title: { nl: "BelgoBase Privacyverklaring", en: "BelgoBase Privacy Notice" } }],
-  cookies: [{ basename: "belgobase-cookieverklaring", title: { nl: "BelgoBase Cookie- en opslagverklaring", en: "BelgoBase Cookie and Storage Notice" } }],
-  legal: [{ basename: "belgobase-website-legal-notice", title: { nl: "BelgoBase Wettelijke vermeldingen", en: "BelgoBase Website Legal Notice" } }],
+  privacy: [{ basename: "belgobase-privacyverklaring", title: { nl: "BelgoBase Privacyverklaring", en: "BelgoBase Privacy Notice", fr: "Déclaration de confidentialité BelgoBase" } }],
+  cookies: [{ basename: "belgobase-cookieverklaring", title: { nl: "BelgoBase Cookie- en opslagverklaring", en: "BelgoBase Cookie and Storage Notice", fr: "Déclaration relative aux cookies et au stockage BelgoBase" } }],
+  legal: [{ basename: "belgobase-website-legal-notice", title: { nl: "BelgoBase Wettelijke vermeldingen", en: "BelgoBase Website Legal Notice", fr: "Mentions légales du site BelgoBase" } }],
 };
 
 const sharedCopy: Record<Locale, Omit<LegalCopy, "eyebrow" | "title" | "intro">> = {
+  fr: {
+    "acceptanceNotice": "La publication sur ce site ne constitue pas à elle seule une acceptation contractuelle. Lors de l’inscription ou de l’acceptation du contrat, la version et l’identité des documents expressément présentées à cette étape s’appliquent.",
+    "publishedLabel": "Publié le",
+    "publishedDate": "19 septembre 2026",
+    "versionLabel": "Version 1.2",
+    "readLabel": "Lire le PDF",
+    "downloadLabel": "Télécharger le PDF"
+},
   nl: {
     acceptanceNotice: "Publicatie op deze website vormt op zichzelf geen contractaanvaarding. Bij registratie of contractaanvaarding gelden de versie en documentidentiteit die u daar uitdrukkelijk worden getoond.",
     publishedLabel: "Gepubliceerd",
@@ -64,6 +72,28 @@ const sharedCopy: Record<Locale, Omit<LegalCopy, "eyebrow" | "title" | "intro">>
 };
 
 const pageCopy: Record<Locale, Record<LegalKind, Pick<LegalCopy, "eyebrow" | "title" | "intro">>> = {
+  fr: {
+    "terms": {
+        "eyebrow": "Documents juridiques",
+        "title": "Conditions générales B2B et conditions d’utilisation",
+        "intro": "Lisez ou téléchargez les conditions complètes de BelgoBase en néerlandais, français ou anglais."
+    },
+    "privacy": {
+        "eyebrow": "Document juridique",
+        "title": "Déclaration de confidentialité",
+        "intro": "Lisez ou téléchargez la déclaration de confidentialité complète de BelgoBase en néerlandais, français ou anglais."
+    },
+    "cookies": {
+        "eyebrow": "Document juridique",
+        "title": "Déclaration relative aux cookies et au stockage",
+        "intro": "Lisez ou téléchargez la déclaration complète de BelgoBase relative aux cookies et au stockage en néerlandais, français ou anglais."
+    },
+    "legal": {
+        "eyebrow": "Document juridique",
+        "title": "Mentions légales",
+        "intro": "Lisez ou téléchargez les informations juridiques complètes sur le site et son fournisseur en néerlandais, français ou anglais."
+    }
+},
   nl: {
     terms: {
       eyebrow: "Juridische documenten",

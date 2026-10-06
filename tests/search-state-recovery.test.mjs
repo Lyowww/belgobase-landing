@@ -93,6 +93,7 @@ test("automatic location changes retain unapplied inputs and the appropriate que
 
 test("website and discovery replies stay in the same advisory conversation", async () => {
   const calls = [];
+  const modeChanges = [];
   const app = { proposal: { status: "ready" } };
   const context = vm.createContext({
     state: app, journey: { mode: "upload" }, guidedStageOverride: null,
@@ -100,6 +101,7 @@ test("website and discovery replies stay in the same advisory conversation", asy
     routeJourneyRequest: () => { calls.push("contact-panel"); return true; },
     journeyAdvise: async text => calls.push(text),
     aiSearch: async () => calls.push("filter-search"),
+    setGuidedMode: enabled => modeChanges.push(enabled),
   });
   vm.runInContext(["guidedInputRoute", "looksLikeBusinessIntro", "isExplicitContactRequest", "dispatchComposerText"].map(functionSource).join("\n"), context);
   await context.dispatchComposerText("Hier is mijn website https://voorbeeld.be/contact, help mijn klanten vinden");
@@ -121,7 +123,8 @@ test("website and discovery replies stay in the same advisory conversation", asy
   context.snapshotFilters = () => ({query:"voorbeeld.be"});
   context.search = async () => calls.push("manual-search");
   await context.dispatchComposerText("voorbeeld.be");
-  assert.equal(calls.at(-1), "manual-search");
+  assert.equal(calls.at(-1), "voorbeeld.be");
+  assert.deepEqual(modeChanges, [true]);
   for (const text of ["Contactgegevens aanvullen", "Compléter les coordonnées", "Complete contact details", "Download contactgegevens", "Zoek telefoonnummer"]) {
     await context.dispatchComposerText(text);
     assert.equal(calls.at(-1), "contact-panel", text);
@@ -166,7 +169,7 @@ test("saved assistant turns keep their compact source row in the conversation DO
     t: (_key, fallback) => fallback,
     esc: value => String(value).replace(/[<>&]/g, ""),
     journeySourcesMarkup: sources => sources?.length ? '<div class="journey-sources">Research</div>' : "",
-    renderGuidedFlow() {},
+    renderGuidedFlow() {}, renderAssistantReading() {},
   });
 
   renderConversation();
@@ -318,7 +321,7 @@ test("invalid numeric drafts cannot erase an existing bound through another acti
     snapshotFilters:()=>{throw Error("Invalid draft must never be snapshotted");},
     search:async()=>calls.push("search"),
   });
-  vm.runInContext(["quickFiltersValid","toggleRegion","removeFilter","dispatchComposerText"].map(functionSource).join("\n"),context);
+  vm.runInContext(["quickFiltersValid","toggleRegion","removeFilter","looksLikeBusinessIntro","dispatchComposerText"].map(functionSource).join("\n"),context);
   context.toggleRegion("vlaanderen");
   context.removeFilter("kbo_postcode");
   assert.equal(await context.dispatchComposerText("Alpha"),false);

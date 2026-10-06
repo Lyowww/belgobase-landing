@@ -7,6 +7,22 @@ import { useTranslations } from "@/providers/TranslationsProvider";
 type DemoId = "prospecting" | "cleanup";
 
 const copy = {
+  fr: {
+    "prospectingTitle": "Que coûte un mauvais prospect à votre équipe ?",
+    "prospectingDescription": "Le même salaire et la même préparation, même pour une entreprise inadaptée. Reconnaissez-vous où votre équipe perd du temps ?",
+    "prospectingCaption": "Essai de recherche réel du 29 septembre. Narration IA en néerlandais ; temps d’attente raccourcis.",
+    "cleanupTitle": "À quelle fréquence rachetez-vous ce qui se trouve déjà dans vos listes Excel ?",
+    "cleanupDescription": "Des doublons, des notes oubliées et une équipe d’appel sans prochaine liste. Voyez ce que révèle un traitement réel de fichiers existants.",
+    "cleanupCaption": "Essai Excel réel dans la version de bureau. Données personnelles masquées ; narration IA en néerlandais.",
+    "play": "Voir la présentation",
+    "open": "Ouvrir la vidéo séparément",
+    "failed": "La vidéo ne peut pas être lue ici.",
+    "next": "Voir comment nettoyer les listes existantes",
+    "demo": "Voir avec votre propre question",
+    "transcript": "À propos de cette vidéo",
+    "prospectingTranscript": "La première minute présente le coût des mauvais prospects : heures d’appel, recherches répétées, entreprises pertinentes manquées, listes dispersées et clients demandant beaucoup de suivi. L’essai réel du 29 septembre montre ensuite un fournisseur de fruits au travail discutant de sa cible et confirmant le code postal 2800 avec au moins 20 ETP. La recherche donne 239 entreprises à examiner, puis l’export Excel réel. Les ETP ne prouvent ni la présence au bureau ni l’intérêt d’achat. La recherche de coordonnées est citée comme étape distincte, sans être exécutée. Les données du compte sont masquées ; le montage raccourcit les attentes.",
+    "cleanupTranscript": "Cet essai réel de la version de bureau réunit des fichiers Excel existants en conservant leur provenance et les notes. Les informations d’appel sont classées, les données incertaines sont soumises à vérification et vous pouvez ensuite poursuivre avec les contacts utiles."
+},
   nl: {
     prospectingTitle: "Wat kost de verkeerde prospect uw team?",
     prospectingDescription: "Hetzelfde loon en dezelfde voorbereiding, ook voor een bedrijf dat niet past. Herkent u waar uw team tijd verliest?",
@@ -43,7 +59,7 @@ const copy = {
 
 export function HeroVisualization({ mode = "prospecting" }: { mode?: DemoId }) {
   const { locale } = useTranslations();
-  const language = locale === "nl" ? "nl" : "en";
+  const language = locale;
   const text = copy[language];
   const videos = useRef<Record<DemoId, HTMLVideoElement | null>>({ prospecting: null, cleanup: null });
   const [started, setStarted] = useState<Record<DemoId, boolean>>({ prospecting: false, cleanup: false });
@@ -110,7 +126,7 @@ export function HeroVisualization({ mode = "prospecting" }: { mode?: DemoId }) {
           onEnded={() => setStarted(current => ({ ...current, [id]: false }))}
           onError={() => setFailed(current => ({ ...current, [id]: true }))}
         >
-          <track key={language} kind="captions" src={`${source.replace(".mp4", "")}-${language}.vtt`} srcLang={language} label={language === "nl" ? "Nederlands" : "English"} default />
+          <track key={language} kind="captions" src={`${source.replace(".mp4", "")}-${language}.vtt`} srcLang={language} label={language === "nl" ? "Nederlands" : language === "fr" ? "Français" : "English"} default />
           <a href={source}>{text.open}</a>
         </video>
         {!started[id] && !failed[id] && <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/15">
@@ -129,7 +145,7 @@ export function HeroVisualization({ mode = "prospecting" }: { mode?: DemoId }) {
     </article>;
   };
 
-  return <section aria-label={language === "nl" ? "BelgoBase-demonstraties" : "BelgoBase demonstrations"} className="w-full min-w-0 space-y-5">
+  return <section aria-label={language === "nl" ? "BelgoBase-demonstraties" : language === "fr" ? "Démonstrations BelgoBase" : "BelgoBase demonstrations"} className="w-full min-w-0 space-y-5">
     {mode === "prospecting" && renderVideo({
       id: "prospecting",
       title: text.prospectingTitle,

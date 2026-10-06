@@ -7,10 +7,10 @@ import { buildCanonicalUrl, buildLanguageAlternates, buildLocalizedPath } from "
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   if (!isLocale(locale)) return {};
-  const title = locale === "nl" ? "Cookieverklaring | BelgoBase" : "Cookie Notice | BelgoBase";
+  const title = locale === "nl" ? "Cookieverklaring | BelgoBase" : locale === "fr" ? "Déclaration relative aux cookies | BelgoBase" : "Cookie Notice | BelgoBase";
   const description = locale === "nl"
     ? "Welke cookies en vergelijkbare browseropslag BelgoBase gebruikt en hoe bezoekers hun voorkeuren beheren."
-    : "Read or download the current BelgoBase cookie notice in Dutch, French or English.";
+    : locale === "fr" ? "Lisez ou téléchargez les documents actuels de BelgoBase en néerlandais, français ou anglais." : "Read or download the current BelgoBase cookie notice in Dutch, French or English.";
   return {
     title,
     description,

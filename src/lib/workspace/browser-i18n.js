@@ -90,7 +90,8 @@
   for (const entries of [catalog._PHRASES,catalog._MESSAGES,catalog._EXPORT_DESCRIPTIONS]) {
     for (const [nl, values] of Object.entries(entries)) [nl,...values].forEach(value=>canonical.set(value,nl));
   }
-  const entryFor=value=>catalog._PHRASES[value]||catalog._MESSAGES[value]||catalog._EXPORT_DESCRIPTIONS[value];
+  const fieldLabelPhrases=Object.fromEntries(Object.values(catalog._KEY_LABELS).map(([nl,fr,en])=>[nl,[fr,en]]));
+  const entryFor=value=>catalog._PHRASES[value]||catalog._MESSAGES[value]||catalog._EXPORT_DESCRIPTIONS[value]||fieldLabelPhrases[value];
   const translate=(value, key, selectedLanguage=language()) => {
     if (typeof value!=="string") return value;
     const nl=canonical.get(value)||value;
@@ -195,10 +196,12 @@
     // Relabel known metadata only; never rewrite company names or source values.
     if (method==="company" && Array.isArray(copy.fields)) {
       copy.fields=copy.fields.map(field=>{
-        const key=field.key || String(field.label||"").toLowerCase().replaceAll(" ","_");
+        const normalizeKeyLabel=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"");
+        const originalLabel=normalizeKeyLabel(field.label);
+        const key=field.key || Object.entries(catalog._KEY_LABELS).find(([candidate,labels])=>normalizeKeyLabel(candidate)===originalLabel || normalizeKeyLabel(labels[0])===originalLabel)?.[0] || String(field.label||"").toLowerCase().replaceAll(" ","_");
         const label=catalog._KEY_LABELS[key] ? translate(field.label,key,selectedLanguage) : field.label;
         const missingAddress=["bus","straat_nl","straat_fr","huisnummer","kbo_postcode","gemeente_nl","gemeente_fr"].includes(key) && ["None","null","NaN"].includes(field.value);
-        return {...field,label,...(missingAddress?{value:null}:{})};
+        return {...field,key,label,...(missingAddress?{value:null}:{})};
       });
     }
     const visit=(value,key,isOption=false)=>{

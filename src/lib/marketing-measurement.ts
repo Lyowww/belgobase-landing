@@ -106,7 +106,7 @@ export function marketingMeasurementEnabled(): boolean {
 export function isMarketingPublicPathname(pathname: string): boolean {
   const parts = pathname.split("?")[0]?.split("#")[0]?.split("/").filter(Boolean) ?? [];
   if (parts.length < 1 || parts.length > 2) return false;
-  if (parts[0] !== "nl" && parts[0] !== "en") return false;
+  if (parts[0] !== "nl" && parts[0] !== "en" && parts[0] !== "fr") return false;
   return marketingPageSlugs.has(parts[1] ?? "");
 }
 

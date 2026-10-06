@@ -7,10 +7,10 @@ import { buildCanonicalUrl, buildLanguageAlternates, buildLocalizedPath } from "
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   if (!isLocale(locale)) return {};
-  const title = locale === "nl" ? "Algemene Voorwaarden B2B en Gebruiksvoorwaarden | BelgoBase" : "B2B Terms and Acceptable Use Terms | BelgoBase";
+  const title = locale === "nl" ? "Algemene Voorwaarden B2B en Gebruiksvoorwaarden | BelgoBase" : locale === "fr" ? "Conditions générales B2B et conditions d’utilisation | BelgoBase" : "B2B Terms and Acceptable Use Terms | BelgoBase";
   const description = locale === "nl"
     ? "De voorwaarden voor zakelijke toegang tot en gebruik van BelgoBase, waaronder licentie, toegelaten gebruik, beëindiging en aansprakelijkheid."
-    : "Read or download the current BelgoBase B2B terms and acceptable use terms in Dutch, French or English.";
+    : locale === "fr" ? "Lisez ou téléchargez les documents actuels de BelgoBase en néerlandais, français ou anglais." : "Read or download the current BelgoBase B2B terms and acceptable use terms in Dutch, French or English.";
   return {
     title,
     description,

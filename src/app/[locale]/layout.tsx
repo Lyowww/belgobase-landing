@@ -68,7 +68,7 @@ export async function generateMetadata({
       title,
       description,
       type: "website",
-      locale: localeParam === "nl" ? "nl_BE" : "en_BE",
+      locale: `${localeParam}_BE`,
       url: pageUrl,
       siteName: "BelgoBase",
     },

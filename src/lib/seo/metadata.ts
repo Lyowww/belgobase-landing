@@ -46,6 +46,7 @@ export function buildLanguageAlternates(pathWithoutLocale = ""): Record<string, 
   return {
     en: `${siteUrl}/en${suffix}`,
     nl: `${siteUrl}/nl${suffix}`,
+    fr: `${siteUrl}/fr${suffix}`,
     // The root redirect varies with a visitor's language preferences. Use the
     // configured default locale as the deterministic fallback for search engines.
     "x-default": `${siteUrl}/en${suffix}`,
@@ -81,7 +82,7 @@ export function createLocalizedPageMetadata(pathWithoutLocale = "") {
       height: 1080,
       alt: locale === "nl"
         ? "BelgoBase: van Excelchaos naar overzicht met echte verwerkingsresultaten"
-        : "BelgoBase: from Excel chaos to clarity with real processing results",
+        : locale === "fr" ? "BelgoBase : du désordre Excel à une vue claire avec de vrais résultats de traitement" : "BelgoBase: from Excel chaos to clarity with real processing results",
     };
 
     return {
@@ -95,7 +96,7 @@ export function createLocalizedPageMetadata(pathWithoutLocale = "") {
           title: dictionary.metadata.title,
           description: dictionary.metadata.description,
           type: "website" as const,
-          locale: locale === "nl" ? "nl_BE" : "en_BE",
+          locale: `${locale}_BE`,
           siteName: "BelgoBase",
           images: [productImage],
         } : {}),

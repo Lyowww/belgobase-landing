@@ -35,7 +35,13 @@ function getPreferredLocale(request: NextRequest): Locale {
   }
 
   const acceptLanguage = request.headers.get("accept-language")?.toLowerCase() ?? "";
-  if (acceptLanguage.includes("nl")) return "nl";
+  const preferences = acceptLanguage.split(",").map((entry, index) => {
+    const [tag, ...parameters] = entry.trim().split(";");
+    const quality = parameters.find(parameter => parameter.trim().startsWith("q="));
+    return { language: tag.split("-")[0], quality: quality ? Number(quality.trim().slice(2)) : 1, index };
+  }).filter(preference => isLocale(preference.language) && preference.quality > 0)
+    .sort((a, b) => b.quality - a.quality || a.index - b.index);
+  if (preferences.length) return preferences[0].language as Locale;
 
   return i18n.defaultLocale;
 }

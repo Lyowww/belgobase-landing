@@ -1,6 +1,6 @@
 {
-  "release": "ANSWER_READING_20261006",
-  "ui_sha256": "527cf87755efb0465cbc44fdf49564b178457377090e100a403763e12188b84e",
+  "release": "UI_PARITY_NL_FR_EN_20261006",
+  "ui_sha256": "ac63113beceb62816e0bea0dc2503ca024441bd63f0a03bdf30643ac47b6e99e",
   "logo_sha256": "9d29aa57e01e8957b9575d94873efa1250b139e3736d8d055579313acb7d8695",
   "contract_sha256": "717f1bbc4606dbe10b01ab509f38a45006cedef5d07ae312f89ccdc1dc64858f"
 }

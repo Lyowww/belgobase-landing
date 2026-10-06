@@ -90,4 +90,116 @@ const en: Record<UseCaseSlug, UseCase> = {
     boundary: "Not every company publishes every figure. Missing does not mean zero. BelgoBase does not guarantee creditworthiness or future payment behaviour.",
   },
 };
-export function getUseCase(locale: Locale, slug: UseCaseSlug): UseCase { return (locale === "nl" ? nl : en)[slug]; }
+const fr: Record<UseCaseSlug, UseCase> = {
+  "bedrijven-zoeken": {
+    "heading": "Combien d’entreprises adaptées manquez-vous en continuant à chercher ?",
+    "title": "Trouver des entreprises belges par secteur et région",
+    "description": "Vous connaissez votre meilleur client. Quelles entreprises belges lui ressemblent et quels filtres faut-il utiliser ? Cette recherche détourne votre équipe des échanges pour lesquels vous la payez.",
+    "question": "Je fournis des entreprises autour de Malines. Aidez-moi à choisir une cible adaptée à mon offre.",
+    "intro": "Vous savez avec quels clients cela fonctionne. Pourtant, la prochaine région, le prochain secteur ou la prochaine liste demande encore des heures de recherche. Combien d’entreprises adaptées n’atteignent jamais votre sélection ? Discutez de votre offre et de votre zone avec BelgoBase, puis examinez les critères avant de chercher.",
+    "steps": [
+      [
+        "Votre expérience reste dans votre tête",
+        "Expliquez quels clients correspondent à votre offre. L’assistant aide à transformer ce contexte en critères."
+      ],
+      [
+        "Une mauvaise sélection coûte aussi des heures d’appel",
+        "Examinez l’activité, la localisation et les informations disponibles avant que votre équipe investisse du temps."
+      ],
+      [
+        "Les données manquantes apparaissent pendant l’appel",
+        "Recherchez les coordonnées disponibles à l’avance et choisissez les champs utiles. Toutes les entreprises ne publient pas leurs coordonnées."
+      ]
+    ],
+    "criteria": [
+      [
+        "Secteur et activité NACEBEL",
+        "Sélectionnez les activités adaptées à votre offre. Un code décrit une activité enregistrée ; examinez également l’entreprise avant de la contacter."
+      ],
+      [
+        "Région, commune et code postal",
+        "Définissez votre zone avec les critères de localisation belges. La sélection suit l’adresse disponible à la BCE, qui ne couvre pas nécessairement tous les lieux d’activité."
+      ],
+      [
+        "Personnel et données financières",
+        "Combinez vos critères avec les ETP et les données financières disponibles. ETP signifie équivalents temps plein, et non nombre de personnes. Toutes les entreprises ne publient pas leur chiffre d’affaires ou des comptes annuels complets."
+      ],
+      [
+        "Forme juridique et situation juridique",
+        "Distinguez la forme juridique de la situation juridique de l’entreprise. Utilisez les filtres d’inclusion et d’exclusion disponibles pour affiner la sélection."
+      ]
+    ],
+    "result": "Une liste ciblée d’entreprises belges avec les champs choisis. Poursuivez la recherche et utilisez la sélection pour préparer votre travail commercial.",
+    "boundary": "Correspondre à vos critères ne signifie pas être intéressé par votre offre. La disponibilité des coordonnées et des chiffres varie selon l’entreprise."
+  },
+  "prospectielijsten": {
+    "heading": "Que fait votre équipe d’appel quand la liste est à nouveau épuisée ?",
+    "title": "Constituer une liste de prospects parmi les entreprises belges",
+    "description": "Sans prochaine liste, pas de prochaine campagne d’appels. Une liste d’entreprises inadaptées remplit la journée sans donner d’échanges pertinents.",
+    "question": "Je livre des fruits au travail. Trouvez des entreprises autour de Malines avec au moins 20 employés.",
+    "intro": "Vos équipes sont prêtes. La prochaine liste ne l’est pas. Ou elles rappellent les mêmes entreprises sans savoir pourquoi. Combien de préparation et de motivation cela coûte-t-il ? Définissez qui convient à votre offre avant de rechercher une sélection belge ciblée.",
+    "steps": [
+      [
+        "« Tout le monde » n’est pas une cible utile",
+        "Discutez de la localisation, de l’activité et de la taille. Examinez et confirmez la proposition."
+      ],
+      [
+        "Le volume masque une mauvaise correspondance",
+        "Examinez les entreprises avant d’utiliser la liste. Affinez les critères dans Conversation ou Espace de travail."
+      ],
+      [
+        "Votre équipe ne devrait pas devoir rechercher chaque champ à nouveau",
+        "Recherchez les coordonnées disponibles et exportez les champs utiles à votre prochaine campagne."
+      ]
+    ],
+    "result": "Une liste d’entreprises réutilisable avec les champs choisis, pour préparer votre prochaine prospection.",
+    "boundary": "Une entreprise adaptée n’est pas nécessairement intéressée. Les coordonnées ne sont pas disponibles pour chaque entreprise. BelgoBase ne garantit ni rendez-vous ni ventes."
+  },
+  "klantenbestand-analyseren": {
+    "heading": "Combien de connaissances clients restent inutilisées dans vos anciennes listes Excel ?",
+    "title": "Utiliser vos clients comme point de départ de la prochaine prospection",
+    "description": "Vous avez déjà investi du temps et de l’argent dans votre clientèle. Que perdez-vous quand la prochaine cible ignore ce que vous savez de vos meilleurs clients ?",
+    "question": "Voici mes clients. Aidez-moi à décider quels types d’entreprises contacter ensuite.",
+    "intro": "Votre équipe a appelé, pris des notes et gagné des clients. Pourtant la recherche de la prochaine cible repart souvent de zéro. Quel client refuseriez-vous si vous pouviez choisir à nouveau ? Utilisez cette expérience comme contexte plutôt que d’acheter simplement une autre liste.",
+    "steps": [
+      [
+        "La liste existe, la connaissance reste inutilisée",
+        "Ajoutez une liste Excel ou CSV, vérifiez les colonnes et indiquez s’il s’agit de clients ou de prospects."
+      ],
+      [
+        "Vous ne voudriez pas regagner chaque client",
+        "Discutez des clients et des missions adaptés ou non. Examinez la cible proposée par l’assistant."
+      ],
+      [
+        "La prochaine liste répète sinon les mêmes choix",
+        "Trouvez des entreprises belges à partir des critères confirmés. Examinez la sélection avant l’export."
+      ]
+    ],
+    "result": "Une cible explicite et une nouvelle sélection éclairée par le contexte fourni.",
+    "boundary": "L’import temporaire accepte Excel et CSV jusqu’à 5 000 lignes et 4 Mo. Importez uniquement des données que vous avez le droit de traiter. Ce n’est ni une intégration CRM automatique ni une garantie de clients identiques."
+  },
+  "bedrijfsanalyse": {
+    "heading": "Combien de préparation consacrez-vous à une entreprise inadaptée à votre offre ?",
+    "title": "Évaluer les entreprises belges avec les données de la BCE et de la BNB",
+    "description": "Un nom d’entreprise dit peu de sa taille et de son contexte financier. Combien de temps perdez-vous si cela apparaît seulement pendant l’appel ?",
+    "question": "Quelles entreprises de ma sélection correspondent à mon offre par leur taille et leurs chiffres financiers ?",
+    "intro": "Votre commercial a recherché l’entreprise, préparé un rendez-vous et réservé du temps. Elle s’avère ensuite trop petite ou inadaptée. Quelles informations auriez-vous préféré connaître avant ? Examinez les données disponibles de la BCE et de la BNB avant de fixer vos priorités.",
+    "steps": [
+      [
+        "Un nom dit trop peu",
+        "Ouvrez une entreprise depuis votre sélection ou cherchez par nom ou numéro d’entreprise."
+      ],
+      [
+        "Le contexte manque dans la liste d’appel",
+        "Examinez l’activité, les ETP et l’historique financier disponibles. Un chiffre inconnu n’est pas zéro et ne prouve pas un comportement de paiement futur."
+      ],
+      [
+        "Vos priorités reposent sinon surtout sur des suppositions",
+        "Affinez la sélection avec les critères disponibles et exportez les informations utiles à votre équipe."
+      ]
+    ],
+    "result": "Une sélection mieux étayée, réunissant informations d’entreprise et chiffres disponibles.",
+    "boundary": "Toutes les entreprises ne publient pas chaque chiffre. Une valeur absente ne signifie pas zéro. BelgoBase ne garantit ni solvabilité ni comportement de paiement futur."
+  }
+};
+export function getUseCase(locale: Locale, slug: UseCaseSlug): UseCase { return { nl, en, fr }[locale][slug]; }

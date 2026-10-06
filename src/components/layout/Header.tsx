@@ -30,7 +30,7 @@ export function Header({ variant = "default" }: HeaderProps) {
         mobileMenuButtonRef.current?.focus();
       }
     };
-    const desktop = window.matchMedia("(min-width: 1024px)");
+    const desktop = window.matchMedia("(min-width: 1280px)");
     const closeOnDesktop = () => { if (desktop.matches) setMobileOpen(false); };
     document.addEventListener("keydown", closeOnEscape);
     desktop.addEventListener("change", closeOnDesktop);
@@ -66,23 +66,7 @@ export function Header({ variant = "default" }: HeaderProps) {
           : "opacity-100",
       )}
     >
-      <nav
-        aria-label={t("nav.mainNavigation")}
-        className={cn(
-          "pointer-events-none absolute top-1/2 left-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-6 lg:flex lg:gap-8",
-          isComingSoon && "lg:hidden",
-        )}
-      >
-        {navLinks.map((link) => (
-          <a
-            key={link.href}
-            href={`/${locale}${link.href}`}
-            className="pointer-events-auto text-sm font-medium text-foreground/90 transition-colors duration-200 hover:text-foreground"
-          >
-            {link.label}
-          </a>
-        ))}
-      </nav>
+
 
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-4 sm:h-16 sm:gap-3 sm:px-6 lg:px-8">
         <Link
@@ -110,8 +94,26 @@ export function Header({ variant = "default" }: HeaderProps) {
           </span>
         </Link>
 
+      <nav
+        aria-label={t("nav.mainNavigation")}
+        className={cn(
+          "hidden shrink-0 items-center gap-4 xl:flex xl:gap-5",
+          isComingSoon && "xl:hidden",
+        )}
+      >
+        {navLinks.map((link) => (
+          <a
+            key={link.href}
+            href={`/${locale}${link.href}`}
+            className="text-sm font-medium text-foreground/90 transition-colors duration-200 hover:text-foreground"
+          >
+            {link.label}
+          </a>
+        ))}
+      </nav>
+
         {!isComingSoon && (
-          <div className="relative z-10 hidden items-center gap-3 lg:flex">
+          <div className="relative z-10 hidden items-center gap-3 xl:flex">
             <a href={`/${locale}/app`} className="rounded-full border border-border px-4 py-2.5 text-sm font-semibold text-deep-navy transition-colors hover:border-primary hover:text-primary">
               {t("nav.signIn")}
             </a>
@@ -135,7 +137,7 @@ export function Header({ variant = "default" }: HeaderProps) {
         <div
           className={cn(
             "flex items-center gap-1.5",
-            isComingSoon ? "relative z-10 lg:hidden" : "lg:hidden",
+            isComingSoon ? "relative z-10 xl:hidden" : "xl:hidden",
           )}
         >
           <LanguageSwitcher />
@@ -160,7 +162,7 @@ export function Header({ variant = "default" }: HeaderProps) {
         inert={!mobileOpen}
         aria-hidden={!mobileOpen}
         className={cn(
-          "overflow-hidden border-t border-border bg-surface lg:hidden",
+          "overflow-hidden border-t border-border bg-surface xl:hidden",
           isComingSoon && "hidden",
           mobileOpen
             ? "h-[calc(100dvh-3.5rem-env(safe-area-inset-top,0px))] sm:h-[calc(100dvh-4rem-env(safe-area-inset-top,0px))] opacity-100"

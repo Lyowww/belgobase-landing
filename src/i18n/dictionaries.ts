@@ -3,6 +3,7 @@ import type { Locale } from "./config";
 
 const dictionaries = {
   en: () => import("@/messages/en.json").then((module) => module.default),
+  fr: () => import("@/messages/fr.json").then((module) => module.default),
   nl: () => import("@/messages/nl.json").then((module) => module.default),
 };
 
