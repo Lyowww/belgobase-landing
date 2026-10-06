@@ -75,7 +75,7 @@ test("web journey UI exposes the same bounded explicit workflow", () => {
   assert.match(script, /linkedAssistant\.content===savedAdvice\?\.assistant_message/);
   assert.match(script, /command:'job_remove'.*confirmed:true/);
   assert.match(script, /journeyText\('removeJobConfirm'\)/);
-  assert.match(script, /data-journey-action="search-target"/);
+  assert.match(script, /data-journey-action="retry-selection"/);
   assert.match(script, /searchJourneyTarget\(button\.dataset\.brief\)/);
   assert.match(script, /filters:freshSession\?journeyApplyExclusions\(\{\}\)/);
   assert.match(script, /freshSession\?\{fresh_session:true\}/);
@@ -88,7 +88,7 @@ test("web renders service-shaped saved advice and list metadata", () => {
   const esc = value => String(value ?? "");
   const journey = { data: {} };
   const advice = scriptFunction("renderJourneyAdvice", "renderJourneyFeedback", {
-    journey, journeyPanel, esc, journeyProfileMarkup: () => "", journeySourcesMarkup: () => "", journeyText: key => key,
+    journey, journeyPanel, esc, journeyProfileMarkup: () => "", journeySourcesMarkup: () => "", journeyText: key => key, t: (key, fallback) => fallback,
   });
   advice({ assistant_message: "Bewaard advies", question: "Volgende vraag", hypotheses: [], search_brief: "Zoekbrief" });
   assert.match(panel.body, /Bewaard advies/);

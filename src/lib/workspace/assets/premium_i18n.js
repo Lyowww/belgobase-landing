@@ -411,6 +411,38 @@
 "journey.reviewTarget":{"nl":"Doelgroep bekijken","fr":"Voir la cible","en":"Review target audience"},
 "journey.moreInsight":{"nl":"Bekijk onderbouwing en profiel","fr":"Voir l’analyse et le profil","en":"View rationale and profile"}
  });
+ Object.assign(messages,{
+  "conversation.selectionLoading": {
+    "nl": "Ik zoek de bedrijven die hierbij passen…",
+    "fr": "Je recherche les entreprises correspondantes…",
+    "en": "Finding companies that match…"
+  },
+  "conversation.selectionRetry": {
+    "nl": "Selectie opnieuw laden",
+    "fr": "Recharger la sélection",
+    "en": "Reload selection"
+  },
+  "conversation.liveSelection": {
+    "nl": "Voorlopige selectie: {count} bedrijven",
+    "fr": "Sélection provisoire : {count} entreprises",
+    "en": "Provisional selection: {count} companies"
+  },
+  "conversation.selectionFilters": {
+    "nl": "Gebruikte filters",
+    "fr": "Filtres utilisés",
+    "en": "Filters used"
+  },
+  "conversation.selectionUnclear": {
+    "nl": "De selectie is nog niet duidelijk genoeg. Vertel welk type klant je wilt bereiken.",
+    "fr": "La sélection n’est pas encore assez précise. Indiquez le type de client recherché.",
+    "en": "The selection is not clear enough yet. Describe the type of customer you want to reach."
+  },
+  "conversation.selectionFailed": {
+    "nl": "De bedrijven konden niet worden geladen. Je gesprek is behouden.",
+    "fr": "Les entreprises n’ont pas pu être chargées. Votre conversation est conservée.",
+    "en": "Companies could not be loaded. Your conversation has been kept."
+  }
+});
   const locales={nl:'nl-BE',fr:'fr-BE',en:'en-GB'};
  let language='nl';
  const normalize=value=>['nl','fr','en'].includes(String(value||'').toLowerCase())?String(value).toLowerCase():'nl';

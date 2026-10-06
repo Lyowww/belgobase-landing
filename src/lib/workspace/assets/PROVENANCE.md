@@ -31,3 +31,5 @@ Microphone input preserves the chosen conversational route. Accepted speech reta
 ## Workspace conversation routing — 6 October 2026
 
 The workspace submit route recognises business introductions and conversational questions before plain company-name search, opens the existing conversation tab and passes the exact text to the existing advisor. Keyboard dictation and typed text share this route. Direct company names and enterprise numbers still use the ordinary search. Tests include the reported potato-farmer question on both web and PC1 sources.
+
+2026-10-06: Conversation advice automatically compiles a provisional search through the existing filter service and displays real BelgoBase results. Each follow-up replaces the selection; errors hide stale previews. PC1 UI and NL/FR/EN parity maintained.
