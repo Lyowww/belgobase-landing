@@ -748,7 +748,7 @@ function adviceSelectionMarkup(){
  if(selection.status==='pending')return `<p role="status">${esc(t('conversation.selectionLoading','Ik zoek de bedrijven die hierbij passen…'))}</p>`;
  if(selection.status==='error')return `<div class="notice error" role="alert">${esc(selection.error)} <button class="secondary" data-journey-action="retry-selection">${esc(t('conversation.selectionRetry','Selectie opnieuw laden'))}</button></div>`;
  if(selection.status!=='ready')return '';
- const filters=Object.entries(state.filters||{}).filter(([key,value])=>!['max_rows','selected_output_cols','ondernemingsnummers_exclude'].includes(key)&&value!==null&&value!==''&&value!==false);
+ const filters=Object.entries(state.filters||{}).filter(([key,value])=>!['max_rows','selected_output_cols','ondernemingsnummers_exclude'].includes(key)&&value!==null&&value!==''&&value!==false&&value!==undefined&&(!Array.isArray(value)||value.length));
  return `<div class="journey-list-summary"><strong>${esc(t('conversation.liveSelection','Voorlopige selectie: {count} bedrijven',{count:nf.format(state.total)}))}</strong><p>${esc(selection.brief)}</p><details><summary>${esc(t('conversation.selectionFilters','Gebruikte filters'))}</summary><div class="chips">${filters.map(([key,value])=>`<span class="chip">${esc(filterLabel(key,value,state.filters))}</span>`).join('')}</div></details></div>`;
 }
 async function searchAdviceSelection(advice,revision){
