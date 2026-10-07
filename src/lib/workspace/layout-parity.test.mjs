@@ -72,7 +72,7 @@ test('year result columns render without grouping while ordinary numbers keep lo
   money:String,negativeClass:()=>'',initials:String,activityLabel:String,present:String,
   filterValueLabels:{},optionLabel:(_selector,value)=>String(value??'')
  });
- vm.runInContext(source('companyCell'),context);
+ vm.runInContext(source('financialResultCell')+';'+source('companyCell'),context);
  for(const key of ['year','jaar','financial_jaar','ebitda_jaar']){
   assert.equal(context.companyCell({values:{[key]:2025}},key),'2025',key);
   assert.equal(context.companyCell({values:{[key]:null}},key),'—',`${key} missing`);

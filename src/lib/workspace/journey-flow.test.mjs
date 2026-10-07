@@ -71,8 +71,7 @@ test("web journey UI exposes the same bounded explicit workflow", () => {
   assert.match(script, /actionName==='resume-job'\)startJourneyJob\(\{command:'job_resume'/);
   assert.match(script, /actionName==='start-job'\)startJourneyJob\(\{command:'job_start'/);
   assert.match(script, /command:'state'.*last_advice/s);
-  assert.match(script, /if\(history\[index\]\?\.role==='user'\)/);
-  assert.match(script, /linkedAssistant\.content===savedAdvice\?\.assistant_message/);
+  assert.doesNotMatch(script, /linkedAssistant\.content===savedAdvice\?\.assistant_message/, "stored text is not a receipt for a new request");
   assert.match(script, /command:'job_remove'.*confirmed:true/);
   assert.match(script, /journeyText\('removeJobConfirm'\)/);
   assert.match(script, /data-journey-action="retry-selection"/);
@@ -291,44 +290,51 @@ test("web loads persistent exclusions once before a search boundary and blocks o
   assert.deepEqual(notices.at(-1), { message: "exclusionsUnavailable", isError: true });
 });
 
-test("web recovers service-shaped user-assistant advice without a second advise", async () => {
-  const savedAdvice = { assistant_message: "Bewaard antwoord", question: "Vervolgvraag", hypotheses: [], search_brief: "" };
-  const calls = [], conversation = [], query = { value: "", focus() {} }, noticeNode = { hidden: false };
-  let rendered = null;
-  const journey = { mode: null, data: null };
+test("failed advice never treats identical saved text as a receipt and keeps the draft", async () => {
+  for (const failure of ["request never submitted", "reply lost after commit"]) {
+    const text = "Mijn bedrijf", calls = [], notices = [], searches = [];
+    const conversation = [{ role: "user", content: text }, { role: "assistant", content: "Eerder betaald antwoord" }];
+    const query = { value: "", focus() {} }, noticeNode = { hidden: false };
+    const state = { busy: false, recording: false }, journey = { mode: null, data: null };
+    const journeyAdvise = scriptFunction("journeyAdvise", "uploadJourneyFile", {
+      journey, renderGuidedFlow() {}, ...journeyContextFixture(journey, state),
+      notice(message, isError) { notices.push({ message, isError }); },
+      appendConversation(role, content) { conversation.push({ role, content }); },
+      $: selector => selector === "#notice" ? noticeNode : (assert.equal(selector, "#query"), query),
+      updateJourney() { assert.fail("failed advise has no confirmed result"); },
+      async journeyCall(command) {
+        calls.push(command.command);
+        assert.equal(command.command, "advise", "do not fetch old state to confirm an uncorrelated request");
+        throw new Error(failure);
+      },
+      async searchAdviceSelection(...args) { searches.push(args); },
+      journeyText: key => key,
+    });
+    assert.equal(await journeyAdvise(text), false);
+    assert.deepEqual(calls, ["advise"], "never automatically repeat the paid request");
+    assert.deepEqual(notices, [{ message: failure, isError: true }]);
+    assert.equal(query.value, text); assert.equal(state.busy, false);
+    assert.equal(conversation[1].content, "Eerder betaald antwoord");
+    assert.equal(conversation.at(-1).role, "user"); assert.deepEqual(searches, []);
+  }
+});
+
+test("a current confirmed advice still renders and searches once", async () => {
+  const calls = [], searches = [], rendered = [];
+  const advice = { assistant_message: "Actueel antwoord", search_brief: "Actuele selectie" };
+  const state = { busy: false, recording: false }, journey = { mode: null, data: null };
+  const query = { value: "", focus() {} }, noticeNode = { hidden: false };
   const journeyAdvise = scriptFunction("journeyAdvise", "uploadJourneyFile", {
-    journey, renderGuidedFlow() {},
-    ...journeyContextFixture(journey),
-    mergeJourneyResult: scriptFunction("mergeJourneyResult", "updateJourney", {
-      journey, state: { conversation }, safeJourneySources: () => [], acceptWalletSnapshot() {},
-    }),
-    notice() { throw new Error("recovery should suppress the original transport error"); },
-    appendConversation(role, content) { conversation.push({ role, content }); },
+    journey, renderGuidedFlow() {}, ...journeyContextFixture(journey, state),
+    notice() { assert.fail("current success must not produce an error"); }, appendConversation() {},
     $: selector => selector === "#notice" ? noticeNode : (assert.equal(selector, "#query"), query),
-    busy() {},
-    updateJourney() { throw new Error("failed advise must not return a direct result"); },
-    async journeyCall(command) {
-      calls.push(command.command);
-      if (command.command === "advise") throw new Error("masked transport failure");
-      return {
-        history: [
-          { role: "user", content: "Mijn bedrijf" },
-          { role: "assistant", content: "Bewaard antwoord" },
-        ],
-        last_advice: savedAdvice,
-      };
-    },
-    renderJourneyAdvice(value) { rendered = value; },
-    acceptWalletSnapshot() {},
-    journeyText: key => key,
+    updateJourney(result) { rendered.push(result.advice); },
+    async journeyCall(command) { calls.push(command.command); return { advice }; },
+    async searchAdviceSelection(value) { searches.push(value); }, journeyText: key => key,
   });
-
-  await journeyAdvise("Mijn bedrijf");
-
-  assert.deepEqual(calls, ["advise", "state"]);
-  assert.equal(rendered, savedAdvice);
-  assert.equal(noticeNode.hidden, true);
-  assert.equal(conversation.at(-1).content, "Bewaard antwoord");
+  assert.equal(await journeyAdvise("Mijn bedrijf"), true);
+  assert.deepEqual(calls, ["advise"]); assert.deepEqual(rendered, [advice]);
+  assert.deepEqual(searches, [advice]); assert.equal(state.busy, false);
 });
 
 test("web maps contact statuses safely and strips transport fields before export", async () => {

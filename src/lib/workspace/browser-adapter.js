@@ -47,6 +47,7 @@
   let journeyLastStarted = 0;
   let journeyClosed = false;
   const adapterMessages = Object.freeze({
+    bridgeTimeout: { nl: "BelgoBase heeft niet op tijd geantwoord. Controleer de huidige status voordat je de actie opnieuw uitvoert.", fr: "BelgoBase n’a pas répondu à temps. Vérifiez l’état actuel avant de relancer l’action.", en: "BelgoBase did not respond in time. Check the current status before repeating the action." },
     journeyInvalid: { nl: "Controleer je bestand of klantreisaanvraag. Gebruik een gewone Excel- of CSV-lijst en controleer de kolomkoppeling. Je bestaande lijst blijft behouden.", fr: "Vérifiez votre fichier ou votre demande. Utilisez un fichier Excel ou CSV standard et vérifiez les colonnes associées. Votre liste existante est conservée.", en: "Check your file or customer journey request. Use a standard Excel or CSV file and check the column mapping. Your existing list is preserved." },
     journeyAdviceInvalid: { nl: "Het advies kon niet betrouwbaar worden verwerkt. Je lijst en selectie blijven behouden.", fr: "Le conseil n’a pas pu être traité de manière fiable. Votre liste et votre sélection sont conservées.", en: "The advice could not be processed reliably. Your list and selection are preserved." },
     recordingActive: { nl: "Er loopt al een opname.", fr: "Un enregistrement est déjà en cours.", en: "A recording is already in progress." },
@@ -168,7 +169,7 @@
     }
   }
 
-  async function ensureCsrf() {
+  async function ensureCsrf(signal) {
     if (csrf) return csrf;
     if (!csrfLoad) {
       csrfLoad = (async () => {
@@ -177,11 +178,13 @@
           response = await fetch(`${API_ROOT}/auth/session`, {
             cache: "no-store",
             credentials: "same-origin",
+            signal,
           });
         } catch {
           throw new Error(adapterMessage("unavailable"));
         }
         const data = await json(response);
+        if (signal?.aborted) throw new Error(adapterMessage("bridgeTimeout"));
         if (response.status === 401) {
           authExpired();
           throw new Error(adapterMessage("sessionExpired"));
@@ -488,16 +491,23 @@
     }
     const url = assertDownloadUrl(exported.download_url);
     if (!url) throw new Error(adapterMessage("retry"));
-    const response = await fetch(url.href, { cache: "no-store", credentials: "same-origin" });
-    if (response.status === 401) {
-      authExpired();
-      throw new Error(adapterMessage("sessionExpired"));
-    }
-    if (!response.ok) throw new Error(adapterMessage("retry"));
-    const raw = new Uint8Array(await response.arrayBuffer());
-    if (!raw.length || raw.length > JOURNEY_MAX_UPLOAD) {
-      throw new Error("Deze selectie is te groot voor de tijdelijke klantenlijst. Verklein ze tot maximaal 4 MB.");
-    }
+    // The Excel download is a separate request after the bridge has returned.
+    // Bound both its connection and body read before uploading any prospects.
+    const raw = await boundedRequest(async signal => {
+      const response = await fetch(url.href, { cache: "no-store", credentials: "same-origin", signal });
+      if (signal.aborted) throw new Error(adapterMessage("retry"));
+      if (response.status === 401) {
+        authExpired();
+        throw new Error(adapterMessage("sessionExpired"));
+      }
+      if (!response.ok) throw new Error(adapterMessage("retry"));
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      if (signal.aborted) throw new Error(adapterMessage("retry"));
+      if (!bytes.length || bytes.length > JOURNEY_MAX_UPLOAD) {
+        throw new Error("Deze selectie is te groot voor de tijdelijke klantenlijst. Verklein ze tot maximaal 4 MB.");
+      }
+      return bytes;
+    }, new AbortController(), () => new Error(adapterMessage("retry")), 130_000);
     const upload = await journeyBridge({ command: "upload_begin", filename: "BelgoBase_selectie.xlsx", size: raw.length, purpose: "prospects" });
     if (typeof upload.upload_id !== "string") throw new Error(adapterMessage("retry"));
     let offset = 0;
@@ -576,33 +586,32 @@
 
   // The gateway allows 90 seconds. Bound the browser too, including session lookup
   // and response body reads, so a broken connection cannot leave controls locked.
-  async function boundedRequest(run, controller, timeoutError) {
+  async function boundedRequest(run, controller, timeoutError, timeoutMs = 100_000) {
     let timer;
     const deadline = new Promise((_, reject) => {
       timer = window.setTimeout(() => {
         reject(timeoutError());
         controller.abort();
-      }, 100_000);
+      }, timeoutMs);
     });
     try { return await Promise.race([run(controller.signal), deadline]); }
     finally { window.clearTimeout(timer); }
   }
 
   async function sendBridge(method, payload, options = {}) {
-    if (method !== "ai") return executeBridge(method, payload, options);
     const controller = new AbortController();
     const abort = () => controller.abort();
     if (options.signal?.aborted) abort();
     else options.signal?.addEventListener("abort", abort, { once: true });
     try {
-      return await boundedRequest(signal => executeBridge(method, payload, { ...options, signal }), controller, () => aiError("ai_timeout", 504));
+      return await boundedRequest(signal => executeBridge(method, payload, { ...options, signal }), controller, () => method === "ai" ? aiError("ai_timeout", 504) : new Error(adapterMessage("bridgeTimeout")));
     } finally { options.signal?.removeEventListener("abort", abort); }
   }
 
   async function executeBridge(method, payload, { skipAutodownload = false, keepalive = false, signal } = {}) {
     const outgoing = payload === undefined ? {} : { ...payload };
     if (method === "workspace_save" && (!Number.isSafeInteger(outgoing.workspace_revision) || outgoing.workspace_revision < 0)) throw new Error(adapterMessage("retry"));
-    const token = await ensureCsrf();
+    const token = await ensureCsrf(signal);
     if (signal?.aborted) throw aiError("ai_timeout", 504);
     let response;
     try {
@@ -623,6 +632,7 @@
       throw new Error(adapterMessage("unavailable"));
     }
     const data = await json(response);
+    if (signal?.aborted) throw method === "ai" ? aiError("ai_timeout", 504) : new Error(adapterMessage("bridgeTimeout"));
     const localized = typeof window.BelgoBaseWebI18n?.enrich === "function" ? window.BelgoBaseWebI18n.enrich(method, data) : data;
     if (response.status === 401) {
       authExpired();
