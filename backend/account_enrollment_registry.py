@@ -11,6 +11,7 @@ from __future__ import annotations
 import datetime as dt
 import hashlib
 import json
+import re
 import sqlite3
 import uuid
 from pathlib import Path
@@ -47,10 +48,12 @@ from belgobase_license_registry_42a import (
 WEB_RECEIPT_SCHEMA = "belgobase-web-legal-acceptance-receipt-v1"
 CLAIM_TTL_SECONDS = 70 * 60
 PREFLIGHT_TTL_SECONDS = 15 * 60
-WEB_CURRENT_LEGAL_SET_ID = "belgobase-commercial-legal-v1.2-20260919"
-WEB_CURRENT_MANIFEST_FILE = "05_BELGOBASE_COMMERCIELE_EERSTE_GEBRUIK_MANIFEST_V1.2.json"
+WEB_CURRENT_LEGAL_SET_ID = "belgobase-commercial-legal-v1.3-20261007"
+WEB_CURRENT_MANIFEST_FILE = "05_BELGOBASE_COMMERCIELE_EERSTE_GEBRUIK_MANIFEST_V1.3.json"
 WEB_CURRENT_MANIFEST_SCHEMA = "belgobase-legal-text-first-use-manifest-v1"
-WEB_CURRENT_MANIFEST_SHA256 = "4609918a391402fa2dfc5299bf28847896c1f5ad7a81675e52f0eb6de7eed75d"
+WEB_CURRENT_MANIFEST_SHA256 = "f59baabdc0c458a3259e863152910af18e824b0b00ed68f26fc95bb92a8b7423"
+SUPPORT_PHONE_PATTERN = re.compile(r"^\+[1-9][0-9]{6,14}$")
+BELGIAN_PHONE_PATTERN = re.compile(r"^[1-9][0-9]{7,8}$")
 
 
 class WebEnrollmentUnavailable(AcceptanceValidationError):
@@ -67,6 +70,13 @@ CREATE TABLE IF NOT EXISTS web_account_enrollment_claims (
     created_at_utc TEXT NOT NULL,
     expires_at_utc TEXT NOT NULL,
     completed_acceptance_id TEXT,
+    FOREIGN KEY(license_id) REFERENCES licenses(license_id)
+);
+CREATE TABLE IF NOT EXISTS web_customer_support_phones (
+    license_id TEXT PRIMARY KEY,
+    support_phone TEXT NOT NULL DEFAULT '',
+    created_at_utc TEXT NOT NULL,
+    updated_at_utc TEXT NOT NULL,
     FOREIGN KEY(license_id) REFERENCES licenses(license_id)
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_web_claim_active_license
@@ -96,6 +106,7 @@ CREATE TABLE IF NOT EXISTS web_legal_acceptance_receipts (
     acceptant_name TEXT NOT NULL,
     business_email TEXT NOT NULL,
     acceptant_function TEXT NOT NULL,
+    support_phone TEXT NOT NULL DEFAULT '',
     legal_set_id TEXT NOT NULL,
     manifest_sha256 TEXT NOT NULL,
     accepted_at_utc TEXT NOT NULL,
@@ -127,10 +138,10 @@ def _load_current_web_legal_bundle(legal_dir: Path) -> dict[str, Any]:
     if (
         manifest.get("schema") != WEB_CURRENT_MANIFEST_SCHEMA
         or manifest.get("contractset_id") != WEB_CURRENT_LEGAL_SET_ID
-        or manifest.get("manifest_version") != "1.2-first-use"
-        or manifest.get("base_contractset_id") != "belgobase-b2b-commercial-1.2"
+        or manifest.get("manifest_version") != "1.3-first-use"
+        or manifest.get("base_contractset_id") != "belgobase-b2b-commercial-1.3"
         or manifest.get("language") != "nl-BE"
-        or manifest.get("document_date") != "2026-09-19"
+        or manifest.get("document_date") != "2026-10-07"
     ):
         raise AcceptanceValidationError("Webmanifest bevat ongeldige setmetadata.")
     flow = manifest.get("acceptance_flow")
@@ -153,9 +164,9 @@ def _load_current_web_legal_bundle(legal_dir: Path) -> dict[str, Any]:
         "privacy_notice": "privacy",
     }
     expected_documents = {
-        "terms": ("BB-AV-B2B-NL-1.2", "01_BELGOBASE_ALGEMENE_VOORWAARDEN_B2B_V1.2.txt"),
-        "usage_terms": ("BB-GV-B2B-NL-1.2", "02_BELGOBASE_GEBRUIKSVOORWAARDEN_V1.2.txt"),
-        "privacy": ("BB-PRIVACY-NL-1.2", "03_BELGOBASE_PRIVACYVERKLARING_V1.2.txt"),
+        "terms": ("BB-AV-B2B-NL-1.3", "01_BELGOBASE_ALGEMENE_VOORWAARDEN_B2B_V1.3.txt"),
+        "usage_terms": ("BB-GV-B2B-NL-1.3", "02_BELGOBASE_GEBRUIKSVOORWAARDEN_V1.3.txt"),
+        "privacy": ("BB-PRIVACY-NL-1.3", "03_BELGOBASE_PRIVACYVERKLARING_V1.3.txt"),
     }
     documents: dict[str, dict[str, Any]] = {}
     document_items: list[dict[str, Any]] = []
@@ -171,7 +182,7 @@ def _load_current_web_legal_bundle(legal_dir: Path) -> dict[str, Any]:
         if (
             Path(file_name).name != file_name
             or (document_id, file_name) != expected_documents[key]
-            or entry.get("version") != "1.2"
+            or entry.get("version") != "1.3"
         ):
             raise AcceptanceValidationError("Webmanifest bevat ongeldige documentmetadata.")
         raw = (root / file_name).read_bytes()
@@ -196,9 +207,9 @@ def _load_current_web_legal_bundle(legal_dir: Path) -> dict[str, Any]:
     choices: dict[str, dict[str, str]] = {}
     document_ids = {item["document_id"] for item in document_items}
     expected_choices = {
-        "general_terms": ("active_acceptance", "BB-AV-B2B-NL-1.2", "Algemene voorwaarden gelezen en goedgekeurd."),
-        "usage_terms": ("active_acceptance", "BB-GV-B2B-NL-1.2", "Gebruiksvoorwaarden gelezen en goedgekeurd."),
-        "privacy_notice": ("acknowledgement_not_consent", "BB-PRIVACY-NL-1.2", "Privacyverklaring ontvangen en gelezen."),
+        "general_terms": ("active_acceptance", "BB-AV-B2B-NL-1.3", "Algemene voorwaarden gelezen en goedgekeurd."),
+        "usage_terms": ("active_acceptance", "BB-GV-B2B-NL-1.3", "Gebruiksvoorwaarden gelezen en goedgekeurd."),
+        "privacy_notice": ("acknowledgement_not_consent", "BB-PRIVACY-NL-1.3", "Privacyverklaring ontvangen en gelezen."),
     }
     for choice in flow.get("choices") or []:
         if not isinstance(choice, dict) or choice.get("document_id") not in document_ids:
@@ -259,14 +270,14 @@ def _compatible_web_bundle(
 
 def load_web_legal_bundle(legal_dir: Path) -> dict[str, Any]:
     root = Path(legal_dir)
-    previous = load_legal_bundle(root, legal_set_id=FIRST_USE_LEGAL_SET_ID)
-    if not (root / WEB_CURRENT_MANIFEST_FILE).is_file():
-        return previous
+    # Explicit immutable identities preserve both prior web receipt generations.
+    prior_sets = (FIRST_USE_LEGAL_SET_ID, "belgobase-commercial-legal-v1.2-20260919")
+    previous = [load_legal_bundle(root, legal_set_id=set_id) for set_id in prior_sets]
     current = _load_current_web_legal_bundle(root)
     result = dict(current)
     result["_compatible_web_bundles"] = {
-        _bundle_key(previous["legal_set_id"], previous["manifest_sha256"]): previous,
-        _bundle_key(current["legal_set_id"], current["manifest_sha256"]): current,
+        _bundle_key(bundle["legal_set_id"], bundle["manifest_sha256"]): bundle
+        for bundle in (*previous, current)
     }
     return result
 
@@ -286,6 +297,15 @@ def initialize_web_enrollment(database_path: Path) -> None:
     connection = connect_database(Path(database_path))
     try:
         connection.executescript(WEB_SCHEMA)
+        receipt_columns = {
+            str(row["name"])
+            for row in connection.execute("PRAGMA table_info(web_legal_acceptance_receipts)")
+        }
+        if "support_phone" not in receipt_columns:
+            connection.execute(
+                "ALTER TABLE web_legal_acceptance_receipts "
+                "ADD COLUMN support_phone TEXT NOT NULL DEFAULT ''"
+            )
         connection.commit()
     finally:
         connection.close()
@@ -407,6 +427,25 @@ def cancel_web_enrollment(
     finally:
         connection.close()
     return {"ok": True}
+
+
+def normalize_support_phone(value: Any) -> str:
+    """Return an optional support phone in one unambiguous international form."""
+    if value is None:
+        return ""
+    raw = str(value).strip()
+    if not raw:
+        return ""
+    if len(raw) > 64:
+        raise AcceptanceValidationError("support_phone_invalid")
+    normalized = re.sub(r"[ .()\-]", "", raw)
+    if normalized.startswith("0032"):
+        normalized = "+32" + normalized[4:]
+    elif normalized.startswith("0") and BELGIAN_PHONE_PATTERN.fullmatch(normalized[1:]):
+        normalized = "+32" + normalized[1:]
+    if SUPPORT_PHONE_PATTERN.fullmatch(normalized) is None:
+        raise AcceptanceValidationError("support_phone_invalid")
+    return normalized
 
 
 def _web_snapshot(
@@ -540,6 +579,7 @@ def web_enrollment_preflight(
         "legal": snapshot["legal"],
         "preflight_id": preflight_id,
         "preflight_fingerprint": fingerprint,
+        "preflight_expires_at": expires,
     }
 
 
@@ -579,6 +619,7 @@ def complete_web_enrollment(
     )
     enterprise = normalize_enterprise_number(payload.get("enterprise_number"))
     legal_name = _normal_text(payload.get("legal_name"), "wettelijke klantnaam", 300)
+    support_phone = normalize_support_phone(payload.get("support_phone"))
     choices = payload.get("choice_texts")
     if not isinstance(choices, dict):
         raise AcceptanceValidationError("legal_acceptance_invalid")
@@ -601,10 +642,14 @@ def complete_web_enrollment(
         if existing is not None:
             stored = json.loads(existing["canonical_receipt_json"])
             if (
-                stored.get("preflight", {}).get("id") != preflight_id
+                existing["business_email"] != normalized_email
+                or stored.get("customer", {}).get("enterprise_number") != enterprise
+                or stored.get("customer", {}).get("legal_name") != legal_name
+                or stored.get("preflight", {}).get("id") != preflight_id
                 or stored.get("preflight", {}).get("snapshot_sha256") != supplied_fingerprint
                 or stored.get("acceptant", {}).get("name") != acceptant_name
                 or stored.get("acceptant", {}).get("function") != acceptant_function
+                or stored.get("customer", {}).get("support_phone", "") != support_phone
                 or stored.get("declarations") != declarations
                 or {
                     key: value.get("text")
@@ -631,10 +676,11 @@ def complete_web_enrollment(
         if (
             preflight is None
             or preflight["consumed_at_utc"] is not None
-            or preflight["expires_at_utc"] <= now_text
             or preflight["snapshot_sha256"] != supplied_fingerprint
         ):
             raise AcceptanceValidationError("legal_acceptance_invalid")
+        if preflight["expires_at_utc"] <= now_text:
+            raise WebEnrollmentUnavailable("legal_preflight_expired")
         snapshot = json.loads(preflight["snapshot_json"])
         customer = snapshot["customer"]
         snapshot_bundle = _compatible_web_bundle(
@@ -692,6 +738,7 @@ def complete_web_enrollment(
             "choice_confirmations": choice_confirmations,
             "documents": snapshot["legal"]["documents"],
         }
+        receipt["customer"] = {**customer, "support_phone": support_phone}
         canonical = _canonical_json(receipt)
         signature = _b64encode(key.sign(canonical.encode("utf-8")))
         connection.execute(
@@ -709,6 +756,12 @@ def complete_web_enrollment(
                 now_text,
             ),
         )
+        connection.execute(
+            """INSERT INTO web_customer_support_phones(
+                   license_id,support_phone,created_at_utc,updated_at_utc
+               ) VALUES(?,?,?,?)""",
+            (claim["license_id"], support_phone, now_text, now_text),
+        )
         profile = connection.execute(
             "SELECT * FROM license_customer_profiles WHERE license_id=?",
             (claim["license_id"],),
@@ -724,16 +777,16 @@ def complete_web_enrollment(
                 "Eerste klantkoppeling via geverifieerde webinschrijving.",
                 now_text,
                 _canonical_json({}),
-                _canonical_json(dict(profile)),
+                _canonical_json({**dict(profile), "support_phone": support_phone}),
             ),
         )
         connection.execute(
             """INSERT INTO web_legal_acceptance_receipts(
                    acceptance_id,claim_id,preflight_id,license_id,customer_number,
                    legal_name,enterprise_number,acceptant_name,business_email,
-                   acceptant_function,legal_set_id,manifest_sha256,accepted_at_utc,
+                   acceptant_function,support_phone,legal_set_id,manifest_sha256,accepted_at_utc,
                    canonical_receipt_json,signing_key_id,signature_b64,public_key_b64
-               ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+               ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (
                 acceptance_id,
                 claim_id,
@@ -745,6 +798,7 @@ def complete_web_enrollment(
                 acceptant_name,
                 normalized_email,
                 acceptant_function,
+                support_phone,
                 snapshot["legal"]["legal_set_id"],
                 snapshot["legal"]["manifest_sha256"],
                 now_text,
@@ -881,12 +935,17 @@ def project_web_account(
                WHERE license_id=? ORDER BY accepted_at_utc DESC LIMIT 1""",
             (license_id,),
         ).fetchone()
+        phone_row = connection.execute(
+            "SELECT support_phone FROM web_customer_support_phones WHERE license_id=?",
+            (license_id,),
+        ).fetchone()
     finally:
         connection.close()
     if (
         profile is None
         or license_row is None
         or profile["support_email"] != email
+        or profile["customer_number"] != normalize_customer_number(license_row["customer_id"])
     ):
         raise AcceptanceValidationError("account_not_ready")
     available_receipts = [
@@ -934,6 +993,8 @@ def project_web_account(
         or receipt_customer.get("legal_name") != profile["legal_name"]
         or receipt_customer.get("enterprise_number") != profile["enterprise_number"]
         or receipt_customer.get("support_email") != profile["support_email"]
+        or receipt_customer.get("support_phone", "")
+        != str(phone_row["support_phone"] if phone_row is not None else "")
         or receipt_acceptant.get("business_email") != profile["support_email"]
         or (
             receipt_customer.get("customer_id") is not None
@@ -954,10 +1015,13 @@ def project_web_account(
         return {
             "ok": True,
             "rows": [
+                {"label": "Klantnummer", "value": profile["customer_number"]},
+                {"label": "Licentie-ID", "value": license_id},
                 {"label": "Onderneming", "value": profile["legal_name"]},
                 {"label": "KBO-nummer", "value": profile["enterprise_number"]},
                 {"label": "Benoemde gebruiker", "value": receipt["acceptant"]["name"]},
                 {"label": "Zakelijk e-mailadres", "value": profile["support_email"]},
+                {"label": "Telefoon", "value": receipt_customer.get("support_phone", "")},
                 {"label": "Functie", "value": receipt["acceptant"]["function"]},
                 {"label": "Licentiestatus", "value": license_row["status"]},
                 {"label": "Licentieplan", "value": license_row["plan"]},
