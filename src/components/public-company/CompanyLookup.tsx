@@ -1,0 +1,144 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { Search, ArrowRight, ArrowLeft, LoaderCircle, ExternalLink } from "lucide-react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import type { Locale } from "@/i18n/config";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { companyCopy } from "@/lib/public-company/copy";
+import { cleanQuery, displayNumber, safeWebsite, type CompanyMatch, type CompanyResponse, type PublicCompany } from "@/lib/public-company/model";
+import "./lookup.css";
+
+export function CompanyLookup({ locale }: { locale: Locale }) {
+  const copy = companyCopy[locale];
+  const [query, setQuery] = useState("");
+  const [matches, setMatches] = useState<CompanyMatch[]>([]);
+  const [company, setCompany] = useState<PublicCompany>();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [officialNumber, setOfficialNumber] = useState("");
+  const pending = useRef<AbortController | null>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const localeTag = `${locale}-BE`;
+
+  useEffect(() => () => pending.current?.abort(), []);
+  useEffect(() => { if (company) heading.current?.focus({ preventScroll: true }); }, [company]);
+
+  async function lookup(value: string, selection = false) {
+    const clean = cleanQuery(value);
+    if (!clean) { setError(copy.short); return; }
+    pending.current?.abort();
+    const controller = new AbortController();
+    pending.current = controller;
+    setBusy(true); setError(""); setOfficialNumber(""); setCompany(undefined);
+    try {
+      const response = await fetch("/api/public/company", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: clean }), signal: controller.signal,
+      });
+      const data: CompanyResponse = await response.json();
+      if (controller.signal.aborted) return;
+      if (!response.ok || !data.ok) {
+        setError(response.status === 429 ? copy.rate : data.error === "invalid_query" ? copy.short : copy.error);
+        return;
+      }
+      if (!selection) setMatches(data.matches);
+      if (data.company) { setCompany(data.company); return; }
+      if (data.error === "natural_person_unavailable") {
+        const number = clean.replace(/^BE\s*/i, "").replace(/[.\s-]/g, "");
+        if (/^\d{10}$/.test(number)) setOfficialNumber(number);
+        setError(copy.limited);
+      } else if (!data.matches.length) setError(copy.notFound);
+    } catch {
+      if (!controller.signal.aborted) setError(copy.error);
+    } finally {
+      if (pending.current === controller) setBusy(false);
+    }
+  }
+
+  function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setMatches([]); void lookup(query); }
+  function date(value?: string) {
+    if (!value || !/^\d{4}-\d{2}-\d{2}/.test(value)) return copy.unavailable;
+    const parsed = new Date(`${value.slice(0, 10)}T12:00:00Z`);
+    return Number.isFinite(parsed.getTime()) ? new Intl.DateTimeFormat(localeTag, { day: "numeric", month: "long", year: "numeric" }).format(parsed) : copy.unavailable;
+  }
+  function metricLabel(key: string, fallback: string) {
+    return ({ revenue: copy.revenue, profit: copy.profit, equity: copy.equity, fte: copy.fte, ebitda: copy.ebitda } as Record<string, string>)[key] || fallback;
+  }
+  function metricValue(value: number | null, unit: string) {
+    if (value === null || !Number.isFinite(value)) return copy.unavailable;
+    return new Intl.NumberFormat(localeTag, unit === "EUR"
+      ? { style: "currency", currency: "EUR", maximumFractionDigits: 0 }
+      : { maximumFractionDigits: 1 }).format(value);
+  }
+  const website = safeWebsite(company?.website);
+  const facts = company ? [
+    [copy.number, displayNumber(company.number)], [copy.status, company.status],
+    [copy.form, company.legalForm], [copy.start, company.startDate ? date(company.startDate) : undefined],
+    [copy.address, company.address],
+  ].filter((row) => row[1]) : [];
+
+  return (
+    <div className="company-lookup">
+      <header className="lookup-nav">
+        <Link href={`/${locale}`} className="lookup-brand" aria-label="BelgoBase">
+          <Image src="/brand/belgobase-bb-logo.png" width={34} height={34} alt="" />
+          <span>BelgoBase</span>
+        </Link>
+        <div className="lookup-nav-right"><Link href={`/${locale}`} className="lookup-about">{copy.about}</Link><LanguageSwitcher /></div>
+      </header>
+      <main className="lookup-main">
+        <section className="lookup-search" aria-labelledby="lookup-title">
+          <h1 id="lookup-title">{copy.heading}</h1>
+          <p className="lookup-intro">{copy.intro}</p>
+          <form onSubmit={submit} className="lookup-form" aria-busy={busy}>
+            <label htmlFor="company-query">{copy.label}</label>
+            <div className="lookup-input-row">
+              <Search size={23} aria-hidden="true" className="lookup-search-icon" />
+              <input id="company-query" name="query" value={query} onChange={(event) => setQuery(event.target.value)} maxLength={100} placeholder={copy.placeholder} autoComplete="off" type="search" required aria-describedby="lookup-hint lookup-message" />
+              <button type="submit" disabled={busy}>{busy ? <LoaderCircle size={21} className="lookup-spin" aria-hidden="true" /> : null}{busy ? copy.loading : copy.search}<ArrowRight size={20} aria-hidden="true" /></button>
+            </div>
+            <p id="lookup-hint" className="lookup-hint">{copy.hint}</p>
+          </form>
+          <div id="lookup-message" aria-live="polite" aria-atomic="true">
+            {error && <p className="lookup-message" role="alert">{error}{officialNumber && <a className="lookup-official" href={`https://kbopub.economie.fgov.be/kbopub/zoeknummerform.html?nummer=${officialNumber}`} target="_blank" rel="noopener noreferrer">{copy.official} <ExternalLink size={16} aria-hidden="true" /></a>}</p>}
+          </div>
+        </section>
+
+        {!company && matches.length > 0 && <section className="lookup-results" aria-label={copy.results}>
+          <h2>{copy.choose}</h2>
+          <ul>{matches.map((match) => <li key={match.number}><button disabled={busy} onClick={() => void lookup(match.number, true)}><span><strong>{match.name}</strong><span className="lookup-match-detail">{displayNumber(match.number)}{match.municipality ? ` · ${match.municipality}` : ""}</span></span><ArrowRight size={23} aria-hidden="true" /></button></li>)}</ul>
+        </section>}
+
+        {company && <article className="lookup-company" aria-labelledby="company-name">
+          <div className="lookup-company-top">
+            <div><p className="lookup-company-number">BE {displayNumber(company.number)}</p><h2 id="company-name" ref={heading} tabIndex={-1}>{company.name}</h2></div>
+            {matches.length > 1 && <button className="lookup-back" onClick={() => { setCompany(undefined); setError(""); }}><ArrowLeft size={18} aria-hidden="true" />{copy.back}</button>}
+          </div>
+          <div className="lookup-company-grid">
+            <section className="lookup-general" aria-labelledby="company-info-title">
+              <h3 id="company-info-title">{copy.general}</h3>
+              <dl>{facts.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
+                {website && <div><dt>{copy.website}</dt><dd><a href={website} target="_blank" rel="noopener noreferrer">{new URL(website).hostname}<ExternalLink size={16} aria-hidden="true" /></a></dd></div>}
+              </dl>
+              {company.activities.length > 0 && <div className="lookup-activities"><h3>{copy.activities}</h3><ul>{company.activities.slice(0, 3).map((activity) => <li key={`${activity.code}-${activity.label}`}><span>{activity.label}</span><span className="lookup-nace">{activity.code}</span></li>)}</ul>
+                {company.activities.length > 3 && <details><summary>{copy.more}</summary><ul>{company.activities.slice(3).map((activity) => <li key={`${activity.code}-${activity.label}`}><span>{activity.label}</span><span className="lookup-nace">{activity.code}</span></li>)}</ul></details>}
+              </div>}
+            </section>
+            <section className="lookup-financial" aria-labelledby="financial-title">
+              <h3 id="financial-title">{copy.finance}</h3>
+              {company.metrics.some((metric) => metric.value !== null) ? <dl className="lookup-metrics">{company.metrics.map((metric) => <div key={metric.key}><dt>{metricLabel(metric.key, metric.label)}</dt><dd className={metric.value !== null && metric.value < 0 ? "lookup-negative" : ""}>{metricValue(metric.value, metric.unit)}{metric.unit === "VTE" && metric.value !== null && <span className="lookup-unit"> {copy.persons}</span>}</dd><p>{metric.year ? `${copy.year} ${metric.year}` : copy.unknownYear}</p></div>)}</dl> : <p className="lookup-no-financials">{copy.noFinancials}</p>}
+            </section>
+          </div>
+          <div className="lookup-provenance">
+            <p>{copy.sources}: KBO{company.sources.nbbDate && " · NBB"}{company.sources.kboDate && <><span aria-hidden="true"> · </span>{copy.kbo}: <strong>{date(company.sources.kboDate)}</strong></>}{company.sources.nbbDate && <><span aria-hidden="true"> · </span>{copy.nbb}: <strong>{date(company.sources.nbbDate)}</strong></>}</p>
+            <a href={`https://kbopub.economie.fgov.be/kbopub/zoeknummerform.html?nummer=${company.number}`} target="_blank" rel="noopener noreferrer">{copy.official}<ExternalLink size={16} aria-hidden="true" /></a>
+          </div>
+          <aside className="lookup-next"><p>{copy.upsell}</p><Link href={`/${locale}#contact`}>{copy.cta}<ArrowRight size={20} aria-hidden="true" /></Link></aside>
+        </article>}
+      </main>
+      <footer className="lookup-footer"><p>{copy.footer}</p><p>{copy.independent} <Link href={`/${locale}/privacy`}>{copy.privacy}</Link></p></footer>
+    </div>
+  );
+}

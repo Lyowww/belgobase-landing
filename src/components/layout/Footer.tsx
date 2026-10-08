@@ -55,6 +55,7 @@ export function Footer({ reserveStickyCta = false }: { reserveStickyCta?: boolea
       { labelKey: "footer.database" as const, href: `/${locale}#database` },
       { labelKey: "footer.pricing" as const, href: `/${locale}#pricing` },
       { label: "Blog", href: `/${locale}/blog` },
+      { label: ({ nl: "Bedrijf opzoeken", fr: "Rechercher une entreprise", en: "Look up a company" })[locale], href: `/${locale}/bedrijf-zoeken` },
     ],
     legal: [
       { labelKey: "footer.privacy" as const, href: `/${locale}/privacy` },

@@ -1,0 +1,35 @@
+import type { Locale } from "@/i18n/config";
+
+export const companyCopy = {
+  nl: {
+    title: "Belgische bedrijven opzoeken", heading: "Eén bedrijf. Eén helder overzicht.",
+    intro: "KBO-gegevens en beschikbare jaarrekeningcijfers, samen op één plaats.",
+    label: "Welk bedrijf wilt u bekijken?", placeholder: "Bedrijfsnaam of ondernemingsnummer", search: "Zoeken", loading: "Bedrijf opzoeken…",
+    hint: "Gratis opzoeken. Geen account nodig.", choose: "Welk bedrijf bedoelt u?", results: "Zoekresultaten", general: "Bedrijfsgegevens", finance: "Financiële cijfers",
+    number: "Ondernemingsnummer", status: "Status", form: "Rechtsvorm", start: "Opgericht", address: "Adres", website: "Website", activities: "Activiteiten", more: "Alle activiteiten bekijken",
+    unavailable: "Niet beschikbaar", noFinancials: "Voor dit bedrijf zijn hier geen jaarrekeningcijfers beschikbaar.",
+    revenue: "Omzet", profit: "Resultaat", equity: "Eigen vermogen", fte: "Personeel", ebitda: "EBITDA", year: "Boekjaar", unknownYear: "Boekjaar onbekend", persons: "VTE",
+    sources: "Bronnen", kbo: "Datum KBO-bron", nbb: "Laatste neerlegging", official: "Bekijk de officiële KBO-fiche", independent: "BelgoBase is een onafhankelijke dienst, geen overheidswebsite.",
+    short: "Vul minstens drie tekens in: een bedrijfsnaam of ondernemingsnummer.", notFound: "Geen beschikbare bedrijfsfiche gevonden. Controleer de naam of het ondernemingsnummer.",
+    error: "De opzoekdienst is tijdelijk niet bereikbaar. Probeer het straks opnieuw.", rate: "Er zijn veel opzoekingen tegelijk. Wacht even en probeer opnieuw.",
+    limited: "Voor eenmanszaken is deze openbare fiche nog niet beschikbaar. U kunt de officiële KBO-fiche raadplegen.",
+    upsell: "Zoekt u meer bedrijven die bij uw doelgroep passen?", cta: "Ontdek BelgoBase", back: "Terug naar de resultaten", about: "Over BelgoBase", privacy: "Privacy", footer: "Bedrijfsinformatie uit KBO en Nationale Bank van België. Beschikbaarheid verschilt per bedrijf.",
+  },
+  fr: {
+    title: "Rechercher des entreprises belges", heading: "Une entreprise. Une vue claire.", intro: "Les données BCE et les chiffres disponibles des comptes annuels, au même endroit.",
+    label: "Quelle entreprise recherchez-vous ?", placeholder: "Nom ou numéro d’entreprise", search: "Rechercher", loading: "Recherche en cours…", hint: "Recherche gratuite. Sans compte.",
+    choose: "Quelle entreprise voulez-vous consulter ?", results: "Résultats", general: "Données de l’entreprise", finance: "Chiffres financiers", number: "Numéro d’entreprise", status: "Statut", form: "Forme juridique", start: "Création", address: "Adresse", website: "Site web", activities: "Activités", more: "Voir toutes les activités",
+    unavailable: "Indisponible", noFinancials: "Aucun chiffre de comptes annuels n’est disponible ici pour cette entreprise.", revenue: "Chiffre d’affaires", profit: "Résultat", equity: "Fonds propres", fte: "Personnel", ebitda: "EBITDA", year: "Exercice", unknownYear: "Exercice inconnu", persons: "ETP",
+    sources: "Sources", kbo: "Date de la source BCE", nbb: "Dernier dépôt", official: "Consulter la fiche officielle BCE", independent: "BelgoBase est un service indépendant, pas un site gouvernemental.",
+    short: "Saisissez au moins trois caractères : un nom ou numéro d’entreprise.", notFound: "Aucune fiche disponible. Vérifiez le nom ou le numéro d’entreprise.", error: "Le service est temporairement indisponible. Réessayez plus tard.", rate: "De nombreuses recherches sont en cours. Veuillez réessayer dans un instant.", limited: "Cette fiche publique n’est pas encore disponible pour les personnes physiques. Consultez la fiche officielle BCE.",
+    upsell: "Vous cherchez d’autres entreprises correspondant à votre cible ?", cta: "Découvrir BelgoBase", back: "Retour aux résultats", about: "À propos de BelgoBase", privacy: "Confidentialité", footer: "Informations issues de la BCE et de la Banque nationale de Belgique. La disponibilité varie selon l’entreprise.",
+  },
+  en: {
+    title: "Look up Belgian companies", heading: "One company. One clear overview.", intro: "KBO registration data and available annual-account figures, together in one place.",
+    label: "Which company would you like to see?", placeholder: "Company name or enterprise number", search: "Search", loading: "Looking up the company…", hint: "Free lookup. No account needed.", choose: "Which company do you mean?", results: "Search results", general: "Company information", finance: "Financial figures", number: "Enterprise number", status: "Status", form: "Legal form", start: "Established", address: "Address", website: "Website", activities: "Activities", more: "View all activities",
+    unavailable: "Not available", noFinancials: "No annual-account figures are available here for this company.", revenue: "Revenue", profit: "Result", equity: "Equity", fte: "Employees", ebitda: "EBITDA", year: "Financial year", unknownYear: "Financial year unknown", persons: "FTE",
+    sources: "Sources", kbo: "KBO source date", nbb: "Latest filing", official: "View the official KBO record", independent: "BelgoBase is an independent service, not a government website.",
+    short: "Enter at least three characters: a company name or enterprise number.", notFound: "No available company record found. Check the name or enterprise number.", error: "The lookup service is temporarily unavailable. Please try again later.", rate: "Many lookups are in progress. Wait a moment and try again.", limited: "This public record is not yet available for sole proprietors. You can view the official KBO record.",
+    upsell: "Looking for more companies that fit your target market?", cta: "Discover BelgoBase", back: "Back to results", about: "About BelgoBase", privacy: "Privacy", footer: "Company information from KBO and the National Bank of Belgium. Availability varies by company.",
+  },
+} satisfies Record<Locale, Record<string, string>>;
