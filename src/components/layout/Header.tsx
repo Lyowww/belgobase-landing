@@ -54,6 +54,7 @@ export function Header({ variant = "default" }: HeaderProps) {
     { label: t("nav.industries"), href: "#industries" },
     { label: t("nav.results"), href: "#database" },
     { label: t("nav.pricing"), href: "#pricing" },
+    { label: "Blog", href: "/blog" },
   ];
 
   return (

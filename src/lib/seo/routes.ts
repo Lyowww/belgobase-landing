@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { i18n, type Locale } from "@/i18n/config";
+import { blogArticles } from "@/lib/blog/articles";
 import { buildCanonicalUrl, buildLanguageAlternates, buildLocalizedPath } from "@/lib/seo/metadata";
 
 const LOCALE_APP_DIR = path.join(process.cwd(), "src/app/[locale]");
@@ -39,7 +40,8 @@ export type SitemapEntry = {
   url: string;
   changeFrequency: "weekly";
   priority: number;
-  alternates: {
+  lastModified?: string;
+  alternates?: {
     languages: Record<string, string>;
   };
 };
@@ -66,6 +68,19 @@ export function buildSitemapEntries(): SitemapEntry[] {
         alternates: { languages },
       });
     }
+  }
+
+  for (const article of blogArticles) {
+    const url = buildCanonicalUrl(`/nl/blog/${article.slug}`);
+    if (seen.has(url)) continue;
+    seen.add(url);
+
+    entries.push({
+      url,
+      changeFrequency: "weekly",
+      priority: 0.7,
+      lastModified: article.publishedAt,
+    });
   }
 
   return entries;

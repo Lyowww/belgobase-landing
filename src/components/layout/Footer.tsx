@@ -24,18 +24,21 @@ function FooterLinkList({
   links,
   t,
 }: {
-  links: { labelKey: string; href: string }[];
+  links: (
+    | { labelKey: string; label?: never; href: string }
+    | { label: string; labelKey?: never; href: string }
+  )[];
   t: (key: string) => string;
 }) {
   return (
     <ul className="space-y-2.5">
       {links.map((link) => (
-        <li key={link.labelKey}>
+        <li key={link.href}>
           <a
             href={link.href}
             className="text-sm text-muted transition-colors hover:text-deep-navy"
           >
-            {t(link.labelKey)}
+            {link.label ?? t(link.labelKey)}
           </a>
         </li>
       ))}
@@ -51,6 +54,7 @@ export function Footer({ reserveStickyCta = false }: { reserveStickyCta?: boolea
       { labelKey: "footer.industries" as const, href: `/${locale}#industries` },
       { labelKey: "footer.database" as const, href: `/${locale}#database` },
       { labelKey: "footer.pricing" as const, href: `/${locale}#pricing` },
+      { label: "Blog", href: `/${locale}/blog` },
     ],
     legal: [
       { labelKey: "footer.privacy" as const, href: `/${locale}/privacy` },
