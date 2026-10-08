@@ -13,7 +13,7 @@ export function FloatingToolbar() {
       initial={{ opacity: 0, x: 16 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.5, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      className="glass-toolbar pointer-events-none fixed top-1/2 right-4 z-[60] hidden -translate-y-1/2 lg:block xl:right-6"
+      className="glass-toolbar pointer-events-none fixed top-1/2 right-4 z-[60] hidden -translate-y-1/2 2xl:block 2xl:right-6"
       aria-label={t("toolbar.sitePreferences")}
     >
       <div className="pointer-events-auto flex flex-col items-center gap-1 p-1.5">
