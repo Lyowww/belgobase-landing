@@ -108,6 +108,7 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
 
         {!company && matches.length > 0 && <section className="lookup-results" aria-label={copy.results}>
           <h2>{copy.choose}</h2>
+          {matches.length === 8 && <p className="lookup-hint">{copy.refine}</p>}
           <ul>{matches.map((match) => <li key={match.number}><button disabled={busy} onClick={() => void lookup(match.number, true)}><span><strong>{match.name}</strong><span className="lookup-match-detail">{displayNumber(match.number)}{match.municipality ? ` · ${match.municipality}` : ""}</span></span><ArrowRight size={23} aria-hidden="true" /></button></li>)}</ul>
         </section>}
 
