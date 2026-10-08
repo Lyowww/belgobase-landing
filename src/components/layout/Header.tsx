@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, Phone, X } from "lucide-react";
+import { Menu, Phone, Search, X } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
@@ -11,9 +11,10 @@ import { MagneticButton } from "@/components/ui/MagneticButton";
 import { useTranslations } from "@/providers/TranslationsProvider";
 import { contactPhone, contactPhoneHref } from "@/lib/site";
 import { cn } from "@/lib/utils";
+import { companyCopy } from "@/lib/public-company/copy";
 
 type HeaderProps = {
-  variant?: "default" | "comingSoon";
+  variant?: "default" | "comingSoon" | "lookup";
 };
 
 export function Header({ variant = "default" }: HeaderProps) {
@@ -22,6 +23,7 @@ export function Header({ variant = "default" }: HeaderProps) {
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
   const scrolled = useThrottledScroll(40);
   const isComingSoon = variant === "comingSoon";
+  const isLookup = variant === "lookup";
 
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -30,7 +32,7 @@ export function Header({ variant = "default" }: HeaderProps) {
         mobileMenuButtonRef.current?.focus();
       }
     };
-    const desktop = window.matchMedia("(min-width: 1280px)");
+    const desktop = window.matchMedia("(min-width: 1536px)");
     const closeOnDesktop = () => { if (desktop.matches) setMobileOpen(false); };
     document.addEventListener("keydown", closeOnEscape);
     desktop.addEventListener("change", closeOnDesktop);
@@ -50,6 +52,7 @@ export function Header({ variant = "default" }: HeaderProps) {
   }, [mobileOpen]);
 
   const navLinks = [
+    { label: companyCopy[locale].navigation, href: "/bedrijf-zoeken" },
     { label: t("nav.process"), href: "#process" },
     { label: t("nav.industries"), href: "#industries" },
     { label: t("nav.results"), href: "#database" },
@@ -69,7 +72,7 @@ export function Header({ variant = "default" }: HeaderProps) {
     >
 
 
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-4 sm:h-16 sm:gap-3 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-14 max-w-[1480px] items-center justify-between gap-2 px-4 sm:h-16 sm:gap-3 sm:px-6 lg:px-8">
         <Link
           href={`/${locale}`}
           onClick={(e) => {
@@ -80,7 +83,7 @@ export function Header({ variant = "default" }: HeaderProps) {
             }
           }}
           aria-label="BelgoBase"
-          className="relative z-10 flex min-w-0 shrink items-center gap-2"
+          className="relative z-10 flex min-w-0 shrink-0 items-center gap-2"
         >
           <Image
             src="/brand/belgobase-bb-logo.png"
@@ -98,8 +101,8 @@ export function Header({ variant = "default" }: HeaderProps) {
       <nav
         aria-label={t("nav.mainNavigation")}
         className={cn(
-          "hidden shrink-0 items-center gap-4 xl:flex xl:gap-5",
-          isComingSoon && "xl:hidden",
+          "hidden shrink-0 items-center gap-4 2xl:flex 2xl:gap-5",
+          (isComingSoon || isLookup) && "2xl:hidden",
         )}
       >
         {navLinks.map((link) => (
@@ -113,8 +116,8 @@ export function Header({ variant = "default" }: HeaderProps) {
         ))}
       </nav>
 
-        {!isComingSoon && (
-          <div className="relative z-10 hidden items-center gap-3 xl:flex">
+        {!isComingSoon && !isLookup && (
+          <div className="relative z-10 hidden items-center gap-3 2xl:flex">
             <a href={`/${locale}/app`} className="rounded-full border border-border px-4 py-2.5 text-sm font-semibold text-deep-navy transition-colors hover:border-primary hover:text-primary">
               {t("nav.signIn")}
             </a>
@@ -128,7 +131,7 @@ export function Header({ variant = "default" }: HeaderProps) {
             </a>
             <MagneticButton
               href={`/${locale}#contact`}
-              className="!min-w-[11rem] !px-8 !py-2.5 !text-sm xl:!min-w-[12rem] xl:!px-10"
+              className="!min-w-[11rem] !px-8 !py-2.5 !text-sm 2xl:!min-w-[12rem] 2xl:!px-10"
             >
               {t("nav.getFreeLeads")}
             </MagneticButton>
@@ -138,12 +141,14 @@ export function Header({ variant = "default" }: HeaderProps) {
         <div
           className={cn(
             "flex items-center gap-1.5",
-            isComingSoon ? "relative z-10 xl:hidden" : "xl:hidden",
+            isLookup ? "relative z-10" : "2xl:hidden",
           )}
         >
+          {!isComingSoon && !isLookup && <Link href={`/${locale}/bedrijf-zoeken`} className="mr-2 hidden items-center gap-2 text-sm font-semibold text-primary md:inline-flex"><Search className="h-4 w-4" aria-hidden="true" />{companyCopy[locale].navigation}</Link>}
+          {isLookup && <Link href={`/${locale}`} className="mr-3 hidden text-sm font-medium text-foreground transition-colors hover:text-primary sm:inline-flex">{companyCopy[locale].about}</Link>}
           <LanguageSwitcher />
           <ThemeToggle />
-          {!isComingSoon && (
+          {!isComingSoon && !isLookup && (
             <button
               ref={mobileMenuButtonRef}
               type="button"
@@ -163,8 +168,8 @@ export function Header({ variant = "default" }: HeaderProps) {
         inert={!mobileOpen}
         aria-hidden={!mobileOpen}
         className={cn(
-          "overflow-hidden border-t border-border bg-surface xl:hidden",
-          isComingSoon && "hidden",
+          "overflow-hidden border-t border-border bg-surface 2xl:hidden",
+          (isComingSoon || isLookup) && "hidden",
           mobileOpen
             ? "h-[calc(100dvh-3.5rem-env(safe-area-inset-top,0px))] sm:h-[calc(100dvh-4rem-env(safe-area-inset-top,0px))] opacity-100"
             : "max-h-0 border-transparent opacity-0",

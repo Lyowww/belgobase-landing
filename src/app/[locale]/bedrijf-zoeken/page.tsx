@@ -12,9 +12,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!isLocale(locale)) return {};
   const copy = companyCopy[locale];
   return {
-    title: `${copy.title} — KBO en NBB | BelgoBase`, description: copy.intro,
+    title: copy.title, description: copy.intro,
     alternates: { canonical: buildCanonicalUrl(`/${locale}/bedrijf-zoeken`), languages: buildLanguageAlternates("bedrijf-zoeken") },
     openGraph: { title: copy.title, description: copy.intro, type: "website", url: buildCanonicalUrl(`/${locale}/bedrijf-zoeken`) },
+    twitter: { card: "summary", title: copy.title, description: copy.intro },
   };
 }
 

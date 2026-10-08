@@ -1,11 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { Search, ArrowRight, ArrowLeft, LoaderCircle, ExternalLink } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { Locale } from "@/i18n/config";
-import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { Header } from "@/components/layout/Header";
 import { companyCopy } from "@/lib/public-company/copy";
 import { cleanQuery, displayNumber, safeWebsite, type CompanyMatch, type CompanyResponse, type PublicCompany } from "@/lib/public-company/model";
 import "./lookup.css";
@@ -80,17 +79,11 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
   ].filter((row) => row[1]) : [];
 
   return (
-    <div className="company-lookup">
-      <header className="lookup-nav">
-        <Link href={`/${locale}`} className="lookup-brand" aria-label="BelgoBase">
-          <Image src="/brand/belgobase-bb-logo.png" width={34} height={34} alt="" />
-          <span>BelgoBase</span>
-        </Link>
-        <div className="lookup-nav-right"><Link href={`/${locale}`} className="lookup-about">{copy.about}</Link><LanguageSwitcher /></div>
-      </header>
+    <div className="marketing-site company-lookup">
+      <Header variant="lookup" />
       <main className="lookup-main">
         <section className="lookup-search" aria-labelledby="lookup-title">
-          <h1 id="lookup-title">{copy.heading}</h1>
+          <h1 id="lookup-title"><span>{copy.headingLead}</span>{" "}{copy.heading}</h1>
           <p className="lookup-intro">{copy.intro}</p>
           <form onSubmit={submit} className="lookup-form" aria-busy={busy}>
             <label htmlFor="company-query">{copy.label}</label>
