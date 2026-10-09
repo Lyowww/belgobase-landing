@@ -530,6 +530,7 @@
     'legalForm.type1':{nl:'1 — Eenmanszaak / natuurlijke persoon',fr:'1 — Entreprise individuelle / personne physique',en:'1 — Sole trader / natural person'},
     'legalForm.type2':{nl:'2 — Rechtspersoon (alle rechtsvormen)',fr:'2 — Personne morale (toutes formes juridiques)',en:'2 — Legal entity (all legal forms)'}
   });
+  Object.assign(messages,{'legalForm.naturalPerson':{nl:'Eenmanszaak / natuurlijke persoon',fr:'Entreprise individuelle / personne physique',en:'Sole trader / natural person'}});
   const locales={nl:'nl-BE',fr:'fr-BE',en:'en-GB'};
  let language='nl';
  const normalize=value=>['nl','fr','en'].includes(String(value||'').toLowerCase())?String(value).toLowerCase():'nl';
