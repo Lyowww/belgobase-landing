@@ -60,8 +60,8 @@
 "savedSearch.retainedValue":{"nl": "{value} — bewaarde waarde (niet in huidige lijst)", "fr": "{value} — valeur enregistrée (absente de la liste actuelle)", "en": "{value} — saved value (not in the current list)"},
 "savedSearch.unknownTitle":{"nl": "Niet-herkende bewaarde filters", "fr": "Filtres enregistrés non reconnus", "en": "Unrecognised saved filters"},
 "savedSearch.removeUnknown":{"nl": "Deze filter verwijderen", "fr": "Supprimer ce filtre", "en": "Remove this filter"},
-"savedSearch.reviewTitle":{"nl": "Bewaarde zoekopdracht controleren", "fr": "Vérifier la recherche enregistrée", "en": "Review saved search"},
-"savedSearch.reviewCopy":{"nl": "Alle bewaarde keuzes staan hieronder. Pas de conflicterende keuze aan en klik opnieuw op Toepassen en zoeken. Er worden geen resultaten getoond of geëxporteerd zolang de filters ongeldig zijn.", "fr": "Tous les choix enregistrés figurent ci-dessous. Corrigez le choix en conflit, puis cliquez à nouveau sur Appliquer et rechercher. Aucun résultat ne sera affiché ou exporté tant que les filtres sont invalides.", "en": "All saved choices are shown below. Correct the conflicting choice, then click Apply and search again. No results will be shown or exported while the filters are invalid."},
+"savedSearch.reviewTitle":{"nl": "Filters controleren", "fr": "Vérifier les filtres", "en": "Review filters"},
+"savedSearch.reviewCopy":{"nl": "Alle gekozen filters staan hieronder. Pas de conflicterende keuze aan en klik opnieuw op Toepassen en zoeken. Er worden geen resultaten getoond of geëxporteerd zolang de filters ongeldig zijn.", "fr": "Tous les filtres choisis figurent ci-dessous. Corrigez le choix en conflit, puis cliquez à nouveau sur Appliquer et rechercher. Aucun résultat ne sera affiché ou exporté tant que les filtres sont invalides.", "en": "All selected filters are shown below. Correct the conflicting choice, then click Apply and search again. No results will be shown or exported while the filters are invalid."},
 "filter.legalForm":{"nl": "Rechtsvorm", "fr": "Forme juridique", "en": "Legal form"},
 
 "journey.actionsLabel":{"nl":"Acties","fr":"Actions","en":"Actions"},
