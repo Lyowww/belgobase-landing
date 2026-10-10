@@ -12,12 +12,14 @@ import { useTranslations } from "@/providers/TranslationsProvider";
 import { contactPhone, contactPhoneHref } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { companyCopy } from "@/lib/public-company/copy";
+import type { Locale } from "@/i18n/config";
 
 type HeaderProps = {
   variant?: "default" | "comingSoon" | "lookup";
+  onBeforeLanguageChange?: (locale: Locale) => boolean;
 };
 
-export function Header({ variant = "default" }: HeaderProps) {
+export function Header({ variant = "default", onBeforeLanguageChange }: HeaderProps) {
   const { t, locale } = useTranslations();
   const [mobileOpen, setMobileOpen] = useState(false);
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
@@ -146,7 +148,7 @@ export function Header({ variant = "default" }: HeaderProps) {
         >
           {!isComingSoon && !isLookup && <Link href={`/${locale}/bedrijf-zoeken`} className="mr-2 hidden items-center gap-2 text-sm font-semibold text-primary md:inline-flex"><Search className="h-4 w-4" aria-hidden="true" />{companyCopy[locale].navigation}</Link>}
           {isLookup && <Link href={`/${locale}`} className="mr-3 hidden text-sm font-medium text-foreground transition-colors hover:text-primary sm:inline-flex">{companyCopy[locale].about}</Link>}
-          <LanguageSwitcher />
+          <LanguageSwitcher onBeforeLanguageChange={onBeforeLanguageChange} />
           <ThemeToggle />
           {!isComingSoon && !isLookup && (
             <button

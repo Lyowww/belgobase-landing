@@ -17,9 +17,11 @@ import { cn } from "@/lib/utils";
 export function LanguageSwitcher({
   className,
   variant = "inline",
+  onBeforeLanguageChange,
 }: {
   className?: string;
   variant?: "inline" | "toolbar";
+  onBeforeLanguageChange?: (locale: typeof i18n.locales[number]) => boolean;
 }) {
   const { locale, t } = useTranslations();
   const pathname = usePathname();
@@ -102,6 +104,11 @@ export function LanguageSwitcher({
                 role="option"
                 aria-selected={locale === loc}
                 onClick={(event) => {
+                  if (onBeforeLanguageChange && !onBeforeLanguageChange(loc)) {
+                    event.preventDefault();
+                    setOpen(false);
+                    return;
+                  }
                   const secure = window.location.protocol === "https:" ? ";Secure" : "";
                   document.cookie = `NEXT_LOCALE=${loc};path=/;max-age=15552000;SameSite=Lax${secure}`;
                   setOpen(false);

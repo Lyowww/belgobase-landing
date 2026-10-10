@@ -2,6 +2,8 @@ import type { Locale } from "@/i18n/config";
 
 export const companyCopy = {
   nl: {
+    active: "Actief", discontinued: "Stopgezet",
+    interrupted: "De lopende opzoeking is gestopt bij de taalwissel. Klik op Zoeken om verder te gaan.", languageRestore: "De taalwissel kon je zoekopdracht niet behouden. Probeer opnieuw.",
     title: "KBO en NBB: bedrijf zoeken | BelgoBase", navigation: "Bedrijf zoeken", headingLead: "KBO en NBB.", heading: "Eén bedrijf, één overzicht.",
     intro: "Zoek op bedrijfsnaam of KBO-nummer. Bekijk de bedrijfsgegevens en beschikbare cijfers van de Nationale Bank samen.",
     label: "Welk bedrijf wilt u opzoeken?", placeholder: "Bedrijfsnaam of KBO-nummer", search: "Zoeken", loading: "Bedrijf opzoeken…",
@@ -16,6 +18,8 @@ export const companyCopy = {
     upsell: "Zoekt u meer bedrijven die bij uw doelgroep passen?", cta: "Ontdek BelgoBase", back: "Terug naar de resultaten", about: "Over BelgoBase", privacy: "Privacy", footer: "Bedrijfsinformatie uit KBO en Nationale Bank van België. Beschikbaarheid verschilt per bedrijf.",
   },
   fr: {
+    active: "Actif", discontinued: "Cessé",
+    interrupted: "La recherche en cours a été arrêtée lors du changement de langue. Cliquez sur Rechercher pour continuer.", languageRestore: "Le changement de langue n’a pas pu conserver votre recherche. Réessayez.",
     title: "BCE et BNB : rechercher une entreprise | BelgoBase", navigation: "Chercher une entreprise", headingLead: "BCE et BNB.", heading: "Une entreprise, une seule vue.", intro: "Recherchez par nom ou numéro d’entreprise. Consultez les données de l’entreprise et les chiffres disponibles de la Banque nationale au même endroit.",
     label: "Quelle entreprise recherchez-vous ?", placeholder: "Nom ou numéro d’entreprise", search: "Rechercher", loading: "Recherche en cours…", hint: "Recherche gratuite. Sans compte.",
     choose: "Quelle entreprise voulez-vous consulter ?", results: "Résultats", general: "Données de l’entreprise", finance: "Chiffres financiers", number: "Numéro d’entreprise", status: "Statut", form: "Forme juridique", start: "Création", address: "Adresse", website: "Site web", activities: "Activité principale", more: "Voir toutes les activités", refine: "Les huit premiers résultats. Précisez le nom ou utilisez le numéro d’entreprise.",
@@ -25,6 +29,8 @@ export const companyCopy = {
     upsell: "Vous cherchez d’autres entreprises correspondant à votre cible ?", cta: "Découvrir BelgoBase", back: "Retour aux résultats", about: "À propos de BelgoBase", privacy: "Confidentialité", footer: "Informations issues de la BCE et de la Banque nationale de Belgique. La disponibilité varie selon l’entreprise.",
   },
   en: {
+    active: "Active", discontinued: "Discontinued",
+    interrupted: "The current lookup stopped when the language changed. Click Search to continue.", languageRestore: "The language change could not preserve your search. Please try again.",
     title: "KBO and NBB: Belgian company lookup | BelgoBase", navigation: "Company lookup", headingLead: "KBO and NBB.", heading: "One company, one overview.", intro: "Search by company name or enterprise number. View company information and available National Bank figures together in one place.",
     label: "Which company would you like to see?", placeholder: "Company name or enterprise number", search: "Search", loading: "Looking up the company…", hint: "Free lookup. No account needed.", choose: "Which company do you mean?", results: "Search results", general: "Company information", finance: "Financial figures", number: "Enterprise number", status: "Status", form: "Legal form", start: "Established", address: "Address", website: "Website", activities: "Primary activity", more: "View all activities", refine: "The first eight results. Refine the name or use the enterprise number.",
     unavailable: "Not available", noFinancials: "No annual-account figures are available here for this company.", revenue: "Revenue", profit: "Result", equity: "Equity", fte: "Employees", ebitda: "EBITDA", year: "Financial year", unknownYear: "Financial year unknown", persons: "FTE",

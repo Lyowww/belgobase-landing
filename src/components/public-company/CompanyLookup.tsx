@@ -7,6 +7,7 @@ import type { Locale } from "@/i18n/config";
 import { Header } from "@/components/layout/Header";
 import { companyCopy } from "@/lib/public-company/copy";
 import { cleanQuery, displayNumber, safeWebsite, type CompanyMatch, type CompanyResponse, type PublicCompany } from "@/lib/public-company/model";
+import { companyLocaleTag, consumeLookupTransfer, saveLookupTransfer, type LookupError } from "@/lib/public-company/navigation";
 import "./lookup.css";
 
 export function CompanyLookup({ locale }: { locale: Locale }) {
@@ -15,22 +16,49 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
   const [matches, setMatches] = useState<CompanyMatch[]>([]);
   const [company, setCompany] = useState<PublicCompany>();
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<LookupError>("");
   const [officialNumber, setOfficialNumber] = useState("");
   const pending = useRef<AbortController | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
-  const localeTag = `${locale}-BE`;
+  const localeTag = companyLocaleTag(locale);
+  const restored = useRef(false);
+
+  // Rehydrate the single-use browser handoff after SSR. React batches these
+  // setters; reading sessionStorage during server/client initial render would
+  // create a hydration mismatch. No search request or recurring sync is started.
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (restored.current) return;
+    restored.current = true;
+    try {
+      const state = consumeLookupTransfer(window.sessionStorage, locale);
+      if (!state) return;
+      setQuery(state.query); setMatches(state.matches); setCompany(state.company);
+      setOfficialNumber(state.officialNumber); setError(state.error);
+    } catch { setError("languageRestore"); }
+  }, [locale]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  function changeLanguage(targetLocale: Locale): boolean {
+    if (targetLocale === locale) return true;
+    try {
+      saveLookupTransfer(window.sessionStorage, targetLocale, { query, matches, company, officialNumber, error: busy ? "interrupted" : error });
+      return true;
+    } catch { setError("languageRestore"); return false; }
+  }
 
   useEffect(() => () => pending.current?.abort(), []);
   useEffect(() => { if (company) heading.current?.focus({ preventScroll: true }); }, [company]);
 
   async function lookup(value: string, selection = false) {
     const clean = cleanQuery(value);
-    if (!clean) { setError(copy.short); return; }
     pending.current?.abort();
+    setError(""); setOfficialNumber(""); setCompany(undefined);
+    if (!selection) setMatches([]);
+    if (!clean) { pending.current = null; setBusy(false); setError("short"); return; }
     const controller = new AbortController();
     pending.current = controller;
-    setBusy(true); setError(""); setOfficialNumber(""); setCompany(undefined);
+    setBusy(true);
     try {
       const response = await fetch("/api/public/company", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -39,7 +67,7 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
       const data: CompanyResponse = await response.json();
       if (controller.signal.aborted) return;
       if (!response.ok || !data.ok) {
-        setError(response.status === 429 ? copy.rate : data.error === "invalid_query" ? copy.short : copy.error);
+        setError(response.status === 429 ? "rate" : data.error === "invalid_query" ? "short" : "error");
         return;
       }
       if (!selection) setMatches(data.matches);
@@ -47,16 +75,16 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
       if (data.error === "natural_person_unavailable") {
         const number = clean.replace(/^BE\s*/i, "").replace(/[.\s-]/g, "");
         if (/^\d{10}$/.test(number)) setOfficialNumber(number);
-        setError(copy.limited);
-      } else if (!data.matches.length) setError(copy.notFound);
+        setError("limited");
+      } else if (!data.matches.length) setError("notFound");
     } catch {
-      if (!controller.signal.aborted) setError(copy.error);
+      if (!controller.signal.aborted) setError("error");
     } finally {
       if (pending.current === controller) setBusy(false);
     }
   }
 
-  function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setMatches([]); void lookup(query); }
+  function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); void lookup(query); }
   function date(value?: string) {
     if (!value || !/^\d{4}-\d{2}-\d{2}/.test(value)) return copy.unavailable;
     const parsed = new Date(`${value.slice(0, 10)}T12:00:00Z`);
@@ -72,15 +100,16 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
       : { maximumFractionDigits: 1 }).format(value);
   }
   const website = safeWebsite(company?.website);
+  const status = company?.status === "Actief" ? copy.active : company?.status === "Stopgezet" ? copy.discontinued : company?.status;
   const facts = company ? [
-    [copy.number, displayNumber(company.number)], [copy.status, company.status],
+    [copy.number, displayNumber(company.number)], [copy.status, status],
     [copy.form, company.legalForm], [copy.start, company.startDate ? date(company.startDate) : undefined],
     [copy.address, company.address],
   ].filter((row) => row[1]) : [];
 
   return (
     <div className="marketing-site company-lookup">
-      <Header variant="lookup" />
+      <Header variant="lookup" onBeforeLanguageChange={changeLanguage} />
       <main className="lookup-main">
         <section className="lookup-search" aria-labelledby="lookup-title">
           <h1 id="lookup-title"><span>{copy.headingLead}</span>{" "}{copy.heading}</h1>
@@ -95,7 +124,7 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
             <p id="lookup-hint" className="lookup-hint">{copy.hint}</p>
           </form>
           <div id="lookup-message" aria-live="polite" aria-atomic="true">
-            {error && <p className="lookup-message" role="alert">{error}{officialNumber && <a className="lookup-official" href={`https://kbopub.economie.fgov.be/kbopub/zoeknummerform.html?nummer=${officialNumber}`} target="_blank" rel="noopener noreferrer">{copy.official} <ExternalLink size={16} aria-hidden="true" /></a>}</p>}
+            {error && <p className="lookup-message" role="alert">{copy[error]}{officialNumber && <a className="lookup-official" href={`https://kbopub.economie.fgov.be/kbopub/zoeknummerform.html?nummer=${officialNumber}`} target="_blank" rel="noopener noreferrer">{copy.official} <ExternalLink size={16} aria-hidden="true" /></a>}</p>}
           </div>
         </section>
 
