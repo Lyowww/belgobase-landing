@@ -76,6 +76,10 @@ export function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const faqs = [
+    { question: t("faq.q10"), answer: t("faq.a10") },
+    { question: t("faq.q11"), answer: t("faq.a11") },
+    { question: t("faq.q12"), answer: t("faq.a12") },
+    { question: t("faq.q13"), answer: t("faq.a13") },
     { question: t("faq.q1"), answer: t("faq.a1") },
     { question: t("faq.q2"), answer: t("faq.a2") },
     { question: t("faq.q3"), answer: t("faq.a3") },
