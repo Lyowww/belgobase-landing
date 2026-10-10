@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { Locale } from "@/i18n/config";
 import { Header } from "@/components/layout/Header";
 import { companyCopy } from "@/lib/public-company/copy";
-import { cleanQuery, displayNumber, safeWebsite, type CompanyMatch, type CompanyResponse, type PublicCompany } from "@/lib/public-company/model";
+import { cleanQuery, displayNumber, publicPayload, safeWebsite, type CompanyMatch, type PublicCompany } from "@/lib/public-company/model";
 import { companyLocaleTag, consumeLookupTransfer, saveLookupTransfer, type LookupError } from "@/lib/public-company/navigation";
 import "./lookup.css";
 
@@ -76,12 +76,15 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: clean }), signal: controller.signal,
       });
-      const data: CompanyResponse = await response.json();
+      const raw: unknown = await response.json();
       if (controller.signal.aborted) return;
-      if (!response.ok || !data.ok) {
-        setError(response.status === 429 ? "rate" : data.error === "invalid_query" ? "short" : "error");
+      const reply = raw && typeof raw === "object" ? raw as Record<string, unknown> : null;
+      if (!response.ok || reply?.ok !== true) {
+        setError(response.status === 429 ? "rate" : reply?.error === "invalid_query" ? "short" : "error");
         return;
       }
+      const data = publicPayload(raw);
+      if (!data) { setError("error"); return; }
       if (!selection) setMatches(data.matches);
       if (data.company) { setCompany(data.company); return; }
       if (data.error === "natural_person_unavailable") {

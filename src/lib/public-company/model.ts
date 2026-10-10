@@ -55,13 +55,13 @@ export function publicPayload(value: unknown): CompanyResponse | null {
     activities.push({ code, label });
   }
   const metrics: PublicCompany["metrics"] = [];
-  const allowedMetrics = new Set(["revenue", "profit", "equity", "fte", "ebitda"]);
+  const metricUnits = new Map([ ["revenue", "EUR"], ["profit", "EUR"], ["equity", "EUR"], ["fte", "VTE"], ["ebitda", "EUR"] ]);
   const seen = new Set<string>();
   for (const metric of item.metrics) {
-    if (!metric || !allowedMetrics.has(metric.key) || seen.has(metric.key)) return null;
+    if (!metric || !metricUnits.has(metric.key) || seen.has(metric.key)) return null;
     if (metric.value !== null && (typeof metric.value !== "number" || !Number.isFinite(metric.value))) return null;
     if (metric.year !== null && (typeof metric.year !== "number" || !Number.isInteger(metric.year) || metric.year < 1900 || metric.year > 2100)) return null;
-    if (metric.unit !== "EUR" && metric.unit !== "VTE") return null;
+    if (metric.unit !== metricUnits.get(metric.key)) return null;
     seen.add(metric.key);
     metrics.push({ key: metric.key, label: text(metric.label) || metric.key, value: metric.value, year: metric.year, unit: metric.unit, status: text(metric.status) });
   }
