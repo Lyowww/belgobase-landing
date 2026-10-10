@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, m } from "framer-motion";
+import { m } from "framer-motion";
 import { Minus, Plus } from "lucide-react";
 import { useState } from "react";
 import { usePerformanceMode } from "@/hooks/usePerformanceMode";
@@ -47,27 +47,24 @@ function FAQItem({
         </span>
       </button>
       {liteAnimation ? (
-        isOpen && (
-          <p id={answerId} className="pb-5 text-sm leading-relaxed text-muted sm:pb-6 sm:text-base">
+        <div id={answerId} hidden={!isOpen}>
+          <p className="pb-5 text-sm leading-relaxed text-muted sm:pb-6 sm:text-base">
             {answer}
           </p>
-        )
+        </div>
       ) : (
-        <AnimatePresence initial={false}>
-          {isOpen && (
-            <m.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              className="overflow-hidden"
-            >
-              <p id={answerId} className="pb-5 text-sm leading-relaxed text-muted sm:pb-6 sm:text-base">
-                {answer}
-              </p>
-            </m.div>
-          )}
-        </AnimatePresence>
+        <m.div
+          id={answerId}
+          initial={false}
+          animate={{ height: isOpen ? "auto" : 0, opacity: isOpen ? 1 : 0 }}
+          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          aria-hidden={!isOpen}
+          className="overflow-hidden"
+        >
+          <p className="pb-5 text-sm leading-relaxed text-muted sm:pb-6 sm:text-base">
+            {answer}
+          </p>
+        </m.div>
       )}
     </div>
   );
