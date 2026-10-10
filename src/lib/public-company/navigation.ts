@@ -2,7 +2,7 @@ import type { Locale } from "../../i18n/config.ts";
 import { publicPayload, type CompanyMatch, type PublicCompany } from "./model.ts";
 
 export const lookupTransferKey = "belgobase:company-language-transfer";
-export const lookupErrors = ["", "short", "rate", "error", "limited", "notFound", "interrupted", "languageRestore"] as const;
+export const lookupErrors = ["", "short", "rate", "error", "limited", "notFound", "interrupted", "edited", "languageRestore"] as const;
 export type LookupError = typeof lookupErrors[number];
 export type LookupState = {
   query: string; matches: CompanyMatch[]; company?: PublicCompany;

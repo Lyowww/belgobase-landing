@@ -38,7 +38,7 @@ test('old, different-route and malformed state cannot silently reopen another pr
 
 test('known errors and a deliberately stopped request retain their meaning across languages', () => {
   const box = storage();
-  for (const error of ['short','error','rate','notFound','interrupted']) {
+  for (const error of ['short','error','rate','notFound','interrupted','edited']) {
     saveLookupTransfer(box, 'en', {...state, company:undefined, matches:[], error}, 1000);
     const received = consumeLookupTransfer(box, 'en', 1001);
     assert.equal(received.error, error);

@@ -52,6 +52,16 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
   useEffect(() => () => pending.current?.abort(), []);
   useEffect(() => { if (company) heading.current?.focus({ preventScroll: true }); }, [company]);
 
+  function changeQuery(value: string) {
+    setQuery(value);
+    if (!pending.current) return;
+    // A response for the previous input must not become the new input's result.
+    pending.current.abort();
+    pending.current = null;
+    setBusy(false); setCompany(undefined); setMatches([]); setOfficialNumber("");
+    setError("edited");
+  }
+
   async function lookup(value: string, selection = false) {
     const clean = cleanQuery(value);
     pending.current?.abort();
@@ -82,7 +92,7 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
     } catch {
       if (!controller.signal.aborted) setError("error");
     } finally {
-      if (pending.current === controller) setBusy(false);
+      if (pending.current === controller) { pending.current = null; setBusy(false); }
     }
   }
 
@@ -120,7 +130,7 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
             <label htmlFor="company-query">{copy.label}</label>
             <div className="lookup-input-row">
               <Search size={23} aria-hidden="true" className="lookup-search-icon" />
-              <input id="company-query" name="query" disabled={!ready} value={query} onChange={(event) => setQuery(event.target.value)} maxLength={100} placeholder={copy.placeholder} autoComplete="off" type="search" required aria-describedby="lookup-hint lookup-message" />
+              <input id="company-query" name="query" disabled={!ready} value={query} onChange={(event) => changeQuery(event.target.value)} maxLength={100} placeholder={copy.placeholder} autoComplete="off" type="search" required aria-describedby="lookup-hint lookup-message" />
               <button type="submit" disabled={!ready || busy}>{!ready || busy ? <LoaderCircle size={21} className="lookup-spin" aria-hidden="true" /> : null}{!ready ? copy.initializing : busy ? copy.loading : copy.search}<ArrowRight size={20} aria-hidden="true" /></button>
             </div>
             <p id="lookup-hint" className="lookup-hint">{copy.hint}</p>
