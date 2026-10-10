@@ -130,6 +130,26 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
   const [downloadBusy, setDownloadBusy] = useState(false);
   const [downloadError, setDownloadError] = useState(false);
   const downloadLock = useRef(false);
+  const accountReadGeneration = useRef(0);
+  const browserLoadGeneration = useRef(0);
+  const referenceLoadGeneration = useRef(0);
+  const sessionLoadGeneration = useRef(0);
+  const accountSessionKey = useRef("");
+  const invalidateAccountReads = useCallback(() => {
+    accountReadGeneration.current++;
+    accountSessionKey.current = "";
+    setAccountOpen(false); setBrowserSessions([]); setReferences({}); setCopyFeedback(undefined);
+    setBrowserSessionsError(false); setAccountReferenceError(false);
+    setBusy(false); setAccountBusy(false); setAccountReferenceBusy(false);
+    downloadLock.current = false; setDownloadBusy(false); setDownloadError(false);
+  }, []);
+  const acceptSession = useCallback((value: Result & { authenticated: true; csrf: string }) => {
+    const key = JSON.stringify([value.csrf, value.account?.email || ""]);
+    if (key !== accountSessionKey.current) {
+      invalidateAccountReads(); accountSessionKey.current = key;
+    }
+    setAccount(value.account); setCsrf(value.csrf);
+  }, [invalidateAccountReads]);
   const frame = useRef<HTMLIFrameElement>(null);
   const documentCloseButton = useRef<HTMLButtonElement>(null);
   const clearEnrollment = useCallback(() => {
@@ -137,19 +157,24 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
   }, []);
 
   const loadSession = useCallback(async () => {
+    const generation = accountReadGeneration.current, requestGeneration = ++sessionLoadGeneration.current;
+    const current = () => generation === accountReadGeneration.current && requestGeneration === sessionLoadGeneration.current;
+    try {
     const response = await fetch("/api/web/auth/session", { cache: "no-store", credentials: "same-origin" });
     const value = await json(response);
+    if (!current()) return;
     if (response.ok && value.authenticated === true) {
       if (!validSessionProjection(value)) throw new Error("temporarily_unavailable");
-      setAccount(value.account); setCsrf(value.csrf); setError(""); setSessionRetryAvailable(false); setPhase("workspace"); return;
+      acceptSession(value); setError(""); setSessionRetryAvailable(false); setPhase("workspace"); return;
     }
-    if (response.ok) { setAccount(undefined); setCsrf(""); setError(""); setSessionRetryAvailable(false); setPhase("login"); return; }
-    if (response.status === 401) { setAccount(undefined); setCsrf(""); setSessionRetryAvailable(false); setPhase("login"); return; }
+    if (response.ok) { invalidateAccountReads(); setAccount(undefined); setCsrf(""); setError(""); setSessionRetryAvailable(false); setPhase("login"); return; }
+    if (response.status === 401) { invalidateAccountReads(); setAccount(undefined); setCsrf(""); setSessionRetryAvailable(false); setPhase("login"); return; }
     if (response.status === 403 && ["license_inactive", "identity_changed", "authorization_denied"].includes(value.error || "")) {
-      setAccount(undefined); setCsrf(""); setSessionRetryAvailable(false); setError(value.error || "license_inactive"); setPhase("login"); return;
+      invalidateAccountReads(); setAccount(undefined); setCsrf(""); setSessionRetryAvailable(false); setError(value.error || "license_inactive"); setPhase("login"); return;
     }
     throw new Error(response.status >= 500 ? "temporarily_unavailable" : value.error || "unknown_error");
-  }, []);
+    } catch (reason) { if (current()) throw reason; }
+  }, [acceptSession, invalidateAccountReads]);
   useEffect(() => {
     const timer = window.setTimeout(() => void loadSession().catch((reason) => { setError(reason instanceof Error ? reason.message : "temporarily_unavailable"); setPhase("serviceUnavailable"); }), 0);
     return () => window.clearTimeout(timer);
@@ -161,11 +186,11 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
         setShellLanguage(event.data.language as ShellLanguage);
       }
       if (event.data?.type === "belgobase-web-auth-expired" || event.data?.type === "belgobase-web-logout") {
-        setAccount(undefined); setLicenseCode(""); setChallengeId(""); setCode(""); setSessionRetryAvailable(false); setAccountOpen(false); setBrowserSessions([]); setReferences({}); setCopyFeedback(undefined); clearEnrollment(); setError(event.data.type === "belgobase-web-auth-expired" ? "session_expired" : "signed_out"); setPhase("login");
+        invalidateAccountReads(); setAccount(undefined); setCsrf(""); setLicenseCode(""); setChallengeId(""); setCode(""); setSessionRetryAvailable(false); setAccountOpen(false); setBrowserSessions([]); setReferences({}); setCopyFeedback(undefined); clearEnrollment(); setError(event.data.type === "belgobase-web-auth-expired" ? "session_expired" : "signed_out"); setPhase("login");
       }
     };
     window.addEventListener("message", onMessage); return () => window.removeEventListener("message", onMessage);
-  }, [clearEnrollment, t.expired, t.loggedOut]);
+  }, [clearEnrollment, invalidateAccountReads, t.expired, t.loggedOut]);
   useEffect(() => {
     if ((phase !== "loginCode" && phase !== "enrollCode") || resendIn <= 0) return;
     const timer = window.setInterval(() => setResendIn((current) => Math.max(0, current - 1)), 1_000);
@@ -185,19 +210,21 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
     let checking = false;
     const checkSession = async () => {
       if (checking || document.visibilityState === "hidden") return;
+      const generation = accountReadGeneration.current;
       checking = true;
       try {
         const response = await fetch("/api/web/auth/session", { cache: "no-store", credentials: "same-origin" });
         const result = await json(response);
+        if (generation !== accountReadGeneration.current) return;
         const outcome = sessionPollOutcome(response.status, result);
         if (!cancelled && outcome === "signedOut") {
-          setAccount(undefined); setCsrf(""); setAccountOpen(false); setBrowserSessions([]); setReferences({}); setCopyFeedback(undefined);
+          invalidateAccountReads(); setAccount(undefined); setCsrf(""); setAccountOpen(false); setBrowserSessions([]); setReferences({}); setCopyFeedback(undefined);
           setError("session_expired"); setPhase("login");
         } else if (!cancelled && outcome === "accessDenied") {
-          setAccount(undefined); setCsrf(""); setAccountOpen(false); setBrowserSessions([]); setReferences({}); setCopyFeedback(undefined);
+          invalidateAccountReads(); setAccount(undefined); setCsrf(""); setAccountOpen(false); setBrowserSessions([]); setReferences({}); setCopyFeedback(undefined);
           setError(result.error || "license_inactive"); setPhase("login");
         } else if (!cancelled && response.ok && validSessionProjection(result)) {
-          setAccount(result.account); setCsrf(result.csrf);
+          acceptSession(result);
         }
       } catch { /* A network interruption is not a logout. */ }
       finally { checking = false; }
@@ -210,7 +237,7 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
       window.removeEventListener("focus", checkSession);
       document.removeEventListener("visibilitychange", checkSession);
     };
-  }, [phase, t.expired]);
+  }, [phase, t.expired, acceptSession, invalidateAccountReads]);
   useEffect(() => {
     if (!documentView) return;
     const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
@@ -237,7 +264,7 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
       if (!response.ok || !result.ok) throw new Error(result.error || "unknown_error");
       if (result.authenticated === true) {
         if (!validSessionProjection(result)) throw new Error("temporarily_unavailable");
-        setAccount(result.account); setCsrf(result.csrf); setChallengeId(""); setCode("");
+        acceptSession(result); setChallengeId(""); setCode("");
         setSessionRetryAvailable(false); setPhase("workspace");
       } else {
         if (!result.challenge_id) throw new Error("unknown_error");
@@ -257,7 +284,7 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
     try {
       const { response, result } = await request("/api/web/auth/verify", { challenge_id: challengeId, code: code.trim() });
       if (!response.ok || !result.ok) throw new Error(result.error || "unknown_error");
-      if (validSessionProjection(result)) { setAccount(result.account); setCsrf(result.csrf); setSessionRetryAvailable(false); setPhase("workspace"); }
+      if (validSessionProjection(result)) { acceptSession(result); setSessionRetryAvailable(false); setPhase("workspace"); }
       else {
         try { await loadSession(); }
         catch (reason) { setSessionRetryAvailable(true); throw reason; }
@@ -302,7 +329,7 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
       if (result.error === "legal_preflight_expired") { setDetails(undefined); setDeclarations(initialDeclarations); }
       if (!response.ok || !result.ok || result.authenticated !== true) throw new Error(result.error || "unknown_error");
       clearEnrollment();
-      if (validSessionProjection(result)) { setAccount(result.account); setCsrf(result.csrf); setSessionRetryAvailable(false); setPhase("workspace"); }
+      if (validSessionProjection(result)) { acceptSession(result); setSessionRetryAvailable(false); setPhase("workspace"); }
       else {
         try { await loadSession(); }
         catch (reason) { setPhase("serviceUnavailable"); throw reason; }
@@ -310,34 +337,43 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
     } catch (reason) { setError(reason instanceof Error ? reason.message : "unknown_error"); } finally { setBusy(false); }
   }
   async function logout() {
+    const generation = accountReadGeneration.current;
     setBusy(true);
-    try { const { response } = await request("/api/web/auth/logout", {}, csrf); if (!response.ok && response.status !== 401) throw new Error(); setAccount(undefined); setLicenseCode(""); setCsrf(""); setChallengeId(""); setCode(""); setAccountOpen(false); setBrowserSessions([]); setReferences({}); setCopyFeedback(undefined); setDownloadError(false); clearEnrollment(); setError("signed_out"); setPhase("login"); } catch { setError("unknown_error"); } finally { setBusy(false); }
+    try { const { response } = await request("/api/web/auth/logout", {}, csrf); if (generation !== accountReadGeneration.current) return; if (!response.ok && response.status !== 401) throw new Error(); invalidateAccountReads(); setBusy(false); setAccount(undefined); setLicenseCode(""); setCsrf(""); setChallengeId(""); setCode(""); setAccountOpen(false); setBrowserSessions([]); setReferences({}); setCopyFeedback(undefined); setDownloadError(false); clearEnrollment(); setError("signed_out"); setPhase("login"); } catch { if (generation === accountReadGeneration.current) setError("unknown_error"); } finally { if (generation === accountReadGeneration.current) setBusy(false); }
   }
   async function loadBrowserSessions() {
+    const generation = accountReadGeneration.current, requestGeneration = ++browserLoadGeneration.current;
+    const current = () => generation === accountReadGeneration.current && requestGeneration === browserLoadGeneration.current;
     setAccountBusy(true); setBrowserSessions([]); setBrowserSessionsError(false); setError("");
     try {
       const response = await fetch("/api/web/auth/sessions", { cache: "no-store", credentials: "same-origin" });
       const result = await json(response);
-      if (response.status === 401) { setAccount(undefined); setCsrf(""); setAccountOpen(false); setBrowserSessions([]); setError("session_expired"); setPhase("login"); return; }
+      if (!current()) return;
+      if (response.status === 401) { invalidateAccountReads(); setAccount(undefined); setCsrf(""); setAccountOpen(false); setBrowserSessions([]); setError("session_expired"); setPhase("login"); return; }
       if (!response.ok || !result.ok || !Array.isArray(result.sessions)) throw new Error(result.error || "unknown_error");
       setBrowserSessions(result.sessions);
-    } catch { setBrowserSessions([]); setBrowserSessionsError(true); } finally { setAccountBusy(false); }
+    } catch { if (current()) { setBrowserSessions([]); setBrowserSessionsError(true); } } finally { if (current()) setAccountBusy(false); }
   }
   async function loadAccountReferences() {
+    const generation = accountReadGeneration.current, requestGeneration = ++referenceLoadGeneration.current;
+    const current = () => generation === accountReadGeneration.current && requestGeneration === referenceLoadGeneration.current;
     setAccountReferenceBusy(true); setAccountReferenceError(false); setReferences({}); setCopyFeedback(undefined);
     try {
       const { response, result } = await request("/api/web/bridge/account_action", { action: "refresh" }, csrf);
-      if (response.status === 401) { setAccount(undefined); setCsrf(""); setAccountOpen(false); setError("session_expired"); setPhase("login"); return; }
+      if (!current()) return;
+      if (response.status === 401) { invalidateAccountReads(); setAccount(undefined); setCsrf(""); setAccountOpen(false); setError("session_expired"); setPhase("login"); return; }
       if (!response.ok || !result.ok) throw new Error(result.error || "unknown_error");
       setReferences(accountReferences(result));
-    } catch { setReferences({}); setAccountReferenceError(true); }
-    finally { setAccountReferenceBusy(false); }
+    } catch { if (current()) { setReferences({}); setAccountReferenceError(true); } }
+    finally { if (current()) setAccountReferenceBusy(false); }
   }
   function openAccount() { setAccountOpen(true); void loadBrowserSessions(); void loadAccountReferences(); }
   async function copyReference(label: string, value: string | undefined) {
+    const generation = accountReadGeneration.current;
     if (!value) { setCopyFeedback({ message: t.copyFailed.replace("{label}", label), error: true }); return; }
     let copied = false;
     try { if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(value); copied = true; } } catch {}
+    if (generation !== accountReadGeneration.current) return;
     if (!copied) {
       const area = document.createElement("textarea");
       area.value = value; area.readOnly = true; area.style.position = "fixed"; area.style.opacity = "0";
@@ -348,12 +384,14 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
   }
   async function downloadDesktop() {
     if (downloadLock.current) return;
+    const generation = accountReadGeneration.current;
     downloadLock.current = true; setDownloadBusy(true); setDownloadError(false);
     try {
       const response = await fetch(`/api/web/desktop-download?lang=${shellLanguage}&format=json`, { cache: "no-store", credentials: "same-origin" });
       const result = await json(response);
+      if (generation !== accountReadGeneration.current) return;
       if (response.status === 401) {
-        setAccount(undefined); setCsrf(""); setAccountOpen(false); setBrowserSessions([]); setReferences({}); setCopyFeedback(undefined); setError("session_expired"); setPhase("login"); return;
+        invalidateAccountReads(); setAccount(undefined); setCsrf(""); setAccountOpen(false); setBrowserSessions([]); setReferences({}); setCopyFeedback(undefined); setError("session_expired"); setPhase("login"); return;
       }
       const href = response.ok && result.ok ? desktopDownloadHref(result.url) : undefined;
       if (!href) throw new Error("desktop_download_unavailable");
@@ -361,22 +399,24 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
       link.href = href; link.download = new URL(href).pathname.split("/").pop() || "BelgoBase_Setup.exe"; link.hidden = true; link.rel = "noopener";
       document.body.append(link);
       try { link.click(); } finally { link.remove(); }
-    } catch { setDownloadError(true); }
-    finally { downloadLock.current = false; setDownloadBusy(false); }
+    } catch { if (generation === accountReadGeneration.current) setDownloadError(true); }
+    finally { if (generation === accountReadGeneration.current) { downloadLock.current = false; setDownloadBusy(false); } }
   }
   async function revokeBrowser(browser: BrowserSession) {
     if (!window.confirm(t.revokeConfirm)) return;
+    const generation = accountReadGeneration.current;
     setAccountBusy(true); setError("");
     try {
       const { response, result } = await request("/api/web/auth/revoke", { browser_id: browser.browser_id }, csrf);
-      if (response.status === 401) { setAccount(undefined); setCsrf(""); setAccountOpen(false); setBrowserSessions([]); setError("session_expired"); setPhase("login"); return; }
+      if (generation !== accountReadGeneration.current) return;
+      if (response.status === 401) { invalidateAccountReads(); setAccount(undefined); setCsrf(""); setAccountOpen(false); setBrowserSessions([]); setError("session_expired"); setPhase("login"); return; }
       if (!response.ok || !result.ok) throw new Error(result.error || "unknown_error");
       if (result.current_session_revoked || browser.current) {
-        setAccount(undefined); setCsrf(""); setAccountOpen(false); setBrowserSessions([]); setError("signed_out"); setPhase("login");
+        invalidateAccountReads(); setAccount(undefined); setCsrf(""); setAccountOpen(false); setBrowserSessions([]); setError("signed_out"); setPhase("login");
       } else {
         await loadBrowserSessions();
       }
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "unknown_error"); } finally { setAccountBusy(false); }
+    } catch (reason) { if (generation === accountReadGeneration.current) setError(reason instanceof Error ? reason.message : "unknown_error"); } finally { if (generation === accountReadGeneration.current) setAccountBusy(false); }
   }
   function selectShellLanguage(language: ShellLanguage) {
     setShellLanguage(language);

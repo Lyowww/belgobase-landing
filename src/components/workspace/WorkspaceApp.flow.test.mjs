@@ -107,7 +107,7 @@ test("explicit logout closes account-only state before the next sign-in", () => 
 test("a browser-list failure is not presented as an empty successful list", () => {
   const loader = source.slice(source.indexOf("async function loadBrowserSessions"), source.indexOf("async function loadAccountReferences"));
   assert.match(loader, /setBrowserSessionsError\(false\)/);
-  assert.match(loader, /catch \{ setBrowserSessions\(\[\]\); setBrowserSessionsError\(true\); \}/);
+  assert.match(loader, /catch \{ if \(current\(\)\) \{ setBrowserSessions\(\[\]\); setBrowserSessionsError\(true\); \} \}/);
   assert.match(source, /!accountBusy && browserSessionsError \? <p[^>]+role="alert">\{t\.browserLoadFailed\}/);
   assert.match(source, /!accountBusy && !browserSessionsError && browserSessions\.length === 0 \? <p[^>]*>\{t\.noBrowsers\}/);
   for (const copy of [
