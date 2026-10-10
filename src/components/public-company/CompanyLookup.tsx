@@ -16,6 +16,7 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
   const [matches, setMatches] = useState<CompanyMatch[]>([]);
   const [company, setCompany] = useState<PublicCompany>();
   const [busy, setBusy] = useState(false);
+  const [ready, setReady] = useState(false);
   const [error, setError] = useState<LookupError>("");
   const [officialNumber, setOfficialNumber] = useState("");
   const pending = useRef<AbortController | null>(null);
@@ -30,6 +31,7 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
   useEffect(() => {
     if (restored.current) return;
     restored.current = true;
+    setReady(true);
     try {
       const state = consumeLookupTransfer(window.sessionStorage, locale);
       if (!state) return;
@@ -84,7 +86,7 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
     }
   }
 
-  function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); void lookup(query); }
+  function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (ready) void lookup(query); }
   function date(value?: string) {
     if (!value || !/^\d{4}-\d{2}-\d{2}/.test(value)) return copy.unavailable;
     const parsed = new Date(`${value.slice(0, 10)}T12:00:00Z`);
@@ -114,15 +116,16 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
         <section className="lookup-search" aria-labelledby="lookup-title">
           <h1 id="lookup-title"><span>{copy.headingLead}</span>{" "}{copy.heading}</h1>
           <p className="lookup-intro">{copy.intro}</p>
-          <form onSubmit={submit} className="lookup-form" aria-busy={busy}>
+          <form onSubmit={submit} className="lookup-form" aria-busy={!ready || busy}>
             <label htmlFor="company-query">{copy.label}</label>
             <div className="lookup-input-row">
               <Search size={23} aria-hidden="true" className="lookup-search-icon" />
-              <input id="company-query" name="query" value={query} onChange={(event) => setQuery(event.target.value)} maxLength={100} placeholder={copy.placeholder} autoComplete="off" type="search" required aria-describedby="lookup-hint lookup-message" />
-              <button type="submit" disabled={busy}>{busy ? <LoaderCircle size={21} className="lookup-spin" aria-hidden="true" /> : null}{busy ? copy.loading : copy.search}<ArrowRight size={20} aria-hidden="true" /></button>
+              <input id="company-query" name="query" disabled={!ready} value={query} onChange={(event) => setQuery(event.target.value)} maxLength={100} placeholder={copy.placeholder} autoComplete="off" type="search" required aria-describedby="lookup-hint lookup-message" />
+              <button type="submit" disabled={!ready || busy}>{!ready || busy ? <LoaderCircle size={21} className="lookup-spin" aria-hidden="true" /> : null}{!ready ? copy.initializing : busy ? copy.loading : copy.search}<ArrowRight size={20} aria-hidden="true" /></button>
             </div>
             <p id="lookup-hint" className="lookup-hint">{copy.hint}</p>
           </form>
+          <noscript><p className="lookup-message">{copy.needsJavaScript}</p></noscript>
           <div id="lookup-message" aria-live="polite" aria-atomic="true">
             {error && <p className="lookup-message" role="alert">{copy[error]}{officialNumber && <a className="lookup-official" href={`https://kbopub.economie.fgov.be/kbopub/zoeknummerform.html?nummer=${officialNumber}`} target="_blank" rel="noopener noreferrer">{copy.official} <ExternalLink size={16} aria-hidden="true" /></a>}</p>}
           </div>
