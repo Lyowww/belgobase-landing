@@ -34,7 +34,7 @@ function functionSource(html, name) {
 
 async function helpersFor(url) {
   const html = await readFile(url, "utf8");
-  const names = ["detailYears", "yearMetricValue", "safeContactHref", "contactRow"];
+  const names = ["detailYears", "yearMetricValue", "financialYearAllowed", "safeContactHref", "contactRow"];
   const context = vm.createContext({
     URL,
     display: value => value === null || value === undefined || value === "" ? "—" : String(value),
