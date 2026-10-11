@@ -5,6 +5,7 @@ import { Search, ArrowRight, ArrowLeft, LoaderCircle, ExternalLink } from "lucid
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { Locale } from "@/i18n/config";
 import { Header } from "@/components/layout/Header";
+import { CompanyPeers } from "@/components/public-company/CompanyPeers";
 import { companyCopy } from "@/lib/public-company/copy";
 import { cleanQuery, displayNumber, publicPayload, safeWebsite, type CompanyMatch, type PublicCompany } from "@/lib/public-company/model";
 import { companyLocaleTag, consumeLookupTransfer, saveLookupTransfer, type LookupError } from "@/lib/public-company/navigation";
@@ -174,7 +175,7 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
             <p>{copy.sources}: KBO{company.sources.nbbDate && " · NBB"}{company.sources.kboDate && <><span aria-hidden="true"> · </span>{copy.kbo}: <strong>{date(company.sources.kboDate)}</strong></>}{company.sources.nbbDate && <><span aria-hidden="true"> · </span>{copy.nbb}: <strong>{date(company.sources.nbbDate)}</strong></>}</p>
             <a href={`https://kbopub.economie.fgov.be/kbopub/zoeknummerform.html?nummer=${company.number}`} target="_blank" rel="noopener noreferrer">{copy.official}<ExternalLink size={16} aria-hidden="true" /></a>
           </div>
-          <aside className="lookup-next"><p>{copy.upsell}</p><Link href={`/${locale}#contact`}>{copy.cta}<ArrowRight size={20} aria-hidden="true" /></Link></aside>
+          <CompanyPeers key={company.number} number={company.number} locale={locale} onSelect={(number) => { heading.current?.scrollIntoView({ block: "start" }); setQuery(number); setMatches([]); void lookup(number); }} />
         </article>}
       </main>
       <footer className="lookup-footer"><p>{copy.footer}</p><p>{copy.independent} <Link href={`/${locale}/privacy`}>{copy.privacy}</Link></p></footer>
