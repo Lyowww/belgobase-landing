@@ -188,7 +188,7 @@
       });
       return result;
     }
-    if (method!=="workspace_data" && method!=="company" && method!=="compare_companies" && method!=="account_action") return result;
+    if (method!=="workspace_data" && method!=="export_columns" && method!=="company" && method!=="compare_companies" && method!=="account_action") return result;
     const copy=structuredClone(result);
     formatAccountRows(copy,selectedLanguage);
     if(method==="workspace_data") arrangeFilters(copy.schema || copy.filter_schema);

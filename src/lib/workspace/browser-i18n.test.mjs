@@ -318,3 +318,74 @@ test("fixed finance aliases and account credit copy follow the selected language
   assert.equal(win.BelgoBasePresentationI18n.translate("Bronjaar kerncijfers"),"Key figures source year");
   assert.equal(messages["account.walletLinked"].en,"Your AI balance is linked to your BelgoBase licence.");
 });
+
+test("default export response keeps labels and groups localised through async load, recovery and language changes", async () => {
+  const frozen = await readFile(new URL("./assets/frozen-ui.html", import.meta.url), "utf8");
+  const loadDefault = frozen.split("\n").find(line => line.startsWith("async function loadDefaultColumns(){"));
+  const renderColumns = frozen.match(/function renderExportColumns\(\)\{[\s\S]*?\n\}/)?.[0];
+  assert.ok(loadDefault && renderColumns, "exercise actual default-load and export-render handlers");
+  const server = {
+    ok: true,
+    columns: [
+      { key: "omzet", raw_key: "omzet", label: "Omzet (€)", group: "Recent NBB-profiel", unit: "EUR", value: null },
+      { key: "personeel_vte", raw_key: "personeel_vte", label: "Personeel VTE", group: "Recent NBB-profiel", unit: "VTE", value: 2.5 },
+      { key: "custom", raw_key: "custom", label: "Eigen vrije label", group: "Eigen vrije groep", unit: null, value: null },
+    ],
+    selected: ["personeel_vte", "omzet"],
+    preference_revision: 7,
+  };
+  const original = structuredClone(server);
+  const window = load("nl");
+  const content = { innerHTML: "" };
+  const work = { columns: [], selected: new Set(), filters: {}, exportLimitDraft: "73", exportProposal: null };
+  let failNext = false;
+  const calls = [];
+  const context = {
+    work, Set, Number,
+    $: selector => { assert.equal(selector, "#tools-content"); return content; },
+    esc: value => String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;"),
+    t: (_key, fallback, variables = {}) => String(fallback).replace(/\{(\w+)\}/g, (_, key) => String(variables[key] ?? "")),
+    explicitExportCount: () => 0,
+    controls() {}, captureExportLimitDraft() {}, notice() {},
+    async action(method, request) {
+      assert.equal(method, "export_columns");
+      assert.equal(request.action, "load_default");
+      calls.push({ method, action: request.action, language: window.BelgoBaseI18n.language });
+      await Promise.resolve(); // response arrives after the actual frozen handler has awaited it
+      if (failNext) { failNext = false; return null; } // existing action boundary rejects errors
+      return window.BelgoBaseWebI18n.enrich(method, server);
+    },
+  };
+  vm.createContext(context);
+  vm.runInContext(`${renderColumns}\n${loadDefault}`, context);
+  const expected = {
+    nl: ["Omzet (€)", "Personeel VTE", "Recent NBB-profiel"],
+    fr: ["Chiffre d’affaires (€)", "Personnel ETP", "Profil BNB récent"],
+    en: ["Revenue (€)", "Staff FTE", "Recent NBB profile"],
+  };
+  for (const language of ["nl", "fr", "en", "fr", "nl"]) {
+    window.BelgoBaseI18n.language = language;
+    await context.loadDefaultColumns();
+    const [revenue, staff, group] = expected[language];
+    assert.equal(work.columns[0].label, revenue, `default revenue label in ${language}`);
+    assert.equal(work.columns[1].label, staff, `default FTE label in ${language}`);
+    assert.equal(work.columns[0].group, group, `default group in ${language}`);
+    assert.ok(content.innerHTML.includes(revenue), "actual export renderer uses translated response label");
+    assert.ok(content.innerHTML.includes(group), "actual export renderer uses translated response group");
+    assert.deepEqual(work.columns.map(column => column.key), original.columns.map(column => column.key));
+    assert.deepEqual(work.columns.map(column => column.raw_key), original.columns.map(column => column.raw_key));
+    assert.deepEqual(work.columns.map(column => [column.unit, column.value]), original.columns.map(column => [column.unit, column.value]));
+    assert.deepEqual([...work.selected], original.selected, "selection IDs and order stay unchanged");
+    assert.equal(work.columns[2].label, "Eigen vrije label");
+    assert.equal(work.columns[2].group, "Eigen vrije groep");
+    assert.equal(work.exportLimitDraft, "73", "default loading preserves row-limit draft");
+    assert.deepEqual(server, original, "translation must not mutate raw server metadata");
+    const before = JSON.stringify({ columns: work.columns, selected: [...work.selected], html: content.innerHTML });
+    failNext = true;
+    await context.loadDefaultColumns();
+    assert.equal(JSON.stringify({ columns: work.columns, selected: [...work.selected], html: content.innerHTML }), before, "failed response preserves last usable columns and render");
+    await context.loadDefaultColumns();
+    assert.equal(work.columns[0].label, revenue, "retry returns localised columns in the active language");
+  }
+  assert.equal(calls.length, 15);
+});
