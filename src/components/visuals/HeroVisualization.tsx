@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { preload } from "react-dom";
 import { Play } from "lucide-react";
 import { useTranslations } from "@/providers/TranslationsProvider";
 
@@ -58,6 +59,13 @@ const copy = {
 };
 
 export function HeroVisualization({ mode = "prospecting" }: { mode?: DemoId }) {
+  if (mode === "prospecting") {
+    preload("/product/belgobase-prospectiepijn-20261005.webp", {
+      as: "image",
+      type: "image/webp",
+      fetchPriority: "high",
+    });
+  }
   const { locale } = useTranslations();
   const language = locale;
   const text = copy[language];
@@ -115,7 +123,7 @@ export function HeroVisualization({ mode = "prospecting" }: { mode?: DemoId }) {
           src={source}
           controls
           playsInline
-          preload={id === "prospecting" ? "metadata" : "none"}
+          preload="none"
           poster={poster}
           width={width}
           height={height}
@@ -153,7 +161,7 @@ export function HeroVisualization({ mode = "prospecting" }: { mode?: DemoId }) {
       caption: text.prospectingCaption,
       transcript: text.prospectingTranscript,
       source: "/product/belgobase-prospectiepijn-20261005.mp4",
-      poster: "/product/belgobase-prospectiepijn-20261005.jpg",
+      poster: "/product/belgobase-prospectiepijn-20261005.webp",
       width: 1920,
       height: 1080,
     })}
@@ -164,7 +172,7 @@ export function HeroVisualization({ mode = "prospecting" }: { mode?: DemoId }) {
       caption: text.cleanupCaption,
       transcript: text.cleanupTranscript,
       source: "/product/belgobase-lijsten-20260929.mp4",
-      poster: "/product/belgobase-lijsten-20260929.jpg",
+      poster: "/product/belgobase-lijsten-20260929.webp",
       width: 1920,
       height: 1080,
     })}

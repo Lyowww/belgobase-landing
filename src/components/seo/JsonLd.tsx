@@ -29,7 +29,7 @@ export async function JsonLd({ locale, title, description }: JsonLdProps) {
         description: nl
           ? "Echte productdemonstratie: van gesprek en bevestigde criteria naar 239 bedrijven in postcode 2800 met minstens 20 VTE en de daadwerkelijke Excel-export."
           : locale === "fr" ? "Démonstration réelle : de la conversation et des critères confirmés à 239 entreprises du code postal 2800 avec au moins 20 ETP et à l’export Excel réel." : "Real product demonstration: from conversation and confirmed criteria to 239 companies in postcode 2800 with at least 20 FTE and the actual Excel export.",
-        thumbnailUrl: `${siteUrl}/product/belgobase-prospectiepijn-20261005.jpg`,
+        thumbnailUrl: `${siteUrl}/product/belgobase-prospectiepijn-20261005.webp`,
         contentUrl: `${siteUrl}/product/belgobase-prospectiepijn-20261005.mp4`,
         uploadDate: "2026-10-05",
         inLanguage: "nl-NL",
@@ -43,7 +43,7 @@ export async function JsonLd({ locale, title, description }: JsonLdProps) {
         description: nl
           ? "Echte desktopproef met bestaande Excelbestanden: lijsten samenbrengen, belinformatie indelen en onzekere gegevens laten controleren. Persoonsgegevens zijn afgeschermd."
           : locale === "fr" ? "Essai réel de la version de bureau avec des fichiers Excel existants : réunir les listes, classer les informations d’appel et vérifier les données incertaines. Données personnelles masquées." : "Real desktop trial with existing Excel files: merging lists, classifying calling information and reviewing uncertain data. Personal data is concealed.",
-        thumbnailUrl: `${siteUrl}/product/belgobase-lijsten-20260929.jpg`,
+        thumbnailUrl: `${siteUrl}/product/belgobase-lijsten-20260929.webp`,
         contentUrl: `${siteUrl}/product/belgobase-lijsten-20260929.mp4`,
         uploadDate: "2026-09-29T00:00:00Z",
         inLanguage: "nl-NL",

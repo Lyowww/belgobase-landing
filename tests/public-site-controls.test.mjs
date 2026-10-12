@@ -200,10 +200,12 @@ test("mobile and preference controls retain their keyboard escape path", async (
   assert.match(hero, /aria-controls=\{videoId\}/);
   assert.match(hero, /belgobase-prospectiepijn-20261005\.mp4/);
   assert.match(hero, /belgobase-lijsten-20260929\.mp4/);
-  assert.match(hero, /belgobase-prospectiepijn-20261005\.jpg/);
-  assert.match(hero, /belgobase-lijsten-20260929\.jpg/);
+  assert.match(hero, /belgobase-prospectiepijn-20261005\.webp/);
+  assert.match(hero, /belgobase-lijsten-20260929\.webp/);
   assert.match(hero, /source\.replace\("\.mp4", ""\)/);
   await Promise.all([
+    "belgobase-prospectiepijn-20261005.webp",
+    "belgobase-lijsten-20260929.webp",
     "belgobase-prospectiepijn-20261005-nl.vtt",
     "belgobase-prospectiepijn-20261005-en.vtt",
     "belgobase-lijsten-20260929-nl.vtt",
