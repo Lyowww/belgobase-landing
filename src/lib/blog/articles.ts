@@ -3,6 +3,7 @@ import type { Locale } from "@/i18n/config";
 export type BlogSection = {
   heading: string;
   paragraphs: readonly string[];
+  links?: readonly { href: string; label: string }[];
   points?: readonly string[];
 };
 
@@ -23,6 +24,118 @@ export type BlogArticle = {
 };
 
 export const blogArticles = [
+  {
+    slug: "database-belgische-bedrijven-kiezen",
+    title: "Waar vindt u een database met Belgische bedrijven?",
+    description:
+      "KBO, NBB of een prospectieplatform? Kies de bron die bij uw taak past en controleer dekking, actualiteit, filters en Excel-export vóór u een lijst gebruikt.",
+    excerpt:
+      "Eén onderneming controleren vraagt iets anders dan een herbruikbare doelgroepselectie. Zo beoordeelt u bronnen en voorkomt u dat uw belteam een lange lijst opnieuw moet uitzoeken.",
+    readingTime: "7 min. lezen",
+    publishedAt: "2026-10-12",
+    author: "BelgoBase",
+    intro: [
+      "U vindt officiële Belgische bedrijfsgegevens bij de Kruispuntbank van Ondernemingen (KBO) en neergelegde jaarrekeningen bij de Nationale Bank van België (NBB). Voor één bedrijf opzoeken zijn die bronnen vaak een logisch vertrekpunt. Voor een terugkerende selectie op activiteit, regio en beschikbare cijfers hebt u daarnaast een manier nodig om gegevens te combineren, criteria te controleren en een bruikbare lijst te bewaren.",
+      "De keuze begint dus bij het werk dat uw team wil doen. Een gratis bedrijfsfiche kan een concrete vraag beantwoorden. Een groot gegevensbestand kan veel rijen bevatten. Een prospectieplatform kan het selectiewerk ondersteunen. Beoordeel ze op uw volgende handeling: wilt u één onderneming begrijpen, een eigen gegevensverzameling opbouwen of een belteam een gecontroleerde doelgroep meegeven?",
+    ],
+    sections: [
+      {
+        heading: "1. Eén bedrijf controleren: begin bij een gerichte opzoeking",
+        paragraphs: [
+          "KBO Public Search laat u gratis openbare registratiegegevens raadplegen. Met een ondernemingsnummer kunt u controleren welke entiteit u voor u hebt; een naamzoekopdracht helpt wanneer u dat nummer nog niet kent. Bekijk onder meer de benaming, het statuut, de rechtsvorm, het adres en de geregistreerde activiteiten. Een handelsnaam op een website hoeft niet dezelfde schrijfwijze te hebben als de officiële naam.",
+          "Public Search is bedoeld voor gerichte raadpleging. De FOD Economie verbiedt hergebruik van de via die toepassing beschikbaar gestelde gegevens en systematisch, ononderbroken downloaden. Bouw uw prospectiebestand daarom niet door automatisch resultaten van Public Search te verzamelen. Voor hergebruik bestaan andere officiële diensten, die we hieronder onderscheiden.",
+          "De gratis KBO- en NBB-zoeker van BelgoBase is een andere instaproute: zoek op naam of ondernemings-/btw-nummer, kies één bedrijf en bekijk de beschikbare basisgegevens en kerncijfers samen. Deze route toont rechtspersonen, geen eenmanszaken of bestuurdersgegevens. Ze vereist geen account en levert geen bulkselectie of Excel-export. Dat maakt haar geschikt om eerst een concrete onderneming te bekijken.",
+        ],
+        links: [
+          { href: "https://economie.fgov.be/nl/themas/ondernemingen/kruispuntbank-van/diensten-voor-iedereen/raadpleging-en-opzoeking-van/kruispuntbank-van", label: "Bron: FOD Economie over Public Search en de gebruiksgrenzen" },
+          { href: "/nl/bedrijf-zoeken", label: "Open de gratis KBO- en NBB-zoeker" },
+        ],
+      },
+      {
+        heading: "2. Gegevens hergebruiken: een bestand is nog geen werkbare lijst",
+        paragraphs: [
+          "Voor hergebruik beschrijft de FOD Economie drie routes: KBO Open Data, de Public Search Webservice en het volledige bestand voor hergebruik. De dekking en voorwaarden verschillen. Open Data bevat een beperkte verzameling gegevens van actieve geregistreerde entiteiten en vestigingseenheden. Het is dus belangrijk te controleren welke velden uw vraag nodig heeft voordat u een route kiest.",
+          "Een bronbestand vraagt vervolgens eigen verwerking: records koppelen aan de juiste onderneming, activiteiten begrijpen, ontbrekende waarden herkennen en updates verwerken. Een bestand met veel bedrijven is niet automatisch een selectie van geschikte klanten. Het bevat evenmin vanzelf alle financiële informatie, een gecontroleerde gesprekspartner of uw eerdere belnotities.",
+          "Controleer ook het toegestane gebruik. Voor KBO Open Data vermeldt de FOD Economie dat persoonsgegevens niet voor directe marketing mogen worden hergebruikt, in het bijzonder gegevens over geregistreerde entiteiten die natuurlijke personen zijn. Openbaar beschikbaar betekent dus geen onbeperkte toestemming voor ieder prospectiedoel. Vraag bij een leverancier welke bron en gebruiksvoorwaarden bij de aangeboden velden horen.",
+        ],
+        links: [
+          { href: "https://economie.fgov.be/nl/themas/ondernemingen/kruispuntbank-van/diensten-voor-iedereen/hergebruik-van-publieke", label: "Bron: officiële KBO-routes voor hergebruik" },
+          { href: "https://economie.fgov.be/nl/themas/ondernemingen/kruispuntbank-van/diensten-voor-iedereen/hergebruik-van-publieke/kruispuntbank-van-0", label: "Bron: dekking en privacyvoorwaarden van KBO Open Data" },
+        ],
+      },
+      {
+        heading: "3. Financiële informatie: controleer de jaarrekening en het boekjaar",
+        paragraphs: [
+          "Via NBB Consult kunt u gepubliceerde jaarrekeningen raadplegen. De Balanscentrale stelt die informatie gratis beschikbaar. Dit is nuttig wanneer u de beschikbare cijfers van een bepaalde rechtspersoon wilt begrijpen of een waarde wilt terugvinden in het oorspronkelijke document. KBO-registratie en jaarrekeninginformatie beantwoorden verschillende vragen; de ene bron vervangt de andere niet.",
+          "Noteer het boekjaar waarop een cijfer slaat. De datum waarop een jaarrekening werd neergelegd is niet dezelfde als de periode waarin de onderneming de prestaties behaalde. Kijk bij vergelijking ook naar de gebruikte post en eenheid: personeelsgrootte in voltijdse equivalenten is iets anders dan een telling van personen.",
+          "Niet elke onderneming heeft voor ieder gewenst jaar dezelfde financiële velden beschikbaar. Een lege omzetcel bewijst geen omzet van nul. Wanneer u omzet of personeelsgrootte als selectiecriterium gebruikt, bepaal vooraf wat u doet met ontbrekende cijfers: apart beoordelen, buiten de selectie houden of met een ander criterium onderzoeken. Laat die keuze zichtbaar blijven.",
+        ],
+        links: [
+          { href: "https://www.nbb.be/nl/balanscentrale/raadplegen/consult", label: "Bron: NBB Consult voor gepubliceerde jaarrekeningen" },
+        ],
+      },
+      {
+        heading: "4. Beoordeel een database op zes concrete vragen",
+        paragraphs: [
+          "Een teller met veel bedrijven vertelt weinig over uw eigen niche. Vraag een aanbieder om uw echte selectie te tonen en bespreek onderstaande punten. Het antwoord moet controleerbaar zijn in voorbeelden en een export, niet alleen in een productomschrijving.",
+          "Bij activiteitencodes hoort ook een versie. Statbel publiceert de NACE-BEL 2025-classificatie en een conversietabel voor de overgang vanuit NACE-BEL 2008. Bewaar de getoonde code, omschrijving en versie samen. Een overeenkomstige code is een aanwijzing voor geregistreerde activiteit; de commerciële aansluiting op uw aanbod moet u nog beoordelen.",
+        ],
+        points: [
+          "Dekking: bevat de bron rechtspersonen, eenmanszaken of vestigingseenheden, en wat valt buiten de getoonde selectie?",
+          "Actualiteit: van wanneer zijn de bedrijfsgegevens en financiële perioden, en hoe worden wijzigingen verwerkt?",
+          "Activiteit: welke NACE-BEL-versie en activiteiten worden gebruikt, en zijn meerdere activiteiten per onderneming herkenbaar?",
+          "Locatie: filtert u op maatschappelijke zetel of vestiging, en welke ontbrekende adressen kunnen uw selectie beïnvloeden?",
+          "Grootte: welke maatstaf gebruikt u, voor welk boekjaar, en hoe behandelt de selectie onbekende waarden?",
+          "Uitvoer: krijgt u ondernemingsnummers en de benodigde kolommen mee, en kunt u de gekozen criteria later terugvinden?",
+        ],
+        links: [
+          { href: "https://statbel.fgov.be/nl/over-statbel/methodologie/classificaties/nace-bel-2025", label: "Bron: Statbel over NACE-BEL 2025 en de conversietabel" },
+        ],
+      },
+      {
+        heading: "5. Wanneer helpt een prospectieplatform?",
+        paragraphs: [
+          "Een platform kan zinvol zijn wanneer uw team dezelfde voorbereiding geregeld moet herhalen. Denk aan een verkoper die telkens opnieuw bedrijven per sector en regio bijeenzoekt, of een team dat losse exports krijgt zonder te weten welke criteria zijn gebruikt. Beoordeel dan hoeveel van dat concrete werk de werkomgeving ondersteunt: selecteren, de bedrijven bekijken, een keuze aanpassen en de juiste kolommen exporteren.",
+          "In BelgoBase kunt u uw behoefte in gewone taal bespreken en de voorlopige bedrijven en gebruikte filters bekijken. Verfijn de vraag wanneer de activiteit te breed is of de regio niet klopt. Beschikbare KBO- en NBB-gegevens helpen bij de controle; daarna kiest u bewust welke selectie en gegevens u naar Excel exporteert. De gratis één-bedrijf-zoeker en deze werkomgeving hebben dus elk een eigen doel.",
+          "Verwacht van een bedrijfsselectie geen bewijs van koopbereidheid. Een passend bedrijf kan uw aanbod niet nodig hebben, een ontbrekend contactveld kan verder onderzoek vragen en een bestaande klant kan opnieuw in een verse selectie voorkomen. Neem uw eigen uitsluitingen en eerdere werk mee in de beoordeling. Aanwezige bedrijfsgegevens zijn geen garantie op volledige telefoon- of e-maildekking.",
+        ],
+        links: [
+          { href: "/nl/bedrijven-zoeken", label: "Bekijk de route voor Belgische bedrijven selecteren" },
+          { href: "/nl/prospectielijsten", label: "Van gecontroleerde selectie naar prospectielijst" },
+        ],
+      },
+      {
+        heading: "6. Probeer uw eigen vraag voordat u een grote lijst gebruikt",
+        paragraphs: [
+          "Neem een kleine, herkenbare opdracht mee naar een demonstratie. Bijvoorbeeld: ‘Ik lever onderhoudsplanning aan technische installatiebedrijven in Antwerpen en Limburg. Ik wil operationele bedrijven met een eigen ploeg onderzoeken; zuivere holdings passen niet.’ Dit is een fictief voorbeeld van een zoekvraag, geen gemeten klantresultaat en geen kant-en-klare code- of omzetgrens.",
+          "Vraag vervolgens om een beperkt aantal resultaten uit verschillende delen van de selectie te bekijken. Controleer of de activiteit werkelijk aansluit, welke locatie het filter gebruikt en waarop de grootte-inschatting steunt. Noteer passende bedrijven, verkeerde bedrijven en twijfelgevallen afzonderlijk. Een groot totaal zonder die inhoudelijke controle geeft uw belteam vooral meer uitzoekwerk.",
+          "Test ten slotte een kleine export. Staat het ondernemingsnummer erin? Zijn bronjaar en ontbrekende waarden begrijpelijk? Kan een collega zien waarom het bedrijf is gekozen? Wanneer een antwoord ontbreekt, pas dan eerst de vraag of de kolomkeuze aan. Een kleinere, uitlegbare lijst is een bruikbaarder vertrekpunt dan een grote selectie waarvan niemand de grenzen begrijpt.",
+        ],
+      },
+      {
+        heading: "7. Vergelijk de nieuwe selectie met wat al in Excel staat",
+        paragraphs: [
+          "Een nieuwe database wist uw bestaande werk niet uit. Leg een verse selectie naast uw klantenbestand en eerdere prospectielijsten voordat u bedrijven opnieuw voorbereidt. Gebruik het gecontroleerde ondernemingsnummer als sterke identiteit en laat onzekere naamovereenkomsten apart nakijken. Bewaar eerdere belnotities, bronrijen en verschillen tussen bestanden.",
+          "Spreek af welk bestand uw team voor de volgende actie gebruikt en waar nieuwe belresultaten worden bijgehouden. Dat is een werkafspraak, geen automatische CRM-functie van de databron. Zonder zo’n afspraak kan hetzelfde bedrijf volgende maand weer als ‘nieuw’ verschijnen, ook wanneer de officiële gegevens correct zijn.",
+        ],
+        links: [
+          { href: "/nl/blog/dubbele-bedrijven-excel-belteam", label: "Lees de gids over dubbele bedrijven en behoud van belhistorie" },
+        ],
+      },
+      {
+        heading: "8. Kies de bron op basis van uw volgende handeling",
+        paragraphs: [
+          "Wilt u één onderneming controleren, begin dan met een gerichte bedrijfsopzoeking en de beschikbare jaarrekening. Wilt u brongegevens in een eigen toepassing verwerken, onderzoek dan de officiële hergebruikroute en de bijbehorende voorwaarden. Wilt u regelmatig een doelgroep samenstellen, beoordeel een platform op selectie, controle en bruikbare uitvoer.",
+          "U hoeft die keuzes niet in één aankoop te combineren. Begin met uw echte vraag, test een kleine selectie en leg vast welke gegevens ontbreken. Zo kiest u een database met Belgische bedrijven omdat ze uw voorbereiding ondersteunt, en niet alleen omdat ze het grootste aantal rijen toont.",
+        ],
+      },
+    ],
+    relatedLinks: [
+      { href: "/nl/bedrijf-zoeken", label: "Bekijk één bedrijf in de KBO- en NBB-zoeker" },
+      { href: "/nl/blog/prospectielijst-belgische-bedrijven-maken", label: "Maak stap voor stap een controleerbare prospectielijst" },
+      { href: "/nl/klantenbestand-analyseren", label: "Gebruik uw bestaande klantenbestand als context" },
+    ],
+  },
   {
     slug: "prospectielijst-belgische-bedrijven-maken",
     title: "Een prospectielijst van Belgische bedrijven maken: van doelgroep naar bruikbare selectie",

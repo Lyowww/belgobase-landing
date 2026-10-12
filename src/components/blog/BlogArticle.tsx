@@ -48,6 +48,15 @@ export function BlogArticle({ article }: { article: BlogArticleData }) {
                   <div className="mt-5 space-y-5 text-base leading-8 text-foreground sm:text-lg">
                     {section.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
                   </div>
+                  {section.links ? (
+                    <div className="mt-5 space-y-3 text-base leading-7">
+                      {section.links.map((link) => (
+                        <Link key={link.href} href={link.href} rel="noreferrer" className="block text-primary underline underline-offset-4 hover:text-primary-dark">
+                          {link.label}
+                        </Link>
+                      ))}
+                    </div>
+                  ) : null}
                   {section.points ? (
                     <ul className="mt-6 space-y-3 rounded-2xl border border-border bg-surface p-5 text-base leading-7 text-foreground sm:p-7">
                       {section.points.map((point) => (
