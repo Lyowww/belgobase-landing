@@ -47,6 +47,11 @@
   let journeyLastStarted = 0;
   let journeyClosed = false;
   const adapterMessages = Object.freeze({
+    selectionCountInvalid: { nl: "Kies één tot maximaal 5.000 bedrijven om te verrijken.", fr: "Sélectionnez entre 1 et 5 000 entreprises dont vous souhaitez compléter les coordonnées.", en: "Choose between 1 and 5,000 companies to find contact details for." },
+    selectionCheckedChanged: { nl: "De aangevinkte selectie is gewijzigd. Kies de bedrijven opnieuw.", fr: "La sélection cochée a changé. Sélectionnez à nouveau les entreprises.", en: "The checked selection has changed. Select the companies again." },
+    selectionExportChanged: { nl: "De selectie of je exportlimiet is gewijzigd. Vernieuw de resultaten; BelgoBase kapt de lijst niet stil af.", fr: "La sélection ou votre limite d’exportation a changé. Actualisez les résultats ; BelgoBase ne tronque pas la liste sans vous prévenir.", en: "The selection or your export limit has changed. Refresh the results; BelgoBase does not silently truncate the list." },
+    selectionTooLarge: { nl: "Deze selectie is te groot voor de tijdelijke klantenlijst. Verklein ze tot maximaal 4 MB.", fr: "Cette sélection est trop volumineuse pour la liste de clients temporaire. Réduisez-la à 4 Mo maximum.", en: "This selection is too large for the temporary customer list. Reduce it to no more than 4 MB." },
+    logoutFailed: { nl: "Afmelden is niet gelukt. Probeer opnieuw.", fr: "La déconnexion a échoué. Réessayez.", en: "Sign-out failed. Try again." },
     bridgeTimeout: { nl: "BelgoBase heeft niet op tijd geantwoord. Controleer de huidige status voordat je de actie opnieuw uitvoert.", fr: "BelgoBase n’a pas répondu à temps. Vérifiez l’état actuel avant de relancer l’action.", en: "BelgoBase did not respond in time. Check the current status before repeating the action." },
     journeyInvalid: { nl: "Controleer je bestand of klantreisaanvraag. Gebruik een gewone Excel- of CSV-lijst en controleer de kolomkoppeling. Je bestaande lijst blijft behouden.", fr: "Vérifiez votre fichier ou votre demande. Utilisez un fichier Excel ou CSV standard et vérifiez les colonnes associées. Votre liste existante est conservée.", en: "Check your file or customer journey request. Use a standard Excel or CSV file and check the column mapping. Your existing list is preserved." },
     journeyAdviceInvalid: { nl: "Het advies kon niet betrouwbaar worden verwerkt. Je lijst en selectie blijven behouden.", fr: "Le conseil n’a pas pu être traité de manière fiable. Votre liste et votre sélection sont conservées.", en: "The advice could not be processed reliably. Your list and selection are preserved." },
@@ -472,10 +477,10 @@
     const expectedCount = request.expected_count;
     if (hasNumbers && numbers.length > 1000) throw new Error(adapterMessage("selectedLimit"));
     if (!Number.isInteger(expectedCount) || expectedCount < 1 || expectedCount > 5000) {
-      throw new Error("Kies één tot maximaal 5.000 bedrijven om te verrijken.");
+      throw new Error(adapterMessage("selectionCountInvalid"));
     }
     if (hasNumbers && numbers.length !== expectedCount) {
-      throw new Error("De aangevinkte selectie is gewijzigd. Kies de bedrijven opnieuw.");
+      throw new Error(adapterMessage("selectionCheckedChanged"));
     }
     const payload = hasNumbers
       ? { numbers: clone(numbers), columns: [...JOURNEY_EXPORT_COLUMNS] }
@@ -487,7 +492,7 @@
     const method = hasNumbers ? "export_selection" : "export_results";
     const exported = await sendBridge(method, payload, { skipAutodownload: true });
     if (exported.total !== expectedCount || exported.rows !== expectedCount) {
-      throw new Error("De selectie of je exportlimiet is gewijzigd. Vernieuw de resultaten; BelgoBase kapt de lijst niet stil af.");
+      throw new Error(adapterMessage("selectionExportChanged"));
     }
     const url = assertDownloadUrl(exported.download_url);
     if (!url) throw new Error(adapterMessage("retry"));
@@ -504,7 +509,7 @@
       const bytes = new Uint8Array(await response.arrayBuffer());
       if (signal.aborted) throw new Error(adapterMessage("retry"));
       if (!bytes.length || bytes.length > JOURNEY_MAX_UPLOAD) {
-        throw new Error("Deze selectie is te groot voor de tijdelijke klantenlijst. Verklein ze tot maximaal 4 MB.");
+        throw new Error(adapterMessage("selectionTooLarge"));
       }
       return bytes;
     }, new AbortController(), () => new Error(adapterMessage("retry")), 130_000);
@@ -874,7 +879,7 @@
     if (response.status === 401) authExpired();
     else {
       const data = await json(response);
-      if (!response.ok || data.ok !== true) throw new Error("Afmelden is niet gelukt. Probeer opnieuw.");
+      if (!response.ok || data.ok !== true) throw new Error(adapterMessage("logoutFailed"));
       destroyVoice();
       csrf = "";
       notifyAuth("belgobase-web-logout");

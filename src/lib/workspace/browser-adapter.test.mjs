@@ -783,7 +783,31 @@ test("the login component retains the public auth contract", async () => {
   assert.match(component, /closeAccount: "Close panel"/);
   assert.match(component, /mail_unavailable: t\.unavailable/);
   assert.match(component, /setPhase\("serviceUnavailable"\)/);
-  assert.match(component, /if \(response\.ok\) \{ setAccount\(undefined\); setCsrf\(""\); setError\(""\); setSessionRetryAvailable\(false\); setPhase\("login"\); return; \}/);
+  // The current logout path invalidates asynchronous account reads and clears
+  // more account state than the former one-line implementation. Exercise the
+  // actual handler rather than require that obsolete source-text arrangement.
+  const logout = component.slice(component.indexOf("async function logout"), component.indexOf("async function loadBrowserSessions"));
+  for (const status of [200, 401, 503]) {
+    const state = { account: "current", csrf: "synthetic", phase: "workspace", busy: false };
+    const generation = { current: 1 };
+    const context = {
+      accountReadGeneration: generation, csrf: state.csrf,
+      request: async () => ({ response: { ok: status === 200, status } }),
+      invalidateAccountReads() { generation.current++; },
+      setBusy(value) { state.busy = value; }, setAccount(value) { state.account = value; },
+      setCsrf(value) { state.csrf = value; }, setPhase(value) { state.phase = value; },
+      setLicenseCode() {}, setChallengeId() {}, setCode() {}, setAccountOpen() {},
+      setBrowserSessions() {}, setReferences() {}, setCopyFeedback() {},
+      setDownloadError() {}, clearEnrollment() {}, setError() {},
+    };
+    await vm.runInNewContext(logout + "\nlogout()", context);
+    assert.equal(state.busy, false);
+    if (status === 503) {
+      assert.equal(state.phase, "workspace"); assert.equal(state.account, "current"); assert.equal(state.csrf, "synthetic");
+    } else {
+      assert.equal(state.phase, "login"); assert.equal(state.account, undefined); assert.equal(state.csrf, "");
+    }
+  }
   assert.match(component, /setSessionRetryAvailable\(true\); throw reason;/);
   assert.match(component, /retrySession\(true\)/);
   assert.match(component, /disabled=\{codeInputLocked\}/);

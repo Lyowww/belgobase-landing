@@ -298,7 +298,7 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
   async function resendEnrollmentCode() {
     if (busy || resendIn > 0) return;
     setBusy(true); setError("");
-    try { const { response, result } = await request("/api/web/enrollment/start", { license_code: licenseCode.trim(), email: email.trim(), remember_browser: remember, language: shellLanguage }); if (!response.ok || !result.ok || !result.challenge_id) throw new Error(result.error || "unknown_error"); setChallengeId(result.challenge_id); setCode(""); setSessionRetryAvailable(false); setResendIn(30); } catch (reason) { setError(reason instanceof Error ? reason.message : "unknown_error"); } finally { setBusy(false); }
+    try { const { response, result } = await request("/api/web/enrollment/start", { challenge_id: challengeId, license_code: licenseCode.trim(), email: email.trim(), remember_browser: remember, language: shellLanguage }); if (!response.ok || !result.ok || !result.challenge_id) throw new Error(result.error || "unknown_error"); setChallengeId(result.challenge_id); setCode(""); setSessionRetryAvailable(false); setResendIn(30); } catch (reason) { setError(reason instanceof Error ? reason.message : "unknown_error"); } finally { setBusy(false); }
   }
   async function verifyEnrollment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy(true); setError("");
