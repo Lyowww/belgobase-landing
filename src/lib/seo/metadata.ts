@@ -86,6 +86,13 @@ export function createLocalizedPageMetadata(pathWithoutLocale = "") {
     };
 
     return {
+      ...(dictionary ? {
+        // Public ownership markers from David's Google and Bing site wizards.
+        verification: {
+          google: "_Z9gMCdVMcPhw6eOIsfOSRR1BKelM95BCJK1AJtDyq4",
+          other: { "msvalidate.01": "52CA7644B581C4F2F9FF1BE2389636D6" },
+        },
+      } : {}),
       alternates: {
         canonical: "./",
         languages: buildLanguageAlternates(pathWithoutLocale),
