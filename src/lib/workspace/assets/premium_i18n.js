@@ -319,7 +319,7 @@
 "journey.applyFeedbackMapping":{"nl":"Feedbackkolommen toepassen","fr":"Appliquer les colonnes de retour","en":"Apply feedback columns"},
 "journey.feedbackReselectMapping":{"nl":"Kies het feedbackbestand opnieuw om een gewijzigde kolomindeling toe te passen.","fr":"Sélectionnez à nouveau le fichier de retour pour appliquer une autre correspondance.","en":"Choose the feedback file again to apply a changed column mapping."},
 "journey.adviceTitle":{"nl":"Doel en ideale klant","fr":"Objectif et client idéal","en":"Goal and ideal customer"},
-"journey.adviceCopy":{"nl":"Beschrijf je aanbod, doel en ideale klanten. Er wordt nog niets gezocht.","fr":"Décrivez votre offre, votre objectif et vos clients idéaux. Aucune recherche ne démarre encore.","en":"Describe your offering, goal, and ideal customers. No search starts yet."},
+"journey.adviceCopy":{"nl":"Beschrijf je aanbod, doel en ideale klanten.","fr":"Décrivez votre offre, votre objectif et vos clients idéaux.","en":"Describe your offering, goal, and ideal customers."},
 "journey.evidenceHypothesis":{"nl":"hypothese","fr":"hypothèse","en":"hypothesis"},
 "journey.evidenceList":{"nl":"afgeleid uit je lijst","fr":"déduit de votre liste","en":"derived from your list"},
 "journey.evidenceUser":{"nl":"door jou opgegeven","fr":"indiqué par vous","en":"provided by you"},
