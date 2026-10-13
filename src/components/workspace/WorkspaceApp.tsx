@@ -182,6 +182,9 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin || event.source !== frame.current?.contentWindow) return;
+      if (event.data?.type === "belgobase-web-session-check") {
+        void loadSession().catch(() => {});
+      }
       if (event.data?.type === "belgobase-web-language" && ["nl", "fr", "en"].includes(event.data.language)) {
         setShellLanguage(event.data.language as ShellLanguage);
       }
@@ -190,7 +193,7 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
       }
     };
     window.addEventListener("message", onMessage); return () => window.removeEventListener("message", onMessage);
-  }, [clearEnrollment, invalidateAccountReads, t.expired, t.loggedOut]);
+  }, [clearEnrollment, invalidateAccountReads, loadSession, t.expired, t.loggedOut]);
   useEffect(() => {
     if ((phase !== "loginCode" && phase !== "enrollCode") || resendIn <= 0) return;
     const timer = window.setInterval(() => setResendIn((current) => Math.max(0, current - 1)), 1_000);
@@ -459,7 +462,7 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
       {!accountBusy && browserSessions.length > 0 ? <ul className={styles.browserSessions}>{browserSessions.map((browser) => <li key={browser.browser_id}><div><strong>{browser.label}{browser.current ? ` — ${t.currentBrowser}` : ""}</strong><span>{t.lastSeen}: {new Date(browser.last_seen_at).toLocaleString(shellLanguage)}</span></div><button type="button" onClick={() => void revokeBrowser(browser)}>{t.revoke}</button></li>)}</ul> : null}
     </section> : null}
     {updateAvailable ? <div className={styles.workspaceBar} role="status"><span>{shellLanguage === "nl" ? "Een nieuwe versie van BelgoBase staat klaar. Rond je huidige werk af en vernieuw." : shellLanguage === "fr" ? "Une nouvelle version de BelgoBase est prête. Terminez votre travail puis actualisez." : "A new BelgoBase version is ready. Finish your current work, then refresh."}</span><button type="button" onClick={() => { const message = shellLanguage === "nl" ? "Heb je je werk opgeslagen en je opname afgerond? BelgoBase wordt opnieuw geopend." : shellLanguage === "fr" ? "Avez-vous enregistré votre travail et terminé votre enregistrement ? BelgoBase va s’actualiser." : "Have you saved your work and finished recording? BelgoBase will reopen."; if (window.confirm(message)) window.location.reload(); }}>{shellLanguage === "nl" ? "Nieuwe versie openen" : shellLanguage === "fr" ? "Ouvrir la nouvelle version" : "Open new version"}</button></div> : null}
-    <iframe ref={frame} onLoad={() => { const version = frame.current?.contentDocument?.querySelector('meta[name="belgobase-release"]')?.getAttribute("content"); if (version) { setLoadedVersion(version); setUpdateAvailable(false); } }} className={styles.frame} title="BelgoBase workspace" src="/api/web/workspace" allow="microphone" />
+    <iframe key={accountReadGeneration.current} ref={frame} onLoad={() => { const version = frame.current?.contentDocument?.querySelector('meta[name="belgobase-release"]')?.getAttribute("content"); if (version) { setLoadedVersion(version); setUpdateAvailable(false); } }} className={styles.frame} title="BelgoBase workspace" src="/api/web/workspace" allow="microphone" />
   </main>;
   if (phase === "checking") return <main className={styles.loading}>{t.loading}</main>;
   if (phase === "serviceUnavailable") return <main className={styles.page} lang={shellLanguage}><section className={styles.card} aria-labelledby="service-unavailable-title">

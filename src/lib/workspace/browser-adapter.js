@@ -644,6 +644,7 @@
       throw new Error(adapterMessage("sessionExpired"));
     }
     if (!response.ok || localized.ok !== true) {
+      if (response.status === 403 && data.error === "csrf_invalid") notifyAuth("belgobase-web-session-check");
       if (method === "ai") throw aiError(typeof localized.error === "string" ? localized.error : "ai_unavailable", response.status);
       throw new Error(bridgeFailure(response.status, localized));
     }
