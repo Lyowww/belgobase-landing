@@ -377,17 +377,17 @@ function companyCell(c,key){if(key==='name')return `<button class="company" data
 async function search(page=1,filters=state.filters,query=($('#ai-mode').checked?state.query:$('#query').value.trim()),{selectionMode='commit',recordHistory=selectionMode==='commit',isCurrent=()=>true}={}){
  if(state.busy||state.recording)return false;
  const revision=filterRevision,previous=JSON.stringify({filters:state.filters,query:state.query});
- const seq=beginOperation(t('busy.searching','Bedrijven zoeken…'),true,'search');lastSearchError='';$('#notice').hidden=true;
+ const seq=beginOperation(t('busy.searching','Bedrijven zoeken…'),true,'search'),operation=state.operation;lastSearchError='';$('#notice').hidden=true;
  const current=()=>seq===state.request&&revision===filterRevision&&isCurrent();
  try{
   if(!journey.exclusionsReady&&!await ensureJourneyState({isCurrent:current}))return false;
   if(!current())return false;
   filters=journeyApplyExclusions({...filters});if(query){delete filters.naam;delete filters.ondernemingsnummer;}
-  const r=await bridge('search',{query,filters,page,result_columns:state.workspace.result_columns,operation_id:state.operation});
+  const r=await bridge('search',{query,filters,page,result_columns:state.workspace.result_columns,operation_id:operation});
   if(!current()||r.cancelled)return false;
   filterDraft=null;state.rows=r.rows||[];state.total=r.total||0;state.page=r.page||page;state.pageSize=r.page_size||50;state.filters={...(r.filters||filters)};delete state.filters.ondernemingsnummers_exclude;if(query){delete state.filters.naam;delete state.filters.ondernemingsnummer;}state.query=query;state.searched=true;state.aiScope='refine';if(previous!==JSON.stringify({filters:state.filters,query:state.query}))state.selectedRows={};const snapshot=selectionSnapshot();if(selectionMode==='commit')commitSelection(snapshot);else if(selectionMode!=='restore')preserveSelection(snapshot);syncFilters();renderRows();if(recordHistory&&page===1)recordSearchHistory(seq);
   return true;
- }catch(e){if(current()){lastSearchError=e.message||t('savedSearch.invalidFallback','Deze bewaarde zoekopdracht kan niet worden uitgevoerd.');if(!filterDraft)syncFilters();notice(lastSearchError,true);}return false;}
+ }catch(e){if(operation)bridge('cancel_operation',{operation_id:operation}).catch(()=>{});if(current()){lastSearchError=e.message||t('savedSearch.invalidFallback','Deze bewaarde zoekopdracht kan niet worden uitgevoerd.');if(!filterDraft)syncFilters();notice(lastSearchError,true);}return false;}
  finally{if(seq===state.request){operationKind=null;endOperation(seq);if(filterRefreshPending)scheduleFilterRefresh();else if(!filterDraft){$('.results').classList.remove('refreshing');renderRows();}}}
 }
 $('#cancel-request').onclick=()=>{const operation=state.operation;state.request++;clearTimeout(operationPoll);state.operation=null;if(operationKind==='advice-selection'){journey.autoSelection={...journey.autoSelection,status:'error',error:t('notice.cancelled','Geannuleerd. Je vorige resultaten en invoer zijn behouden.')};renderJourneyAdvice(journey.data?.last_advice);}if(operationKind==='search'){filterRevision++;clearTimeout(filterRefreshTimer);filterDraft=null;filterRefreshPending=false;operationKind=null;syncFilters();$('.results').classList.remove('refreshing');renderRows();}if(state.aiPending){$('#query').value=state.aiDraft||'';state.aiPending=false;}busy(false);notice(t('notice.cancelled','Geannuleerd. Je vorige resultaten en invoer zijn behouden.'));bridge('cancel_operation',{operation_id:operation}).catch(()=>{});};
