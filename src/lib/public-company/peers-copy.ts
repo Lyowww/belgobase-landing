@@ -14,7 +14,7 @@ export const peersCopy = {
   },
   fr: {
     heading: "Combien d’entreprises ressemblent à celle-ci ?",
-    activity: "Même activité", municipality: "Dans la même commune", postcode: "Dans la même zone postale", fte: "Effectif comparable",
+    activity: "Même activité", municipality: "Même commune", postcode: "Même code postal", fte: "Effectif comparable",
     companies: "autres entreprises", examples: "Voir des exemples", empty: "Aucune autre entreprise.",
     pending: "Calcul des entreprises comparables…", error: "Comparaison temporairement indisponible.", retry: "Réessayer",
     unavailable: "Indisponible", noActivity: "Activité inconnue", noMunicipality: "Commune inconnue", noPostcode: "Code postal inconnu", noFte: "Effectif indisponible",
@@ -25,7 +25,7 @@ export const peersCopy = {
   },
   en: {
     heading: "How many companies are similar to this one?",
-    activity: "Same activity", municipality: "In the same municipality", postcode: "In the same postcode area", fte: "Comparable workforce",
+    activity: "Same activity", municipality: "Same municipality", postcode: "Same postcode", fte: "Comparable workforce",
     companies: "other companies", examples: "View examples", empty: "No other companies.",
     pending: "Calculating comparable companies…", error: "Comparison temporarily unavailable.", retry: "Try again",
     unavailable: "Unavailable", noActivity: "Activity unknown", noMunicipality: "Municipality unknown", noPostcode: "Postcode unknown", noFte: "Workforce figure missing",

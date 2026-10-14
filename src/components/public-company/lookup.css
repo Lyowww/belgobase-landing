@@ -203,8 +203,10 @@
 }
 
 .lookup-search-has-company h1 {
-  font-size: clamp(25px, 2.3vw, 31px);
-  letter-spacing: -.8px;
+  font-size: 19px;
+  letter-spacing: -.3px;
+  font-weight: 500;
+  color: var(--lookup-muted);
 }
 
 .lookup-search-has-company .lookup-form {
@@ -236,27 +238,41 @@
 
 .lookup-company-top {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 18px;
-  padding-bottom: 10px;
+  margin: -16px -24px 0;
+  padding: 16px 24px;
+  border-radius: 16px 16px 0 0;
+  background: color-mix(in srgb, var(--primary-blue) 5%, var(--surface));
   border-bottom: 1px solid var(--border);
 }
 
 .lookup-company-number {
-  margin-bottom: 2px;
+  margin-left: 12px;
   color: var(--lookup-muted);
-  font-size: 14px;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
   font-variant-numeric: tabular-nums;
 }
 
 .lookup-company h2 {
   overflow-wrap: anywhere;
-  font-size: clamp(25px, 2.6vw, 32px);
+  font-size: clamp(28px, 2.8vw, 36px);
   line-height: 1.18;
   letter-spacing: -.8px;
-  font-weight: 600;
+  font-weight: 700;
 }
+
+.lookup-company-identity { display: flex; align-items: center; gap: 13px; min-width: 0; flex: 1; }
+.lookup-company-symbol { display: grid; place-items: center; flex-shrink: 0; width: 46px; height: 46px; border-radius: 12px; color: var(--primary-blue); background: var(--surface); border: 1px solid color-mix(in srgb, var(--primary-blue) 15%, var(--border)); }
+.lookup-company-kicker { margin-bottom: 3px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--primary-blue); }
+.lookup-company-status { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 99px; background: var(--surface); border: 1px solid var(--border); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.lookup-company-status-active { color: #176344; background: #eaf7f0; border-color: #c9e9d8; }
+.lookup-company-status-active::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.dark .lookup-company-status-active { color: #94e4bb; background: #15372b; border-color: #26513e; }
 
 .lookup-company h2:focus { outline: 0; }
 
@@ -280,8 +296,11 @@
 
 .lookup-company h3 {
   margin-bottom: 6px;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--lookup-muted);
 }
 
 .lookup-general dl {
@@ -303,8 +322,10 @@
 
 .lookup-general dd {
   overflow-wrap: anywhere;
-  font-size: 15px;
+  font-size: 14px;
 }
+
+.lookup-fact-address { grid-column: 1 / -1; }
 
 .lookup-general dd a {
   display: inline-flex;
@@ -315,7 +336,8 @@
 }
 
 .lookup-general-facts > summary { display: none; cursor: pointer; color: var(--primary-blue); font-size: 14px; }
-.lookup-financial-title { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
+.lookup-financial { padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--light-bg); }
+.lookup-company .lookup-financial-title { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; font-size: 15px; color: var(--lookup-ink); text-transform: none; letter-spacing: -.2px; }
 .lookup-financial-year { font-weight: 400; font-size: 12px; color: var(--lookup-muted); }
 
 .lookup-activities {
@@ -324,7 +346,7 @@
   border-top: 1px solid var(--border);
 }
 
-.lookup-activities h3 { margin-bottom: 3px; font-size: 15px; }
+.lookup-activities h3 { margin-bottom: 3px; font-size: 11px; }
 .lookup-activities ul { margin: 0; padding: 0; list-style: none; }
 
 .lookup-activities li {
@@ -356,17 +378,21 @@
 .lookup-metrics {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 12px;
+  gap: 6px;
 }
+
+.lookup-metric { min-width: 0; padding: 6px 8px; border-radius: 7px; background: var(--surface); }
 
 .lookup-metrics dd {
   overflow-wrap: anywhere;
-  font-size: clamp(18px, 2vw, 24px);
+  font-size: clamp(19px, 2vw, 24px);
   line-height: 1.25;
   letter-spacing: -.45px;
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
+
+.lookup-metrics .lookup-value-missing { padding-top: 3px; font-size: 14px; line-height: 1.5; font-weight: 500; letter-spacing: 0; color: var(--lookup-muted); }
 
 .lookup-metrics p {
   margin-top: 2px;
@@ -410,7 +436,10 @@
 
 .lookup-peers h3 {
   margin-bottom: 3px;
-  font-size: 22px;
+  font-size: 23px;
+  color: var(--lookup-ink);
+  letter-spacing: -.55px;
+  text-transform: none;
   line-height: 1.25;
   text-wrap: balance;
 }
@@ -429,12 +458,25 @@
 
 .lookup-peer-card {
   min-width: 0;
-  padding: 14px;
+  padding: 14px 15px;
   overflow-wrap: anywhere;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: var(--light-bg);
+  background: var(--surface);
+  box-shadow: 0 2px 5px var(--shadow-color);
 }
+
+.lookup-peer-title { display: flex; align-items: flex-start; gap: 7px; }
+.lookup-peer-title > svg { flex-shrink: 0; margin-top: 2px; color: var(--primary-blue); }
+.lookup-peer-card-activity:not(.lookup-peer-card-unavailable) { border-color: #2859df; background: linear-gradient(135deg, #2859df, #194bc8); color: white; }
+.lookup-peer-card-activity:not(.lookup-peer-card-unavailable) .lookup-peer-title > svg,
+.lookup-peer-card-activity:not(.lookup-peer-card-unavailable) .lookup-peer-criteria { color: #e4ecff; }
+.lookup-peer-card-activity:not(.lookup-peer-card-unavailable) .lookup-peer-toggle { color: white; border-color: #ffffff55; background: #ffffff12; }
+.lookup-peer-card-activity:not(.lookup-peer-card-unavailable) .lookup-peer-toggle:hover { background: #ffffff25; }
+.lookup-peer-card-activity:not(.lookup-peer-card-unavailable) .lookup-peer-count { font-size: 44px; }
+.lookup-peer-card-activity:not(.lookup-peer-card-unavailable) li { border-color: #ffffff30; }
+.lookup-peer-card-activity:not(.lookup-peer-card-unavailable) li button:hover { color: white; text-decoration: underline; }
+.lookup-peer-card-activity:not(.lookup-peer-card-unavailable) small { color: #e4ecff; }
 
 .lookup-peer-step {
   margin-bottom: 3px;
@@ -444,24 +486,26 @@
 }
 
 .lookup-peer-card h4 {
-  min-height: 50px;
-  font-size: 20px;
+  min-height: 42px;
+  font-size: 17px;
   line-height: 1.22;
   font-weight: 600;
 }
 
 .lookup-peer-count {
   margin-top: 7px;
-  font-size: 32px;
+  font-size: 34px;
   line-height: 1.15;
   letter-spacing: -.8px;
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow-wrap: normal;
 }
 
 .lookup-peer-count-label { color: var(--lookup-muted); font-size: 13px; }
 
-.lookup-peer-number-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 7px; }
+.lookup-peer-number-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 6px; }
 .lookup-peer-number-row .lookup-peer-count { margin-top: 0; }
 .lookup-peer-toggle { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border); color: var(--primary-blue); cursor: pointer; }
 .lookup-peer-toggle:hover { background: var(--surface-hover); }
@@ -610,11 +654,14 @@
 .lookup-peers-actions .lookup-peers-method[open] { flex-basis: 100%; }
 .lookup-peers-actions .lookup-next { margin: 0; padding: 0; border: 0; }
 .lookup-peers-actions .lookup-next a { padding: 0; }
+.lookup-peers-actions .lookup-next a { font-size: 13px; font-weight: 600; }
+.lookup-peers-method { font-size: 12px; }
+.lookup-provenance { font-size: 12px; }
 
 @media (min-width: 1100px) {
   .lookup-company { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); column-gap: 24px; }
   .lookup-company-top { grid-column: 1 / -1; }
-  .lookup-company-grid { grid-column: 1; grid-row: 2; grid-template-columns: 1fr; gap: 14px; }
+  .lookup-company-grid { grid-column: 1; grid-row: 2; grid-template-columns: 1fr; gap: 12px; padding-top: 14px; }
   .lookup-provenance { grid-column: 1; grid-row: 3; justify-content: flex-start; }
   .lookup-peers { grid-column: 2; grid-row: 2 / span 2; margin: 10px 0 0; padding: 0 0 0 24px; border-top: 0; border-left: 1px solid var(--border); }
   .lookup-peer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -656,12 +703,21 @@
   .lookup-input-row button { min-height: 40px; padding: 8px 11px; }
   .lookup-company { margin-top: 12px; padding: 16px; border-radius: 14px; }
   .lookup-peer-toggle { width: 44px; height: 44px; }
-  .lookup-company-top { display: block; padding-bottom: 6px; }
-  .lookup-company h2 { font-size: 25px; }
+  .lookup-company-top { display: flex; flex-wrap: wrap; gap: 7px 10px; margin: -16px -16px 0; padding: 12px 16px; }
+  .lookup-company-symbol { display: none; }
+  .lookup-company-identity { flex-basis: calc(100% - 80px); }
+  .lookup-company h2 { font-size: 26px; }
+  .lookup-company-kicker { font-size: 10px; letter-spacing: .05em; }
+  .lookup-company-number { display: block; margin: 0; font-size: 11px; }
+  .lookup-company-status { padding: 4px 7px; font-size: 11px; }
   .lookup-back { margin-top: 9px; }
   .lookup-company-grid { grid-template-columns: 1fr; gap: 12px; padding-top: 8px; }
   .lookup-activities .lookup-nace { display: none; }
   .lookup-peers h3 { font-size: 20px; }
+  .lookup-peer-card h4 { font-size: 16px; }
+  .lookup-peer-title { gap: 5px; }
+  .lookup-peer-title > svg { display: none; }
+  .lookup-peer-card-activity:not(.lookup-peer-card-unavailable) .lookup-peer-count { font-size: 30px; }
   .lookup-peer-number-row { margin-top: 4px; }
   .lookup-peer-criteria { margin-top: 3px; }
   .lookup-general dl { column-gap: 14px; }
@@ -678,18 +734,33 @@
   .lookup-input-row button { gap: 4px; padding-right: 9px; padding-left: 9px; font-size: 14px; }
   .lookup-input-row button svg:last-child { display: none; }
   .lookup-company { padding: 12px; }
+  .lookup-company-top { margin: -12px -12px 0; padding: 10px 12px; }
+  .lookup-company-number { display: inline; margin-left: 7px; font-size: 10px; }
+  .lookup-company-identity { flex-basis: 100%; }
+  .lookup-company-status { position: absolute; right: 14px; top: 12px; }
+  .lookup-company-top { position: relative; }
+  .lookup-company-kicker { min-height: 26px; padding-right: 58px; }
+  .lookup-company h2 { font-size: 25px; }
   .lookup-general dl { column-gap: 10px; }
   .lookup-general dd,
   .lookup-activities li { font-size: 14px; }
-  .lookup-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 8px; }
+  .lookup-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+  .lookup-metric { padding: 5px 6px; }
+  .lookup-financial { padding: 8px; }
   .lookup-metrics dd { font-size: 19px; }
   .lookup-peer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .lookup-peer-card { padding: 9px; }
-  .lookup-peer-card h4 { font-size: 17px; letter-spacing: -.2px; }
+  .lookup-peer-card h4 { font-size: 16px; letter-spacing: -.2px; }
   .lookup-peer-count { font-size: clamp(22px, 6vw, 28px); }
+  .lookup-peer-card-activity:not(.lookup-peer-card-unavailable) .lookup-peer-count { font-size: 24px; }
   .lookup-peer-criteria,
   .lookup-peer-card details summary,
   .lookup-peer-count-label { font-size: 12px; }
+}
+
+@media (max-width: 360px) {
+  .lookup-peer-number-row { flex-wrap: wrap; gap: 4px; }
+  .lookup-peer-toggle { margin-left: auto; }
 }
 
 @media (prefers-reduced-motion: reduce) {

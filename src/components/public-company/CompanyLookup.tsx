@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Search, ArrowRight, ArrowLeft, LoaderCircle, ExternalLink } from "lucide-react";
+import { Search, ArrowRight, ArrowLeft, LoaderCircle, ExternalLink, Building2 } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { Locale } from "@/i18n/config";
 import { Header } from "@/components/layout/Header";
@@ -129,7 +129,7 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
   const status = company?.status === "Actief" ? copy.active : company?.status === "Stopgezet" ? copy.discontinued : company?.status;
   const uniformYear = company?.metrics.length && company.metrics[0].year && company.metrics.every((metric) => metric.year === company.metrics[0].year) ? company.metrics[0].year : null;
   const facts = company ? [
-    [copy.status, status], [copy.form, company.legalForm],
+    [copy.form, company.legalForm],
     [copy.start, company.startDate ? date(company.startDate) : undefined],
     [copy.address, company.address],
   ].filter((row) => row[1]) : [];
@@ -164,13 +164,14 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
 
         {company && <article className={`lookup-company${company.activities.length ? " lookup-company-has-activity" : ""}`} aria-labelledby="company-name">
           <div className="lookup-company-top">
-            <div><p className="lookup-company-number">BE {displayNumber(company.number)}</p><h2 id="company-name" ref={heading} tabIndex={-1}>{company.name}</h2></div>
+            <div className="lookup-company-identity"><span className="lookup-company-symbol" aria-hidden="true"><Building2 size={24} /></span><div><p className="lookup-company-kicker">{copy.selected}<span className="lookup-company-number">BE {displayNumber(company.number)}</span></p><h2 id="company-name" ref={heading} tabIndex={-1}>{company.name}</h2></div></div>
+            {status && <span className={`lookup-company-status${company.status === "Actief" ? " lookup-company-status-active" : ""}`}>{status}</span>}
             {matches.length > 1 && <button className="lookup-back" onClick={() => { setCompany(undefined); setError(""); }}><ArrowLeft size={18} aria-hidden="true" />{copy.back}</button>}
           </div>
           <div className="lookup-company-grid">
             <section className="lookup-general" aria-labelledby="company-info-title">
               <h3 id="company-info-title" className="lookup-general-title">{copy.general}</h3>
-              <details className="lookup-general-facts" open={infoExpanded} onToggle={(event) => setInfoExpanded(event.currentTarget.open)}><summary>{copy.general}</summary><dl>{facts.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
+              <details className="lookup-general-facts" open={infoExpanded} onToggle={(event) => setInfoExpanded(event.currentTarget.open)}><summary>{copy.general}</summary><dl>{facts.map(([label, value]) => <div className={label === copy.address ? "lookup-fact-address" : undefined} key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
                 {website && <div><dt>{copy.website}</dt><dd><a href={website} target="_blank" rel="noopener noreferrer">{new URL(website).hostname}<ExternalLink size={16} aria-hidden="true" /></a></dd></div>}
               </dl></details>
               {company.activities.length > 0 && <div className="lookup-activities"><h3>{copy.activities}</h3><ul>{company.activities.slice(0, 1).map((activity) => <li key={`${activity.code}-${activity.label}`}><span>{activity.label}</span><span className="lookup-nace">{activity.code}</span></li>)}</ul>
@@ -179,7 +180,7 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
             </section>
             <section className="lookup-financial" aria-labelledby="financial-title">
               <h3 id="financial-title" className="lookup-financial-title">{copy.finance}{uniformYear && <span className="lookup-financial-year">{copy.year} {uniformYear}</span>}</h3>
-              {company.metrics.some((metric) => metric.value !== null) ? <dl className="lookup-metrics">{company.metrics.map((metric) => <div key={metric.key}><dt>{metricLabel(metric.key, metric.label)}</dt><dd className={metric.value !== null && metric.value < 0 ? "lookup-negative" : ""}>{metricValue(metric.value, metric.unit)}{metric.unit === "VTE" && metric.value !== null && <span className="lookup-unit"> {copy.persons}</span>}</dd>{!uniformYear && <p>{metric.year ? `${copy.year} ${metric.year}` : copy.unknownYear}</p>}</div>)}</dl> : <p className="lookup-no-financials">{copy.noFinancials}</p>}
+              {company.metrics.some((metric) => metric.value !== null) ? <dl className="lookup-metrics">{company.metrics.map((metric) => <div className="lookup-metric" key={metric.key}><dt>{metricLabel(metric.key, metric.label)}</dt><dd className={metric.value === null ? "lookup-value-missing" : metric.value < 0 ? "lookup-negative" : undefined}>{metricValue(metric.value, metric.unit)}{metric.unit === "VTE" && metric.value !== null && <span className="lookup-unit"> {copy.persons}</span>}</dd>{!uniformYear && <p>{metric.year ? `${copy.year} ${metric.year}` : copy.unknownYear}</p>}</div>)}</dl> : <p className="lookup-no-financials">{copy.noFinancials}</p>}
             </section>
           </div>
           <div className="lookup-provenance">

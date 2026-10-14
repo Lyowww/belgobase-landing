@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, LoaderCircle } from "lucide-react";
+import { ArrowRight, LoaderCircle, BriefcaseBusiness, MapPin, Map, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { Locale } from "@/i18n/config";
 import { peersCopy } from "@/lib/public-company/peers-copy";
@@ -15,6 +15,7 @@ export function CompanyPeers({ number, locale, onSelect }: { number: string; loc
   const [attempt, setAttempt] = useState(0);
   const [expanded, setExpanded] = useState<string[]>([]);
   const tag = companyLocaleTag(locale);
+  const tierIcons = { activity: BriefcaseBusiness, municipality: MapPin, postcode: Map, fte: Users };
   useEffect(() => {
     const controller = new AbortController();
     void (async () => {
@@ -42,9 +43,10 @@ export function CompanyPeers({ number, locale, onSelect }: { number: string; loc
     {error && <div className="lookup-peers-error" role="status"><p>{copy.error}</p><button onClick={() => { setError(false); setAttempt((value) => value + 1); }}>{copy.retry}</button></div>}
     {data && <>
       <p className="lookup-peers-activity">{data.activity.label}{data.activity.code && <span> · NACEBEL {data.activity.code}{data.activity.version && ` (${data.activity.version})`}</span>}</p>
-      <div className="lookup-peer-grid">{data.tiers.map((tier) => <article className="lookup-peer-card" key={tier.key} aria-labelledby={`peer-${tier.key}`}>
-        <h4 id={`peer-${tier.key}`}>{copy[tier.key]}</h4>
+      <div className="lookup-peer-grid">{data.tiers.map((tier) => { const Icon = tierIcons[tier.key]; return <article className={`lookup-peer-card lookup-peer-card-${tier.key}${tier.available ? "" : " lookup-peer-card-unavailable"}`} key={tier.key} aria-labelledby={`peer-${tier.key}`}>
+        <div className="lookup-peer-title"><Icon size={17} aria-hidden="true" /><h4 id={`peer-${tier.key}`}>{copy[tier.key]}</h4></div>
         <div className="lookup-peer-number-row"><div><p className="lookup-peer-count">{tier.available ? new Intl.NumberFormat(tag).format(tier.count!) : "—"}</p>
+          {tier.available && tier.key === "activity" && <p className="lookup-peer-criteria">{copy.companies}</p>}
           {!tier.available && <p className="lookup-peer-criteria">{reason(tier)}</p>}
           {tier.available && (tier.criteria.municipality || tier.criteria.postcode || tier.criteria.fteMin !== undefined) && <div className="lookup-peer-criteria">
             {tier.criteria.municipality && <p>{tier.criteria.municipality}</p>}
@@ -55,7 +57,7 @@ export function CompanyPeers({ number, locale, onSelect }: { number: string; loc
         {tier.available && <>
           {tier.examples.length > 0 ? <ul id={`peer-examples-${tier.key}`} hidden={!expanded.includes(tier.key)} className="lookup-peer-examples">{tier.examples.map((item) => <li key={item.number}><button onClick={() => onSelect(item.number)}><span>{item.name}{item.municipality && <small>{item.municipality}</small>}</span><ArrowRight size={15} aria-hidden="true" /></button></li>)}</ul> : <p className="lookup-peer-criteria">{copy.empty}</p>}
         </>}
-      </article>)}</div>
+      </article>; })}</div>
     </>}
     <div className="lookup-peers-actions">
       {data && <details className="lookup-peers-method"><summary>{copy.method}</summary><p>{data.activity.label} · NACEBEL {data.activity.code} ({data.activity.version})</p><p>{copy.scope}</p></details>}

@@ -3,7 +3,7 @@ import type { Locale } from "@/i18n/config";
 export const companyCopy = {
   nl: {
     initializing: "Zoeken wordt geladen…", needsJavaScript: "Schakel JavaScript in om bedrijven op te zoeken.",
-    active: "Actief", discontinued: "Stopgezet",
+    active: "Actief", discontinued: "Stopgezet", selected: "Opgezocht bedrijf",
     edited: "De vorige opzoeking is gestopt omdat u de zoektekst wijzigde. Klik op Zoeken voor uw nieuwe zoekopdracht.",
     interrupted: "De lopende opzoeking is gestopt bij de taalwissel. Klik op Zoeken om verder te gaan.", languageRestore: "De taalwissel kon je zoekopdracht niet behouden. Probeer opnieuw.",
     title: "KBO en NBB: bedrijf zoeken | BelgoBase", navigation: "Bedrijf zoeken", headingLead: "KBO en NBB.", heading: "Eén bedrijf, één overzicht.",
@@ -21,7 +21,7 @@ export const companyCopy = {
   },
   fr: {
     initializing: "Chargement de la recherche…", needsJavaScript: "Activez JavaScript pour rechercher des entreprises.",
-    active: "Actif", discontinued: "Cessé",
+    active: "Actif", discontinued: "Cessé", selected: "Entreprise recherchée",
     edited: "La recherche précédente a été arrêtée car vous avez modifié le texte. Cliquez sur Rechercher pour votre nouvelle recherche.",
     interrupted: "La recherche en cours a été arrêtée lors du changement de langue. Cliquez sur Rechercher pour continuer.", languageRestore: "Le changement de langue n’a pas pu conserver votre recherche. Réessayez.",
     title: "BCE et BNB : rechercher une entreprise | BelgoBase", navigation: "Chercher une entreprise", headingLead: "BCE et BNB.", heading: "Une entreprise, une seule vue.", intro: "Recherchez par nom ou numéro d’entreprise. Consultez les données de l’entreprise et les chiffres disponibles de la Banque nationale au même endroit.",
@@ -34,7 +34,7 @@ export const companyCopy = {
   },
   en: {
     initializing: "Loading search…", needsJavaScript: "Enable JavaScript to look up companies.",
-    active: "Active", discontinued: "Discontinued",
+    active: "Active", discontinued: "Discontinued", selected: "Company you looked up",
     edited: "The previous lookup stopped because you changed the search text. Click Search for your new lookup.",
     interrupted: "The current lookup stopped when the language changed. Click Search to continue.", languageRestore: "The language change could not preserve your search. Please try again.",
     title: "KBO and NBB: Belgian company lookup | BelgoBase", navigation: "Company lookup", headingLead: "KBO and NBB.", heading: "One company, one overview.", intro: "Search by company name or enterprise number. View company information and available National Bank figures together in one place.",
