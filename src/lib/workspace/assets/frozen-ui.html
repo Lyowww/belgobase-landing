@@ -986,10 +986,19 @@ function workspaceFilterSource(section,keepDraft=false){
  }
  return filters;
 }
+function xbrlMetadataFilters(filters){
+ if(!Object.hasOwn(filters,'xbrl_metric_filters'))return {};
+ const criteria=filters.xbrl_metric_filters;
+ // Only exact identities are safe to read separately from an editable draft.
+ // Legacy code-only or malformed identities keep the existing full validation.
+ if(!Array.isArray(criteria)||!criteria.every(item=>item&&typeof item==='object'&&!Array.isArray(item)&&typeof item.xbrl_metric_key==='string'&&item.xbrl_metric_key.trim()&&item.xbrl_metric_key===item.xbrl_metric_key.trim()))return null;
+ if(!criteria.length)return {};
+ return {xbrl_metric_filters:criteria.map(item=>({xbrl_metric_key:item.xbrl_metric_key}))};
+}
 async function openWorkspace(section,keepDraft=false){
  if(state.busy||state.recording)return;
- const filters=workspaceFilterSource(section,keepDraft);
- let data=await action('workspace_data',{section,filters},t('busy.loadingData','Gegevens laden…')),preserveFilters=false;
+ const filters=workspaceFilterSource(section,keepDraft),metadataFilters=section==='xbrl'?xbrlMetadataFilters(filters):null;
+ let data=await action('workspace_data',{section,filters:metadataFilters??filters},t('busy.loadingData','Gegevens laden…')),preserveFilters=metadataFilters!==null;
  if(!data&&section==='filters'){const message=lastActionError||t('savedSearch.invalidFallback','Deze filterselectie kan niet worden geopend.');data=await action('workspace_data',{section:'filters',filters:{}},t('busy.loadingData','Gegevens laden…'));if(!data)return;preserveFilters=true;savedSearchIssue={message,query:keepDraft?(savedSearchIssue?.query||''):''};}else{if(!keepDraft)savedSearchIssue=null;if(!data)return;}
  if(state.view!=='tools')work.returnView=state.view==='saved'?'saved':'search';
  work.section=section;work.data=data;work.filters=structuredClone(preserveFilters?filters:(data.filters||filters));work.schema=data.schema||{groups:[],fields:[]};work.metricTypes={...(data.metric_types||{})};
@@ -1042,7 +1051,7 @@ function updateWorkspaceField(element){const key=element.dataset.workspaceField;
  return;}if(field?.type==='boolean'){work.filters[key]=element.checked;return;}const raw=element.value.trim();if(raw==='')delete work.filters[key];else work.filters[key]=field?.type==='number'?Number(raw):raw;}
 async function applyWorkspaceFilters(filters=work.filters){
  if(!$$('#tools-content input').every(input=>input.reportValidity()))return;
- const result=await action('filters_apply',{filters:structuredClone(filters)},t('tools.checkFilters','Filters controleren…'));if(!result){if(lastActionError){savedSearchIssue={message:lastActionError,query:savedSearchIssue?.query??''};renderFullFilters();controls();}return;}
+ const result=await action('filters_apply',{filters:structuredClone(filters)},t('tools.checkFilters','Filters controleren…'));if(!result){if(lastActionError){savedSearchIssue={message:lastActionError,query:savedSearchIssue?.query??''};if(work.section==='xbrl')renderXbrlCriteria();else renderFullFilters();controls();}return;}
  const query=savedSearchIssue?.query||'',applied=await search(1,result.filters||{},query);if(!applied)return;
  savedSearchIssue=null;$('#query').value=query;state.refining=true;state.aiScope='refine';resetConversation();navigate('search');renderComposer();
 }
