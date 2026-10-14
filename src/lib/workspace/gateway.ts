@@ -52,7 +52,7 @@ export function isAllowedRoute(parts: string[], method: string): boolean {
   return parts.length === 2 && parts[0] === "download" && /^[a-zA-Z0-9_-]{16,100}$/.test(parts[1]) && method === "GET";
 }
 
-async function boundedBody(request: NextRequest): Promise<ArrayBuffer> {
+export async function boundedBody(request: Request, maxBytes = MAX_REQUEST_BYTES): Promise<ArrayBuffer> {
   const reader = request.body?.getReader();
   if (!reader) return new ArrayBuffer(0);
   const chunks: Uint8Array[] = [];
@@ -62,7 +62,7 @@ async function boundedBody(request: NextRequest): Promise<ArrayBuffer> {
       const part = await reader.read();
       if (part.done) break;
       size += part.value.byteLength;
-      if (size > MAX_REQUEST_BYTES) { await reader.cancel(); throw new RangeError("body limit"); }
+      if (size > maxBytes) { await reader.cancel(); throw new RangeError("body limit"); }
       chunks.push(part.value);
     }
   } finally { reader.releaseLock(); }
