@@ -34,7 +34,7 @@ export async function POST(request: NextRequest): Promise<Response> {
   try {
     const upstream = await fetch(backendUrl("../public/company-peers"), {
       method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ query }), cache: "no-store", redirect: "error", signal: AbortSignal.timeout(25_000),
+      body: JSON.stringify({ query, comparisonMode: "practical" }), cache: "no-store", redirect: "error", signal: AbortSignal.timeout(25_000),
     });
     if (upstream.status === 429) return fail("rate_limited", 429);
     if (upstream.status >= 500 || upstream.status === 404) return fail("unavailable", 503);

@@ -34,7 +34,7 @@ export function Header({ variant = "default", onBeforeLanguageChange }: HeaderPr
         mobileMenuButtonRef.current?.focus();
       }
     };
-    const desktop = window.matchMedia("(min-width: 1536px)");
+    const desktop = window.matchMedia(isLookup ? "(min-width: 1280px)" : "(min-width: 1536px)");
     const closeOnDesktop = () => { if (desktop.matches) setMobileOpen(false); };
     document.addEventListener("keydown", closeOnEscape);
     desktop.addEventListener("change", closeOnDesktop);
@@ -42,7 +42,7 @@ export function Header({ variant = "default", onBeforeLanguageChange }: HeaderPr
       document.removeEventListener("keydown", closeOnEscape);
       desktop.removeEventListener("change", closeOnDesktop);
     };
-  }, [mobileOpen]);
+  }, [mobileOpen, isLookup]);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -61,6 +61,7 @@ export function Header({ variant = "default", onBeforeLanguageChange }: HeaderPr
     { label: t("nav.pricing"), href: "#pricing" },
     { label: "Blog", href: "/blog" },
   ];
+  const lookupApplications = locale === "nl" ? "Toepassingen" : locale === "fr" ? "Applications" : "Use cases";
 
   return (
     <header
@@ -104,7 +105,7 @@ export function Header({ variant = "default", onBeforeLanguageChange }: HeaderPr
         aria-label={t("nav.mainNavigation")}
         className={cn(
           "hidden shrink-0 items-center gap-4 2xl:flex 2xl:gap-5",
-          (isComingSoon || isLookup) && "2xl:hidden",
+          isComingSoon && "2xl:hidden",
         )}
       >
         {navLinks.map((link) => (
@@ -118,7 +119,21 @@ export function Header({ variant = "default", onBeforeLanguageChange }: HeaderPr
         ))}
       </nav>
 
-        {!isComingSoon && !isLookup && (
+        {isLookup && (
+          <nav aria-label={t("nav.mainNavigation")} className="hidden shrink-0 items-center gap-5 xl:flex 2xl:hidden">
+            <Link href={`/${locale}#database`} className="text-sm font-medium text-foreground/90 transition-colors hover:text-primary">
+              {lookupApplications}
+            </Link>
+            <Link href={`/${locale}/blog`} className="text-sm font-medium text-foreground/90 transition-colors hover:text-primary">
+              Blog
+            </Link>
+            <Link href={`/${locale}/app`} className="rounded-full border border-border px-3.5 py-2 text-sm font-semibold text-deep-navy transition-colors hover:border-primary hover:text-primary">
+              {t("nav.signIn")}
+            </Link>
+          </nav>
+        )}
+
+        {!isComingSoon && (
           <div className="relative z-10 hidden items-center gap-3 2xl:flex">
             <a href={`/${locale}/app`} className="rounded-full border border-border px-4 py-2.5 text-sm font-semibold text-deep-navy transition-colors hover:border-primary hover:text-primary">
               {t("nav.signIn")}
@@ -142,19 +157,18 @@ export function Header({ variant = "default", onBeforeLanguageChange }: HeaderPr
 
         <div
           className={cn(
-            "flex items-center gap-1.5",
-            isLookup ? "relative z-10" : "2xl:hidden",
+            "relative z-10 flex items-center gap-1.5",
+            !isLookup && "2xl:hidden",
           )}
         >
           {!isComingSoon && !isLookup && <Link href={`/${locale}/bedrijf-zoeken`} className="mr-2 hidden items-center gap-2 text-sm font-semibold text-primary md:inline-flex"><Search className="h-4 w-4" aria-hidden="true" />{companyCopy[locale].navigation}</Link>}
-          {isLookup && <Link href={`/${locale}`} className="mr-3 hidden text-sm font-medium text-foreground transition-colors hover:text-primary sm:inline-flex">{companyCopy[locale].about}</Link>}
           <LanguageSwitcher onBeforeLanguageChange={onBeforeLanguageChange} />
           <ThemeToggle />
-          {!isComingSoon && !isLookup && (
+          {!isComingSoon && (
             <button
               ref={mobileMenuButtonRef}
               type="button"
-              className="shrink-0 rounded-xl p-2 transition-colors hover:bg-surface-hover touch-manipulation"
+              className={cn("shrink-0 rounded-xl p-2 transition-colors hover:bg-surface-hover touch-manipulation", isLookup && "xl:hidden")}
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label={mobileOpen ? t("nav.closeMenu") : t("nav.openMenu")}
               aria-controls="site-navigation-mobile"
@@ -171,7 +185,8 @@ export function Header({ variant = "default", onBeforeLanguageChange }: HeaderPr
         aria-hidden={!mobileOpen}
         className={cn(
           "overflow-hidden border-t border-border bg-surface 2xl:hidden",
-          (isComingSoon || isLookup) && "hidden",
+          isComingSoon && "hidden",
+          isLookup && "xl:hidden",
           mobileOpen
             ? "h-[calc(100dvh-3.5rem-env(safe-area-inset-top,0px))] sm:h-[calc(100dvh-4rem-env(safe-area-inset-top,0px))] opacity-100"
             : "max-h-0 border-transparent opacity-0",

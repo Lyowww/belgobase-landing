@@ -13,6 +13,7 @@ export function CompanyPeers({ number, locale, onSelect }: { number: string; loc
   const [data, setData] = useState<PeerData>();
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [expanded, setExpanded] = useState<string[]>([]);
   const tag = companyLocaleTag(locale);
   useEffect(() => {
     const controller = new AbortController();
@@ -27,37 +28,38 @@ export function CompanyPeers({ number, locale, onSelect }: { number: string; loc
     return () => controller.abort();
   }, [number, attempt]);
 
-  function range(min: number | undefined, max: number | null | undefined, currency: boolean) {
-    const formatter = new Intl.NumberFormat(tag, currency ? { style: "currency", currency: "EUR", maximumFractionDigits: 0 } : { maximumFractionDigits: 1 });
+  function range(min: number | undefined, max: number | null | undefined) {
+    const formatter = new Intl.NumberFormat(tag, { maximumFractionDigits: 1 });
     if (min === undefined) return "";
     return max === null || max === undefined ? `${copy.from} ${formatter.format(min)}` : `${formatter.format(min)} ${copy.below} ${formatter.format(max)}`;
   }
   function reason(tier: PeerTier) {
-    return ({ no_activity: copy.noActivity, no_revenue: copy.noRevenue, no_fte: copy.noFte, no_legal_form: copy.noLegalForm, comparison_limit: copy.comparisonLimit } as Record<string, string>)[tier.unavailableReason || ""] || copy.prior;
+    return ({ no_activity: copy.noActivity, no_postcode: copy.noPostcode, no_municipality: copy.noMunicipality, no_fte: copy.noFte, comparison_limit: copy.comparisonLimit } as Record<string, string>)[tier.unavailableReason || ""] || copy.unavailable;
   }
   return <section className="lookup-peers" aria-labelledby="peers-title">
-    <h3 id="peers-title">{copy.heading}</h3><p className="lookup-peers-intro">{copy.intro}</p>
+    <h3 id="peers-title">{copy.heading}</h3>
     {!data && !error && <p className="lookup-peers-loading" role="status"><LoaderCircle size={20} className="lookup-spin" aria-hidden="true" />{copy.pending}</p>}
     {error && <div className="lookup-peers-error" role="status"><p>{copy.error}</p><button onClick={() => { setError(false); setAttempt((value) => value + 1); }}>{copy.retry}</button></div>}
     {data && <>
       <p className="lookup-peers-activity">{data.activity.label}{data.activity.code && <span> · NACEBEL {data.activity.code}{data.activity.version && ` (${data.activity.version})`}</span>}</p>
-      <div className="lookup-peer-grid">{data.tiers.map((tier, index) => <article className="lookup-peer-card" key={tier.key} aria-labelledby={`peer-${tier.key}`}>
-        <p className="lookup-peer-step">{index + 1}</p><h4 id={`peer-${tier.key}`}>{copy[tier.key]}</h4>
-        <p className="lookup-peer-count">{tier.available ? new Intl.NumberFormat(tag).format(tier.count!) : "—"}</p>
-        <p className="lookup-peer-count-label">{tier.available ? copy.companies : copy.unavailable}</p>
-        {!tier.available && <p className="lookup-peer-criteria">{reason(tier)}</p>}
+      <div className="lookup-peer-grid">{data.tiers.map((tier) => <article className="lookup-peer-card" key={tier.key} aria-labelledby={`peer-${tier.key}`}>
+        <h4 id={`peer-${tier.key}`}>{copy[tier.key]}</h4>
+        <div className="lookup-peer-number-row"><div><p className="lookup-peer-count">{tier.available ? new Intl.NumberFormat(tag).format(tier.count!) : "—"}</p>
+          {!tier.available && <p className="lookup-peer-criteria">{reason(tier)}</p>}
+          {tier.available && (tier.criteria.municipality || tier.criteria.postcode || tier.criteria.fteMin !== undefined) && <div className="lookup-peer-criteria">
+            {tier.criteria.municipality && <p>{tier.criteria.municipality}</p>}
+            {tier.criteria.postcode && <p>{tier.criteria.postcode}</p>}
+            {tier.criteria.fteMin !== undefined && <p>{range(tier.criteria.fteMin, tier.criteria.fteMax)} {copy.persons} · {tier.criteria.financialYear}</p>}
+          </div>}
+        </div>{tier.examples.length > 0 && <button className="lookup-peer-toggle" type="button" title={copy.examples} aria-label={`${copy.examples}: ${copy[tier.key]}`} aria-expanded={expanded.includes(tier.key)} aria-controls={`peer-examples-${tier.key}`} onClick={() => setExpanded((keys) => keys.includes(tier.key) ? keys.filter((key) => key !== tier.key) : [...keys, tier.key])}><ArrowRight size={18} aria-hidden="true" /></button>}</div>
         {tier.available && <>
-          <div className="lookup-peer-criteria">
-            {tier.criteria.revenueMin !== undefined && <p>{copy.turnover}: {range(tier.criteria.revenueMin, tier.criteria.revenueMax, true)}</p>}
-            {tier.criteria.fteMin !== undefined && <p>{copy.employees}: {range(tier.criteria.fteMin, tier.criteria.fteMax, false)} {copy.persons}</p>}
-            {tier.criteria.financialYear && <p>{copy.year} {tier.criteria.financialYear}</p>}
-            {tier.criteria.legalForm && <p>{tier.criteria.legalForm}</p>}
-          </div>
-          {tier.examples.length > 0 ? <><p className="lookup-peer-example-title">{copy.examples}</p><ul>{tier.examples.map((item) => <li key={item.number}><button onClick={() => onSelect(item.number)}><span>{item.name}{item.municipality && <small>{item.municipality}</small>}</span><ArrowRight size={15} aria-hidden="true" /></button></li>)}</ul></> : <p className="lookup-peer-criteria">{copy.empty}</p>}
+          {tier.examples.length > 0 ? <ul id={`peer-examples-${tier.key}`} hidden={!expanded.includes(tier.key)} className="lookup-peer-examples">{tier.examples.map((item) => <li key={item.number}><button onClick={() => onSelect(item.number)}><span>{item.name}{item.municipality && <small>{item.municipality}</small>}</span><ArrowRight size={15} aria-hidden="true" /></button></li>)}</ul> : <p className="lookup-peer-criteria">{copy.empty}</p>}
         </>}
       </article>)}</div>
-      <details className="lookup-peers-method"><summary>{locale === "nl" ? "Hoe worden deze aantallen berekend?" : locale === "fr" ? "Comment ces chiffres sont-ils calculés ?" : "How are these counts calculated?"}</summary><p>{copy.scope}</p>{data.sources.kboDate && <p>{copy.source}: {data.sources.kboDate}</p>}</details>
     </>}
-    <aside className="lookup-next"><p>{copy.question}</p><Link href={`/${locale}#contact`}>{copy.cta}<ArrowRight size={20} aria-hidden="true" /></Link></aside>
+    <div className="lookup-peers-actions">
+      {data && <details className="lookup-peers-method"><summary>{copy.method}</summary><p>{data.activity.label} · NACEBEL {data.activity.code} ({data.activity.version})</p><p>{copy.scope}</p></details>}
+      <aside className="lookup-next"><Link href={`/${locale}/prospectielijsten`}>{copy.cta}<ArrowRight size={20} aria-hidden="true" /></Link></aside>
+    </div>
   </section>;
 }

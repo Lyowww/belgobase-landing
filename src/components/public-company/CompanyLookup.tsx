@@ -20,6 +20,7 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<LookupError>("");
   const [officialNumber, setOfficialNumber] = useState("");
+  const [infoExpanded, setInfoExpanded] = useState(true);
   const pending = useRef<AbortController | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const localeTag = companyLocaleTag(locale);
@@ -41,6 +42,15 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
     } catch { setError("languageRestore"); }
   }, [locale]);
   /* eslint-enable react-hooks/set-state-in-effect */
+
+  // Native disclosure keeps secondary facts available without filling a phone.
+  useEffect(() => {
+    const screen = window.matchMedia("(min-width: 761px)");
+    const sync = () => setInfoExpanded(screen.matches);
+    sync();
+    screen.addEventListener("change", sync);
+    return () => screen.removeEventListener("change", sync);
+  }, []);
 
   function changeLanguage(targetLocale: Locale): boolean {
     if (targetLocale === locale) return true;
@@ -117,19 +127,20 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
   }
   const website = safeWebsite(company?.website);
   const status = company?.status === "Actief" ? copy.active : company?.status === "Stopgezet" ? copy.discontinued : company?.status;
+  const uniformYear = company?.metrics.length && company.metrics[0].year && company.metrics.every((metric) => metric.year === company.metrics[0].year) ? company.metrics[0].year : null;
   const facts = company ? [
-    [copy.number, displayNumber(company.number)], [copy.status, status],
-    [copy.form, company.legalForm], [copy.start, company.startDate ? date(company.startDate) : undefined],
+    [copy.status, status], [copy.form, company.legalForm],
+    [copy.start, company.startDate ? date(company.startDate) : undefined],
     [copy.address, company.address],
   ].filter((row) => row[1]) : [];
 
   return (
     <div className="marketing-site company-lookup">
       <Header variant="lookup" onBeforeLanguageChange={changeLanguage} />
-      <main className="lookup-main">
-        <section className="lookup-search" aria-labelledby="lookup-title">
-          <h1 id="lookup-title"><span>{copy.headingLead}</span>{" "}{copy.heading}</h1>
-          <p className="lookup-intro">{copy.intro}</p>
+      <main className={`lookup-main${company ? " lookup-main-has-company" : ""}`}>
+        <section className={`lookup-search${company ? " lookup-search-has-company" : ""}`} aria-labelledby="lookup-title">
+          <h1 id="lookup-title">{company ? copy.navigation : <><span>{copy.headingLead}</span>{" "}{copy.heading}</>}</h1>
+          {!company && <p className="lookup-intro">{copy.intro}</p>}
           <form onSubmit={submit} className="lookup-form" aria-busy={!ready || busy}>
             <label htmlFor="company-query">{copy.label}</label>
             <div className="lookup-input-row">
@@ -151,28 +162,27 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
           <ul>{matches.map((match) => <li key={match.number}><button disabled={busy} onClick={() => void lookup(match.number, true)}><span><strong>{match.name}</strong><span className="lookup-match-detail">{displayNumber(match.number)}{match.municipality ? ` · ${match.municipality}` : ""}</span></span><ArrowRight size={23} aria-hidden="true" /></button></li>)}</ul>
         </section>}
 
-        {company && <article className="lookup-company" aria-labelledby="company-name">
+        {company && <article className={`lookup-company${company.activities.length ? " lookup-company-has-activity" : ""}`} aria-labelledby="company-name">
           <div className="lookup-company-top">
             <div><p className="lookup-company-number">BE {displayNumber(company.number)}</p><h2 id="company-name" ref={heading} tabIndex={-1}>{company.name}</h2></div>
             {matches.length > 1 && <button className="lookup-back" onClick={() => { setCompany(undefined); setError(""); }}><ArrowLeft size={18} aria-hidden="true" />{copy.back}</button>}
           </div>
           <div className="lookup-company-grid">
             <section className="lookup-general" aria-labelledby="company-info-title">
-              <h3 id="company-info-title">{copy.general}</h3>
-              <dl>{facts.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
+              <h3 id="company-info-title" className="lookup-general-title">{copy.general}</h3>
+              <details className="lookup-general-facts" open={infoExpanded} onToggle={(event) => setInfoExpanded(event.currentTarget.open)}><summary>{copy.general}</summary><dl>{facts.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
                 {website && <div><dt>{copy.website}</dt><dd><a href={website} target="_blank" rel="noopener noreferrer">{new URL(website).hostname}<ExternalLink size={16} aria-hidden="true" /></a></dd></div>}
-              </dl>
-              {company.activities.length > 0 && <div className="lookup-activities"><h3>{copy.activities}</h3><ul>{company.activities.slice(0, 3).map((activity) => <li key={`${activity.code}-${activity.label}`}><span>{activity.label}</span><span className="lookup-nace">{activity.code}</span></li>)}</ul>
-                {company.activities.length > 3 && <details><summary>{copy.more}</summary><ul>{company.activities.slice(3).map((activity) => <li key={`${activity.code}-${activity.label}`}><span>{activity.label}</span><span className="lookup-nace">{activity.code}</span></li>)}</ul></details>}
+              </dl></details>
+              {company.activities.length > 0 && <div className="lookup-activities"><h3>{copy.activities}</h3><ul>{company.activities.slice(0, 1).map((activity) => <li key={`${activity.code}-${activity.label}`}><span>{activity.label}</span><span className="lookup-nace">{activity.code}</span></li>)}</ul>
+                {company.activities.length > 1 && <details><summary>{copy.more}</summary><ul>{company.activities.slice(1).map((activity) => <li key={`${activity.code}-${activity.label}`}><span>{activity.label}</span><span className="lookup-nace">{activity.code}</span></li>)}</ul></details>}
               </div>}
             </section>
             <section className="lookup-financial" aria-labelledby="financial-title">
-              <h3 id="financial-title">{copy.finance}</h3>
-              {company.metrics.some((metric) => metric.value !== null) ? <dl className="lookup-metrics">{company.metrics.map((metric) => <div key={metric.key}><dt>{metricLabel(metric.key, metric.label)}</dt><dd className={metric.value !== null && metric.value < 0 ? "lookup-negative" : ""}>{metricValue(metric.value, metric.unit)}{metric.unit === "VTE" && metric.value !== null && <span className="lookup-unit"> {copy.persons}</span>}</dd><p>{metric.year ? `${copy.year} ${metric.year}` : copy.unknownYear}</p></div>)}</dl> : <p className="lookup-no-financials">{copy.noFinancials}</p>}
+              <h3 id="financial-title" className="lookup-financial-title">{copy.finance}{uniformYear && <span className="lookup-financial-year">{copy.year} {uniformYear}</span>}</h3>
+              {company.metrics.some((metric) => metric.value !== null) ? <dl className="lookup-metrics">{company.metrics.map((metric) => <div key={metric.key}><dt>{metricLabel(metric.key, metric.label)}</dt><dd className={metric.value !== null && metric.value < 0 ? "lookup-negative" : ""}>{metricValue(metric.value, metric.unit)}{metric.unit === "VTE" && metric.value !== null && <span className="lookup-unit"> {copy.persons}</span>}</dd>{!uniformYear && <p>{metric.year ? `${copy.year} ${metric.year}` : copy.unknownYear}</p>}</div>)}</dl> : <p className="lookup-no-financials">{copy.noFinancials}</p>}
             </section>
           </div>
           <div className="lookup-provenance">
-            <p>{copy.sources}: KBO{company.sources.nbbDate && " · NBB"}{company.sources.kboDate && <><span aria-hidden="true"> · </span>{copy.kbo}: <strong>{date(company.sources.kboDate)}</strong></>}{company.sources.nbbDate && <><span aria-hidden="true"> · </span>{copy.nbb}: <strong>{date(company.sources.nbbDate)}</strong></>}</p>
             <a href={`https://kbopub.economie.fgov.be/kbopub/zoeknummerform.html?nummer=${company.number}`} target="_blank" rel="noopener noreferrer">{copy.official}<ExternalLink size={16} aria-hidden="true" /></a>
           </div>
           <CompanyPeers key={company.number} number={company.number} locale={locale} onSelect={(number) => { heading.current?.scrollIntoView({ block: "start" }); setQuery(number); setMatches([]); void lookup(number); }} />
