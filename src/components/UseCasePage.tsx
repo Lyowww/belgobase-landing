@@ -2,11 +2,18 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { isLocale } from "@/i18n/config";
 import { getUseCase, useCaseSlugs, type UseCaseSlug } from "@/lib/seo/use-cases";
+import { getBlogArticle } from "@/lib/blog/articles";
 import { buildCanonicalUrl, buildLanguageAlternates, buildLocalizedPath } from "@/lib/seo/metadata";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 
 type Props = { params: Promise<{ locale: string }> };
+const guideSlugs: Record<UseCaseSlug, string[]> = {
+  "bedrijven-zoeken": ["database-belgische-bedrijven-kiezen", "prospectielijst-belgische-bedrijven-maken"],
+  prospectielijsten: ["prospectielijst-belgische-bedrijven-maken"],
+  "klantenbestand-analyseren": ["dubbele-bedrijven-excel-belteam"],
+  bedrijfsanalyse: ["database-belgische-bedrijven-kiezen"],
+};
 export function createUseCaseMetadata(slug: UseCaseSlug) {
   return async ({ params }: Props): Promise<Metadata> => {
     const { locale } = await params;
@@ -60,6 +67,14 @@ export async function UseCasePage({ params, slug }: Props & { slug: UseCaseSlug 
         <a href={`/${locale}#product-demonstration`} className="mt-5 block text-base text-white underline underline-offset-4">{nl ? "Bekijk de productdemo" : locale === "fr" ? "Voir la démonstration du produit" : "Watch the product demo"}</a>
       </section>
       <p className="text-base leading-7 text-muted">{data.boundary}</p>
+      <section className="mt-10 border-t border-border pt-8">
+        <h2 className="mb-4 text-xl font-semibold text-deep-navy">{nl ? "Verder lezen vóór u uw lijst gebruikt" : locale === "fr" ? "À lire avant d’utiliser votre liste" : "Read more before using your list"}</h2>
+        {guideSlugs[slug].map(guideSlug => {
+          const article = getBlogArticle(guideSlug);
+          if (!article) return null;
+          return <a key={guideSlug} href={`/nl/blog/${article.slug}`} hrefLang="nl" className="block py-2 text-primary hover:underline">{article.title}{nl ? "" : locale === "fr" ? " (guide en néerlandais)" : " (Dutch-language guide)"} →</a>;
+        })}
+      </section>
       <nav aria-label={nl ? "Andere toepassingen" : locale === "fr" ? "Autres applications" : "Related use cases"} className="mt-12 border-t border-border pt-8">
         <h2 className="mb-4 text-xl font-semibold text-deep-navy">{nl ? "Waar loopt het nog vast?" : locale === "fr" ? "Où cela bloque-t-il encore ?" : "Where else does it get stuck?"}</h2>
         {useCaseSlugs.filter(other => other !== slug).map(other => <a key={other} href={`/${locale}/${other}`} className="block py-2 text-primary hover:underline">{getUseCase(locale, other).heading ?? getUseCase(locale, other).title} →</a>)}

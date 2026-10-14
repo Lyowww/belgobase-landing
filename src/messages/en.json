@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "title": "BelgoBase | Belgian prospect lists with AI",
-    "description": "What does prospecting the wrong companies cost your team? Find Belgian companies that fit your offer, discuss your target market with AI and use your existing lists.",
+    "title": "BelgoBase | Find Belgian companies and build prospect lists",
+    "description": "Find Belgian companies by industry, region and available size data. Discuss your target market with AI and build a reviewed prospect list for Excel.",
     "keywords": "Belgian companies, define target market, B2B prospecting, company list, website contact details, Excel export"
   },
   "nav": {
@@ -24,7 +24,7 @@
     "titleHighlight": "",
     "titleLine2": "to call the wrong companies?",
     "enrichment": "BelgoBase helps your team find suitable companies, so less calling time is lost on the wrong audience.",
-    "productSummary": "BelgoBase helps B2B teams select Belgian companies by activity, region and available CBE and NBB data. Discuss your target audience, check the selection and export your chosen companies and columns to Excel.",
+    "productSummary": "BelgoBase helps B2B teams build a company list from a Belgian company database combining available CBE and NBB data. Select by industry, NACE-BEL activity, region and available FTE, discuss your target market and export your chosen companies and columns to Excel.",
     "description": "You know your best customers. How much time do you lose before finding companies like them?",
     "primaryCta": "Request a demo",
     "secondaryCta": "See how BelgoBase works",
@@ -234,7 +234,7 @@
     "ctaText": "Another list does not fix the wrong target market. Bring your situation and see what you can prepare differently.",
     "getFreeLeads": "Request a demo",
     "q10": "Where can I find a database of companies in Belgium?",
-    "a10": "The CBE is an official source of Belgian company data. BelgoBase uses available CBE and NBB data to build a target audience by activity, region and size. You review the criteria and results before exporting your chosen companies and columns to Excel.",
+    "a10": "The CBE is an official source of Belgian company data. The BelgoBase company database combines available CBE and NBB data for selection by industry, NACE-BEL activity, region and size in FTE. Check the criteria and results, then build a company list with your chosen columns for Excel. Not every field is available for every company.",
     "q11": "How can I look up a company by name?",
     "a11": "Use Find a company on this website to look up one Belgian legal entity at a time for free, by name or enterprise number. Choose the right company and view its available basic data and financial figures. This public lookup does not provide bulk selection or Excel export; those features are available in the licensed BelgoBase workspace.",
     "q12": "Where can I find company figures?",

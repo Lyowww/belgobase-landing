@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "title": "BelgoBase | Belgische prospectielijsten met AI",
-    "description": "Wat kost prospectie bij de verkeerde bedrijven? Zoek Belgische bedrijven die bij uw aanbod passen, bespreek uw doelgroep met AI en werk verder met uw eigen lijsten.",
+    "title": "BelgoBase | Belgische bedrijven zoeken en prospectielijsten maken",
+    "description": "Zoek Belgische bedrijven op sector, regio en beschikbare omvang. Bespreek uw doelgroep met AI en stel een gecontroleerde prospectielijst samen voor Excel.",
     "keywords": "Belgische ondernemingen, doelgroep bepalen, B2B prospectie, bedrijvenlijst, websitecontactgegevens, Excel export"
   },
   "nav": {
@@ -24,7 +24,7 @@
     "titleHighlight": "",
     "titleLine2": "om de verkeerde bedrijven te bellen?",
     "enrichment": "BelgoBase helpt uw team passende bedrijven vinden, zodat minder beltijd verloren gaat aan de verkeerde doelgroep.",
-    "productSummary": "BelgoBase helpt B2B-teams Belgische bedrijven selecteren op activiteit, regio en beschikbare KBO- en NBB-gegevens. Bespreek uw doelgroep, controleer de selectie en exporteer gekozen bedrijven en kolommen naar Excel.",
+    "productSummary": "BelgoBase helpt B2B-teams een bedrijvenlijst samenstellen uit een Belgische bedrijvendatabase met beschikbare KBO- en NBB-gegevens. Selecteer op sector, NACE-BEL-activiteit, regio en beschikbare VTE, bespreek uw doelgroep en exporteer gekozen bedrijven en kolommen naar Excel.",
     "description": "U kent uw beste klanten. Maar hoeveel tijd gaat verloren voordat u bedrijven vindt die daarop lijken?",
     "primaryCta": "Vraag een demo aan",
     "secondaryCta": "Bekijk hoe BelgoBase werkt",
@@ -234,7 +234,7 @@
     "ctaText": "Een volgende lijst lost een verkeerde doelgroep niet op. Breng uw eigen situatie mee en bekijk wat u anders kunt voorbereiden.",
     "getFreeLeads": "Vraag een demo aan",
     "q10": "Waar kan ik een database met bedrijven in België vinden?",
-    "a10": "De KBO is een officiële bron van Belgische bedrijfsgegevens. BelgoBase gebruikt beschikbare KBO- en NBB-gegevens om een doelgroep samen te stellen op activiteit, regio en omvang. U beoordeelt de criteria en resultaten vóór u gekozen bedrijven en kolommen naar Excel exporteert.",
+    "a10": "De KBO is een officiële bron van Belgische bedrijfsgegevens. De bedrijvendatabase van BelgoBase combineert beschikbare KBO- en NBB-gegevens voor selectie op sector, NACE-BEL-activiteit, regio en omvang in VTE. Controleer de criteria en resultaten en stel een bedrijvenlijst samen met uw gekozen kolommen voor Excel. Niet elk veld is voor ieder bedrijf beschikbaar.",
     "q11": "Hoe kan ik een bedrijfsnaam opzoeken?",
     "a11": "Via Bedrijf zoeken op deze website kunt u gratis één Belgische rechtspersoon opzoeken op naam of ondernemingsnummer. Kies de juiste onderneming en bekijk de beschikbare basisgegevens en financiële kerncijfers. Deze openbare opzoeking biedt geen bulkselectie of Excel-export; daarvoor gebruikt u de BelgoBase-werkruimte met een licentie.",
     "q12": "Waar kan ik cijfers van bedrijven vinden?",

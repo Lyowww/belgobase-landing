@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "title": "BelgoBase | Listes de prospects belges avec l’IA",
-    "description": "Combien coûte à votre équipe la prospection des mauvaises entreprises ? Trouvez des entreprises belges adaptées à votre offre, définissez votre cible avec l’IA et utilisez vos listes existantes.",
+    "title": "BelgoBase | Trouver des entreprises belges et créer des listes de prospects",
+    "description": "Cherchez des entreprises belges par secteur, région et taille disponible. Définissez votre cible avec l’IA et préparez une liste de prospects vérifiée pour Excel.",
     "keywords": "entreprises belges, définir une cible, prospection B2B, liste d’entreprises, coordonnées sur les sites web, export Excel"
   },
   "nav": {
@@ -13,7 +13,7 @@
     "titleHighlight": "",
     "titleLine2": "d’appeler les mauvaises entreprises ?",
     "enrichment": "BelgoBase aide votre équipe à trouver des entreprises adaptées, pour perdre moins de temps d’appel auprès des mauvaises cibles.",
-    "productSummary": "BelgoBase aide les équipes B2B à sélectionner des entreprises belges selon leur activité, leur région et les données disponibles de la BCE et de la BNB. Définissez votre cible, vérifiez la sélection et exportez les entreprises et colonnes choisies vers Excel.",
+    "productSummary": "BelgoBase aide les équipes B2B à constituer une liste d’entreprises à partir d’une base belge réunissant les données disponibles de la BCE et de la BNB. Sélectionnez le secteur, l’activité NACE-BEL, la région et les ETP disponibles, définissez votre cible et exportez les entreprises et colonnes choisies vers Excel.",
     "description": "Vous connaissez vos meilleurs clients. Combien de temps perdez-vous avant de trouver des entreprises qui leur ressemblent ?",
     "primaryCta": "Demander une démonstration", "secondaryCta": "Voir comment fonctionne BelgoBase", "getFreeLeads": "Demander une démonstration", "accessSample": "Voir comment fonctionne BelgoBase",
     "trustNoSignup": "Conversation", "trustNoSignupSub": "Expliquez ce que vous vendez et quels clients vous correspondent.", "trustUpdated": "Espace de travail", "trustUpdatedSub": "Recherchez, comparez et affinez la sélection proposée.", "trustBelgium": "Export sur mesure", "trustBelgiumSub": "Choisissez vos colonnes et emportez les données utiles.",
@@ -59,7 +59,7 @@
   "faq": {
     "eyebrow": "Avant de recommencer", "title": "Où votre prospection se bloque-t-elle ?", "ctaText": "Une autre liste ne corrige pas une mauvaise cible. Apportez votre situation et voyez ce que vous pouvez préparer autrement.", "getFreeLeads": "Demander une démonstration",
     "q10": "Où trouver une base de données des entreprises en Belgique ?",
-    "a10": "La BCE est une source officielle de données sur les entreprises belges. BelgoBase utilise les données disponibles de la BCE et de la BNB pour constituer une cible selon l’activité, la région et la taille. Vous vérifiez les critères et les résultats avant d’exporter les entreprises et les colonnes choisies vers Excel.",
+    "a10": "La BCE est une source officielle de données d’entreprises belges. La base de BelgoBase combine les données disponibles de la BCE et de la BNB pour sélectionner par secteur, activité NACE-BEL, région et taille en ETP. Vérifiez les critères et les résultats, puis constituez une liste avec les colonnes choisies pour Excel. Tous les champs ne sont pas disponibles pour chaque entreprise.",
     "q11": "Comment rechercher une entreprise par son nom ?",
     "a11": "La fonction Rechercher une entreprise de ce site permet de consulter gratuitement une personne morale belge à la fois, par nom ou numéro d’entreprise. Choisissez la bonne entreprise et consultez les données de base et les chiffres financiers disponibles. Cette recherche publique ne permet pas de sélection en masse ni d’export Excel ; ces fonctions sont accessibles dans l’espace de travail BelgoBase avec une licence.",
     "q12": "Où trouver les chiffres d’une entreprise ?",
