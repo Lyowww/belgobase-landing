@@ -7,13 +7,13 @@ import type { Locale } from "@/i18n/config";
 import { peersCopy } from "@/lib/public-company/peers-copy";
 import { peersPayload, type CompanyPeers as PeerData, type PeerTier } from "@/lib/public-company/peers";
 import { companyLocaleTag } from "@/lib/public-company/navigation";
+import type { LookupHistoryPeerKey } from "@/lib/public-company/history";
 
-export function CompanyPeers({ number, locale, onSelect }: { number: string; locale: Locale; onSelect: (number: string) => void }) {
+export function CompanyPeers({ number, locale, onSelect, expanded, onExpandedChange, methodExpanded, onMethodExpandedChange, onSettled }: { number: string; locale: Locale; onSelect: (number: string) => void; expanded: LookupHistoryPeerKey[]; onExpandedChange: (keys: LookupHistoryPeerKey[]) => void; methodExpanded: boolean; onMethodExpandedChange: (open: boolean) => void; onSettled: () => void }) {
   const copy = peersCopy[locale];
   const [data, setData] = useState<PeerData>();
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  const [expanded, setExpanded] = useState<string[]>([]);
   const tag = companyLocaleTag(locale);
   const tierIcons = { activity: BriefcaseBusiness, municipality: MapPin, postcode: Map, fte: Users };
   useEffect(() => {
@@ -28,6 +28,7 @@ export function CompanyPeers({ number, locale, onSelect }: { number: string; loc
     })();
     return () => controller.abort();
   }, [number, attempt]);
+  useEffect(() => { if (data || error) onSettled(); }, [data, error, onSettled]);
 
   function range(min: number | undefined, max: number | null | undefined) {
     const formatter = new Intl.NumberFormat(tag, { maximumFractionDigits: 1 });
@@ -53,14 +54,14 @@ export function CompanyPeers({ number, locale, onSelect }: { number: string; loc
             {tier.criteria.postcode && <p>{tier.criteria.postcode}</p>}
             {tier.criteria.fteMin !== undefined && <p>{range(tier.criteria.fteMin, tier.criteria.fteMax)} {copy.persons} · {tier.criteria.financialYear}</p>}
           </div>}
-        </div>{tier.examples.length > 0 && <button className="lookup-peer-toggle" type="button" title={copy.examples} aria-label={`${copy.examples}: ${copy[tier.key]}`} aria-expanded={expanded.includes(tier.key)} aria-controls={`peer-examples-${tier.key}`} onClick={() => setExpanded((keys) => keys.includes(tier.key) ? keys.filter((key) => key !== tier.key) : [...keys, tier.key])}><ArrowRight size={18} aria-hidden="true" /></button>}</div>
+        </div>{tier.examples.length > 0 && <button className="lookup-peer-toggle" type="button" title={copy.examples} aria-label={`${copy.examples}: ${copy[tier.key]}`} aria-expanded={expanded.includes(tier.key)} aria-controls={`peer-examples-${tier.key}`} onClick={() => onExpandedChange(expanded.includes(tier.key) ? expanded.filter((key) => key !== tier.key) : [...expanded, tier.key])}><ArrowRight size={18} aria-hidden="true" /></button>}</div>
         {tier.available && <>
           {tier.examples.length > 0 ? <ul id={`peer-examples-${tier.key}`} hidden={!expanded.includes(tier.key)} className="lookup-peer-examples">{tier.examples.map((item) => <li key={item.number}><button onClick={() => onSelect(item.number)}><span>{item.name}{item.municipality && <small>{item.municipality}</small>}</span><ArrowRight size={15} aria-hidden="true" /></button></li>)}</ul> : <p className="lookup-peer-criteria">{copy.empty}</p>}
         </>}
       </article>; })}</div>
     </>}
     <div className="lookup-peers-actions">
-      {data && <details className="lookup-peers-method"><summary>{copy.method}</summary><p>{data.activity.label} · NACEBEL {data.activity.code} ({data.activity.version})</p><p>{copy.scope}</p></details>}
+      {data && <details className="lookup-peers-method" open={methodExpanded} onToggle={(event) => onMethodExpandedChange(event.currentTarget.open)}><summary>{copy.method}</summary><p>{data.activity.label} · NACEBEL {data.activity.code} ({data.activity.version})</p><p>{copy.scope}</p></details>}
       <aside className="lookup-next"><Link href={`/${locale}/prospectielijsten`}>{copy.cta}<ArrowRight size={20} aria-hidden="true" /></Link></aside>
     </div>
   </section>;

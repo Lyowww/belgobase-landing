@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { Search, ArrowRight, ArrowLeft, LoaderCircle, ExternalLink, Copy, Check } from "lucide-react";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import type { Locale } from "@/i18n/config";
 import { Header } from "@/components/layout/Header";
 import { CompanyPeers } from "@/components/public-company/CompanyPeers";
 import { companyCopy } from "@/lib/public-company/copy";
 import { cleanQuery, displayNumber, publicPayload, safeWebsite, type CompanyMatch, type PublicCompany } from "@/lib/public-company/model";
 import { companyLocaleTag, consumeLookupTransfer, saveLookupTransfer, type LookupError } from "@/lib/public-company/navigation";
+import { readInitialLookupHistory, readLookupPopState, replaceCurrentLookupHistory, pushLookupHistory, type LookupHistoryView, type LookupHistoryPeerKey } from "@/lib/public-company/history";
 import "./lookup.css";
 
 export function CompanyLookup({ locale }: { locale: Locale }) {
@@ -21,6 +22,9 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
   const [error, setError] = useState<LookupError>("");
   const [officialNumber, setOfficialNumber] = useState("");
   const [infoExpanded, setInfoExpanded] = useState(true);
+  const [activitiesExpanded, setActivitiesExpanded] = useState(false);
+  const [expandedPeers, setExpandedPeers] = useState<LookupHistoryPeerKey[]>([]);
+  const [peerMethodExpanded, setPeerMethodExpanded] = useState(false);
   const [numberCopied, setNumberCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
   const pending = useRef<AbortController | null>(null);
@@ -28,6 +32,38 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const localeTag = companyLocaleTag(locale);
   const restored = useRef(false);
+  const restoreTarget = useRef<number | null>(null);
+  const view = useRef<LookupHistoryView>({ query: "", matches: [], officialNumber: "", error: "", infoExpanded: true, activitiesExpanded: false, expandedPeers: [], peerMethodExpanded: false, scrollY: 0 });
+  useLayoutEffect(() => {
+    view.current = { query, matches, company, officialNumber, error, infoExpanded, activitiesExpanded, expandedPeers, peerMethodExpanded, scrollY: 0 };
+  }, [query, matches, company, officialNumber, error, infoExpanded, activitiesExpanded, expandedPeers, peerMethodExpanded]);
+
+  function applyView(state: LookupHistoryView) {
+    setQuery(state.query); setMatches(state.matches); setCompany(state.company);
+    setOfficialNumber(state.officialNumber); setError(state.error);
+    setInfoExpanded(state.infoExpanded); setActivitiesExpanded(state.activitiesExpanded);
+    setExpandedPeers(state.expandedPeers); setPeerMethodExpanded(state.peerMethodExpanded);
+    setNumberCopied(false); setCopyFailed(false);
+  }
+  function saveView(state = view.current, push = false) {
+    try {
+      const context = { locale, url: window.location.pathname + window.location.search };
+      (push ? pushLookupHistory : replaceCurrentLookupHistory)(window.history, context, { ...state, scrollY: window.scrollY });
+    } catch { /* A restricted browser must still allow the lookup itself. */ }
+  }
+  function restoreScroll(final = true) {
+    if (restoreTarget.current === null) return;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (restoreTarget.current === null) return;
+      window.scrollTo({ top: restoreTarget.current, behavior: "instant" });
+      if (final) restoreTarget.current = null;
+    }));
+  }
+  useLayoutEffect(() => {
+    // Restore visible facts immediately; the settled peers section can restore
+    // a lower position once its examples have their final height.
+    if (ready) restoreScroll(false);
+  }, [ready, company]);
 
   // Rehydrate the single-use browser handoff after SSR. React batches these
   // setters; reading sessionStorage during server/client initial render would
@@ -36,13 +72,14 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
   useEffect(() => {
     if (restored.current) return;
     restored.current = true;
-    setReady(true);
     try {
-      const state = consumeLookupTransfer(window.sessionStorage, locale);
-      if (!state) return;
-      setQuery(state.query); setMatches(state.matches); setCompany(state.company);
-      setOfficialNumber(state.officialNumber); setError(state.error);
+      const transfer = consumeLookupTransfer(window.sessionStorage, locale);
+      const state = transfer ? { ...transfer, infoExpanded: window.matchMedia("(min-width: 761px)").matches, activitiesExpanded: false, expandedPeers: [], peerMethodExpanded: false, scrollY: 0 }
+        : readInitialLookupHistory(window.history.state, { locale, url: window.location.pathname + window.location.search });
+      if (state) { applyView(state); restoreTarget.current = state.scrollY; if (!state.company) restoreScroll(); }
+      else setInfoExpanded(window.matchMedia("(min-width: 761px)").matches);
     } catch { setError("languageRestore"); }
+    setReady(true);
   }, [locale]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -50,10 +87,44 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
   useEffect(() => {
     const screen = window.matchMedia("(min-width: 761px)");
     const sync = () => setInfoExpanded(screen.matches);
-    sync();
     screen.addEventListener("change", sync);
     return () => screen.removeEventListener("change", sync);
   }, []);
+
+  useEffect(() => {
+    const previousRestoration = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+    let scrollTimer: ReturnType<typeof setTimeout>;
+    const context = { locale, url: window.location.pathname + window.location.search };
+    const snapshot = () => { if (!pending.current && restoreTarget.current === null) saveView(); };
+    const scroll = () => { clearTimeout(scrollTimer); scrollTimer = setTimeout(snapshot, 150); };
+    const pop = (event: PopStateEvent) => {
+      const state = readLookupPopState(event, context);
+      if (!state) return;
+      clearTimeout(scrollTimer);
+      pending.current?.abort(); pending.current = null; setBusy(false);
+      restoreTarget.current = state.scrollY;
+      applyView(state);
+      if (!state.company) restoreScroll();
+    };
+    window.addEventListener("popstate", pop);
+    window.addEventListener("scroll", scroll, { passive: true });
+    window.addEventListener("pagehide", snapshot);
+    return () => {
+      clearTimeout(scrollTimer);
+      window.history.scrollRestoration = previousRestoration;
+      window.removeEventListener("popstate", pop);
+      window.removeEventListener("scroll", scroll);
+      window.removeEventListener("pagehide", snapshot);
+    };
+    // Event handlers read the latest view from the ref without resubscribing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locale]);
+
+  useEffect(() => {
+    if (ready && !busy && restoreTarget.current === null) saveView();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, busy, query, matches, company, officialNumber, error, infoExpanded, activitiesExpanded, expandedPeers, peerMethodExpanded]);
 
   function changeLanguage(targetLocale: Locale): boolean {
     if (targetLocale === locale) return true;
@@ -78,7 +149,11 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
 
   async function lookup(value: string, selection = false) {
     const clean = cleanQuery(value);
+    const previous = view.current;
+    saveView();
+    restoreTarget.current = null;
     pending.current?.abort();
+    setQuery(value);
     setError(""); setOfficialNumber(""); setCompany(undefined); setNumberCopied(false); setCopyFailed(false);
     if (copyTimer.current) clearTimeout(copyTimer.current);
     if (!selection) setMatches([]);
@@ -101,7 +176,14 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
       const data = publicPayload(raw);
       if (!data) { setError("error"); return; }
       if (!selection) setMatches(data.matches);
-      if (data.company) { setCompany(data.company); return; }
+      if (data.company || data.matches.length) {
+        const next = { ...view.current, query: value, matches: selection ? matches : data.matches, company: data.company, officialNumber: "", error: "" as const,
+          infoExpanded: window.matchMedia("(min-width: 761px)").matches, activitiesExpanded: false, expandedPeers: [], peerMethodExpanded: false, scrollY: 0 };
+        const different = next.company?.number !== previous.company?.number || next.matches.map((item) => item.number).join() !== previous.matches.map((item) => item.number).join();
+        saveView(next, different);
+        applyView(next);
+        return;
+      }
       if (data.error === "natural_person_unavailable") {
         const number = clean.replace(/^BE\s*/i, "").replace(/[.\s-]/g, "");
         if (/^\d{10}$/.test(number)) setOfficialNumber(number);
@@ -189,8 +271,8 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
               <details className="lookup-general-facts" open={infoExpanded} onToggle={(event) => setInfoExpanded(event.currentTarget.open)}><summary>{copy.general}</summary><dl>{facts.map(([label, value]) => <div className={label === copy.address ? "lookup-fact-address" : undefined} key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
                 {website && <div><dt>{copy.website}</dt><dd><a href={website} target="_blank" rel="noopener noreferrer">{new URL(website).hostname}<ExternalLink size={16} aria-hidden="true" /></a></dd></div>}
               </dl></details>
-              {company.activities.length > 0 && <div className="lookup-activities"><h3>{copy.activities}</h3><ul>{company.activities.slice(0, 1).map((activity) => <li key={`${activity.code}-${activity.label}`}><span>{activity.label}</span><span className="lookup-nace">{activity.code}</span></li>)}</ul>
-                {company.activities.length > 1 && <details><summary>{copy.more}</summary><ul>{company.activities.slice(1).map((activity) => <li key={`${activity.code}-${activity.label}`}><span>{activity.label}</span><span className="lookup-nace">{activity.code}</span></li>)}</ul></details>}
+              {company.activities.length > 0 && <div className="lookup-activities"><div className="lookup-activity-heading"><h3>{copy.activities}</h3><span className="lookup-nace">NACEBEL {company.activities[0].code}</span></div><p>{company.activities[0].label}</p>
+                {company.activities.length > 1 && <details open={activitiesExpanded} onToggle={(event) => setActivitiesExpanded(event.currentTarget.open)}><summary>{copy.more}</summary><ul>{company.activities.slice(1).map((activity) => <li key={`${activity.code}-${activity.label}`}><span className="lookup-nace">NACEBEL {activity.code}</span><span>{activity.label}</span></li>)}</ul></details>}
               </div>}
             </section>
             <section className="lookup-financial" aria-labelledby="financial-title">
@@ -200,8 +282,9 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
           </div>
           <div className="lookup-provenance">
             <a href={`https://kbopub.economie.fgov.be/kbopub/zoeknummerform.html?nummer=${company.number}`} target="_blank" rel="noopener noreferrer">{copy.official}<ExternalLink size={16} aria-hidden="true" /></a>
+            <a href={`https://consult.cbso.nbb.be/consult-enterprise/${company.number}`} target="_blank" rel="noopener noreferrer">{copy.officialNbb}<ExternalLink size={16} aria-hidden="true" /></a>
           </div>
-          <CompanyPeers key={company.number} number={company.number} locale={locale} onSelect={(number) => { heading.current?.scrollIntoView({ block: "start" }); setQuery(number); setMatches([]); void lookup(number); }} />
+          <CompanyPeers key={company.number} number={company.number} locale={locale} expanded={expandedPeers} onExpandedChange={setExpandedPeers} methodExpanded={peerMethodExpanded} onMethodExpandedChange={setPeerMethodExpanded} onSettled={restoreScroll} onSelect={(number) => { void lookup(number); }} />
         </article>}
       </main>
       <footer className="lookup-footer"><p>{copy.footer} <Link href={`/${locale}/privacy`}>{copy.privacy}</Link></p></footer>
