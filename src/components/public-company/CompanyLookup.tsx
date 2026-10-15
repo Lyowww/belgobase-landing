@@ -65,9 +65,35 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
     if (ready) restoreScroll(false);
   }, [ready, company]);
 
-  // Rehydrate the single-use browser handoff after SSR. React batches these
-  // setters; reading sessionStorage during server/client initial render would
-  // create a hydration mismatch. No search request or recurring sync is started.
+  async function refreshRestoredCompany(number: string) {
+    // History preserves the view, not the age of the data. Re-read the active
+    // BelgoBase source once without adding an entry or closing disclosures.
+    pending.current?.abort();
+    const controller = new AbortController();
+    pending.current = controller;
+    setBusy(true); setError("");
+    try {
+      const response = await fetch("/api/public/company", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: number }), signal: controller.signal, cache: "no-store",
+      });
+      const data = response.ok ? publicPayload(await response.json()) : null;
+      if (controller.signal.aborted) return;
+      if (!data) { setError("refresh"); return; }
+      if (data.company?.number === number) setCompany(data.company);
+      else {
+        setCompany(undefined);
+        setError(data.error === "natural_person_unavailable" ? "limited" : "notFound");
+        setOfficialNumber(data.error === "natural_person_unavailable" ? number : "");
+        restoreScroll();
+      }
+    } catch { if (!controller.signal.aborted) setError("refresh"); }
+    finally { if (pending.current === controller) { pending.current = null; setBusy(false); } }
+  }
+
+
+  // Rehydrate navigation after SSR. React batches these setters; reading
+  // browser storage during initial render would create a hydration mismatch.
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (restored.current) return;
@@ -76,10 +102,12 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
       const transfer = consumeLookupTransfer(window.sessionStorage, locale);
       const state = transfer ? { ...transfer, infoExpanded: window.matchMedia("(min-width: 761px)").matches, activitiesExpanded: false, expandedPeers: [], peerMethodExpanded: false, scrollY: 0 }
         : readInitialLookupHistory(window.history.state, { locale, url: window.location.pathname + window.location.search });
-      if (state) { applyView(state); restoreTarget.current = state.scrollY; if (!state.company) restoreScroll(); }
+      if (state) { applyView(state); restoreTarget.current = state.scrollY; if (!state.company) restoreScroll(); else void refreshRestoredCompany(state.company.number); }
       else setInfoExpanded(window.matchMedia("(min-width: 761px)").matches);
     } catch { setError("languageRestore"); }
     setReady(true);
+    // The guarded handoff runs once; refresh reads only the supplied identity.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -106,6 +134,7 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
       restoreTarget.current = state.scrollY;
       applyView(state);
       if (!state.company) restoreScroll();
+      else void refreshRestoredCompany(state.company.number);
     };
     window.addEventListener("popstate", pop);
     window.addEventListener("scroll", scroll, { passive: true });
@@ -146,6 +175,7 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
     setBusy(false); setCompany(undefined); setMatches([]); setOfficialNumber("");
     setError("edited");
   }
+
 
   async function lookup(value: string, selection = false) {
     const clean = cleanQuery(value);
