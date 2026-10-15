@@ -56,6 +56,11 @@ def workspace_scope_resolver(method: str, payload: dict[str, Any]) -> frozenset[
     if method in {"export_results", "export_selection"}:
         return _XBRL_EXPORT if _has_xbrl_filters(payload) else _DATA_EXPORT
     if method == "workspace_data":
+        if payload.get("section") == "local_excel":
+            excel_method = payload.get("method")
+            if excel_method in {"local_excel_export", "local_excel_export_cohort", "local_excel_prepare_enrichment"}:
+                return _DATA_EXPORT
+            return _DATA_READ
         return _XBRL_READ if payload.get("section") == "xbrl" else _DATA_READ
     required = _STATIC_POLICIES.get(method)
     if required is None:

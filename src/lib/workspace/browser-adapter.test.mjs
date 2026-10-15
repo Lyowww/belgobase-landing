@@ -297,6 +297,80 @@ test("journey selection import rejects truncation and over 5,000 before uploadin
   assert.equal(limited.calls.length, 2, "a truncated export must never be downloaded or uploaded");
 });
 
+test("numberfinder selection respects the 5,000-row export quota and uses the single facade", async () => {
+  const journeyReply = journey => ({ body: { ok: true, proposal: { status: "journey", contract: AI_CONTRACT, journey } } });
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "n".repeat(32) } },
+    { body: { ok: true, total: 5000, rows: 5000, download_url: "/api/web/download/numberfinder-selection" } },
+    { raw: [1, 2, 3] },
+    journeyReply({ numberfinder: { upload_id: "f".repeat(32), offset: 0 } }),
+    journeyReply({ numberfinder: { offset: 3 } }),
+    journeyReply({ numberfinder: { status: 200, body: { count: 5000 } } }),
+  ]);
+  h.window.setTimeout = (callback, delay) => { if (delay < 100_000) queueMicrotask(callback); return 1; };
+
+  const result = await h.api.journey_prepare_selection({ filters: { kbo_postcode: "9000" }, expected_count: 5000, target: "numberfinder" });
+  assert.equal(result.numberfinder.status, 200);
+  const numberfinderCalls = h.calls.slice(3).map(call => JSON.parse(call.options.body).journey);
+  assert.deepEqual(numberfinderCalls.map(call => [call.command, call.operation]), [
+    ["numberfinder", "upload_begin"], ["numberfinder", "upload_chunk"], ["numberfinder", "upload_finish"],
+  ]);
+  assert.ok(numberfinderCalls.every(call => call.command === "numberfinder"));
+});
+
+test("numberfinder selection rejects an import count mismatch", async () => {
+  const journeyReply = journey => ({ body: { ok: true, proposal: { status: "journey", contract: AI_CONTRACT, journey } } });
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "m".repeat(32) } },
+    { body: { ok: true, total: 1, rows: 1, download_url: "/api/web/download/numberfinder-selection" } },
+    { raw: [1, 2, 3] },
+    journeyReply({ numberfinder: { upload_id: "f".repeat(32), offset: 0 } }),
+    journeyReply({ numberfinder: { offset: 3 } }),
+    journeyReply({ numberfinder: { status: 200, body: { count: 2 } } }),
+  ]);
+  h.window.setTimeout = (callback, delay) => { if (delay < 100_000) queueMicrotask(callback); return 1; };
+  await assert.rejects(
+    h.api.journey_prepare_selection({ filters: { kbo_postcode: "9000" }, expected_count: 1, target: "numberfinder" })
+  );
+});
+
+test("local Excel API names tunnel through the authenticated workspace adapter", async () => {
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "e".repeat(32) } },
+    { body: { ok: true, status: { state: "ready" } } },
+  ]);
+  const result = await h.api.local_excel_status({});
+  assert.equal(result.status.state, "ready");
+  assert.equal(h.calls[1].url, "/api/web/bridge/workspace_data");
+  assert.deepEqual(JSON.parse(h.calls[1].options.body), {
+    section: "local_excel", method: "local_excel_status", payload: {},
+  });
+});
+
+test("cancelling the local Excel file picker returns a clean cancelled result", async () => {
+  const h = adapterHarness([]);
+  const pending = h.api.local_excel_select();
+  assert.equal(h.links.length, 1);
+  h.links[0].oncancel();
+  const result = await pending;
+  assert.equal(result.ok, true);
+  assert.equal(result.cancelled, true);
+  assert.equal(h.calls.length, 0);
+});
+
+test("local Excel export reports only a started browser download", async () => {
+  const h = adapterHarness([
+    { body: { authenticated: true, csrf: "x".repeat(32) } },
+    { body: { ok: true, rows: 2, filename: "BelgoBase.xlsx", download_url: "/api/web/download/" + "a".repeat(32) } },
+  ]);
+  const result = await h.api.local_excel_export({});
+  assert.equal(result.download_started, true);
+  assert.equal(result.delivery_pending, true);
+  assert.equal(result.filename, "BelgoBase.xlsx");
+  assert.equal(result.result, undefined);
+  assert.equal(h.links[0].clicked, true);
+});
+
 test("journey rejects missing or malformed BFF proposal envelopes", async () => {
   for (const body of [
     { ok: true, status: "journey", contract: AI_CONTRACT, journey: {} },
@@ -704,7 +778,10 @@ test("bridge errors are localized before display and protocol codes stay private
       assert.doesNotMatch(error.message, new RegExp(code));
       return true;
     });
-    assert.equal(h.messages.length, 0);
+    // A CSRF rejection asks the parent to check the existing session; it must
+    // neither sign the customer out nor expose the raw protocol error.
+    assert.deepEqual(h.messages.map(item => item.value.type),
+      code === "csrf_invalid" ? ["belgobase-web-session-check"] : []);
   }
 });
 

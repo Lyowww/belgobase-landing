@@ -35,29 +35,23 @@ test('AI drawer is removed and wallet stays on Account with browser email handof
  assert.match(source('refreshWalletContact'),/mailto:david@belgobase\.be/);
  assert.doesNotMatch(html,/bridge\(['"]open_wallet_topup_email/);
 });
-test('workspace cleanup keeps only actionable copy and places mode and voice controls consistently',()=>{
- assert.doesNotMatch(html,/Belgische bedrijven\. De cijfers erachter\. De kansen ervoor\./);
- assert.doesNotMatch(html,/id="version"|Geen filters ingesteld|Nog geen zoekopdracht uitgevoerd|Volgens het KBO-bedrijfsadres|begin met een naam of filter/);
- assert.match(html,/class="app-mode-tabs side-mode-tabs"[\s\S]*?<nav>/);
- assert.doesNotMatch(html,/<header class="guided-global"|id="conversation-tab"|id="guided-advanced"/);
- assert.match(html,/body\.guided-mode \.top,body\.guided-mode \.side nav\{display:none\}/,'conversation keeps the shared sidebar and hides only workspace navigation');
- assert.match(html,/aria-labelledby="side-conversation-tab"/);
- assert.match(html,/id="ai-mode"[^>]+hidden/);
- const composer=html.indexOf('id="search-form"'),voice=html.indexOf('id="voice-info"'),context=html.indexOf('class="guided-context-actions"');
- assert.ok(composer>=0&&voice>composer&&voice<context,'voice information follows the microphone composer');
- assert.match(polish,/\.side-mode-tabs[\s\S]*?grid-template-columns:\s*1fr 1fr/);
- assert.match(polish,/\.voice-info \{[^}]*margin:[^;}]*auto/);
- assert.match(polish,/\.region-button \{[^}]*border-radius:\s*8px/);
- assert.match(polish,/#journey-close[\s\S]*?color:\s*#b42318/);
- assert.match(polish,/\.chip \{[^}]*border-radius:\s*8px/);
- assert.match(i18n,/"guided\.goalTitle":\{"nl":"Vertel wat je doet","fr":"Parlez-nous de votre activité","en":"Tell us what you do"\}/);
- assert.match(i18n,/"guided\.uploadContext":\{"nl":"Klantenlijst toevoegen","fr":"Ajouter une liste de clients","en":"Add customer list"\}/);
+test('one workspace exposes all services and groups saved customer work',()=>{
+ assert.doesNotMatch(html,/data-app-mode=|id="side-conversation-tab"|id="conversation-tab"/);
+ const nav=html.slice(html.indexOf('<nav id="services-nav">'),html.indexOf('</nav>',html.indexOf('<nav id="services-nav">')));
+ assert.doesNotMatch(nav,/data-workspace="similar"/);
+ const markers=['nav.findCustomers','nav.numberfinder','nav.excelClean','nav.accounts','sidebar.myWork','results.savedSearches','breadcrumb.saved','results.history'];
+ const positions=markers.map(marker=>nav.indexOf(marker));
+ assert.ok(positions.every((value,index)=>value>=0&&(index===0||value>positions[index-1])),'services and personal work retain the agreed order');
+ assert.match(html,/id="dossier-similar"/);
+ assert.match(html,/id="nav-toggle"[^>]*aria-controls="main-navigation"/);
+ assert.doesNotMatch(source('setGuidedMode'),/displayTab|set_display_tab|workspaceTabPresentation/,'old display preferences cannot split the workspace again');
+ assert.match(i18n,/workspace.queryPlaceholder/);
 });
 test('new assignment clears transient results while preserving explicitly saved work',()=>{
  const nodes=new Map(),node=selector=>{if(!nodes.has(selector))nodes.set(selector,{value:'old',hidden:false,checked:true,disabled:false,classList:{remove(){}},setAttribute(){},focus(){}});return nodes.get(selector);};
  const state={ready:true,recording:false,busy:false,operation:null,filters:{regions:['vlaanderen']},query:'oude opdracht',rows:[{number:'1'}],total:1,page:4,searched:true,detail:{},selectedRows:{1:true},sort:{key:'name',direction:-1},refining:true,aiScope:'refine',aiPending:true,aiDraft:'draft',conversationCollapsed:true,saved:[{number:'saved'}],workspace:{searches:[{id:'saved-search'}],lists:[{id:'saved-list'}]}};
  const work={filters:{kbo_status:'AC'},similar:{},criteria:[{}]},selectionHistory={entries:[{}],index:0};
- const context=vm.createContext({state,work,selectionHistory,$:node,bridge(){throw new Error('no operation should be cancelled');},filterRevision:0,filterRefreshTimer:null,filterDraft:{},filterRefreshPending:true,operationKind:null,operationPoll:null,clearTimeout(){},resetConversation(){},syncFilters(){},busy(){},navigate(){},guidedModeActive:()=>false,document:{scrollingElement:{scrollTop:99}}});
+ const context=vm.createContext({state,work,selectionHistory,$:node,bridge(){throw new Error('no operation should be cancelled');},filterRevision:0,filterRefreshTimer:null,filterDraft:{},filterRefreshPending:true,operationKind:null,operationPoll:null,clearTimeout(){},resetConversation(){},resetLocalExcelPanel(){},syncFilters(){},busy(){},navigate(){},guidedModeActive:()=>false,document:{scrollingElement:{scrollTop:99}}});
  vm.runInContext(`${source('newSearch')};newSearch();`,context);
  assert.equal(Object.keys(state.filters).length,0);assert.equal(state.rows.length,0);assert.equal(state.total,0);assert.equal(state.searched,false);assert.equal(state.query,'');
  assert.deepEqual(state.saved,[{number:'saved'}]);assert.deepEqual(state.workspace,{searches:[{id:'saved-search'}],lists:[{id:'saved-list'}]});

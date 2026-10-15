@@ -52,9 +52,11 @@ function node(id = "") {
   };
 }
 
-test("the complete web workspace script completes bootstrap with desktop-only markup absent", async () => {
-  assert.equal(ids.has("local-excel-open"), false);
-  assert.doesNotMatch(script, /localExcel|local-excel/);
+test("the shared workspace boots with all services and without separate display tabs", async () => {
+  assert.equal(ids.has("local-excel-open"), true);
+  assert.equal(ids.has("local-excel-view"), true);
+  assert.equal(ids.has("conversation-tab"), false);
+  assert.equal(ids.has("side-conversation-tab"), false);
 
   const nodes = new Map(Array.from(ids, id => [id, node(id)]));
   const body = node("body");
@@ -73,6 +75,7 @@ test("the complete web workspace script completes bootstrap with desktop-only ma
   const calls = [];
   const window = {
     document,
+    matchMedia() { return { matches: false, addEventListener() {} }; },
     addEventListener() {},
     localStorage: { getItem() { return null; }, setItem() {} },
     pywebview: { api: {
@@ -133,7 +136,7 @@ test("the complete web workspace script completes bootstrap with desktop-only ma
 
   assert.doesNotThrow(() => vm.runInNewContext(script, context));
   for (let index = 0; index < 5; index += 1) await new Promise(resolve => setImmediate(resolve));
-  assert.equal(document.querySelector("#local-excel-open"), null, "absent desktop markup must stay absent in the DOM stub");
+  assert.equal(document.querySelector("#local-excel-open"), nodes.get("local-excel-open"), "the shared Excel entry remains connected after bootstrap");
   assert.deepEqual(calls, ["bootstrap", "journey"]);
   assert.equal(nodes.get("connection").hidden, true, "a successful bootstrap must leave the connection warning hidden");
   assert.equal(nodes.get("connection").textContent, "");

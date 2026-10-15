@@ -154,8 +154,10 @@ class WorkspaceService:
         "account_action": "account_action",
     }
 
-    def __init__(self, core: CoreCallbacks, storage: AtomicTenantStore, assets_dir: str | Path):
+    def __init__(self, core: CoreCallbacks, storage: AtomicTenantStore, assets_dir: str | Path,
+                 excel_workspace: Any | None = None):
         self.core, self.storage, self.assets_dir = core, storage, Path(assets_dir)
+        self.excel_workspace = excel_workspace
         self._operations: dict[tuple[str, str], dict[str, Any]] = {}
         self._operations_lock = threading.RLock()
 
@@ -214,7 +216,14 @@ class WorkspaceService:
         state = self.storage.load(auth)
         meta = self._asset("workspace_metadata.json", {})
         bootstrap = self.core.call("bootstrap", {}, auth)
+        capabilities = bootstrap.get("desktop_capabilities")
+        capabilities = list(capabilities) if isinstance(capabilities, list) else []
+        for capability in ("journey_prepare_selection", "journey_save_export", "local_excel_upload",
+                           "local_excel_select", "local_excel_feedback_select"):
+            if capability not in capabilities:
+                capabilities.append(capability)
         return {**bootstrap, "language": state["language"], "account": {"name": auth.display_name},
+                "desktop_capabilities": capabilities,
                 "workspace_revision": state["workspace_revision"],
                 "workspace": state["workspace"] or bootstrap.get("workspace") or {"lists": [], "searches": []},
                 "filter_labels": meta.get("filter_labels", bootstrap.get("filter_labels", {})),
@@ -243,7 +252,47 @@ class WorkspaceService:
     def _workspace_data(self, request: dict[str, Any], auth: AuthContext) -> dict[str, Any]:
         if request.get("section") == "export_columns":
             return self._export_columns({"action": "current"}, auth)
+        if request.get("section") == "local_excel":
+            if self.excel_workspace is None:
+                raise CoreNotConfiguredError("Excel opschonen is tijdelijk niet beschikbaar.")
+            if set(request) != {"section", "method", "payload"} or not isinstance(request.get("method"), str):
+                raise WorkspaceError("Ongeldige Excelopdracht.")
+            result = self.excel_workspace.execute(request["method"], request.get("payload"), auth)
+            reference = result.pop("download_reference", None)
+            if reference is not None:
+                download_bytes = result.pop("download_bytes", None)
+                download_sha256 = result.pop("download_sha256", None)
+                result["download_url"] = f"/api/web/download/{self._register_excel_download(reference, download_bytes, download_sha256, auth)}"
+            return result
         return self.core.call("workspace_data", request, auth)
+
+    def _register_download(self, reference: str, auth: AuthContext) -> str:
+        if not isinstance(reference, str) or not reference:
+            raise CoreNotConfiguredError("Core integration ontbreekt voor: export download.")
+        job_id = uuid.uuid4().hex
+        def change(state):
+            downloads = state["downloads"] if isinstance(state["downloads"], dict) else {}
+            downloads[job_id] = {"reference": reference, "created_at": int(time.time())}
+            state["downloads"] = downloads
+        self.storage.update(auth, change)
+        return job_id
+
+    def _register_excel_download(self, reference: Any, download_bytes: Any,
+                                 download_sha256: Any, auth: AuthContext) -> str:
+        if (not isinstance(reference, str) or re.fullmatch(r"[0-9a-f]{32}", reference) is None
+                or type(download_bytes) is not int or download_bytes <= 0
+                or not isinstance(download_sha256, str)
+                or re.fullmatch(r"[0-9a-f]{64}", download_sha256) is None):
+            raise CoreNotConfiguredError("Excel-download kon niet veilig worden voorbereid.")
+        job_id = uuid.uuid4().hex
+        item = {"reference": reference, "created_at": int(time.time()), "provider": "excel",
+                "owner": auth.tenant_key, "bytes": download_bytes, "sha256": download_sha256}
+        def change(state):
+            downloads = state["downloads"] if isinstance(state["downloads"], dict) else {}
+            downloads[job_id] = item
+            state["downloads"] = downloads
+        self.storage.update(auth, change)
+        return job_id
 
     def _filters_apply(self, request: dict[str, Any], auth: AuthContext) -> dict[str, Any]:
         return self.core.call("filters_apply", request, auth)
@@ -366,16 +415,9 @@ class WorkspaceService:
         if "columns" not in request and isinstance(selected, list) and selected:
             request["columns"] = copy.deepcopy(selected)
         result = self.core.call("export", request, auth)
-        job_id = uuid.uuid4().hex
         # Core returns an opaque gateway-owned download reference, never a local filesystem path.
         reference = result.get("download_reference")
-        if not isinstance(reference, str) or not reference:
-            raise CoreNotConfiguredError("Core integration ontbreekt voor: export download.")
-        def change(state):
-            downloads = state["downloads"] if isinstance(state["downloads"], dict) else {}
-            downloads[job_id] = {"reference": reference, "created_at": int(time.time())}
-            state["downloads"] = downloads
-        self.storage.update(auth, change)
+        job_id = self._register_download(reference, auth)
         return {"download_url": f"/api/web/download/{job_id}", "rows": result.get("rows"),
                 "total": result.get("total"), "limited": result.get("limited", False),
                 "message": result.get("message", "Excel is voorbereid.")}

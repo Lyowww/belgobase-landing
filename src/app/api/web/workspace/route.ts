@@ -17,18 +17,20 @@ export async function GET(request: NextRequest) {
   if (session?.authenticated !== true) return webError("Meld je aan om BelgoBase te openen.", 401);
   try {
   const root = path.join(process.cwd(), "src/lib/workspace");
-  const [original, desktopI18n, presentationI18n, adapter, polish] = await Promise.all([
+  const [original, desktopI18n, presentationI18n, adapter, polish, numberfinder] = await Promise.all([
     readFile(path.join(root, "assets/frozen-ui.html"), "utf8"),
     readFile(path.join(root, "assets/premium_i18n.js"), "utf8"),
     readFile(path.join(root, "browser-i18n.js"), "utf8"),
     readFile(path.join(root, "browser-adapter.js"), "utf8"),
     readFile(path.join(root, "browser-polish.css"), "utf8"),
+    readFile(path.join(root, "assets/numberfinder-view.js"), "utf8"),
   ]);
   const desktopMarker = '<script src="premium_i18n.js"></script>';
-  if (!original.includes(desktopMarker) || [desktopI18n, presentationI18n, adapter].some(source => /<\/script/i.test(source))) {
+  if (!original.includes(desktopMarker) || [desktopI18n, presentationI18n, adapter, numberfinder].some(source => /<\/script/i.test(source))) {
     return webError("De werkruimte kon niet worden geladen.", 503);
   }
-  const localized = original.replace(desktopMarker, `<script>${desktopI18n}</script>`);
+  const localized = original.replace(desktopMarker, `<script>${desktopI18n}</script>`)
+    .replace('<script src="numberfinder-view.js"></script>', `<script>${numberfinder}</script>`);
   const marker = localized.lastIndexOf("<script>");
   if (marker < 0) return webError("De werkruimte kon niet worden geladen.", 503);
   const html = (localized.slice(0, marker) + `<script>${presentationI18n}</script><script>${adapter}</script>` + localized.slice(marker))

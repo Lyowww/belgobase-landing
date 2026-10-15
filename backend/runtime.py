@@ -77,6 +77,12 @@ def operation_binding(method: str, payload: dict[str, Any]) -> OperationBinding:
         return OperationBinding("/leadsearch/export", "/web/bridge")
     if method == "workspace_data" and payload.get("section") == "xbrl":
         return OperationBinding("/xbrl/metrics/browse", "/web/bridge")
+    if method == "workspace_data" and payload.get("section") == "local_excel":
+        if payload.get("method") in {"local_excel_export", "local_excel_export_cohort"}:
+            return OperationBinding("/leadsearch/export", "/leadsearch/export", export=True)
+        if payload.get("method") == "local_excel_prepare_enrichment":
+            return OperationBinding("/leadsearch/export", "/web/bridge")
+        return OperationBinding("/company/lookup", "/web/bridge")
     if method in {"filters_apply", "similar_apply"} and uses_xbrl:
         return OperationBinding("/xbrl/leadsearch/results", "/web/bridge")
     if method == "account_action":
@@ -555,10 +561,12 @@ def build_web_runtime_from_environment(
             validate_credential,
         )
         from belgobase_usage_limits_46a import USAGE_CONTROLLER
+        from belgobase_usage_limits_46a import reserve_web_export_rows
         from belgobase_voice_transcription import transcribe
         from belgobase_premium_ai_server import interpret_premium
         from .web_core import WebCore
         from .web_workspace import AtomicTenantStore, WorkspaceError, WorkspaceService
+        from .web_excel_workspace import WebExcelWorkspace
     except ImportError as exc:
         raise RuntimeConfigurationError("web runtime dependency import failed") from exc
 
@@ -642,7 +650,39 @@ def build_web_runtime_from_environment(
             main_module, interpret_premium, auth
         ),
     )
-    workspace = WorkspaceService(web_core.callbacks(), AtomicTenantStore(state_root), assets_dir)
+    def excel_cloud(command: dict[str, Any], request_id: str, auth: Any) -> dict[str, Any]:
+        context = auth.authorization_context()
+        numberfinder = command.get("command") == "numberfinder"
+        route = "/leadsearch/export" if numberfinder else "/leadsearch/interpret"
+        context = authorize_preauthenticated_customer(
+            "POST", route, context, source_ip="unknown"
+        )
+        permit = None if numberfinder else USAGE_CONTROLLER.start_request("POST", "/leadsearch/interpret", "unknown", context)
+        payload = {"contract": "belgobase-premium-v1", "action": "journey",
+                   "request_id": request_id, "language": "nl", "journey": command}
+        try:
+            if permit is not None:
+                permit.configure_payload(payload)
+            answer = _interpret_premium_for_web(main_module, interpret_premium, payload, context)
+            envelope = answer.get("proposal") if isinstance(answer, dict) else None
+            if not isinstance(envelope, dict):
+                envelope = answer
+            if (not isinstance(envelope, dict) or envelope.get("status") != "journey"
+                    or envelope.get("contract") != "belgobase-premium-v1"
+                    or not isinstance(envelope.get("journey"), dict)):
+                raise WorkspaceError("De adviesdienst gaf geen geldig antwoord.")
+            return dict(envelope["journey"])
+        finally:
+            if permit is not None:
+                permit.close()
+
+    excel_workspace = WebExcelWorkspace(
+        state_root / "excel", download_root / "excel", excel_cloud,
+        export_reserver=reserve_web_export_rows,
+    )
+    workspace = WorkspaceService(
+        web_core.callbacks(), AtomicTenantStore(state_root), assets_dir, excel_workspace
+    )
 
     def resolve_download(job_id: str, auth: Any) -> Path:
         state = workspace.storage.load(auth)
@@ -651,6 +691,13 @@ def build_web_runtime_from_environment(
         reference = item.get("reference") if isinstance(item, dict) else None
         if not isinstance(reference, str) or not reference:
             raise AuthError("download_not_found", 404)
+        if item.get("provider") == "excel":
+            if item.get("owner") != auth.tenant_key:
+                raise AuthError("download_not_found", 404)
+            return excel_workspace.resolve_download(
+                reference, auth, persisted_owner=item["owner"],
+                expected_bytes=item.get("bytes"), expected_sha256=item.get("sha256"),
+            )
         return web_core.resolve_download(reference, auth)
 
     def interpret(payload: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:

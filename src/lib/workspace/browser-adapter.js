@@ -17,8 +17,10 @@
   const AI_CONTRACT = "belgobase-premium-v1";
   const AI_SELECTION_CONTRACT = "belgobase-selection-v2";
   const JOURNEY_CHUNK_SIZE = 30000;
+  const EXCEL_CHUNK_SIZE = 4 * 1024 * 1024;
   const JOURNEY_MIN_REQUEST_INTERVAL = 800;
   const JOURNEY_MAX_UPLOAD = 4 * 1024 * 1024;
+  const NUMBERFINDER_MAX_UPLOAD = 25 * 1024 * 1024;
   const ENTERPRISE_EXCLUSION_FIELD = "ondernemingsnummers_exclude";
   const JOURNEY_EXPORT_COLUMNS = [
     "ondernemingsnummer", "naam", "straat_nl", "straat_fr", "huisnummer",
@@ -45,6 +47,8 @@
   let aiClosing = false;
   let journeyQueue = Promise.resolve();
   let journeyLastStarted = 0;
+  let excelQueue = Promise.resolve();
+  let excelLastStarted = 0;
   let journeyClosed = false;
   const adapterMessages = Object.freeze({
     selectionCountInvalid: { nl: "Kies één tot maximaal 5.000 bedrijven om te verrijken.", fr: "Sélectionnez entre 1 et 5 000 entreprises dont vous souhaitez compléter les coordonnées.", en: "Choose between 1 and 5,000 companies to find contact details for." },
@@ -472,6 +476,7 @@
 
   async function journeyPrepareSelection(request) {
     if (!object(request)) throw new Error(adapterMessage("retry"));
+    const numberfinder = request.target === "numberfinder";
     const hasNumbers = Array.isArray(request.numbers);
     const numbers = hasNumbers ? request.numbers : [];
     const expectedCount = request.expected_count;
@@ -508,21 +513,101 @@
       if (!response.ok) throw new Error(adapterMessage("retry"));
       const bytes = new Uint8Array(await response.arrayBuffer());
       if (signal.aborted) throw new Error(adapterMessage("retry"));
-      if (!bytes.length || bytes.length > JOURNEY_MAX_UPLOAD) {
+      if (!bytes.length || bytes.length > (numberfinder ? NUMBERFINDER_MAX_UPLOAD : JOURNEY_MAX_UPLOAD)) {
         throw new Error(adapterMessage("selectionTooLarge"));
       }
       return bytes;
     }, new AbortController(), () => new Error(adapterMessage("retry")), 130_000);
-    const upload = await journeyBridge({ command: "upload_begin", filename: "BelgoBase_selectie.xlsx", size: raw.length, purpose: "prospects" });
+    const upload = numberfinder
+      ? (await journeyBridge({ command: "numberfinder", operation: "upload_begin", name: "BelgoBase_selectie.xlsx", size: raw.length })).numberfinder
+      : await journeyBridge({ command: "upload_begin", filename: "BelgoBase_selectie.xlsx", size: raw.length, purpose: "prospects" });
     if (typeof upload.upload_id !== "string") throw new Error(adapterMessage("retry"));
     let offset = 0;
     while (offset < raw.length) {
       const chunk = raw.subarray(offset, Math.min(raw.length, offset + JOURNEY_CHUNK_SIZE));
-      const sent = await journeyBridge({ command: "upload_chunk", upload_id: upload.upload_id, offset, data: bytesBase64(chunk) });
+      const sent = numberfinder
+        ? (await journeyBridge({ command: "numberfinder", operation: "upload_chunk", upload_id: upload.upload_id, offset, data: bytesBase64(chunk) })).numberfinder
+        : await journeyBridge({ command: "upload_chunk", upload_id: upload.upload_id, offset, data: bytesBase64(chunk) });
       if (!Number.isInteger(sent.offset) || sent.offset !== offset + chunk.length) throw new Error(adapterMessage("retry"));
       offset = sent.offset;
     }
-    return journeyBridge({ command: "upload_finish", upload_id: upload.upload_id });
+    if (!numberfinder) return journeyBridge({ command: "upload_finish", upload_id: upload.upload_id });
+    const finished = await journeyBridge({ command: "numberfinder", operation: "upload_finish", upload_id: upload.upload_id });
+    if (finished?.numberfinder?.status !== 200 || finished.numberfinder?.body?.count !== expectedCount) {
+      throw new Error(adapterMessage("retry"));
+    }
+    return finished;
+  }
+
+  function localExcelBridge(method, payload = {}) {
+    const start = excelQueue.then(async () => {
+      const wait = Math.max(0, JOURNEY_MIN_REQUEST_INTERVAL - (performance.now() - excelLastStarted));
+      if (wait) await new Promise(resolve => window.setTimeout(resolve, wait));
+      excelLastStarted = performance.now();
+    });
+    excelQueue = start.catch(() => {});
+    return start.then(() => sendBridge("workspace_data", { section: "local_excel", method, payload }));
+  }
+
+  async function localExcelMethod(method, payload = {}) {
+    const result = await localExcelBridge(method, payload);
+    if (!["local_excel_export", "local_excel_export_cohort"].includes(method)) return result;
+    if (!object(result) || !/^\/api\/web\/download\/[0-9a-f]{32}$/.test(result.download_url)
+        || typeof result.filename !== "string" || !result.filename.toLowerCase().endsWith(".xlsx")) {
+      throw new Error(adapterMessage("retry"));
+    }
+    const link = document.createElement("a");
+    link.href = result.download_url;
+    link.download = result.filename;
+    link.style.display = "none";
+    document.body.append(link);
+    link.click();
+    link.remove();
+    return { ...result, download_started: true, delivery_pending: true };
+  }
+
+  function chooseExcelFiles(purpose) {
+    return new Promise((resolve, reject) => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+      input.multiple = true;
+      input.style.display = "none";
+      input.oncancel = () => {
+        input.remove();
+        resolve({ ok: true, cancelled: true });
+      };
+      input.onchange = async () => {
+        const files = Array.from(input.files || []);
+        input.remove();
+        if (!files.length) { resolve({ ok: true, cancelled: true }); return; }
+        let batchId = null;
+        try {
+          for (const file of files) {
+            const begun = await localExcelBridge("local_excel_upload_begin", {
+              name: file.name, size: file.size, purpose, ...(batchId ? { batch_id: batchId } : {}),
+            });
+            batchId = begun.batch_id;
+            let offset = 0;
+            while (offset < file.size) {
+              const bytes = new Uint8Array(await file.slice(offset, Math.min(file.size, offset + EXCEL_CHUNK_SIZE)).arrayBuffer());
+              const sent = await localExcelBridge("local_excel_upload_chunk", {
+                batch_id: batchId, upload_id: begun.upload_id, offset, data: bytesBase64(bytes),
+              });
+              if (!Number.isInteger(sent.offset) || sent.offset !== offset + bytes.length) throw new Error(adapterMessage("retry"));
+              offset = sent.offset;
+            }
+            await localExcelBridge("local_excel_upload_finish", { batch_id: batchId, upload_id: begun.upload_id });
+          }
+          resolve(await localExcelBridge("local_excel_upload_commit", { batch_id: batchId }));
+        } catch (error) {
+          if (batchId) await localExcelBridge("local_excel_upload_cancel", { batch_id: batchId }).catch(() => {});
+          reject(error);
+        }
+      };
+      document.body.append(input);
+      input.click();
+    });
   }
 
   async function journeyDownloadExport(request) {
@@ -576,6 +661,9 @@
     if (method === "journey") return journeyBridge(payload);
     if (method === "journey_prepare_selection") return journeyPrepareSelection(payload);
     if (method === "journey_save_export") return journeyDownloadExport(payload);
+    if (method === "local_excel_select") return chooseExcelFiles("source");
+    if (method === "local_excel_feedback_select") return chooseExcelFiles("feedback");
+    if (method.startsWith("local_excel_")) return localExcelMethod(method, payload);
     if (method === "cancel_operation") {
       const sessionToClose = cancelAiState(payload?.operation_id);
       return sendBridge(method, payload).finally(() => closeKnownAiSession(sessionToClose));

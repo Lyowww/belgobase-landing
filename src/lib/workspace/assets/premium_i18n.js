@@ -582,6 +582,500 @@ Object.assign(messages,{
     "en": "The speech service on this device did not start. Reload the page and retry."
   }
 });
+ Object.assign(messages,{
+  "localExcel.sourceRows": {
+    "nl": "Bronrijen",
+    "fr": "Lignes source",
+    "en": "Source rows"
+  },
+  "localExcel.mergedRecords": {
+    "nl": "Samengevoegde records",
+    "fr": "Enregistrements fusionnés",
+    "en": "Merged records"
+  },
+  "localExcel.companyReview": {
+    "nl": "Bedrijfsgegevens nakijken",
+    "fr": "Vérifier les données d’entreprise",
+    "en": "Review company details"
+  },
+  "localExcel.sourceOpen": {
+    "nl": "Open volgens de bron",
+    "fr": "Ouvert selon la source",
+    "en": "Open according to source"
+  },
+  "localExcel.called": {
+    "nl": "Al gebeld",
+    "fr": "Déjà appelé",
+    "en": "Already called"
+  },
+  "localExcel.excluded": {
+    "nl": "Uitgesloten",
+    "fr": "Exclus",
+    "en": "Excluded"
+  },
+  "localExcel.missingStatus": {
+    "nl": "Status ontbreekt",
+    "fr": "Statut manquant",
+    "en": "Missing status"
+  },
+  "localExcel.reviewStatus": {
+    "nl": "Status nakijken",
+    "fr": "Vérifier le statut",
+    "en": "Review status"
+  },
+  "localExcel.duplicateRows": {
+    "nl": "Dubbele bronrijen",
+    "fr": "Lignes source en double",
+    "en": "Duplicate source rows"
+  },
+  "localExcel.duplicateFiles": {
+    "nl": "Identieke bestanden",
+    "fr": "Fichiers identiques",
+    "en": "Identical files"
+  },
+  "localExcel.conflicts": {
+    "nl": "Records met verschillen",
+    "fr": "Enregistrements divergents",
+    "en": "Records with differences"
+  },
+  "localExcel.analysisFailed": {
+    "nl": "De lokale analyse kon niet worden uitgevoerd.",
+    "fr": "L’analyse locale n’a pas pu être effectuée.",
+    "en": "The local analysis could not be completed."
+  },
+  "localExcel.progress": {
+    "nl": "Voortgang",
+    "fr": "Progression",
+    "en": "Progress"
+  },
+  "localExcel.step1": {
+    "nl": "1. Excel opschonen",
+    "fr": "1. Nettoyer Excel",
+    "en": "1. Clean Excel"
+  },
+  "localExcel.step2": {
+    "nl": "2. Beschrijf je ideale klant",
+    "fr": "2. Décrivez votre client idéal",
+    "en": "2. Describe your ideal customer"
+  },
+  "localExcel.step3": {
+    "nl": "3. Belvolgorde",
+    "fr": "3. Ordre des appels",
+    "en": "3. Call order"
+  },
+  "localExcel.priority": {
+    "nl": "Prioriteit",
+    "fr": "Priorité",
+    "en": "Priority"
+  },
+  "localExcel.reserve": {
+    "nl": "Reserve",
+    "fr": "Réserve",
+    "en": "Reserve"
+  },
+  "localExcel.review": {
+    "nl": "Nakijken",
+    "fr": "À vérifier",
+    "en": "Review"
+  },
+  "localExcel.withCalls": {
+    "nl": "Met belinformatie",
+    "fr": "Avec informations d’appel",
+    "en": "With call information"
+  },
+  "localExcel.withoutCalls": {
+    "nl": "Zonder belinformatie",
+    "fr": "Sans informations d’appel",
+    "en": "Without call information"
+  },
+  "localExcel.city": {
+    "nl": "Gemeente",
+    "fr": "Commune",
+    "en": "Municipality"
+  },
+  "localExcel.postcode": {
+    "nl": "Postcode",
+    "fr": "Code postal",
+    "en": "Postcode"
+  },
+  "localExcel.activity": {
+    "nl": "Activiteit",
+    "fr": "Activité",
+    "en": "Activity"
+  },
+  "localExcel.sector": {
+    "nl": "Sector",
+    "fr": "Secteur",
+    "en": "Sector"
+  },
+  "localExcel.legalForm": {
+    "nl": "Rechtsvorm",
+    "fr": "Forme juridique",
+    "en": "Legal form"
+  },
+  "localExcel.employeeBand": {
+    "nl": "Personeelsklasse",
+    "fr": "Tranche d’effectif",
+    "en": "Staff band"
+  },
+  "localExcel.category": {
+    "nl": "Categorie",
+    "fr": "Catégorie",
+    "en": "Category"
+  },
+  "localExcel.attribute": {
+    "nl": "Kenmerk",
+    "fr": "Caractéristique",
+    "en": "Attribute"
+  },
+  "localExcel.customer": {
+    "nl": "Klant",
+    "fr": "Client",
+    "en": "Customer"
+  },
+  "localExcel.appointment": {
+    "nl": "Afspraak",
+    "fr": "Rendez-vous",
+    "en": "Appointment"
+  },
+  "localExcel.negative": {
+    "nl": "Negatief",
+    "fr": "Négatif",
+    "en": "Negative"
+  },
+  "localExcel.unclear": {
+    "nl": "Onduidelijk",
+    "fr": "Indéterminé",
+    "en": "Unclear"
+  },
+  "localExcel.suggestedProfile": {
+    "nl": "Voorgesteld klantprofiel",
+    "fr": "Profil client proposé",
+    "en": "Suggested customer profile"
+  },
+  "localExcel.selectionRule": {
+    "nl": "Selectieregel:",
+    "fr": "Règle de sélection :",
+    "en": "Selection rule:"
+  },
+  "localExcel.limits": {
+    "nl": "Grenzen:",
+    "fr": "Limites :",
+    "en": "Limits:"
+  },
+  "localExcel.preparedSelection": {
+    "nl": "Voorbereide selectie",
+    "fr": "Sélection préparée",
+    "en": "Prepared selection"
+  },
+  "localExcel.reviewSaved": {
+    "nl": "Beoordelingsrapport opgeslagen. De oorspronkelijke gegevens staan op het tabblad Bronrijen.",
+    "fr": "Rapport de vérification enregistré. Les données d’origine figurent dans l’onglet Bronrijen.",
+    "en": "Review report saved. Original data is on the Bronrijen worksheet."
+  },
+  "localExcel.excelSaved": {
+    "nl": "Excel opgeslagen. Vul nieuwe beluitkomsten alleen in de kolom Nieuw belresultaat op het tabblad Bedrijven in. Analyseer het bestand daarna opnieuw.",
+    "fr": "Excel enregistré. Saisissez les nouveaux résultats d’appel uniquement dans la colonne Nieuw belresultaat de l’onglet Bedrijven. Analysez ensuite à nouveau le fichier.",
+    "en": "Excel saved. Enter new call outcomes only in the Nieuw belresultaat column on the Bedrijven worksheet, then analyse the file again."
+  },
+  "localExcel.reportSaved": {
+    "nl": "Volledig analyserapport opgeslagen.",
+    "fr": "Rapport d’analyse complet enregistré.",
+    "en": "Full analysis report saved."
+  },
+  "localExcel.describeBusiness": {
+    "nl": "Beschrijf kort wat je verkoopt en aan wie.",
+    "fr": "Décrivez brièvement votre offre et vos clients.",
+    "en": "Briefly describe what you sell and to whom."
+  },
+  "localExcel.profileMissing": {
+    "nl": "Het profielvoorstel ontbreekt.",
+    "fr": "Le profil proposé est manquant.",
+    "en": "The proposed profile is missing."
+  },
+  "localExcel.rankingMissing": {
+    "nl": "De bevestigde belvolgorde ontbreekt.",
+    "fr": "L’ordre des appels confirmé est manquant.",
+    "en": "The confirmed call order is missing."
+  },
+  "localExcel.chooseLimit": {
+    "nl": "Kies 1 tot 5.000 bedrijven.",
+    "fr": "Choisissez de 1 à 5 000 entreprises.",
+    "en": "Choose 1 to 5,000 companies."
+  },
+  "localExcel.prepareFailed": {
+    "nl": "De contacttaak kon niet worden voorbereid.",
+    "fr": "La tâche de recherche de contacts n’a pas pu être préparée.",
+    "en": "The contact task could not be prepared."
+  },
+  "localExcel.taskPrepared": {
+    "nl": "De contacttaak staat klaar. Controleer de raming en opties voordat je start.",
+    "fr": "La tâche est prête. Vérifiez l’estimation et les options avant de démarrer.",
+    "en": "The contact task is ready. Check the estimate and options before starting."
+  },
+  "localExcel.feedbackHelp": {
+    "nl": "Vul nieuwe beluitkomsten alleen in de kolom Nieuw belresultaat op het tabblad Bedrijven in. Kies daarna dat bestand om het opnieuw te analyseren; je eerdere lijsten blijven erbij.",
+    "fr": "Saisissez les nouveaux résultats d’appel uniquement dans la colonne Nieuw belresultaat de l’onglet Bedrijven. Sélectionnez ensuite ce fichier pour l’analyser à nouveau ; vos listes précédentes sont conservées.",
+    "en": "Enter new call outcomes only in the Nieuw belresultaat column on the Bedrijven worksheet. Select that file to analyse it again; your previous lists are kept."
+  },
+  "localExcel.heading1": {
+    "nl": "Stap 1 · Excel opschonen",
+    "fr": "Étape 1 · Nettoyer Excel",
+    "en": "Step 1 · Clean Excel"
+  },
+  "localExcel.heading2": {
+    "nl": "Stap 2 · Beschrijf je ideale klant",
+    "fr": "Étape 2 · Décrivez votre client idéal",
+    "en": "Step 2 · Describe your ideal customer"
+  },
+  "localExcel.heading3": {
+    "nl": "Stap 3 · Belvolgorde",
+    "fr": "Étape 3 · Ordre des appels",
+    "en": "Step 3 · Call order"
+  },
+  "localExcel.exportWithCalls": {
+    "nl": "Met belinformatie exporteren",
+    "fr": "Exporter avec informations d’appel",
+    "en": "Export with call information"
+  },
+  "localExcel.exportWithoutCalls": {
+    "nl": "Zonder belinformatie exporteren",
+    "fr": "Exporter sans informations d’appel",
+    "en": "Export without call information"
+  },
+  "localExcel.exportReview": {
+    "nl": "Nakijken exporteren",
+    "fr": "Exporter les éléments à vérifier",
+    "en": "Export review list"
+  },
+  "localExcel.saveReport": {
+    "nl": "Volledig analyserapport bewaren",
+    "fr": "Enregistrer le rapport complet",
+    "en": "Save full analysis report"
+  },
+  "localExcel.retry": {
+    "nl": "Opnieuw analyseren",
+    "fr": "Analyser à nouveau",
+    "en": "Analyse again"
+  },
+  "localExcel.newProfile": {
+    "nl": "Nieuw profiel voorstellen",
+    "fr": "Proposer un nouveau profil",
+    "en": "Suggest new profile"
+  },
+  "localExcel.proposeProfile": {
+    "nl": "Klantprofiel voorstellen",
+    "fr": "Proposer un profil client",
+    "en": "Suggest customer profile"
+  },
+  "localExcel.buildingProfile": {
+    "nl": "Klantprofiel wordt opgesteld…",
+    "fr": "Création du profil client…",
+    "en": "Building customer profile…"
+  },
+  "localExcel.stop": {
+    "nl": "Stoppen",
+    "fr": "Arrêter",
+    "en": "Stop"
+  },
+  "localExcel.stopping": {
+    "nl": "Lopende AI-aanvraag wordt afgerond; daarna stopt de analyse. Deze aanvraag kan nog AI-tegoed gebruiken.",
+    "fr": "La demande IA en cours sera terminée, puis l’analyse s’arrêtera. Cette demande peut encore consommer du crédit IA.",
+    "en": "The current AI request will finish, then analysis stops. This request may still use AI credit."
+  },
+  "localExcel.workflowFailed": {
+    "nl": "De workflow kon niet worden vervolgd.",
+    "fr": "Le traitement n’a pas pu être poursuivi.",
+    "en": "The workflow could not continue."
+  },
+  "localExcel.noCriteria": {
+    "nl": "Dit voorstel bevat nog geen onderbouwde criteria. Pas de omschrijving aan en laat een nieuw profiel voorstellen.",
+    "fr": "Cette proposition ne contient pas encore de critères étayés. Modifiez la description et demandez un nouveau profil.",
+    "en": "This proposal has no supported criteria yet. Edit the description and request a new profile."
+  },
+  "localExcel.describeIdeal": {
+    "nl": "Beschrijf je ideale klant",
+    "fr": "Décrivez votre client idéal",
+    "en": "Describe your ideal customer"
+  },
+  "localExcel.useProfile": {
+    "nl": "Dit profiel gebruiken",
+    "fr": "Utiliser ce profil",
+    "en": "Use this profile"
+  },
+  "localExcel.adjustProfile": {
+    "nl": "Profiel aanpassen",
+    "fr": "Modifier le profil",
+    "en": "Edit profile"
+  },
+  "localExcel.exportPriority": {
+    "nl": "Prioriteit exporteren",
+    "fr": "Exporter la liste prioritaire",
+    "en": "Export priority list"
+  },
+  "localExcel.exportReserve": {
+    "nl": "Reserve exporteren",
+    "fr": "Exporter la liste de réserve",
+    "en": "Export reserve list"
+  },
+  "localExcel.priorityCount": {
+    "nl": "Aantal prioriteitsbedrijven",
+    "fr": "Nombre d’entreprises prioritaires",
+    "en": "Number of priority companies"
+  },
+  "localExcel.prepareContacts": {
+    "nl": "Contactgegevens voorbereiden",
+    "fr": "Préparer la recherche de contacts",
+    "en": "Prepare contact details"
+  },
+  "localExcel.prepareHelp": {
+    "nl": "Hiermee maak je alleen de contacttaak klaar. Je controleert daarna eerst de raming en opties.",
+    "fr": "Cette action prépare uniquement la tâche. Vérifiez ensuite l’estimation et les options.",
+    "en": "This only prepares the contact task. Check the estimate and options next."
+  },
+  "localExcel.addOutcomes": {
+    "nl": "Nieuwe belresultaten toevoegen",
+    "fr": "Ajouter des résultats d’appel",
+    "en": "Add new call outcomes"
+  },
+  "localExcel.chooseFilesTitle": {
+    "nl": "Kies je bestanden",
+    "fr": "Choisissez vos fichiers",
+    "en": "Choose your files"
+  },
+  "localExcel.ready": {
+    "nl": "Klaar om te analyseren",
+    "fr": "Prêt à analyser",
+    "en": "Ready to analyse"
+  },
+  "localExcel.reading": {
+    "nl": "Bestanden worden gelezen",
+    "fr": "Lecture des fichiers",
+    "en": "Reading files"
+  },
+  "localExcel.complete": {
+    "nl": "Analyse afgerond",
+    "fr": "Analyse terminée",
+    "en": "Analysis complete"
+  },
+  "localExcel.cancelled": {
+    "nl": "Analyse gestopt",
+    "fr": "Analyse arrêtée",
+    "en": "Analysis stopped"
+  },
+  "localExcel.incomplete": {
+    "nl": "Analyse niet voltooid",
+    "fr": "Analyse incomplète",
+    "en": "Analysis incomplete"
+  },
+  "localExcel.analysis": {
+    "nl": "Analyse",
+    "fr": "Analyse",
+    "en": "Analysis"
+  },
+  "localExcel.fileHelp": {
+    "nl": "Kies je .xlsx-lijsten. ZIP, PDF en macrobestanden worden niet ingelezen.",
+    "fr": "Choisissez vos listes .xlsx. Les fichiers ZIP, PDF et avec macros ne sont pas lus.",
+    "en": "Choose your .xlsx lists. ZIP, PDF and macro files are not read."
+  },
+  "localExcel.chooseFiles": {
+    "nl": "Bestanden kiezen",
+    "fr": "Choisir des fichiers",
+    "en": "Choose files"
+  },
+  "localExcel.analyse": {
+    "nl": "Analyseren",
+    "fr": "Analyser",
+    "en": "Analyse"
+  },
+  "localExcel.fileLimits": {
+    "nl": "Maximaal 100 bestanden, 32 MB per bestand en 512 MB samen. Grote analyses stoppen veilig bij de verwerkingsgrens.",
+    "fr": "Maximum 100 fichiers, 32 Mo par fichier et 512 Mo au total. Les grandes analyses s’arrêtent en sécurité à la limite de traitement.",
+    "en": "Maximum 100 files, 32 MB per file and 512 MB in total. Large analyses stop safely at the processing limit."
+  },
+  "localExcel.resume": {
+    "nl": "Vorige analyse hervatten",
+    "fr": "Reprendre l’analyse précédente",
+    "en": "Resume previous analysis"
+  },
+  "localExcel.workflowMissing": {
+    "nl": "De workflowstatus ontbreekt.",
+    "fr": "L’état du traitement est manquant.",
+    "en": "The workflow status is missing."
+  },
+  "localExcel.filesProgress": {
+    "nl": "{processed} van {total} bestanden",
+    "fr": "{processed} sur {total} fichiers",
+    "en": "{processed} of {total} files"
+  },
+  "localExcel.selectedFiles": {
+    "nl": "{count} geselecteerde bestanden",
+    "fr": "{count} fichiers sélectionnés",
+    "en": "{count} selected files"
+  },
+  "localExcel.selectionCounts": {
+    "nl": "{count} klaargezet · {available} beschikbaar voor nummerzoeking · {withPhone} met bestaand telefoonnummer · {review} adresgegevens nakijken",
+    "fr": "{count} préparées · {available} disponibles pour la recherche de numéros · {withPhone} avec numéro existant · {review} adresses à vérifier",
+    "en": "{count} prepared · {available} available for phone lookup · {withPhone} with an existing phone · {review} addresses to review"
+  },
+  "localExcel.remaining": {
+    "nl": "{count} wachten op een volgende groep",
+    "fr": "{count} en attente d’un prochain groupe",
+    "en": "{count} waiting for the next group"
+  },
+  "sidebar.services": {
+    "nl": "DIENSTEN",
+    "fr": "SERVICES",
+    "en": "SERVICES"
+  },
+  "sidebar.myWork": {
+    "nl": "MIJN WERK",
+    "fr": "MON ESPACE",
+    "en": "MY WORK"
+  },
+  "nav.findCustomers": {
+    "nl": "Vind klanten",
+    "fr": "Trouver des clients",
+    "en": "Find customers"
+  },
+  "nav.numberfinder": {
+    "nl": "Nummerzoeker",
+    "fr": "Recherche de coordonnées",
+    "en": "Contact finder"
+  },
+  "nav.open": {
+    "nl": "Menu openen",
+    "fr": "Ouvrir le menu",
+    "en": "Open menu"
+  },
+  "nav.close": {
+    "nl": "Menu sluiten",
+    "fr": "Fermer le menu",
+    "en": "Close menu"
+  },
+  "account.nav": {
+    "nl": "Account en tegoed",
+    "fr": "Compte et crédit",
+    "en": "Account and credit"
+  },
+  "workspace.queryPlaceholder": {
+    "nl": "Beschrijf wie je zoekt, typ een bedrijfsnaam of spreek je vraag in…",
+    "fr": "Décrivez votre cible, saisissez une entreprise ou dictez votre demande…",
+    "en": "Describe who you need, type a company name or speak your request…"
+  },
+  "detail.findSimilar": {
+    "nl": "Vind vergelijkbare bedrijven",
+    "fr": "Trouver des entreprises similaires",
+    "en": "Find similar companies"
+  },
+  "workspace.numberfinderDescription": {
+    "nl": "Zoek contactgegevens met je eigen Excel of per postcode.",
+    "fr": "Recherchez des coordonnées avec votre fichier Excel ou par code postal.",
+    "en": "Find contact details using your Excel file or a postcode."
+  }
+});
+ Object.assign(messages,{"localExcel.downloadStarted": {"nl": "Download gestart: {filename}", "fr": "Téléchargement démarré : {filename}", "en": "Download started: {filename}"}});
+ Object.assign(messages,{"localExcel.aiDisclosure": {"nl": "Deze optionele AI-analyse verstuurt ingekorte belnotities, je bedrijfsomschrijving en samenvattende aantallen via BelgoBase naar OpenAI. Telefoonnummers, e-mailadressen en links worden uit de notities verwijderd; namen en andere vrije tekst kunnen blijven staan. Controleer je gegevens. Dit gebruikt AI-tegoed.", "fr": "Cette analyse IA facultative transmet à OpenAI, via BelgoBase, des notes d’appel abrégées, votre description commerciale et des totaux. Les numéros de téléphone, adresses e-mail et liens sont retirés des notes ; les noms et autres textes libres peuvent subsister. Vérifiez vos données. Cette fonction utilise votre crédit IA.", "en": "This optional AI analysis sends shortened call notes, your business description and summary counts to OpenAI through BelgoBase. Phone numbers, email addresses and links are removed from notes; names and other free text may remain. Review your data. This uses AI credit."}, "localExcel.aiAcknowledgement": {"nl": "Ik heb de omschrijving en belnotities gecontroleerd en mag ze voor deze AI-analyse gebruiken.", "fr": "J’ai vérifié la description et les notes d’appel et suis autorisé à les utiliser pour cette analyse IA.", "en": "I have reviewed the description and call notes and am authorised to use them for this AI analysis."}, "localExcel.aiReviewRequired": {"nl": "Controleer eerst de gegevens en bevestig dat je ze voor de AI-analyse mag gebruiken.", "fr": "Vérifiez les données et confirmez que vous êtes autorisé à les utiliser pour cette analyse IA.", "en": "Review the data and confirm that you are authorised to use it for this AI analysis first."}});
  const t=(key,fallback='',vars={})=>{
   let text=messages[key]?.[language]||messages[key]?.nl||fallback||key;
   return String(text).replace(/\{(\w+)\}/g,(_,name)=>String(vars[name]??''));

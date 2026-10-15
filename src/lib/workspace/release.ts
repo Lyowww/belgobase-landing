@@ -11,6 +11,7 @@ export async function workspaceRelease() {
     readFile(path.join(root, "browser-i18n.js")),
     readFile(path.join(root, "browser-adapter.js")),
     readFile(path.join(root, "browser-polish.css")),
+    readFile(path.join(root, "assets/numberfinder-view.js")),
   ]);
   const hash = createHash("sha256");
   for (const file of files) hash.update(file);
