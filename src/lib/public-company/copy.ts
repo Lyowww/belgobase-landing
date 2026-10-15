@@ -3,7 +3,7 @@ import type { Locale } from "@/i18n/config";
 export const companyCopy = {
   nl: {
     initializing: "Zoeken wordt geladen…", needsJavaScript: "Schakel JavaScript in om bedrijven op te zoeken.",
-    active: "Actief", discontinued: "Stopgezet", selected: "Opgezocht bedrijf",
+    active: "Actief", discontinued: "Stopgezet", copyNumber: "Ondernemingsnummer kopiëren", copied: "Nummer gekopieerd", copyManually: "Selecteer het nummer om het te kopiëren.",
     edited: "De vorige opzoeking is gestopt omdat u de zoektekst wijzigde. Klik op Zoeken voor uw nieuwe zoekopdracht.",
     interrupted: "De lopende opzoeking is gestopt bij de taalwissel. Klik op Zoeken om verder te gaan.", languageRestore: "De taalwissel kon je zoekopdracht niet behouden. Probeer opnieuw.",
     title: "KBO en NBB: bedrijf zoeken | BelgoBase", navigation: "Bedrijf zoeken", headingLead: "KBO en NBB.", heading: "Eén bedrijf, één overzicht.",
@@ -17,11 +17,11 @@ export const companyCopy = {
     short: "Geef een bedrijfsnaam (minstens drie tekens) of een geldig ondernemingsnummer.", notFound: "Geen beschikbare bedrijfsfiche gevonden. Controleer de naam of het ondernemingsnummer.",
     error: "De opzoekdienst is tijdelijk niet bereikbaar. Probeer het straks opnieuw.", rate: "Er zijn veel opzoekingen tegelijk. Wacht even en probeer opnieuw.",
     limited: "Voor eenmanszaken is deze openbare fiche nog niet beschikbaar. U kunt de officiële KBO-fiche raadplegen.",
-    upsell: "Zoekt u meer bedrijven die bij uw doelgroep passen?", cta: "Ontdek BelgoBase", back: "Terug naar de resultaten", about: "Over BelgoBase", privacy: "Privacy", footer: "Bedrijfsinformatie uit KBO en Nationale Bank van België. Beschikbaarheid verschilt per bedrijf.",
+    upsell: "Zoekt u meer bedrijven die bij uw doelgroep passen?", cta: "Ontdek BelgoBase", back: "Terug naar de resultaten", about: "Over BelgoBase", privacy: "Privacy", footer: "Bedrijfsinformatie uit KBO en Nationale Bank van België onder één dak.",
   },
   fr: {
     initializing: "Chargement de la recherche…", needsJavaScript: "Activez JavaScript pour rechercher des entreprises.",
-    active: "Actif", discontinued: "Cessé", selected: "Entreprise recherchée",
+    active: "Actif", discontinued: "Cessé", copyNumber: "Copier le numéro d’entreprise", copied: "Numéro copié", copyManually: "Sélectionnez le numéro pour le copier.",
     edited: "La recherche précédente a été arrêtée car vous avez modifié le texte. Cliquez sur Rechercher pour votre nouvelle recherche.",
     interrupted: "La recherche en cours a été arrêtée lors du changement de langue. Cliquez sur Rechercher pour continuer.", languageRestore: "Le changement de langue n’a pas pu conserver votre recherche. Réessayez.",
     title: "BCE et BNB : rechercher une entreprise | BelgoBase", navigation: "Chercher une entreprise", headingLead: "BCE et BNB.", heading: "Une entreprise, une seule vue.", intro: "Recherchez par nom ou numéro d’entreprise. Consultez les données de l’entreprise et les chiffres disponibles de la Banque nationale au même endroit.",
@@ -30,11 +30,11 @@ export const companyCopy = {
     unavailable: "Indisponible", noFinancials: "Aucun chiffre de comptes annuels n’est disponible ici pour cette entreprise.", revenue: "Chiffre d’affaires", profit: "Résultat", equity: "Fonds propres", fte: "Personnel", ebitda: "EBITDA", year: "Exercice", unknownYear: "Exercice inconnu", persons: "ETP",
     sources: "Sources", kbo: "Date de la source BCE", nbb: "Dernier dépôt", official: "Consulter la fiche officielle BCE", independent: "BelgoBase est un service indépendant, pas un site gouvernemental.",
     short: "Saisissez un nom (au moins trois caractères) ou un numéro d’entreprise valide.", notFound: "Aucune fiche disponible. Vérifiez le nom ou le numéro d’entreprise.", error: "Le service est temporairement indisponible. Réessayez plus tard.", rate: "De nombreuses recherches sont en cours. Veuillez réessayer dans un instant.", limited: "Cette fiche publique n’est pas encore disponible pour les personnes physiques. Consultez la fiche officielle BCE.",
-    upsell: "Vous cherchez d’autres entreprises correspondant à votre cible ?", cta: "Découvrir BelgoBase", back: "Retour aux résultats", about: "À propos de BelgoBase", privacy: "Confidentialité", footer: "Informations issues de la BCE et de la Banque nationale de Belgique. La disponibilité varie selon l’entreprise.",
+    upsell: "Vous cherchez d’autres entreprises correspondant à votre cible ?", cta: "Découvrir BelgoBase", back: "Retour aux résultats", about: "À propos de BelgoBase", privacy: "Confidentialité", footer: "Les données de la BCE et de la Banque nationale de Belgique réunies au même endroit.",
   },
   en: {
     initializing: "Loading search…", needsJavaScript: "Enable JavaScript to look up companies.",
-    active: "Active", discontinued: "Discontinued", selected: "Company you looked up",
+    active: "Active", discontinued: "Discontinued", copyNumber: "Copy enterprise number", copied: "Number copied", copyManually: "Select the number to copy it.",
     edited: "The previous lookup stopped because you changed the search text. Click Search for your new lookup.",
     interrupted: "The current lookup stopped when the language changed. Click Search to continue.", languageRestore: "The language change could not preserve your search. Please try again.",
     title: "KBO and NBB: Belgian company lookup | BelgoBase", navigation: "Company lookup", headingLead: "KBO and NBB.", heading: "One company, one overview.", intro: "Search by company name or enterprise number. View company information and available National Bank figures together in one place.",
@@ -42,6 +42,6 @@ export const companyCopy = {
     unavailable: "Not available", noFinancials: "No annual-account figures are available here for this company.", revenue: "Revenue", profit: "Result", equity: "Equity", fte: "Employees", ebitda: "EBITDA", year: "Financial year", unknownYear: "Financial year unknown", persons: "FTE",
     sources: "Sources", kbo: "KBO source date", nbb: "Latest filing", official: "View the official KBO record", independent: "BelgoBase is an independent service, not a government website.",
     short: "Enter a company name (at least three characters) or a valid enterprise number.", notFound: "No available company record found. Check the name or enterprise number.", error: "The lookup service is temporarily unavailable. Please try again later.", rate: "Many lookups are in progress. Wait a moment and try again.", limited: "This public record is not yet available for sole proprietors. You can view the official KBO record.",
-    upsell: "Looking for more companies that fit your target market?", cta: "Discover BelgoBase", back: "Back to results", about: "About BelgoBase", privacy: "Privacy", footer: "Company information from KBO and the National Bank of Belgium. Availability varies by company.",
+    upsell: "Looking for more companies that fit your target market?", cta: "Discover BelgoBase", back: "Back to results", about: "About BelgoBase", privacy: "Privacy", footer: "Company information from KBO and the National Bank of Belgium under one roof.",
   },
 } satisfies Record<Locale, Record<string, string>>;

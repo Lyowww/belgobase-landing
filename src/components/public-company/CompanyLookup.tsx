@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Search, ArrowRight, ArrowLeft, LoaderCircle, ExternalLink, Building2 } from "lucide-react";
+import { Search, ArrowRight, ArrowLeft, LoaderCircle, ExternalLink, Copy, Check } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { Locale } from "@/i18n/config";
 import { Header } from "@/components/layout/Header";
@@ -21,8 +21,11 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
   const [error, setError] = useState<LookupError>("");
   const [officialNumber, setOfficialNumber] = useState("");
   const [infoExpanded, setInfoExpanded] = useState(true);
+  const [numberCopied, setNumberCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
   const pending = useRef<AbortController | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const localeTag = companyLocaleTag(locale);
   const restored = useRef(false);
 
@@ -60,7 +63,7 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
     } catch { setError("languageRestore"); return false; }
   }
 
-  useEffect(() => () => pending.current?.abort(), []);
+  useEffect(() => () => { pending.current?.abort(); if (copyTimer.current) clearTimeout(copyTimer.current); }, []);
   useEffect(() => { if (company) heading.current?.focus({ preventScroll: true }); }, [company]);
 
   function changeQuery(value: string) {
@@ -76,7 +79,8 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
   async function lookup(value: string, selection = false) {
     const clean = cleanQuery(value);
     pending.current?.abort();
-    setError(""); setOfficialNumber(""); setCompany(undefined);
+    setError(""); setOfficialNumber(""); setCompany(undefined); setNumberCopied(false); setCopyFailed(false);
+    if (copyTimer.current) clearTimeout(copyTimer.current);
     if (!selection) setMatches([]);
     if (!clean) { pending.current = null; setBusy(false); setError("short"); return; }
     const controller = new AbortController();
@@ -111,6 +115,15 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
   }
 
   function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (ready) void lookup(query); }
+  async function copyNumber() {
+    if (!company) return;
+    try {
+      await navigator.clipboard.writeText(`BE${company.number}`);
+      setNumberCopied(true); setCopyFailed(false);
+      if (copyTimer.current) clearTimeout(copyTimer.current);
+      copyTimer.current = setTimeout(() => setNumberCopied(false), 2500);
+    } catch { setCopyFailed(true); }
+  }
   function date(value?: string) {
     if (!value || !/^\d{4}-\d{2}-\d{2}/.test(value)) return copy.unavailable;
     const parsed = new Date(`${value.slice(0, 10)}T12:00:00Z`);
@@ -140,15 +153,13 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
       <main className={`lookup-main${company ? " lookup-main-has-company" : ""}`}>
         <section className={`lookup-search${company ? " lookup-search-has-company" : ""}`} aria-labelledby="lookup-title">
           <h1 id="lookup-title">{company ? copy.navigation : <><span>{copy.headingLead}</span>{" "}{copy.heading}</>}</h1>
-          {!company && <p className="lookup-intro">{copy.intro}</p>}
           <form onSubmit={submit} className="lookup-form" aria-busy={!ready || busy}>
-            <label htmlFor="company-query">{copy.label}</label>
+            <label htmlFor="company-query" className="lookup-sr-only">{copy.label}</label>
             <div className="lookup-input-row">
               <Search size={23} aria-hidden="true" className="lookup-search-icon" />
-              <input id="company-query" name="query" disabled={!ready} value={query} onChange={(event) => changeQuery(event.target.value)} maxLength={100} placeholder={copy.placeholder} autoComplete="off" type="search" required aria-describedby="lookup-hint lookup-message" />
+              <input id="company-query" name="query" disabled={!ready} value={query} onChange={(event) => changeQuery(event.target.value)} maxLength={100} placeholder={copy.placeholder} autoComplete="off" type="search" required aria-describedby="lookup-message" />
               <button type="submit" disabled={!ready || busy}>{!ready || busy ? <LoaderCircle size={21} className="lookup-spin" aria-hidden="true" /> : null}{!ready ? copy.initializing : busy ? copy.loading : copy.search}<ArrowRight size={20} aria-hidden="true" /></button>
             </div>
-            <p id="lookup-hint" className="lookup-hint">{copy.hint}</p>
           </form>
           <noscript><p className="lookup-message">{copy.needsJavaScript}</p></noscript>
           <div id="lookup-message" aria-live="polite" aria-atomic="true">
@@ -164,13 +175,17 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
 
         {company && <article className={`lookup-company${company.activities.length ? " lookup-company-has-activity" : ""}`} aria-labelledby="company-name">
           <div className="lookup-company-top">
-            <div className="lookup-company-identity"><span className="lookup-company-symbol" aria-hidden="true"><Building2 size={24} /></span><div><p className="lookup-company-kicker">{copy.selected}<span className="lookup-company-number">BE {displayNumber(company.number)}</span></p><h2 id="company-name" ref={heading} tabIndex={-1}>{company.name}</h2></div></div>
+            <div className="lookup-company-identity">
+              <h2 id="company-name" ref={heading} tabIndex={-1}>{company.name}</h2>
+              <div className="lookup-company-number-group"><span className="lookup-company-number">BE {displayNumber(company.number)}</span><button className="lookup-copy-number" type="button" onClick={() => void copyNumber()} aria-label={numberCopied ? copy.copied : copy.copyNumber} title={numberCopied ? copy.copied : copy.copyNumber}>{numberCopied ? <Check size={18} aria-hidden="true" /> : <Copy size={18} aria-hidden="true" />}</button><span className="lookup-sr-only" role="status">{numberCopied ? copy.copied : ""}</span></div>
+              {copyFailed && <p className="lookup-copy-failed" role="status">{copy.copyManually}</p>}
+            </div>
             {status && <span className={`lookup-company-status${company.status === "Actief" ? " lookup-company-status-active" : ""}`}>{status}</span>}
             {matches.length > 1 && <button className="lookup-back" onClick={() => { setCompany(undefined); setError(""); }}><ArrowLeft size={18} aria-hidden="true" />{copy.back}</button>}
           </div>
           <div className="lookup-company-grid">
             <section className="lookup-general" aria-labelledby="company-info-title">
-              <h3 id="company-info-title" className="lookup-general-title">{copy.general}</h3>
+              <h3 id="company-info-title" className="lookup-general-title lookup-sr-only">{copy.general}</h3>
               <details className="lookup-general-facts" open={infoExpanded} onToggle={(event) => setInfoExpanded(event.currentTarget.open)}><summary>{copy.general}</summary><dl>{facts.map(([label, value]) => <div className={label === copy.address ? "lookup-fact-address" : undefined} key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
                 {website && <div><dt>{copy.website}</dt><dd><a href={website} target="_blank" rel="noopener noreferrer">{new URL(website).hostname}<ExternalLink size={16} aria-hidden="true" /></a></dd></div>}
               </dl></details>
@@ -189,7 +204,7 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
           <CompanyPeers key={company.number} number={company.number} locale={locale} onSelect={(number) => { heading.current?.scrollIntoView({ block: "start" }); setQuery(number); setMatches([]); void lookup(number); }} />
         </article>}
       </main>
-      <footer className="lookup-footer"><p>{copy.footer}</p><p>{copy.independent} <Link href={`/${locale}/privacy`}>{copy.privacy}</Link></p></footer>
+      <footer className="lookup-footer"><p>{copy.footer} <Link href={`/${locale}/privacy`}>{copy.privacy}</Link></p></footer>
     </div>
   );
 }
