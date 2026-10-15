@@ -62,6 +62,7 @@ test("authenticated workspace iframe remains same-origin frameable with a comple
   assert.match(csp, /default-src 'none'/);
   assert.match(csp, /connect-src 'self'/);
   assert.match(csp, /form-action 'none'/);
+  assert.match(csp, /frame-src 'self'/);
   assert.match(csp, /frame-ancestors 'self'/);
   assert.doesNotMatch(csp, /frame-ancestors 'none'/);
   assert.equal(workspaceSecurityHeaders["X-Frame-Options"], "SAMEORIGIN");

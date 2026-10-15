@@ -62,6 +62,7 @@ export const workspaceSecurityHeaders = {
     "object-src 'none'",
     "base-uri 'none'",
     "form-action 'none'",
+    "frame-src 'self'",
     "frame-ancestors 'self'",
   ].join("; "),
   "Permissions-Policy": "microphone=(self), camera=(), geolocation=()",
