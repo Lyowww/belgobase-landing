@@ -19,6 +19,9 @@ export function Results() {
           </a>;
         })}
       </div>
+      <a href={`/${locale}/mogelijkheden`} className="mt-8 inline-flex items-center gap-2 font-semibold text-primary hover:underline">
+        {nl ? "Bekijk alle 15 mogelijkheden" : locale === "fr" ? "Voir les 15 possibilités" : "View all 15 capabilities"} <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+      </a>
     </div>
   </section>;
 }

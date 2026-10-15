@@ -54,6 +54,7 @@ export function Footer({ reserveStickyCta = false }: { reserveStickyCta?: boolea
       { labelKey: "footer.industries" as const, href: `/${locale}#industries` },
       { labelKey: "footer.database" as const, href: `/${locale}#database` },
       { labelKey: "footer.pricing" as const, href: `/${locale}#pricing` },
+      { label: ({ nl: "Alle mogelijkheden", fr: "Toutes les possibilités", en: "All capabilities" })[locale], href: `/${locale}/mogelijkheden` },
       { label: "Blog", href: `/${locale}/blog` },
       { label: ({ nl: "Bedrijf opzoeken", fr: "Rechercher une entreprise", en: "Look up a company" })[locale], href: `/${locale}/bedrijf-zoeken` },
     ],
