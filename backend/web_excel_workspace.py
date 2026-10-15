@@ -487,9 +487,6 @@ class WebExcelWorkspace:
         if type(rows) is not int or rows < 0:
             target.unlink(missing_ok=True)
             raise WorkspaceError("Het aantal Excelrijen kon niet veilig worden bevestigd.")
-        if rows > 5000:
-            target.unlink(missing_ok=True)
-            raise WorkspaceError("Exporteer maximaal 5.000 bedrijven per bestand.")
         if self._export_reserver is None:
             target.unlink(missing_ok=True)
             raise WorkspaceError("De exportlimiet kon niet veilig worden gereserveerd.")
@@ -610,7 +607,9 @@ class WebExcelWorkspace:
                      "needs_address_review": len(missing) - len(usable),
                      "row_ids": [row["id"] for row in selected]}
         _atomic_json(tenant.root / "numberfinder-preparation.json", selection)
-        workflow.handoff = dict(selection)
+        # Identity belongs to preparation metadata, not the shared PC1 handoff
+        # checkpoint schema, which is validated strictly when work resumes.
+        workflow.handoff = {key: value for key, value in selection.items() if key != "identity"}
         workflow.preparation = {"identity": identity, "list_id": None}
         workflow.save_checkpoint()
         return {"numberfinder": numberfinder, "selection": selection}

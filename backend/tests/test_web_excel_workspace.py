@@ -72,7 +72,7 @@ class PathLeakAnalysis(FakeAnalysis):
         raise OSError(r"C:\BelgoBase_App\web_workspace\tenant-secret\klant.xlsx")
 
 
-class TooManyAnalysis(FakeAnalysis):
+class LargeOwnAnalysis(FakeAnalysis):
     def export(self, path, candidate_ids=None):
         Path(path).write_bytes(b"xlsx")
         return {"path": path, "count": 5001}
@@ -234,17 +234,47 @@ class WebExcelWorkspaceTests(unittest.TestCase):
             RunningAnalysis.release.set()
             tenant.analysis._thread.join(2)
 
-    def test_full_export_over_5000_is_rejected_before_publication(self):
+    def test_own_workbook_over_query_page_limit_reserves_all_rows(self):
         root = Path(self.temp.name)
         self.service = WebExcelWorkspace(root / "state", root / "downloads", self.service.cloud_dispatch,
-                                         analysis_factory=TooManyAnalysis, workflow_factory=FakeWorkflow,
-                                         export_reserver=lambda rows, auth: self.fail("over-limit rows must not be reserved"))
+                                         analysis_factory=LargeOwnAnalysis, workflow_factory=FakeWorkflow,
+                                         export_reserver=lambda rows, auth: self.reserve_calls.append((rows, auth.tenant_key)))
         begun = self.upload(self.a)
         self.service.execute("local_excel_upload_commit", {"batch_id": begun["batch_id"]}, self.a)
         self.service.execute("local_excel_start", {}, self.a)
-        with self.assertRaisesRegex(WorkspaceError, "5.000"):
+        exported = self.service.execute("local_excel_export", {}, self.a)
+        self.assertEqual(5001, exported["rows"])
+        self.assertEqual([(5001, self.a.tenant_key)], self.reserve_calls)
+        self.assertEqual(1, len(list((root / "downloads" / self.a.tenant_key).glob("*.xlsx"))))
+        self.assertNotIn("path", exported)
+
+    def test_own_workbook_quota_failure_does_not_publish_a_download(self):
+        root = Path(self.temp.name)
+        def reserve(rows, auth):
+            self.reserve_calls.append((rows, auth.tenant_key))
+            raise WorkspaceError("export_rows_daily_limit")
+        self.service = WebExcelWorkspace(root / "state", root / "downloads", self.service.cloud_dispatch,
+                                         analysis_factory=LargeOwnAnalysis, workflow_factory=FakeWorkflow,
+                                         export_reserver=reserve)
+        begun = self.upload(self.a)
+        self.service.execute("local_excel_upload_commit", {"batch_id": begun["batch_id"]}, self.a)
+        self.service.execute("local_excel_start", {}, self.a)
+        with self.assertRaisesRegex(WorkspaceError, "export_rows_daily_limit"):
             self.service.execute("local_excel_export", {}, self.a)
+        self.assertEqual([(5001, self.a.tenant_key)], self.reserve_calls)
         self.assertEqual([], list((root / "downloads" / self.a.tenant_key).glob("*.xlsx")))
+
+    def test_priority_handoff_checkpoint_uses_shared_pc1_schema(self):
+        begun = self.upload(self.a)
+        self.service.execute("local_excel_upload_commit", {"batch_id": begun["batch_id"]}, self.a)
+        self.service.execute("local_excel_start", {}, self.a)
+        result = self.service.execute("local_excel_prepare_enrichment",
+                                      {"analysis_id": "a" * 64, "cohort": "priority", "limit": 10}, self.a)
+        workflow = self.service._tenant(self.a).workflow
+        self.assertEqual({"count", "available", "job_id", "remaining", "with_existing_phone",
+                          "needs_address_review", "row_ids"}, set(workflow.handoff))
+        self.assertEqual(result["selection"]["identity"], workflow.preparation["identity"])
+        self.assertEqual(result["selection"]["job_id"], workflow.handoff["job_id"])
 
     def test_priority_handoff_uses_numberfinder_without_starting_a_job(self):
         begun = self.upload(self.a)
