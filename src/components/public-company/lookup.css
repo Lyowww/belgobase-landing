@@ -336,7 +336,7 @@
 .lookup-general-facts > summary { display: none; cursor: pointer; color: var(--primary-blue); font-size: 14px; }
 .lookup-financial { padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--light-bg); }
 .lookup-company .lookup-financial-title { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; font-size: 15px; color: var(--primary-blue); text-transform: none; letter-spacing: -.2px; }
-.lookup-financial-year { font-weight: 400; font-size: 12px; color: var(--lookup-muted); }
+.lookup-financial-year { font-weight: 400; font-size: 15px; color: var(--lookup-muted); }
 
 .lookup-activities {
   margin-top: 6px;
@@ -345,21 +345,20 @@
 
 .lookup-activities h3 { margin: 0; font-size: 12px; }
 .lookup-activity-heading { display: grid; grid-template-columns: 112px minmax(0, 1fr); align-items: baseline; gap: 12px; margin-bottom: 4px; }
-.lookup-activities > p { font-size: 14px; line-height: 1.4; }
+.lookup-activities > p { font-size: 15px; line-height: 1.4; }
 .lookup-activities ul { margin: 0; padding: 0; list-style: none; }
 
 .lookup-activities li {
   display: grid;
   gap: 4px;
   padding: 3px 0;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.4;
 }
 
 .lookup-nace {
-  font-size: 14px;
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
+  font-size: 15px;
+  font-weight: 400;
 }
 
 .lookup-activities details { margin-top: 5px; }
@@ -382,22 +381,21 @@
 
 .lookup-metrics dd {
   overflow-wrap: anywhere;
-  font-size: clamp(19px, 2vw, 24px);
-  line-height: 1.25;
-  letter-spacing: -.45px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
+  font-size: 15px;
+  line-height: 1.4;
+  letter-spacing: normal;
+  font-weight: 400;
 }
 
-.lookup-metrics .lookup-value-missing { padding-top: 3px; font-size: 14px; line-height: 1.5; font-weight: 500; letter-spacing: 0; color: var(--lookup-muted); }
+.lookup-metrics .lookup-value-missing { color: var(--lookup-muted); }
 
 .lookup-metrics p {
   margin-top: 2px;
   color: var(--lookup-muted);
-  font-size: 12px;
+  font-size: 15px;
 }
 
-.lookup-unit { font-size: 14px; font-weight: 400; }
+.lookup-unit { font-size: inherit; font-weight: inherit; }
 .lookup-negative { color: #b23d30; }
 .dark .lookup-negative { color: #ff9d91; }
 
@@ -457,7 +455,7 @@
 
 .lookup-peer-card {
   min-width: 0;
-  padding: 14px 15px;
+  padding: 12px;
   overflow-wrap: anywhere;
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -476,25 +474,19 @@
 }
 
 .lookup-peer-card h4 {
-  min-height: 42px;
-  font-size: 17px;
+  font-size: 15px;
   line-height: 1.22;
   font-weight: 600;
   color: var(--primary-blue);
 }
 
 .lookup-peer-count {
-  margin-top: 7px;
-  font-size: 34px;
-  line-height: 1.15;
-  letter-spacing: -.8px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+  font-size: 15px;
+  line-height: 1.4;
+  letter-spacing: normal;
+  font-weight: 400;
   overflow-wrap: normal;
 }
-
-.lookup-peer-count-label { color: var(--lookup-muted); font-size: 13px; }
 
 .lookup-peer-number-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 6px; }
 .lookup-peer-number-row .lookup-peer-count { margin-top: 0; }
@@ -504,9 +496,9 @@
 .lookup-peer-examples[hidden] { display: none; }
 
 .lookup-peer-criteria {
-  margin-top: 8px;
+  margin-top: 3px;
   color: var(--lookup-muted);
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.4;
 }
 
@@ -589,34 +581,16 @@
   cursor: pointer;
 }
 
-.lookup-next {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  margin-top: 14px;
-  padding-top: 13px;
-  border-top: 1px solid var(--border);
-}
-
-.lookup-next p {
-  max-width: 560px;
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.lookup-next a {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 7px;
-  padding: 5px 0;
-  color: var(--primary-blue);
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.lookup-next a:hover { text-decoration: underline; }
+.lookup-peer-contact { margin-top: 12px; padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--light-bg); }
+.lookup-peer-contact-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.lookup-peer-contact h4 { color: var(--primary-blue); font-size: 18px; font-weight: 600; line-height: 1.3; }
+.lookup-peer-cta { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 9px 12px; border-radius: 8px; background: var(--primary-blue); color: white; font-size: 15px; font-weight: 600; }
+.dark .lookup-peer-cta { color: #060a14; }
+.lookup-peer-cta:hover { background: var(--dark-blue); }
+.lookup-peer-contact-links { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 10px; font-size: 15px; }
+.lookup-peer-contact-links a { display: inline-flex; align-items: center; gap: 6px; min-width: 0; overflow-wrap: anywhere; text-decoration: underline; text-underline-offset: 3px; }
+.lookup-peer-contact-links svg { flex-shrink: 0; color: var(--primary-blue); }
+.lookup-peer-contact a:focus-visible { outline: 2px solid var(--primary-blue); outline-offset: 3px; }
 
 .lookup-footer {
   max-width: 1192px;
@@ -644,9 +618,6 @@
 }
 .lookup-peers-actions .lookup-peers-method { flex: 1 1 180px; margin-top: 0; }
 .lookup-peers-actions .lookup-peers-method[open] { flex-basis: 100%; }
-.lookup-peers-actions .lookup-next { margin: 0; padding: 0; border: 0; }
-.lookup-peers-actions .lookup-next a { padding: 0; }
-.lookup-peers-actions .lookup-next a { font-size: 13px; font-weight: 600; }
 .lookup-peers-method { font-size: 12px; }
 .lookup-provenance { font-size: 12px; }
 
@@ -666,7 +637,6 @@
   .lookup-company-grid { gap: 24px; }
   .lookup-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lookup-peer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .lookup-peer-card h4 { min-height: 0; }
 }
 
 @media (max-width: 760px) {
@@ -703,15 +673,14 @@
   .lookup-activity-heading { grid-template-columns: 92px minmax(0, 1fr); gap: 10px; }
   .lookup-peers h3 { font-size: 20px; }
   .lookup-peers { padding-top: 8px; }
-  .lookup-peer-card h4 { font-size: 16px; }
   .lookup-peer-title { gap: 5px; }
   .lookup-peer-title > svg { display: none; }
   .lookup-peer-number-row { margin-top: 4px; }
   .lookup-peer-criteria { margin-top: 3px; }
   .lookup-general dl > div { grid-template-columns: 92px minmax(0, 1fr); gap: 10px; }
   .lookup-provenance { justify-content: flex-start; }
-  .lookup-next { display: block; }
-  .lookup-next a { margin-top: 4px; }
+  .lookup-peer-contact-top { align-items: stretch; flex-direction: column; }
+  .lookup-peer-cta { width: 100%; }
   .lookup-footer { margin-top: 10px; padding: 17px 14px 22px; }
 }
 
@@ -724,19 +693,12 @@
   .lookup-company-top { margin: -12px -12px 0; padding: 6px 12px; }
   .lookup-company h2,
   .lookup-company-number-group { font-size: 23px; }
-  .lookup-general dd,
-  .lookup-activities li { font-size: 14px; }
   .lookup-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
   .lookup-metric { padding: 5px 6px; }
   .lookup-financial { padding: 8px; }
-  .lookup-metrics dd { font-size: 19px; }
   .lookup-peer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .lookup-peer-card { padding: 9px; }
-  .lookup-peer-card h4 { font-size: 16px; letter-spacing: -.2px; }
-  .lookup-peer-count { font-size: clamp(22px, 6vw, 28px); }
-  .lookup-peer-criteria,
-  .lookup-peer-card details summary,
-  .lookup-peer-count-label { font-size: 12px; }
+  .lookup-peer-card details summary { font-size: 12px; }
 }
 
 @media (max-width: 360px) {

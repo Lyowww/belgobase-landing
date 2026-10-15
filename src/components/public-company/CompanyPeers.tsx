@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, LoaderCircle, BriefcaseBusiness, MapPin, Map, Users } from "lucide-react";
+import { ArrowRight, LoaderCircle, BriefcaseBusiness, MapPin, Map, Users, Phone, Mail } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { Locale } from "@/i18n/config";
 import { peersCopy } from "@/lib/public-company/peers-copy";
 import { peersPayload, type CompanyPeers as PeerData, type PeerTier } from "@/lib/public-company/peers";
 import { companyLocaleTag } from "@/lib/public-company/navigation";
 import type { LookupHistoryPeerKey } from "@/lib/public-company/history";
+import { displayNumber } from "@/lib/public-company/model";
+import { contactPhone, contactPhoneHref, salesContactEmail } from "@/lib/site";
 
 export function CompanyPeers({ number, locale, onSelect, expanded, onExpandedChange, methodExpanded, onMethodExpandedChange, onSettled }: { number: string; locale: Locale; onSelect: (number: string) => void; expanded: LookupHistoryPeerKey[]; onExpandedChange: (keys: LookupHistoryPeerKey[]) => void; methodExpanded: boolean; onMethodExpandedChange: (open: boolean) => void; onSettled: () => void }) {
   const copy = peersCopy[locale];
@@ -47,7 +49,6 @@ export function CompanyPeers({ number, locale, onSelect, expanded, onExpandedCha
       <div className="lookup-peer-grid">{data.tiers.map((tier) => { const Icon = tierIcons[tier.key]; return <article className={`lookup-peer-card lookup-peer-card-${tier.key}${tier.available ? "" : " lookup-peer-card-unavailable"}`} key={tier.key} aria-labelledby={`peer-${tier.key}`}>
         <div className="lookup-peer-title"><Icon size={17} aria-hidden="true" /><h4 id={`peer-${tier.key}`}>{copy[tier.key]}</h4></div>
         <div className="lookup-peer-number-row"><div><p className="lookup-peer-count">{tier.available ? new Intl.NumberFormat(tag).format(tier.count!) : "—"}</p>
-          {tier.available && tier.key === "activity" && <p className="lookup-peer-criteria">{copy.companies}</p>}
           {!tier.available && <p className="lookup-peer-criteria">{reason(tier)}</p>}
           {tier.available && (tier.criteria.municipality || tier.criteria.postcode || tier.criteria.fteMin !== undefined) && <div className="lookup-peer-criteria">
             {tier.criteria.municipality && <p>{tier.criteria.municipality}</p>}
@@ -60,9 +61,12 @@ export function CompanyPeers({ number, locale, onSelect, expanded, onExpandedCha
         </>}
       </article>; })}</div>
     </>}
+    <aside className="lookup-peer-contact" aria-labelledby="peer-contact-title">
+      <div className="lookup-peer-contact-top"><h4 id="peer-contact-title">{copy.question}</h4><Link className="lookup-peer-cta" href={`/${locale}/prospectielijsten`}>{copy.cta}<ArrowRight size={18} aria-hidden="true" /></Link></div>
+      <div className="lookup-peer-contact-links"><a href={contactPhoneHref}><Phone size={16} aria-hidden="true" />{contactPhone}</a><a href={`mailto:${salesContactEmail}?subject=${encodeURIComponent(`${copy.emailSubject} BE ${displayNumber(number)}`)}`}><Mail size={16} aria-hidden="true" />{salesContactEmail}</a></div>
+    </aside>
     <div className="lookup-peers-actions">
       {data && <details className="lookup-peers-method" open={methodExpanded} onToggle={(event) => onMethodExpandedChange(event.currentTarget.open)}><summary>{copy.method}</summary><p>{data.activity.label} · NACEBEL {data.activity.code} ({data.activity.version})</p><p>{copy.scope}</p></details>}
-      <aside className="lookup-next"><Link href={`/${locale}/prospectielijsten`}>{copy.cta}<ArrowRight size={20} aria-hidden="true" /></Link></aside>
     </div>
   </section>;
 }
