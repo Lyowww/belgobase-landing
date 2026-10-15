@@ -111,6 +111,9 @@ test("configuration, explicit kill switches and route allowlist fail closed", ()
   assert.equal(getMarketingMeasurementConfig(adsId, "bad/label", ga4Id, true), null);
   assert.equal(isMarketingPublicPathname("/nl"), true);
   assert.equal(isMarketingPublicPathname("/en/prospectielijsten"), true);
+  for (const locale of ["nl", "fr", "en"]) {
+    assert.equal(isMarketingPublicPathname(`/${locale}/bedrijf-zoeken`), true);
+  }
   assert.equal(isMarketingPublicPathname("/nl/app"), false);
   assert.equal(isMarketingPublicPathname("/en/account"), false);
   assert.equal(isMarketingPublicPathname("/nl/privacy"), false);

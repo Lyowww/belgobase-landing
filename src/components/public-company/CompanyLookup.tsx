@@ -7,6 +7,7 @@ import type { Locale } from "@/i18n/config";
 import { Header } from "@/components/layout/Header";
 import { CompanyPeers } from "@/components/public-company/CompanyPeers";
 import { companyCopy } from "@/lib/public-company/copy";
+import { trackPublicCompanyAction } from "@/lib/marketing-measurement";
 import { cleanQuery, displayNumber, publicPayload, safeWebsite, type CompanyMatch, type PublicCompany } from "@/lib/public-company/model";
 import { companyLocaleTag, consumeLookupTransfer, saveLookupTransfer, type LookupError } from "@/lib/public-company/navigation";
 import { readInitialLookupHistory, readLookupPopState, replaceCurrentLookupHistory, pushLookupHistory, type LookupHistoryView, type LookupHistoryPeerKey } from "@/lib/public-company/history";
@@ -188,6 +189,7 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
     if (copyTimer.current) clearTimeout(copyTimer.current);
     if (!selection) setMatches([]);
     if (!clean) { pending.current = null; setBusy(false); setError("short"); return; }
+    trackPublicCompanyAction("submit");
     const controller = new AbortController();
     pending.current = controller;
     setBusy(true);
@@ -201,10 +203,11 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
       const reply = raw && typeof raw === "object" ? raw as Record<string, unknown> : null;
       if (!response.ok || reply?.ok !== true) {
         setError(response.status === 429 ? "rate" : reply?.error === "invalid_query" ? "short" : "error");
+        trackPublicCompanyAction("error");
         return;
       }
       const data = publicPayload(raw);
-      if (!data) { setError("error"); return; }
+      if (!data) { setError("error"); trackPublicCompanyAction("error"); return; }
       if (!selection) setMatches(data.matches);
       if (data.company || data.matches.length) {
         const next = { ...view.current, query: value, matches: selection ? matches : data.matches, company: data.company, officialNumber: "", error: "" as const,
@@ -212,15 +215,17 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
         const different = next.company?.number !== previous.company?.number || next.matches.map((item) => item.number).join() !== previous.matches.map((item) => item.number).join();
         saveView(next, different);
         applyView(next);
+        trackPublicCompanyAction(data.company ? "success" : "matches");
         return;
       }
       if (data.error === "natural_person_unavailable") {
         const number = clean.replace(/^BE\s*/i, "").replace(/[.\s-]/g, "");
         if (/^\d{10}$/.test(number)) setOfficialNumber(number);
         setError("limited");
-      } else if (!data.matches.length) setError("notFound");
+        trackPublicCompanyAction("limited");
+      } else if (!data.matches.length) { setError("notFound"); trackPublicCompanyAction("not_found"); }
     } catch {
-      if (!controller.signal.aborted) setError("error");
+      if (!controller.signal.aborted) { setError("error"); trackPublicCompanyAction("error"); }
     } finally {
       if (pending.current === controller) { pending.current = null; setBusy(false); }
     }
@@ -231,6 +236,7 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
     if (!company) return;
     try {
       await navigator.clipboard.writeText(`BE${company.number}`);
+      trackPublicCompanyAction("copy_number");
       setNumberCopied(true); setCopyFailed(false);
       if (copyTimer.current) clearTimeout(copyTimer.current);
       copyTimer.current = setTimeout(() => setNumberCopied(false), 2500);
@@ -275,7 +281,7 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
           </form>
           <noscript><p className="lookup-message">{copy.needsJavaScript}</p></noscript>
           <div id="lookup-message" aria-live="polite" aria-atomic="true">
-            {error && <p className="lookup-message" role="alert">{copy[error]}{officialNumber && <a className="lookup-official" href={`https://kbopub.economie.fgov.be/kbopub/zoeknummerform.html?nummer=${officialNumber}`} target="_blank" rel="noopener noreferrer">{copy.official} <ExternalLink size={16} aria-hidden="true" /></a>}</p>}
+            {error && <p className="lookup-message" role="alert">{copy[error]}{officialNumber && <a className="lookup-official" data-company-action="kbo" href={`https://kbopub.economie.fgov.be/kbopub/zoeknummerform.html?nummer=${officialNumber}`} target="_blank" rel="noopener noreferrer">{copy.official} <ExternalLink size={16} aria-hidden="true" /></a>}</p>}
           </div>
         </section>
 
@@ -299,7 +305,7 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
             <section className="lookup-general" aria-labelledby="company-info-title">
               <h3 id="company-info-title" className="lookup-general-title lookup-sr-only">{copy.general}</h3>
               <details className="lookup-general-facts" open={infoExpanded} onToggle={(event) => setInfoExpanded(event.currentTarget.open)}><summary>{copy.general}</summary><dl>{facts.map(([label, value]) => <div className={label === copy.address ? "lookup-fact-address" : undefined} key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
-                {website && <div><dt>{copy.website}</dt><dd><a href={website} target="_blank" rel="noopener noreferrer">{new URL(website).hostname}<ExternalLink size={16} aria-hidden="true" /></a></dd></div>}
+                {website && <div><dt>{copy.website}</dt><dd><a data-company-action="website" href={website} target="_blank" rel="noopener noreferrer">{new URL(website).hostname}<ExternalLink size={16} aria-hidden="true" /></a></dd></div>}
               </dl></details>
               {company.activities.length > 0 && <div className="lookup-activities"><div className="lookup-activity-heading"><h3>{copy.activities}</h3><span className="lookup-nace">NACEBEL {company.activities[0].code}</span></div><p>{company.activities[0].label}</p>
                 {company.activities.length > 1 && <details open={activitiesExpanded} onToggle={(event) => setActivitiesExpanded(event.currentTarget.open)}><summary>{copy.more}</summary><ul>{company.activities.slice(1).map((activity) => <li key={`${activity.code}-${activity.label}`}><span className="lookup-nace">NACEBEL {activity.code}</span><span>{activity.label}</span></li>)}</ul></details>}
@@ -311,8 +317,8 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
             </section>
           </div>
           <div className="lookup-provenance">
-            <a href={`https://kbopub.economie.fgov.be/kbopub/zoeknummerform.html?nummer=${company.number}`} target="_blank" rel="noopener noreferrer">{copy.official}<ExternalLink size={16} aria-hidden="true" /></a>
-            <a href={`https://consult.cbso.nbb.be/consult-enterprise/${company.number}`} target="_blank" rel="noopener noreferrer">{copy.officialNbb}<ExternalLink size={16} aria-hidden="true" /></a>
+            <a data-company-action="kbo" href={`https://kbopub.economie.fgov.be/kbopub/zoeknummerform.html?nummer=${company.number}`} target="_blank" rel="noopener noreferrer">{copy.official}<ExternalLink size={16} aria-hidden="true" /></a>
+            <a data-company-action="nbb" href={`https://consult.cbso.nbb.be/consult-enterprise/${company.number}`} target="_blank" rel="noopener noreferrer">{copy.officialNbb}<ExternalLink size={16} aria-hidden="true" /></a>
           </div>
           <CompanyPeers key={company.number} number={company.number} locale={locale} expanded={expandedPeers} onExpandedChange={setExpandedPeers} methodExpanded={peerMethodExpanded} onMethodExpandedChange={setPeerMethodExpanded} onSettled={restoreScroll} onSelect={(number) => { void lookup(number); }} />
         </article>}

@@ -12,7 +12,28 @@ export const MARKETING_CONSENT_MAX_AGE_SECONDS = 60 * 60 * 24 * 180;
 const GOOGLE_TAG_SCRIPT_ID = "bb-google-measurement-tag";
 const LEAD_STORAGE_PREFIX = "bb-google-lead:";
 const GOOGLE_COOKIE_PREFIXES = ["_ga", "_gid", "_gat", "_gcl_", "_gac_", "_gads", "_gpi"];
+const publicCompanyEvents = {
+  submit: "company_lookup_submit",
+  success: "company_lookup_success",
+  matches: "company_lookup_matches",
+  not_found: "company_lookup_not_found",
+  limited: "company_lookup_limited",
+  error: "company_lookup_error",
+  peers_open: "company_peers_open",
+  peer_select: "company_peer_select",
+  copy_number: "company_number_copy",
+} as const;
+const publicCompanyCtas = {
+  belgobase: "lookup_belgobase",
+  phone: "lookup_phone",
+  email: "lookup_email",
+  kbo: "lookup_official_kbo",
+  nbb: "lookup_official_nbb",
+  website: "lookup_company_website",
+} as const;
+export type PublicCompanyAction = keyof typeof publicCompanyEvents | keyof typeof publicCompanyCtas;
 const GA4_EVENT_NAMES = new Set([
+  ...Object.values(publicCompanyEvents),
   "cta_click",
   "generate_lead",
   "page_view",
@@ -25,6 +46,7 @@ const marketingPageSlugs = new Set([
   "",
   "bedrijfsanalyse",
   "bedrijven-zoeken",
+  "bedrijf-zoeken",
   "klantenbestand-analyseren",
   "prospectielijsten",
 ]);
@@ -267,6 +289,24 @@ function emitGa4Event(
   }
 }
 
+// Only fixed action names leave the public lookup. Never read the query,
+// company identity, link URL (including mail subjects), or visible link text.
+export function trackPublicCompanyAction(
+  action: PublicCompanyAction,
+  config = getMarketingMeasurementConfig(),
+): boolean {
+  if (!/^\/(?:nl|en|fr)\/bedrijf-zoeken\/?$/.test(window.location.pathname)) return false;
+  if (Object.hasOwn(publicCompanyEvents, action)) {
+    return emitGa4Event(publicCompanyEvents[action as keyof typeof publicCompanyEvents], {}, config);
+  }
+  if (Object.hasOwn(publicCompanyCtas, action)) {
+    return emitGa4Event("cta_click", {
+      cta_name: publicCompanyCtas[action as keyof typeof publicCompanyCtas],
+    }, config);
+  }
+  return false;
+}
+
 function resetPageInteractionState() {
   reachedScrollDepths = new Set<number>();
 }
@@ -287,14 +327,17 @@ function installInteractionTracking(config: MarketingMeasurementConfig) {
     }
   };
   const onClick = (event: Event) => {
+    if (!ga4Active(config) || !isMarketingPublicPathname(window.location.pathname)) return;
     const target = event.target;
     if (!(target instanceof Element)) return;
     const anchor = target.closest("a[href]");
     if (!anchor) return;
+    const companyAction = anchor.getAttribute("data-company-action");
+    if (companyAction && trackPublicCompanyAction(companyAction as PublicCompanyAction, config)) return;
     const href = anchor.getAttribute("href") ?? "";
     let ctaName = "";
     if (href.startsWith("#")) ctaName = trackedCtaTargets.get(href.slice(1)) ?? "";
-    else if (/^\/(?:nl|en)\/app(?:[/?#]|$)/.test(href)) ctaName = "open_workspace";
+    else if (/^\/(?:nl|en|fr)\/app(?:[/?#]|$)/.test(href)) ctaName = "open_workspace";
     if (ctaName) emitGa4Event("cta_click", { cta_name: ctaName }, config);
   };
   const onVideo = (event: Event) => {
@@ -308,12 +351,13 @@ function installInteractionTracking(config: MarketingMeasurementConfig) {
     }, config);
   };
   window.addEventListener("scroll", onScroll, { passive: true });
-  document.addEventListener("click", onClick);
+  // Queue before Next navigation or an external phone/mail application opens.
+  document.addEventListener("click", onClick, true);
   document.addEventListener("play", onVideo, true);
   document.addEventListener("ended", onVideo, true);
   removeInteractionTracking = () => {
     window.removeEventListener("scroll", onScroll);
-    document.removeEventListener("click", onClick);
+    document.removeEventListener("click", onClick, true);
     document.removeEventListener("play", onVideo, true);
     document.removeEventListener("ended", onVideo, true);
     removeInteractionTracking = null;
