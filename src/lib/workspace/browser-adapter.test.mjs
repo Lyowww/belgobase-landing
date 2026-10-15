@@ -368,6 +368,8 @@ test("local Excel export reports only a started browser download", async () => {
   assert.equal(result.delivery_pending, true);
   assert.equal(result.filename, "BelgoBase.xlsx");
   assert.equal(result.result, undefined);
+  assert.equal(h.links.length, 1, "one export click must start exactly one download");
+  assert.equal(h.links[0].download, "BelgoBase.xlsx");
   assert.equal(h.links[0].clicked, true);
 });
 

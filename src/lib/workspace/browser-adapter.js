@@ -546,7 +546,9 @@
       excelLastStarted = performance.now();
     });
     excelQueue = start.catch(() => {});
-    return start.then(() => sendBridge("workspace_data", { section: "local_excel", method, payload }));
+    // Excel validates and names its download below. Do not also trigger the
+    // generic bridge download: that would open two saves for one click.
+    return start.then(() => sendBridge("workspace_data", { section: "local_excel", method, payload }, { skipAutodownload: true }));
   }
 
   async function localExcelMethod(method, payload = {}) {
