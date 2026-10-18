@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { generateKeyPairSync, sign } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { verifyLoginMail, loginMailContent } from '../src/lib/workspace/mail-relay.ts';
 import {
   isAllowedRoute,
@@ -10,6 +13,18 @@ import {
   MAX_BRIDGE_RESPONSE_BYTES,
   MAX_IDENTITY_RESPONSE_BYTES,
 } from '../src/lib/workspace/gateway.ts';
+
+const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+function captureConsoleErrors(run) {
+  const lines = [];
+  const original = console.error;
+  console.error = (...args) => { lines.push(args.map(String).join(' ')); };
+  return Promise.resolve()
+    .then(run)
+    .finally(() => { console.error = original; })
+    .then((result) => ({ result, lines }));
+}
 
 test('login mail requires the server signature, correct purpose and a fresh challenge', () => {
   const {privateKey, publicKey}=generateKeyPairSync('ed25519');
@@ -288,6 +303,139 @@ test('gateway keeps the tighter identity-route response sanitization limit', asy
       ok: false,
       error: 'BelgoBase heeft niet op tijd geantwoord. Controleer de huidige status voordat je de actie opnieuw uitvoert.',
     });
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test('gateway sanitizes a realistic logo-bearing bootstrap payload under the bridge limit', async () => {
+  const logo = readFileSync(join(repoRoot, 'backend/workspace_assets/belgobase_bb_logo.png'));
+  const meta = JSON.parse(readFileSync(join(repoRoot, 'backend/workspace_assets/workspace_metadata.json'), 'utf8'));
+  const brandLogo = `data:image/png;base64,${logo.toString('base64')}`;
+  const bootstrap = {
+    ok: true,
+    version: 'BelgoBase web',
+    brand_logo: brandLogo,
+    sectors: meta.catalogs?.sectors ?? [],
+    legal_forms: meta.catalogs?.legal_forms ?? [],
+    workspace: { lists: [], searches: [] },
+    filter_labels: meta.filter_labels ?? {},
+    result_column_options: meta.column_groups?.result_columns ?? [],
+  };
+  const encoded = JSON.stringify(bootstrap);
+  assert.ok(encoded.length > MAX_IDENTITY_RESPONSE_BYTES);
+  assert.ok(encoded.length < MAX_BRIDGE_RESPONSE_BYTES);
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => new Response(encoded, {
+    status: 200,
+    headers: {
+      'content-type': 'application/json; charset=utf-8',
+      'content-length': String(Buffer.byteLength(encoded)),
+    },
+  });
+  try {
+    const response = await proxyWebRequest(
+      request('bridge/bootstrap', {}, { 'x-belgobase-csrf': '1234567890abcdefghijklmnop' }),
+      ['bridge', 'bootstrap'],
+    );
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.ok, true);
+    assert.equal(body.brand_logo, brandLogo);
+    assert.equal(body.sectors.length, bootstrap.sectors.length);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test('gateway logs safe diagnostics when bridge body exceeds the sanitization limit', async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => new Response(
+    JSON.stringify({
+      ok: true,
+      brand_logo: `data:image/png;base64,${'B'.repeat(MAX_BRIDGE_RESPONSE_BYTES)}`,
+    }),
+    {
+      status: 200,
+      headers: {
+        'content-type': 'application/json',
+        'content-length': String(MAX_BRIDGE_RESPONSE_BYTES + 64),
+      },
+    },
+  );
+  try {
+    const { result: response, lines } = await captureConsoleErrors(() => proxyWebRequest(
+      request('bridge/bootstrap', {}, { 'x-belgobase-csrf': '1234567890abcdefghijklmnop' }),
+      ['bridge', 'bootstrap'],
+    ));
+    assert.equal(response.status, 502);
+    const joined = lines.join('\n');
+    assert.match(joined, /\[gateway\]/);
+    assert.match(joined, /route=bridge\/bootstrap/);
+    assert.match(joined, /upstream_status=200/);
+    assert.match(joined, /content_type=application\/json/);
+    assert.match(joined, /content_length=\d+/);
+    assert.match(joined, /reason=body_limit/);
+    assert.match(joined, /error_name=RangeError/);
+    assert.match(joined, new RegExp(`sanitize_limit=${MAX_BRIDGE_RESPONSE_BYTES}`));
+    assert.doesNotMatch(joined, /brand_logo|Bearer|Cookie|__Host-|opaque_session|abcdefghijklmnop/);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test('gateway logs safe diagnostics for invalid bridge JSON and non-object payloads', async () => {
+  const original = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => new Response('{"ok":true,', {
+      status: 200,
+      headers: { 'content-type': 'application/json', 'content-length': '11' },
+    });
+    const parseCase = await captureConsoleErrors(() => proxyWebRequest(
+      request('bridge/bootstrap', {}, { 'x-belgobase-csrf': '1234567890abcdefghijklmnop' }),
+      ['bridge', 'bootstrap'],
+    ));
+    assert.equal(parseCase.result.status, 502);
+    assert.match(parseCase.lines.join('\n'), /reason=json_parse/);
+    assert.match(parseCase.lines.join('\n'), /error_name=SyntaxError/);
+    assert.match(parseCase.lines.join('\n'), /upstream_status=200/);
+
+    globalThis.fetch = async () => new Response(JSON.stringify(['not', 'an', 'object']), {
+      status: 200,
+      headers: { 'content-type': 'application/json', 'content-length': '20' },
+    });
+    const shapeCase = await captureConsoleErrors(() => proxyWebRequest(
+      request('bridge/bootstrap', {}, { 'x-belgobase-csrf': '1234567890abcdefghijklmnop' }),
+      ['bridge', 'bootstrap'],
+    ));
+    assert.equal(shapeCase.result.status, 502);
+    assert.match(shapeCase.lines.join('\n'), /reason=non_object_json/);
+    assert.match(shapeCase.lines.join('\n'), /upstream_status=200/);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test('gateway forwards upstream 502 and logs status without response bodies', async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => Response.json(
+    { ok: false, error: 'Selecteer eerst bedrijven.', secret_token: 'should-not-be-logged' },
+    { status: 502, headers: { 'content-type': 'application/json', 'content-length': '80' } },
+  );
+  try {
+    const { result: response, lines } = await captureConsoleErrors(() => proxyWebRequest(
+      request('bridge/bootstrap', {}, { 'x-belgobase-csrf': '1234567890abcdefghijklmnop' }),
+      ['bridge', 'bootstrap'],
+    ));
+    assert.equal(response.status, 502);
+    const body = await response.json();
+    assert.equal(body.ok, false);
+    assert.equal(body.error, 'Selecteer eerst bedrijven.');
+    const joined = lines.join('\n');
+    assert.match(joined, /reason=forward_upstream_status/);
+    assert.match(joined, /upstream_status=502/);
+    assert.match(joined, /route=bridge\/bootstrap/);
+    assert.doesNotMatch(joined, /should-not-be-logged|Selecteer eerst bedrijven/);
   } finally {
     globalThis.fetch = original;
   }

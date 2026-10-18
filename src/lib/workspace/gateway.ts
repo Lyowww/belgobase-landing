@@ -112,6 +112,49 @@ function jsonBody(bytes: Uint8Array): ArrayBuffer {
   return copy;
 }
 
+function safeLogToken(value: string | null | undefined, fallback = "missing"): string {
+  if (!value) return fallback;
+  const cleaned = value.replace(/[^\w./+;=\s-]/g, "?").slice(0, 80).trim();
+  return cleaned || fallback;
+}
+
+function safeContentLength(value: string | null): string {
+  if (value === null) return "missing";
+  return /^\d{1,12}$/.test(value) ? value : "invalid";
+}
+
+/** Production-safe diagnostics for gateway 502 paths — never log bodies, cookies, or tokens. */
+export function logGatewayUpstreamIssue(details: {
+  route: string;
+  upstreamStatus: number;
+  contentType: string | null;
+  contentLength: string | null;
+  reason: string;
+  errorName?: string;
+  sanitizeLimit?: number;
+}): void {
+  const parts = [
+    "upstream_issue",
+    `route=${safeLogToken(details.route, "unknown")}`,
+    `upstream_status=${Number.isFinite(details.upstreamStatus) ? details.upstreamStatus : "invalid"}`,
+    `content_type=${safeLogToken(details.contentType)}`,
+    `content_length=${safeContentLength(details.contentLength)}`,
+    `reason=${safeLogToken(details.reason, "unknown")}`,
+  ];
+  if (details.errorName) parts.push(`error_name=${safeLogToken(details.errorName)}`);
+  if (typeof details.sanitizeLimit === "number" && Number.isFinite(details.sanitizeLimit)) {
+    parts.push(`sanitize_limit=${details.sanitizeLimit}`);
+  }
+  serverErrorLog("gateway", parts.join(" "));
+}
+
+function gatewayTimeoutError(): Response {
+  return webError(
+    "BelgoBase heeft niet op tijd geantwoord. Controleer de huidige status voordat je de actie opnieuw uitvoert.",
+    502,
+  );
+}
+
 export async function proxyWebRequest(request: NextRequest, parts: string[]): Promise<Response> {
   if (!isAllowedRoute(parts, request.method)) return webError("Deze actie bestaat niet.", 404);
   if (request.method !== "GET" && request.headers.get("origin") !== request.nextUrl.origin) {
@@ -198,14 +241,29 @@ export async function proxyWebRequest(request: NextRequest, parts: string[]): Pr
       const sanitizeLimit = parts[0] === "bridge"
         ? MAX_BRIDGE_RESPONSE_BYTES
         : MAX_IDENTITY_RESPONSE_BYTES;
+      const issueBase = {
+        route: parts.join("/"),
+        upstreamStatus: upstream.status,
+        contentType: upstream.headers.get("content-type"),
+        contentLength: upstream.headers.get("content-length"),
+        sanitizeLimit,
+      };
       let bytes: Uint8Array;
       try { bytes = await readBoundedBytes(upstream.body, sanitizeLimit); }
-      catch { return webError("BelgoBase heeft niet op tijd geantwoord. Controleer de huidige status voordat je de actie opnieuw uitvoert.", 502); }
+      catch (error) {
+        logGatewayUpstreamIssue({
+          ...issueBase,
+          reason: error instanceof RangeError ? "body_limit" : "read_failed",
+          errorName: error instanceof Error ? error.name : "unknown",
+        });
+        return gatewayTimeoutError();
+      }
       if (bytes.byteLength) {
         try {
           const parsed: unknown = JSON.parse(new TextDecoder().decode(bytes));
           if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-            return webError("BelgoBase heeft niet op tijd geantwoord. Controleer de huidige status voordat je de actie opnieuw uitvoert.", 502);
+            logGatewayUpstreamIssue({ ...issueBase, reason: "non_object_json" });
+            return gatewayTimeoutError();
           }
           const record = parsed as Record<string, unknown>;
           if (browserIdentityRoutes.has(upstreamPath)) delete record.auth_context;
@@ -218,10 +276,24 @@ export async function proxyWebRequest(request: NextRequest, parts: string[]): Pr
             record.error = sanitized;
           }
           responseBody = jsonBody(new TextEncoder().encode(JSON.stringify(record)));
-        } catch {
-          return webError("BelgoBase heeft niet op tijd geantwoord. Controleer de huidige status voordat je de actie opnieuw uitvoert.", 502);
+        } catch (error) {
+          logGatewayUpstreamIssue({
+            ...issueBase,
+            reason: "json_parse",
+            errorName: error instanceof Error ? error.name : "unknown",
+          });
+          return gatewayTimeoutError();
         }
       } else responseBody = jsonBody(bytes);
+    }
+    if (upstream.status === 502) {
+      logGatewayUpstreamIssue({
+        route: parts.join("/"),
+        upstreamStatus: upstream.status,
+        contentType: upstream.headers.get("content-type"),
+        contentLength: upstream.headers.get("content-length"),
+        reason: shouldSanitizeJson ? "forward_upstream_status" : "forward_upstream_status_raw",
+      });
     }
     return new Response(responseBody, { status: upstream.status, headers: outgoing });
   } catch (error) {
