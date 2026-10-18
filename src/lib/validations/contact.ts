@@ -53,7 +53,8 @@ export const contactFormSchema = z.object({
       message: "gdprRequired",
     }),
   requestType: z.enum(["sample", "custom"]).default("sample"),
-  website: z.string().max(0, "Invalid submission"),
+  // Honeypot: never surface a distinctive message to clients.
+  website: z.string().max(0, "formErrors"),
 });
 
 export type ContactFormData = z.infer<typeof contactFormSchema>;

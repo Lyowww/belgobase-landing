@@ -112,7 +112,7 @@ class WebCore:
         # server's extract_selection helper, not normal filter fields.
         selection = {key: filters[key] for key in ('regions', 'preferences') if key in filters}
         try: normalized = self.main.normalize_premium_ai_filters({k:v for k,v in filters.items() if k not in selection})
-        except Exception as exc: raise WorkspaceError(str(exc)) from exc
+        except Exception as exc: raise WorkspaceError('De filters konden niet worden verwerkt.') from exc
         return {**normalized, **selection}
 
     @staticmethod
@@ -198,7 +198,7 @@ class WebCore:
 
     def _company_data(self, number: Any) -> dict[str, Any]:
         try: ondnr, company, _ = self.main.lookup_company(number)
-        except Exception as exc: raise WorkspaceError(str(exc)) from exc
+        except Exception as exc: raise WorkspaceError('Het bedrijf kon niet worden geladen.') from exc
         record = dict(company); row = self._row(record)
         metric_specs = [('revenue','Omzet','omzet','€'),('profit','Resultaat','winst_verlies','€'),('fte','Personeel','personeel_vte','VTE'),('ebitda','EBITDA','ebitda','€'),('equity','Eigen vermogen','eigen_vermogen','€')]
         def fact_year(key: str): return record.get('ebitda_jaar' if key=='ebitda' else 'financial_jaar' if key in {'financial_omzet','financial_winst_verlies','eigen_vermogen','brutomarge'} else 'jaar')
@@ -309,7 +309,7 @@ class WebCore:
     def similar_company(self, payload: dict[str, Any], auth: AuthContext) -> dict[str, Any]:
         self._allow('similar_company', payload, auth)
         try: number, company, _ = self.main.lookup_company(payload.get('number'))
-        except Exception as exc: raise WorkspaceError(str(exc)) from exc
+        except Exception as exc: raise WorkspaceError('Het voorbeeldbedrijf kon niet worden geladen.') from exc
         with self._lock: self._similar[self._tenant(auth)] = dict(company)
         criteria=[]
         for key,label,kind,source,targets,transform,tolerance,allow_negative in _ICP_SPECS:

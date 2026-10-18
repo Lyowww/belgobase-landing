@@ -509,7 +509,12 @@ try {
   await page.getByRole("button", { name: "Paneel sluiten", exact: true }).click();
 
   assert.equal(await iframe.getAttribute("allow"), "microphone");
-  assert.match(await frame.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute("content"), /connect-src 'self'/);
+  assert.equal(await frame.locator('meta[http-equiv="Content-Security-Policy"]').count(), 0);
+  const workspaceCsp = workspaceResponses.at(-1).headers()["content-security-policy"] || "";
+  assert.match(workspaceCsp, /connect-src 'self'/);
+  assert.match(workspaceCsp, /script-src 'nonce-[^']+' 'strict-dynamic'/);
+  assert.doesNotMatch(workspaceCsp, /script-src[^;]*'unsafe-inline'/);
+  assert.match(await frame.locator("script[nonce]").first().getAttribute("nonce") || "", /.+/);
   assert.match(workspaceResponses.at(-1).headers()["permissions-policy"] || "", /microphone=\(self\)/);
   const release = await frame.locator('meta[name="belgobase-release"]').getAttribute("content");
   assert.match(release || "", /^[a-f0-9]{64}$/);

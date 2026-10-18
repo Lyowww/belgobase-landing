@@ -2,17 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { i18n, isLocale, type Locale } from "@/i18n/config";
 import { PATHNAME_HEADER } from "@/lib/seo/metadata";
 import {
+  CSP_NONCE_HEADER,
+  createCspNonce,
   publicPageSecurityHeaders,
   workspaceShellSecurityHeaders,
 } from "@/lib/security-headers";
 
-function withSecurityHeaders(response: NextResponse, pathname: string) {
-  const isWorkspaceShell = i18n.locales.some(
+function isWorkspaceShellPath(pathname: string) {
+  return i18n.locales.some(
     (locale) => pathname === `/${locale}/app` || pathname === `/${locale}/app/`,
   );
-  const securityHeaders = isWorkspaceShell
-    ? workspaceShellSecurityHeaders
-    : publicPageSecurityHeaders;
+}
+
+function applyResponseSecurityHeaders(
+  response: NextResponse,
+  pathname: string,
+  nonce: string,
+) {
+  const securityHeaders = isWorkspaceShellPath(pathname)
+    ? workspaceShellSecurityHeaders(nonce)
+    : publicPageSecurityHeaders(nonce);
   for (const [name, value] of Object.entries(securityHeaders)) {
     response.headers.set(name, value);
   }
@@ -20,12 +29,22 @@ function withSecurityHeaders(response: NextResponse, pathname: string) {
 }
 
 function withPathnameHeader(request: NextRequest, pathname: string) {
+  const nonce = createCspNonce();
+  const securityHeaders = isWorkspaceShellPath(pathname)
+    ? workspaceShellSecurityHeaders(nonce)
+    : publicPageSecurityHeaders(nonce);
+  const csp = securityHeaders["Content-Security-Policy"];
+
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set(PATHNAME_HEADER, pathname);
-  return withSecurityHeaders(
-    NextResponse.next({ request: { headers: requestHeaders } }),
-    pathname,
-  );
+  // Next.js reads the request CSP header and stamps matching nonces on scripts.
+  requestHeaders.set(CSP_NONCE_HEADER, nonce);
+  requestHeaders.set("Content-Security-Policy", csp);
+
+  const response = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
+  return applyResponseSecurityHeaders(response, pathname, nonce);
 }
 
 function getPreferredLocale(request: NextRequest): Locale {
@@ -60,7 +79,11 @@ export function proxy(request: NextRequest) {
   const locale = getPreferredLocale(request);
   const url = request.nextUrl.clone();
   url.pathname = `/${locale}${pathname === "/" ? "" : pathname}`;
-  return withSecurityHeaders(NextResponse.redirect(url), url.pathname);
+  return applyResponseSecurityHeaders(
+    NextResponse.redirect(url),
+    url.pathname,
+    createCspNonce(),
+  );
 }
 
 export const config = {

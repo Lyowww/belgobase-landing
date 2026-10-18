@@ -238,6 +238,7 @@ async function sendViaResend(input: {
     console.warn("[email]", CONTACT_BUDGET_DETAIL);
     return { ok: false, errorDetail: CONTACT_BUDGET_DETAIL };
   }
+  // Keep provider detail in server logs only (already redacted).
   console.error("[email] Resend request failed:", redactLogDetail(outcome.errorDetail));
   return { ok: false, errorDetail: outcome.errorDetail };
 }

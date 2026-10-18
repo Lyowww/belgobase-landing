@@ -196,7 +196,25 @@ test("public contact responses expose no provider detail or caller-addressed mai
   assert.doesNotMatch(mailer, /sendCustomerConfirmationEmail/);
   assert.match(mailer, /id:\s*data\.id/);
   assert.match(mailer, /deliveryId:\s*outcome\.value\.id/);
-  assert.match(action, /conversionId:\s*result\.deliveryId/);
+  assert.match(action, /opaqueConversionId/);
+  assert.doesNotMatch(action, /conversionId:\s*result\.deliveryId\b/);
+});
+
+test("honeypot validation never exposes a distinctive client message", () => {
+  const rejected = contactFormSchema.safeParse({
+    name: "Ada Lovelace",
+    email: "ada@example.com",
+    company: "Analytical Engines",
+    phone: "",
+    gdprConfirm: "on",
+    requestType: "sample",
+    website: "https://spam.example",
+  });
+  assert.equal(rejected.success, false);
+  if (!rejected.success) {
+    assert.equal(rejected.error.issues[0]?.message, "formErrors");
+    assert.doesNotMatch(JSON.stringify(rejected.error.issues), /Invalid submission|spam/i);
+  }
 });
 
 test("mail failure logs do not keep addresses or provider keys", () => {

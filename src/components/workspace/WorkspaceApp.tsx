@@ -208,7 +208,7 @@ export function WorkspaceApp({ locale }: { locale: Locale }) {
   useEffect(() => {
     if (!loadedVersion || phase !== "workspace") return;
     let cancelled = false;
-    const check = async () => { if (document.visibilityState === "hidden") return; try { const response = await fetch("/api/web/version", { cache: "no-store" }); const result = await response.json(); if (!cancelled && response.ok && typeof result.version === "string") setUpdateAvailable(result.version !== loadedVersion); } catch {} };
+    const check = async () => { if (document.visibilityState === "hidden") return; try { const response = await fetch("/api/web/version", { cache: "no-store", credentials: "same-origin" }); const result = await response.json(); if (!cancelled && response.ok && typeof result.version === "string") setUpdateAvailable(result.version !== loadedVersion); } catch {} };
     const timer = window.setInterval(() => void check(), 60_000);
     window.addEventListener("focus", check); document.addEventListener("visibilitychange", check); void check();
     return () => { cancelled = true; window.clearInterval(timer); window.removeEventListener("focus", check); document.removeEventListener("visibilitychange", check); };

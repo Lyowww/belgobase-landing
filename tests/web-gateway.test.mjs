@@ -170,3 +170,40 @@ test('browser responses omit server identity and bridge calls cannot set it', as
     globalThis.fetch = original;
   }
 });
+
+test('gateway sanitizes internal bridge error text before it reaches the browser', async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => Response.json({
+    ok: false,
+    error: 'Traceback (most recent call last):\n  File "/Users/ops/app/backend/web_core.py", line 42, in lookup\nKeyError: secret_table',
+  });
+  try {
+    const response = await proxyWebRequest(
+      request('bridge/company', { number: '0123456789' }, { 'x-belgobase-csrf': '1234567890abcdefghijklmnop' }),
+      ['bridge', 'company'],
+    );
+    const body = await response.json();
+    assert.equal(body.ok, false);
+    assert.equal(body.error, 'temporarily_unavailable');
+    assert.doesNotMatch(JSON.stringify(body), /Traceback|web_core\.py|secret_table|\/Users\//);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test('gateway keeps curated product bridge errors for the UI', async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => Response.json({
+    ok: false,
+    error: 'Selecteer eerst bedrijven.',
+  });
+  try {
+    const response = await proxyWebRequest(
+      request('bridge/export_results', { numbers: [] }, { 'x-belgobase-csrf': '1234567890abcdefghijklmnop' }),
+      ['bridge', 'export_results'],
+    );
+    assert.deepEqual(await response.json(), { ok: false, error: 'Selecteer eerst bedrijven.' });
+  } finally {
+    globalThis.fetch = original;
+  }
+});

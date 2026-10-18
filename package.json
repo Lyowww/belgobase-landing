@@ -7,7 +7,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
-    "test:security": "node --test tests/contact-security.test.mjs tests/web-security-headers.test.mjs tests/web-gateway.test.mjs tests/turnstile.test.mjs"
+    "test:security": "node --test tests/contact-security.test.mjs tests/web-security-headers.test.mjs tests/web-gateway.test.mjs tests/turnstile.test.mjs tests/information-disclosure.test.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

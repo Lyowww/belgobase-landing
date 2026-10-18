@@ -1,4 +1,6 @@
 import type { NextRequest } from "next/server";
+import { sanitizeClientErrorMessage } from "../safe-client-error.ts";
+import { serverDebugLog, serverErrorLog } from "../server-log.ts";
 import {
   TURNSTILE_ACTIONS,
   type TurnstileAction,
@@ -181,7 +183,10 @@ export async function proxyWebRequest(request: NextRequest, parts: string[]): Pr
       if (sessionNames.has(name) && !/;\s*domain=/i.test(cookieValue)) outgoing.append("Set-Cookie", cookieValue);
     }
     let responseBody: BodyInit | null = upstream.body;
-    if (browserIdentityRoutes.has(upstreamPath) && upstream.headers.get("content-type")?.includes("application/json")) {
+    const shouldSanitizeJson =
+      upstream.headers.get("content-type")?.includes("application/json") &&
+      (browserIdentityRoutes.has(upstreamPath) || parts[0] === "bridge");
+    if (shouldSanitizeJson) {
       let bytes: Uint8Array;
       try { bytes = await readBoundedBytes(upstream.body, 65_536); }
       catch { return webError("BelgoBase heeft niet op tijd geantwoord. Controleer de huidige status voordat je de actie opnieuw uitvoert.", 502); }
@@ -191,15 +196,28 @@ export async function proxyWebRequest(request: NextRequest, parts: string[]): Pr
           if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
             return webError("BelgoBase heeft niet op tijd geantwoord. Controleer de huidige status voordat je de actie opnieuw uitvoert.", 502);
           }
-          delete (parsed as Record<string, unknown>).auth_context;
-          responseBody = jsonBody(new TextEncoder().encode(JSON.stringify(parsed)));
+          const record = parsed as Record<string, unknown>;
+          if (browserIdentityRoutes.has(upstreamPath)) delete record.auth_context;
+          if (parts[0] === "bridge" && record.ok !== true && "error" in record) {
+            const original = typeof record.error === "string" ? record.error : "";
+            const sanitized = sanitizeClientErrorMessage(record.error);
+            if (sanitized !== original) {
+              serverDebugLog("gateway", "bridge error sanitized for client");
+            }
+            record.error = sanitized;
+          }
+          responseBody = jsonBody(new TextEncoder().encode(JSON.stringify(record)));
         } catch {
           return webError("BelgoBase heeft niet op tijd geantwoord. Controleer de huidige status voordat je de actie opnieuw uitvoert.", 502);
         }
       } else responseBody = jsonBody(bytes);
     }
     return new Response(responseBody, { status: upstream.status, headers: outgoing });
-  } catch {
+  } catch (error) {
+    serverErrorLog(
+      "gateway",
+      error instanceof Error ? error.message : "upstream proxy failure",
+    );
     return webError("BelgoBase heeft niet op tijd geantwoord. Controleer de huidige status voordat je de actie opnieuw uitvoert.", 503);
   }
 }

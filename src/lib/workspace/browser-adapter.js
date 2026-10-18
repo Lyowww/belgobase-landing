@@ -93,11 +93,20 @@
   }
   const adapterMessage = key => adapterMessages[key][adapterLanguage()];
   const protocolCode = value => typeof value === "string" && /^[a-z][a-z0-9_]*$/.test(value);
+  function looksLikeInternalError(message) {
+    if (message.length === 0 || message.length > 400) return true;
+    if (/[\0-\x08\x0b\x0c\x0e-\x1f]/.test(message)) return true;
+    if (/\r|\n/.test(message) && /Traceback|File "|at \w+|Exception|Error:/i.test(message)) return true;
+    if (/Traceback \(most recent call last\)|File "[^"]+\.py"|node_modules[/\\]|[/\\]Users[/\\]|[/\\]home[/\\]|[A-Za-z]:\\|\.tsx?:\d+|at Object\.|at Module\./i.test(message)) return true;
+    if (/\bre_[A-Za-z0-9_]{8,}\b|Bearer\s+[A-Za-z0-9._-]{12,}|api[_-]?key\s*[:=]/i.test(message)) return true;
+    return false;
+  }
   function bridgeFailure(status, data) {
     if (status === 403) return adapterMessage("denied");
     if (status >= 500) return adapterMessage("unavailable");
-    const message = typeof data?.error === "string" && !protocolCode(data.error) ? data.error : null;
-    return message || adapterMessage("retry");
+    const raw = typeof data?.error === "string" ? data.error.trim() : "";
+    if (!raw || protocolCode(raw) || looksLikeInternalError(raw)) return adapterMessage("retry");
+    return raw;
   }
 
   const AI_ERROR_MESSAGES = Object.freeze({

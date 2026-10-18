@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Keep production browser source maps off so server/client internals stay off the wire.
+  productionBrowserSourceMaps: false,
   reactStrictMode: true,
   compress: true,
   outputFileTracingIncludes: {

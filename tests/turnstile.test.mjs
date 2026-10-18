@@ -7,6 +7,8 @@ import {
   verifyTurnstileToken,
 } from "../src/lib/security/turnstile.ts";
 import { publicPageSecurityHeaders, workspaceShellSecurityHeaders } from "../src/lib/security-headers.ts";
+
+const TEST_NONCE = "dGVzdC1ub25jZS12YWx1ZQ==";
 import { proxyWebRequest } from "../src/lib/workspace/gateway.ts";
 
 const SECRET = "test-turnstile-secret-value-for-unit-tests";
@@ -153,10 +155,15 @@ test("expected hostnames include the canonical site and local defaults", () => {
 });
 
 test("CSP allows Cloudflare Turnstile on public and workspace shell pages", () => {
-  for (const headers of [publicPageSecurityHeaders, workspaceShellSecurityHeaders]) {
+  for (const headers of [
+    publicPageSecurityHeaders(TEST_NONCE),
+    workspaceShellSecurityHeaders(TEST_NONCE),
+  ]) {
     const csp = headers["Content-Security-Policy"];
     assert.match(csp, /https:\/\/challenges\.cloudflare\.com/);
     assert.match(csp, /script-src[^;]*https:\/\/challenges\.cloudflare\.com/);
+    assert.match(csp, /script-src[^;]*'nonce-/);
+    assert.doesNotMatch(csp, /script-src[^;]*'unsafe-inline'/);
     assert.match(csp, /frame-src[^;]*https:\/\/challenges\.cloudflare\.com/);
     assert.match(csp, /connect-src[^;]*https:\/\/challenges\.cloudflare\.com/);
   }

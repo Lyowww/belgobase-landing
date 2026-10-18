@@ -767,6 +767,22 @@ test("bridge errors are localized before display and protocol codes stay private
   ], undefined, "fr", (_method, data) => ({ ...data, error: "Requête non valide." }));
   await assert.rejects(translated.api.search({}), /Requête non valide/);
 
+  const leaked = adapterHarness([
+    { body: { authenticated: true, csrf: "s".repeat(32) } },
+    {
+      status: 400,
+      body: {
+        ok: false,
+        error: 'Traceback (most recent call last):\n  File "/Users/ops/backend/web_core.py", line 1\nKeyError',
+      },
+    },
+  ], undefined, "en");
+  await assert.rejects(leaked.api.search({}), error => {
+    assert.match(error.message, /try again|opnieuw|réessayer|retry/i);
+    assert.doesNotMatch(error.message, /Traceback|web_core|KeyError|\/Users\//);
+    return true;
+  });
+
   for (const [status, code, expected] of [
     [403, "csrf_invalid", /not available for your account/i],
     [500, "internal_error", /temporarily unavailable/i],

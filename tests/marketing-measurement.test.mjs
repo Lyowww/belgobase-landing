@@ -192,11 +192,17 @@ test("analytics-only consent configures privacy controls and one safe initial pa
 });
 
 test("GA4 collection hosts are limited to public pages", () => {
-  const publicCsp = publicPageSecurityHeaders["Content-Security-Policy"];
+  const nonce = "dGVzdC1ub25jZS12YWx1ZQ==";
+  const publicCsp = publicPageSecurityHeaders(nonce)["Content-Security-Policy"];
   assert.match(publicCsp, /https:\/\/www\.google-analytics\.com/);
   assert.match(publicCsp, /https:\/\/region1\.google-analytics\.com/);
   assert.match(publicCsp, /https:\/\/region1\.analytics\.google\.com/);
-  assert.doesNotMatch(workspaceShellSecurityHeaders["Content-Security-Policy"], /(?:google-analytics|analytics\.google)/);
+  assert.match(publicCsp, /script-src[^;]*'nonce-/);
+  assert.doesNotMatch(publicCsp, /script-src[^;]*'unsafe-inline'/);
+  assert.doesNotMatch(
+    workspaceShellSecurityHeaders(nonce)["Content-Security-Policy"],
+    /(?:google-analytics|analytics\.google)/,
+  );
 });
 
 test("ads-only consent never grants analytics and sends only the direct Ads lead", () => {

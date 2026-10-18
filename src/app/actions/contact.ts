@@ -1,6 +1,6 @@
 "use server";
 
-import { redactLogDetail } from "@/lib/email/log-redaction";
+import { createHash } from "node:crypto";
 import { sendDemoRequestEmail } from "@/lib/email/resend";
 import {
   adminNotificationSubject,
@@ -15,6 +15,11 @@ import {
   TURNSTILE_ACTIONS,
   verifyTurnstileToken,
 } from "@/lib/security/turnstile";
+import { serverErrorLog } from "@/lib/server-log";
+
+function opaqueConversionId(deliveryId: string): string {
+  return createHash("sha256").update(`ads:${deliveryId}`).digest("hex").slice(0, 32);
+}
 
 export type ContactFormState = {
   success: boolean;
@@ -95,9 +100,9 @@ export async function submitContactForm(
   });
 
   if (!result.ok || !result.delivered) {
-    console.error(
-      "[contact] Failed to send admin notification:",
-      result.ok ? "Provider did not confirm delivery" : redactLogDetail(result.errorDetail),
+    serverErrorLog(
+      "contact",
+      result.ok ? "Provider did not confirm delivery" : String(result.errorDetail ?? "delivery failed"),
     );
     return { ...contactDeliveryState(false), attemptId };
   }
@@ -105,6 +110,7 @@ export async function submitContactForm(
   return {
     ...contactDeliveryState(true),
     attemptId,
-    conversionId: result.deliveryId,
+    // Stable opaque id for ads dedupe — never the raw provider message id.
+    conversionId: opaqueConversionId(result.deliveryId ?? attemptId),
   };
 }
