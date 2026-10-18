@@ -255,7 +255,61 @@ test('gateway accepts successful bridge JSON larger than the identity sanitizati
   }
 });
 
-test('gateway rejects bridge JSON that exceeds the bridge response sanitization limit', async () => {
+test('gateway accepts production-sized bootstrap JSON around 1.9 MiB through sanitization', async () => {
+  assert.equal(MAX_BRIDGE_RESPONSE_BYTES, 4 * 1024 * 1024);
+  const oneMiB = 1 * 1024 * 1024;
+  const productionBytes = 1_888_418;
+  const logo = readFileSync(join(repoRoot, 'backend/workspace_assets/belgobase_bb_logo.png'));
+  const meta = JSON.parse(readFileSync(join(repoRoot, 'backend/workspace_assets/workspace_metadata.json'), 'utf8'));
+  const bootstrap = {
+    ok: true,
+    version: 'BelgoBase web',
+    brand_logo: `data:image/png;base64,${logo.toString('base64')}`,
+    sectors: meta.catalogs?.sectors ?? [],
+    legal_forms: meta.catalogs?.legal_forms ?? [],
+    workspace: { lists: [], searches: [] },
+    filter_labels: meta.filter_labels ?? {},
+    result_column_options: meta.column_groups?.result_columns ?? [],
+    catalog_padding: '',
+  };
+  let encoded = JSON.stringify(bootstrap);
+  const pad = Math.max(0, productionBytes - Buffer.byteLength(encoded));
+  bootstrap.catalog_padding = 'P'.repeat(pad);
+  encoded = JSON.stringify(bootstrap);
+  assert.ok(Buffer.byteLength(encoded) > oneMiB, 'fixture must exceed the former 1 MiB limit');
+  assert.ok(Buffer.byteLength(encoded) >= productionBytes - 32);
+  assert.ok(Buffer.byteLength(encoded) < MAX_BRIDGE_RESPONSE_BYTES);
+  assert.ok(Buffer.byteLength(encoded) < 2 * 1024 * 1024, 'fixture stays around the observed ~1.9 MiB production size');
+
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => new Response(encoded, {
+    status: 200,
+    headers: {
+      'content-type': 'application/json; charset=utf-8',
+      'content-length': String(Buffer.byteLength(encoded)),
+    },
+  });
+  try {
+    const response = await proxyWebRequest(
+      request('bridge/bootstrap', {}, { 'x-belgobase-csrf': '1234567890abcdefghijklmnop' }),
+      ['bridge', 'bootstrap'],
+    );
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get('content-type') ?? '', /application\/json/);
+    const body = await response.json();
+    assert.equal(body.ok, true);
+    assert.equal(body.version, 'BelgoBase web');
+    assert.equal(body.brand_logo, bootstrap.brand_logo);
+    assert.equal(body.catalog_padding.length, pad);
+    assert.equal(Array.isArray(body.sectors), true);
+    assert.equal('auth_context' in body, false);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test('gateway rejects bridge JSON that exceeds the 4 MiB bridge response sanitization limit', async () => {
+  assert.equal(MAX_BRIDGE_RESPONSE_BYTES, 4 * 1024 * 1024);
   const original = globalThis.fetch;
   globalThis.fetch = async () => new Response(
     JSON.stringify({

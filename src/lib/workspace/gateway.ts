@@ -23,10 +23,10 @@ const MAX_REQUEST_BYTES = 8 * 1024 * 1024;
 export const MAX_IDENTITY_RESPONSE_BYTES = 65_536;
 /**
  * Bridge success payloads (notably bootstrap with an embedded brand logo data URI)
- * exceed the identity limit. Bound separately — well below MAX_REQUEST_BYTES — so
- * sanitization still runs without buffering multi‑megabyte response bodies.
+ * exceed the identity limit. Production bootstrap is ~1.9 MiB; allow 4 MiB with
+ * headroom while staying below MAX_REQUEST_BYTES so sanitization remains bounded.
  */
-export const MAX_BRIDGE_RESPONSE_BYTES = 1 * 1024 * 1024;
+export const MAX_BRIDGE_RESPONSE_BYTES = 4 * 1024 * 1024;
 const browserIdentityRoutes = new Set(["auth/session", "auth/verify", "enrollment/complete"]);
 const protectedBridgeFields = [
   "license_id", "customer_id", "user_id", "browser_id", "access_class", "plan", "rights",
