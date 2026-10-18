@@ -17,6 +17,11 @@ function action(result) {
       if(id==='@/lib/email/templates') return templates;
       if(id==='@/lib/validations/contact') return validation;
       if(id==='@/lib/contact-state') return delivery;
+      if(id==='@/lib/security/turnstile') return {
+        TURNSTILE_ACTIONS:{contact:'contact'},
+        verifyTurnstileToken:async()=>({ok:true,bypassed:true}),
+      };
+      if(id==='@/lib/email/log-redaction') return {redactLogDetail:(value)=>value};
       throw new Error('Unexpected dependency '+id);
     },
   });

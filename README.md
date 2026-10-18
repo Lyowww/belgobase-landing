@@ -40,7 +40,7 @@ Create a `.env.local` file in the project root (never commit this file):
 | `CONTACT_MAIL_SLOTS` | Optional | Maximum accepted admin notifications per 10-minute window (1–100, default 10) |
 | `NEXT_PUBLIC_SITE_URL` | Optional | Canonical site URL for SEO metadata (defaults to the value in `src/lib/site.ts`) |
 
-Without `RESEND_API_KEY`, the contact form returns an error. Admin recipient defaults to the site contact email (`legal@belgobase.be`) when `ADMIN_EMAIL` / `CONTACT_EMAIL` are unset. The public form only sends an internal admin notification; it does not send mail to the submitted address. Resend idempotency keys enforce the configured ten-minute delivery budget across serverless instances. Do **not** set the recipient to `noreply@belgobase.be` — that address is send-only. See `.env.example`.
+Without `RESEND_API_KEY`, the contact form returns an error. Admin recipient defaults to the commercial inbox (`david@belgobase.be`) when `ADMIN_EMAIL` / `CONTACT_EMAIL` are unset. The public form only sends an internal admin notification; it does not send mail to the submitted address. Resend idempotency keys cap distinct notifications for each ten-minute window across serverless instances; an identical retry reuses the earlier delivery instead of taking another slot. Do **not** set the recipient to `noreply@belgobase.be` — that address is send-only. See `.env.example`.
 
 ---
 
@@ -255,7 +255,7 @@ Demo / contact requests are handled by a Next.js Server Action (`src/app/actions
 2. Data is validated with Zod (`src/lib/validations/contact.ts`).
 3. On success, Resend sends one **admin notification** to `ADMIN_EMAIL`, with the submitted address as Reply-To. The public form never sends mail to that caller-controlled address.
 4. The notification uses **From:** `BelgoBase <noreply@belgobase.be>` (or `FROM_EMAIL` / `RESEND_FROM_EMAIL`).
-5. Provider-enforced idempotency limits accepted notifications across serverless instances. The default is 10 per 10 minutes and can be tuned with `CONTACT_MAIL_SLOTS`.
+5. Provider-enforced idempotency limits accepted notifications across serverless instances. The default is 10 distinct messages per 10 minutes and can be tuned with `CONTACT_MAIL_SLOTS`. Repeating the same message does not consume a second slot.
 6. A honeypot field (`website`) blocks basic bots.
 
 Shared Resend helpers live in `src/lib/email/resend.ts`; HTML templates in `src/lib/email/templates.ts`. The noreply address is only used as From — never as To.

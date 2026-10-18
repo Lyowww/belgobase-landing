@@ -5,13 +5,13 @@ import vm from "node:vm";
 import ts from "typescript";
 
 const source = await readFile(new URL("./WorkspaceApp.tsx", import.meta.url), "utf8");
-const module = { exports: {} };
+const commonjs = { exports: {} };
 const output = ts.transpileModule(source, {
   compilerOptions: { esModuleInterop: true, jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
 vm.runInNewContext(output, {
-  module,
-  exports: module.exports,
+  module: commonjs,
+  exports: commonjs.exports,
   require(id) {
     if (id === "react") return {};
     if (id === "react/jsx-runtime") return { Fragment: Symbol("Fragment"), jsx() {}, jsxs() {} };
@@ -21,7 +21,7 @@ vm.runInNewContext(output, {
   URL,
 });
 
-const { accountReferences, desktopDownloadHref, retryLocksCodeInput, sessionPollOutcome, validSessionProjection } = module.exports;
+const { accountReferences, desktopDownloadHref, retryLocksCodeInput, sessionPollOutcome, validSessionProjection } = commonjs.exports;
 
 test("authenticated workspace projection requires exact authentication and a bounded CSRF token", () => {
   const valid = "A_1234567890-bcde";

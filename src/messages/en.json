@@ -341,6 +341,7 @@
     "timelineRequired": "Please select a timeline",
     "gdprRequired": "Please check the agreement box to continue",
     "fixErrors": "Please fix the errors below.",
+    "captchaFailed": "Confirm you are not a robot and try again.",
     "serviceUnavailable": "Service temporarily unavailable. Please try again later.",
     "successMessage": "Thank you! We'll be in touch shortly about your demo.",
     "errorMessage": "Something went wrong. Please try again or email us directly."

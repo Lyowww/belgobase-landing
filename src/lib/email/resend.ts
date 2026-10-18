@@ -2,10 +2,14 @@ import { Resend } from "resend";
 import { salesContactEmail as defaultRecipientEmail } from "@/lib/site";
 import { emailSchema } from "@/lib/validations/contact";
 import {
-  contactDeliveryKey,
+  contactDeliveryProbeKeys,
+  contactSubmissionIdentity,
+  deliverWithinBudget,
   isIdempotencyConflict,
+  type DeliveryAttempt,
 } from "@/lib/email/contact-abuse";
 import { resolveAdminEmailCandidate } from "@/lib/email/admin-recipient";
+import { redactLogDetail } from "@/lib/email/log-redaction";
 
 /** Default verified sender identity — not a mailbox. Never use as `to`. */
 export const DEFAULT_FROM_EMAIL = "BelgoBase <noreply@belgobase.be>";
@@ -165,16 +169,25 @@ function getResendClient():
   return { ok: true, client: new Resend(resendApiKey) };
 }
 
-async function sendViaResend(input: {
+const CONTACT_BUDGET_DETAIL = "Contact delivery budget reached for the current window";
+
+function classifyDeliveryError(error: unknown): DeliveryAttempt<never> {
+  const name = error && typeof error === "object" ? (error as { name?: unknown }).name : undefined;
+  if (name === "invalid_idempotent_request") return { status: "occupied" };
+  if (name === "concurrent_idempotent_requests") return { status: "in-flight" };
+  return { status: "error", errorDetail: formatEmailError(error) };
+}
+
+async function attemptContactDelivery(input: {
   from: string;
   to: string;
   replyTo: string;
   subject: string;
   html: string;
   idempotencyKey: string;
-}): Promise<SendEmailResult> {
+}): Promise<DeliveryAttempt<{ id: string }>> {
   const clientResult = getResendClient();
-  if (!clientResult.ok) return clientResult;
+  if (!clientResult.ok) return { status: "error", errorDetail: clientResult.errorDetail };
 
   try {
     const { data, error } = await clientResult.client.emails.send(
@@ -188,34 +201,45 @@ async function sendViaResend(input: {
       { idempotencyKey: input.idempotencyKey },
     );
 
-    if (error) {
-      if (isIdempotencyConflict(error)) {
-        const errorDetail = "Contact delivery budget reached for the current window";
-        console.warn("[email]", errorDetail);
-        return { ok: false, errorDetail };
-      }
-      const errorDetail = formatEmailError(error);
-      console.error("[email] Resend API error:", errorDetail);
-      return { ok: false, errorDetail };
-    }
-
+    if (error) return classifyDeliveryError(error);
     if (!data?.id) {
-      const errorDetail = "Resend returned success without a message id";
-      console.error("[email]", errorDetail);
-      return { ok: false, errorDetail };
+      return { status: "error", errorDetail: "Resend returned success without a message id" };
     }
-
-    return { ok: true, delivered: true, deliveryId: data.id };
+    return { status: "delivered", value: { id: data.id } };
   } catch (error) {
-    if (isIdempotencyConflict(error)) {
-      const errorDetail = "Contact delivery budget reached for the current window";
-      console.warn("[email]", errorDetail);
-      return { ok: false, errorDetail };
-    }
-    const errorDetail = formatEmailError(error);
-    console.error("[email] Resend request failed:", errorDetail);
-    return { ok: false, errorDetail };
+    if (isIdempotencyConflict(error)) return classifyDeliveryError(error);
+    return { status: "error", errorDetail: formatEmailError(error) };
   }
+}
+
+async function sendViaResend(input: {
+  from: string;
+  to: string;
+  replyTo: string;
+  subject: string;
+  html: string;
+}): Promise<SendEmailResult> {
+  const keys = contactDeliveryProbeKeys(contactSubmissionIdentity({
+    recipient: input.to,
+    replyTo: input.replyTo,
+    subject: input.subject,
+    html: input.html,
+  }));
+  const outcome = await deliverWithinBudget(
+    keys,
+    (idempotencyKey) => attemptContactDelivery({ ...input, idempotencyKey }),
+    { wait: (attempt) => new Promise((resolve) => setTimeout(resolve, attempt * 100)) },
+  );
+
+  if (outcome.status === "delivered") {
+    return { ok: true, delivered: true, deliveryId: outcome.value.id };
+  }
+  if (outcome.status === "budget") {
+    console.warn("[email]", CONTACT_BUDGET_DETAIL);
+    return { ok: false, errorDetail: CONTACT_BUDGET_DETAIL };
+  }
+  console.error("[email] Resend request failed:", redactLogDetail(outcome.errorDetail));
+  return { ok: false, errorDetail: outcome.errorDetail };
 }
 
 /**
@@ -253,7 +277,6 @@ export async function sendAdminNotificationEmail(
     replyTo: customer.email,
     subject: input.subject,
     html: input.html,
-    idempotencyKey: contactDeliveryKey(customer.email),
   });
 }
 

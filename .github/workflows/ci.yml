@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx eslint
+      - run: npm run test:security
+      - run: python3 -m unittest backend.tests.test_web_auth backend.tests.test_enrollment
+      - run: python3 tools/scan_tracked_secrets.py
+      - run: npm audit --omit=dev --audit-level=high

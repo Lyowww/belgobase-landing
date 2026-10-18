@@ -226,6 +226,68 @@ class WebAuthService:
             ),
         )
 
+    def _mail_ready(self) -> bool:
+        available = getattr(self.mailer, "available", None)
+        if not callable(available):
+            return True
+        return available() is not False
+
+    def _require_mail_ready(self) -> None:
+        """Reject every caller the same way when mail cannot be sent.
+
+        This runs before account lookup. A missing mailer must not become a
+        503 that only a real account would otherwise see after delivery fails.
+        """
+        if not self._mail_ready():
+            raise AuthError("mail_unavailable", 503)
+
+    def _record_denial(
+        self,
+        action: str,
+        *,
+        user_id: str | None = None,
+        license_id: str | None = None,
+        customer_id: str | None = None,
+        browser_id: str | None = None,
+        source_hash: str | None = None,
+    ) -> None:
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            self._audit(
+                connection,
+                action,
+                "denied",
+                user_id=user_id,
+                license_id=license_id,
+                customer_id=customer_id,
+                browser_id=browser_id,
+                source_hash=source_hash,
+            )
+            if action == "web_csrf_rejected":
+                connection.execute(
+                    "DELETE FROM web_auth_audit WHERE action=? AND occurred_at<?",
+                    (action, self._iso(self._now() - dt.timedelta(days=2))),
+                )
+            connection.commit()
+        except Exception:
+            connection.rollback()
+        finally:
+            connection.close()
+
+    def _note_csrf_failure(self, session_token: str) -> None:
+        try:
+            context = self.validate_session(session_token, touch=False)
+        except AuthError:
+            return
+        self._record_denial(
+            "web_csrf_rejected",
+            user_id=context.user_id,
+            license_id=context.license_id,
+            customer_id=context.customer_id,
+            browser_id=context.browser_id,
+        )
+
     def _rate_event(
         self,
         connection: sqlite3.Connection,
@@ -368,14 +430,23 @@ class WebAuthService:
         except MailDeliveryError:
             connection = self._connect()
             try:
+                connection.execute("BEGIN IMMEDIATE")
                 connection.execute(
                     "DELETE FROM web_login_challenges WHERE challenge_id=? AND delivered_at IS NULL",
                     (challenge_id,),
                 )
+                self._audit(
+                    connection,
+                    "web_login_mail",
+                    "delivery_failed",
+                    license_id=license_record.license_id,
+                    customer_id=license_record.customer_id,
+                    source_hash=source_hash,
+                )
                 connection.commit()
             finally:
                 connection.close()
-            raise AuthError("mail_unavailable", 503)
+            return self._dummy_start()
         connection = self._connect()
         try:
             connection.execute(
@@ -403,6 +474,7 @@ class WebAuthService:
         code_text = str(license_code or "").strip()
         if not code_text or len(code_text) > 200 or type(remember_browser) is not bool:
             raise AuthError("invalid_request", 400)
+        self._require_mail_ready()
         connection = self._connect()
         try:
             connection.execute("BEGIN IMMEDIATE")
@@ -443,6 +515,7 @@ class WebAuthService:
         normalized = self.normalize_email(email)
         if type(remember_browser) is not bool:
             raise AuthError("invalid_request", 400)
+        self._require_mail_ready()
         connection = self._connect()
         try:
             connection.execute("BEGIN IMMEDIATE")
@@ -557,6 +630,14 @@ class WebAuthService:
                 connection.execute(
                     "UPDATE web_login_challenges SET failed_attempts=failed_attempts+1 WHERE challenge_id=?",
                     (challenge,),
+                )
+                self._audit(
+                    connection,
+                    "web_login_verify",
+                    "denied",
+                    license_id=str(row["license_id"]),
+                    customer_id=str(row["customer_id"]) if row["customer_id"] else None,
+                    source_hash=str(row["source_hash"]) if row["source_hash"] else None,
                 )
                 connection.commit()
                 raise AuthError("code_invalid", 401)
@@ -1006,6 +1087,7 @@ class WebAuthService:
         expected = self.csrf_token(session_token)
         value = str(supplied or "")
         if not value or not hmac.compare_digest(expected, value):
+            self._note_csrf_failure(session_token)
             raise AuthError("csrf_invalid", 403)
 
     def logout(self, token: Any) -> None:

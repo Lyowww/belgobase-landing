@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from backend.http_adapter import WebAuthHTTPAdapter
-from backend.mailer import SignedWebsiteMailer
+from backend.mailer import DisabledMailer, MailDeliveryError, SignedWebsiteMailer
 from backend.registry import BelgoBaseLicenseRegistry, LicenseRecord
 from backend.web_auth import AuthError, WebAuthConfig, WebAuthService
 from backend.workspace_integration import make_workspace_bridge_handler, workspace_scope_resolver
@@ -37,6 +37,14 @@ class CapturingMailer:
 
     def send_login_code(self, **values: Any) -> None:
         self.messages.append(values)
+
+
+class FailingMailer:
+    def available(self) -> bool:
+        return True
+
+    def send_login_code(self, **_values: Any) -> None:
+        raise MailDeliveryError("mail_relay_failed")
 
 
 class FakeRegistry:
@@ -506,6 +514,71 @@ class WebAuthTests(unittest.TestCase):
             self.service.verify_code(login["challenge_id"], str(self.mailer.messages[-1]["code"]))
         self.service.validate_session(first.token)
 
+    def test_mail_failure_matches_unknown_account(self) -> None:
+        self.registry.profile_records["owner@example.test"] = [record()]
+        service = WebAuthService(
+            WebAuthConfig(state_database=self.database, secret=b"s" * 32),
+            self.registry,
+            FailingMailer(),
+            clock=self.clock,
+        )
+        unknown = service.start_login(
+            "not-a-customer@example.test", remember_browser=False, source="198.51.100.9"
+        )
+        known = service.start_login(
+            "owner@example.test", remember_browser=False, source="198.51.100.9"
+        )
+        self.assertEqual(set(unknown), set(known))
+        self.assertEqual("if_account_matches", known["delivery"])
+        self.assertNotIn("license", json.dumps(known))
+        with closing(sqlite3.connect(self.database)) as connection:
+            delivered = connection.execute(
+                "SELECT COUNT(*) FROM web_login_challenges WHERE delivered_at IS NOT NULL"
+            ).fetchone()
+            self.assertEqual(0, delivered[0])
+            audit = connection.execute(
+                "SELECT outcome FROM web_auth_audit WHERE action='web_login_mail'"
+            ).fetchone()
+            self.assertEqual("delivery_failed", audit[0])
+
+    def test_unconfigured_mailer_is_the_same_for_known_and_unknown_accounts(self) -> None:
+        service = WebAuthService(
+            WebAuthConfig(state_database=self.database, secret=b"s" * 32),
+            self.registry,
+            DisabledMailer(),
+            clock=self.clock,
+        )
+        with self.assertRaises(AuthError) as unknown:
+            service.start_login(
+                "not-a-customer@example.test", remember_browser=False, source="198.51.100.9"
+            )
+        with self.assertRaises(AuthError) as known:
+            service.start_login(
+                "owner@example.test", remember_browser=False, source="198.51.100.9"
+            )
+        self.assertEqual(503, unknown.exception.status)
+        self.assertEqual(unknown.exception.code, known.exception.code)
+        self.assertEqual(unknown.exception.status, known.exception.status)
+
+    def test_wrong_code_is_audited_without_the_secret(self) -> None:
+        result, otp = self.claim()
+        wrong = "000000" if otp != "000000" else "111111"
+        with self.assertRaisesRegex(AuthError, "code_invalid"):
+            self.service.verify_code(result["challenge_id"], wrong)
+        with closing(sqlite3.connect(self.database)) as connection:
+            outcome = connection.execute(
+                "SELECT outcome FROM web_auth_audit WHERE action='web_login_verify'"
+            ).fetchone()
+            self.assertEqual("denied", outcome[0])
+            stored = " ".join(
+                str(value)
+                for row in connection.execute("SELECT * FROM web_auth_audit")
+                for value in row
+                if value is not None
+            )
+            self.assertNotIn(otp, stored)
+            self.assertNotIn(wrong, stored)
+
     def test_http_cookie_csrf_and_server_context(self) -> None:
         captured: list[dict[str, Any]] = []
 
@@ -546,8 +619,14 @@ class WebAuthTests(unittest.TestCase):
             ),
         )
         self.assertNotIn("token", json.dumps(verified.body).lower())
+        self.assertNotIn("auth_context", verified.body)
+        self.assertNotIn("license_id", json.dumps(verified.body))
+        self.assertNotIn("rights", json.dumps(verified.body))
         self.assertIs(True, verified.body["authenticated"])
         self.assertEqual("owner@example.test", verified.body["account"]["email"])
+        anonymous = adapter.handle("GET", "/web/auth/session", {})
+        self.assertEqual(401, anonymous.status)
+        self.assertNotIn("auth_context", anonymous.body)
         cookie = verified.headers["Set-Cookie"].split(";", 1)[0]
         csrf = str(verified.body["csrf"])
         forbidden = adapter.handle(
@@ -636,7 +715,28 @@ class SignedMailerTests(unittest.TestCase):
             set(body),
         )
         self.assertEqual("belgobase-login-v1", body["purpose"])
+        self.assertEqual("nl", body["language"])
         self.assertEqual("c2lnbmF0dXJl", opener.request.get_header("X-belgobase-mail-signature"))
+
+        mailer.send_login_code(
+            email="owner@example.test",
+            code="012345",
+            challenge_id="challenge-fr",
+            issued_at=issued,
+            expires_at=issued + dt.timedelta(minutes=10),
+            language="fr",
+        )
+        self.assertEqual("fr", json.loads(opener.request.data)["language"])
+        with self.assertRaises(Exception) as raised:
+            mailer.send_login_code(
+                email="owner@example.test",
+                code="012345",
+                challenge_id="challenge-de",
+                issued_at=issued,
+                expires_at=issued + dt.timedelta(minutes=10),
+                language="de",
+            )
+        self.assertEqual("mail_language_invalid", str(raised.exception))
 
 
 class WorkspaceIntegrationTests(unittest.TestCase):

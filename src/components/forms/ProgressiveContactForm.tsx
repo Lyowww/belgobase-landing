@@ -4,10 +4,12 @@ import { m } from "framer-motion";
 import { ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { submitContactForm, type ContactFormState } from "@/app/actions/contact";
+import { TurnstileField } from "@/components/security/TurnstileField";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 import { useTranslations } from "@/providers/TranslationsProvider";
 import { cn } from "@/lib/utils";
 import { trackGoogleAdsConversion } from "@/lib/marketing-measurement";
+import { TURNSTILE_ACTIONS } from "@/lib/security/turnstile-config";
 import {
   CONTACT_FIELD_LIMITS,
   emailSchema,
@@ -306,6 +308,12 @@ export function ProgressiveContactForm({
           {translateError(state.message)}
         </p>
       )}
+
+      <TurnstileField
+        key={state.attemptId ?? "contact-turnstile"}
+        action={TURNSTILE_ACTIONS.contact}
+        className="mt-4"
+      />
 
       <div className="mt-6">
         <MagneticButton type="submit" disabled={isPending} className="w-full">

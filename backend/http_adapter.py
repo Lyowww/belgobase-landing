@@ -151,7 +151,6 @@ class WebAuthHTTPAdapter:
             "ok": True,
             "authenticated": True,
             "account": {"email": context.email},
-            "auth_context": context.as_dict(),
             "csrf": service.csrf_token(token),
         }
 

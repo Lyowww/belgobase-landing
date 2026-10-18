@@ -32,6 +32,8 @@ test("client-side login navigation inherits a microphone-capable document", () =
   assert.equal(publicPageSecurityHeaders["Permissions-Policy"], workspaceShellSecurityHeaders["Permissions-Policy"]);
   assert.match(publicPageSecurityHeaders["Content-Security-Policy"], /https:\/\/www\.googletagmanager\.com/);
   assert.match(publicPageSecurityHeaders["Content-Security-Policy"], /https:\/\/www\.googleadservices\.com/);
+  assert.match(publicPageSecurityHeaders["Content-Security-Policy"], /https:\/\/challenges\.cloudflare\.com/);
+  assert.match(workspaceShellSecurityHeaders["Content-Security-Policy"], /https:\/\/challenges\.cloudflare\.com/);
   assert.doesNotMatch(workspaceShellSecurityHeaders["Content-Security-Policy"], /google|doubleclick/);
 });
 

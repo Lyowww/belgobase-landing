@@ -1,4 +1,9 @@
 import type { NextRequest } from "next/server";
+import {
+  TURNSTILE_ACTIONS,
+  type TurnstileAction,
+  verifyTurnstileToken,
+} from "../security/turnstile.ts";
 
 const bridgeMethods = new Set([
   "bootstrap", "search", "company", "operation_status", "cancel_operation",
@@ -12,6 +17,15 @@ const authMethods = new Set(["start", "verify", "session", "logout", "logout-all
 const enrollmentMethods = new Set(["start", "verify", "session", "autofill", "complete"]);
 const sessionNames = new Set(["__Host-belgobase_session", "belgobase_session", "__Host-belgobase_enrollment", "belgobase_enrollment", "__Host-bb_trust", "bb_trust"]);
 const MAX_REQUEST_BYTES = 8 * 1024 * 1024;
+const browserIdentityRoutes = new Set(["auth/session", "auth/verify", "enrollment/complete"]);
+const protectedBridgeFields = [
+  "license_id", "customer_id", "user_id", "browser_id", "access_class", "plan", "rights",
+  "principal_id", "principal_type", "quota_subject_id", "required_scopes", "effective_scopes",
+];
+const botProtectedStarts = new Map<string, TurnstileAction>([
+  ["auth/start", TURNSTILE_ACTIONS.login],
+  ["enrollment/start", TURNSTILE_ACTIONS.enrollment],
+]);
 
 function mailLanguage(value: unknown): "nl" | "fr" | "en" {
   return value === "fr" || value === "en" ? value : "nl";
@@ -52,9 +66,12 @@ export function isAllowedRoute(parts: string[], method: string): boolean {
   return parts.length === 2 && parts[0] === "download" && /^[a-zA-Z0-9_-]{16,100}$/.test(parts[1]) && method === "GET";
 }
 
-export async function boundedBody(request: Request, maxBytes = MAX_REQUEST_BYTES): Promise<ArrayBuffer> {
-  const reader = request.body?.getReader();
-  if (!reader) return new ArrayBuffer(0);
+export async function readBoundedBytes(
+  stream: ReadableStream<Uint8Array> | null,
+  maximum: number,
+): Promise<Uint8Array> {
+  if (!stream) return new Uint8Array();
+  const reader = stream.getReader();
   const chunks: Uint8Array[] = [];
   let size = 0;
   try {
@@ -62,14 +79,27 @@ export async function boundedBody(request: Request, maxBytes = MAX_REQUEST_BYTES
       const part = await reader.read();
       if (part.done) break;
       size += part.value.byteLength;
-      if (size > maxBytes) { await reader.cancel(); throw new RangeError("body limit"); }
+      if (size > maximum) { await reader.cancel(); throw new RangeError("body limit"); }
       chunks.push(part.value);
     }
   } finally { reader.releaseLock(); }
   const bytes = new Uint8Array(size);
   let offset = 0;
   for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
-  return bytes.buffer;
+  return bytes;
+}
+
+export async function boundedBody(request: Request, maxBytes = MAX_REQUEST_BYTES): Promise<ArrayBuffer> {
+  const bytes = await readBoundedBytes(request.body, maxBytes);
+  const copy = new Uint8Array(bytes.byteLength);
+  copy.set(bytes);
+  return copy.buffer;
+}
+
+function jsonBody(bytes: Uint8Array): ArrayBuffer {
+  const copy = new ArrayBuffer(bytes.byteLength);
+  new Uint8Array(copy).set(bytes);
+  return copy;
 }
 
 export async function proxyWebRequest(request: NextRequest, parts: string[]): Promise<Response> {
@@ -95,6 +125,26 @@ export async function proxyWebRequest(request: NextRequest, parts: string[]): Pr
     try {
       const parsed = JSON.parse(new TextDecoder().decode(body));
       if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return webError("Ongeldige aanvraag.", 400);
+      const botAction = botProtectedStarts.get(upstreamPath);
+      if (botAction) {
+        const captcha = await verifyTurnstileToken({
+          token: (parsed as Record<string, unknown>).turnstile_token
+            ?? (parsed as Record<string, unknown>)["cf-turnstile-response"],
+          action: botAction,
+        });
+        if (!captcha.ok) {
+          const status =
+            captcha.reason === "not_configured" ||
+            captcha.reason === "timeout" ||
+            captcha.reason === "provider_error"
+              ? 503
+              : 403;
+          return webError(
+            status === 503 ? "temporarily_unavailable" : "captcha_failed",
+            status,
+          );
+        }
+      }
       if (upstreamPath === "auth/start") {
         upstreamPath = parsed.license_code ? "auth/claim" : "auth/login";
         body = new TextEncoder().encode(JSON.stringify({ email: parsed.email,
@@ -103,12 +153,16 @@ export async function proxyWebRequest(request: NextRequest, parts: string[]): Pr
           language: mailLanguage(parsed.language) })).buffer;
       } else if (upstreamPath === "enrollment/start") {
         body = new TextEncoder().encode(JSON.stringify({
-          ...parsed,
+          email: parsed.email,
+          license_code: parsed.license_code,
+          remember_browser: parsed.remember_browser,
           language: mailLanguage(parsed.language),
         })).buffer;
       } else if (parts[0] === "bridge") {
         upstreamPath = "bridge";
-        body = new TextEncoder().encode(JSON.stringify({ method: parts[1], payload: parsed })).buffer;
+        const payload = { ...parsed };
+        for (const field of protectedBridgeFields) delete payload[field];
+        body = new TextEncoder().encode(JSON.stringify({ method: parts[1], payload })).buffer;
       }
     } catch { return webError("Ongeldige aanvraag.", 400); }
   }
@@ -126,7 +180,25 @@ export async function proxyWebRequest(request: NextRequest, parts: string[]): Pr
       const name = cookieValue.split("=", 1)[0];
       if (sessionNames.has(name) && !/;\s*domain=/i.test(cookieValue)) outgoing.append("Set-Cookie", cookieValue);
     }
-    return new Response(upstream.body, { status: upstream.status, headers: outgoing });
+    let responseBody: BodyInit | null = upstream.body;
+    if (browserIdentityRoutes.has(upstreamPath) && upstream.headers.get("content-type")?.includes("application/json")) {
+      let bytes: Uint8Array;
+      try { bytes = await readBoundedBytes(upstream.body, 65_536); }
+      catch { return webError("BelgoBase heeft niet op tijd geantwoord. Controleer de huidige status voordat je de actie opnieuw uitvoert.", 502); }
+      if (bytes.byteLength) {
+        try {
+          const parsed: unknown = JSON.parse(new TextDecoder().decode(bytes));
+          if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+            return webError("BelgoBase heeft niet op tijd geantwoord. Controleer de huidige status voordat je de actie opnieuw uitvoert.", 502);
+          }
+          delete (parsed as Record<string, unknown>).auth_context;
+          responseBody = jsonBody(new TextEncoder().encode(JSON.stringify(parsed)));
+        } catch {
+          return webError("BelgoBase heeft niet op tijd geantwoord. Controleer de huidige status voordat je de actie opnieuw uitvoert.", 502);
+        }
+      } else responseBody = jsonBody(bytes);
+    }
+    return new Response(responseBody, { status: upstream.status, headers: outgoing });
   } catch {
     return webError("BelgoBase heeft niet op tijd geantwoord. Controleer de huidige status voordat je de actie opnieuw uitvoert.", 503);
   }

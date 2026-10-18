@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { generateKeyPairSync, sign } from 'node:crypto';
 import { verifyLoginMail, loginMailContent } from '../src/lib/workspace/mail-relay.ts';
-import { isAllowedRoute, proxyWebRequest, backendUrl } from '../src/lib/workspace/gateway.ts';
+import { isAllowedRoute, proxyWebRequest, backendUrl, readBoundedBytes } from '../src/lib/workspace/gateway.ts';
 
 test('login mail requires the server signature, correct purpose and a fresh challenge', () => {
   const {privateKey, publicKey}=generateKeyPairSync('ed25519');
@@ -69,7 +69,7 @@ test('auth and enrollment starts forward a validated mail language',async()=>{
   try {
     await proxyWebRequest(request('auth/start',{email:'qa@example.test',license_code:'TEST-NOT-A-REAL-LICENCE',remember:true,language:'fr'}),['auth','start']);
     await proxyWebRequest(request('auth/start',{email:'qa@example.test',remember:false,language:'en'}),['auth','start']);
-    await proxyWebRequest(request('enrollment/start',{email:'qa@example.test',license_code:'TEST-NOT-A-REAL-LICENCE',remember_browser:false,language:'de'}),['enrollment','start']);
+    await proxyWebRequest(request('enrollment/start',{email:'qa@example.test',license_code:'TEST-NOT-A-REAL-LICENCE',remember_browser:false,language:'de',source:'attacker',customer_id:'other-tenant'}),['enrollment','start']);
     assert.equal(calls[0][0],'https://api.belgobase.be/web/auth/claim');
     assert.equal(calls[0][1].remember_browser,true);
     assert.equal(calls[0][1].language,'fr');
@@ -77,8 +77,32 @@ test('auth and enrollment starts forward a validated mail language',async()=>{
     assert.equal('license_code' in calls[1][1],false);
     assert.equal(calls[1][1].language,'en');
     assert.equal(calls[2][0],'https://api.belgobase.be/web/enrollment/start');
-    assert.equal(calls[2][1].language,'nl');
+    assert.deepEqual(calls[2][1], {
+      email: 'qa@example.test',
+      license_code: 'TEST-NOT-A-REAL-LICENCE',
+      remember_browser: false,
+      language: 'nl',
+    });
   } finally {globalThis.fetch=original;}
+});
+
+test('bounded reads stop when a body exceeds its limit', async () => {
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(new Uint8Array(3000));
+      controller.enqueue(new Uint8Array(3000));
+      controller.close();
+    },
+  });
+  await assert.rejects(() => readBoundedBytes(stream, 4096), RangeError);
+  const small = new ReadableStream({
+    start(controller) {
+      controller.enqueue(Uint8Array.from([65, 66]));
+      controller.close();
+    },
+  });
+  assert.deepEqual(await readBoundedBytes(small, 4096), Uint8Array.from([65, 66]));
+  assert.equal((await readBoundedBytes(null, 4096)).byteLength, 0);
 });
 
 test('enrollment completion retains both session issuance and enrollment-cookie clearing',async()=>{
@@ -101,4 +125,48 @@ test('enrollment completion retains both session issuance and enrollment-cookie 
     assert.equal(isAllowedRoute(['enrollment','session'],'GET'),true);
     assert.equal(isAllowedRoute(['enrollment','complete'],'GET'),false);
   } finally {globalThis.fetch=original;}
+});
+
+test('browser responses omit server identity and bridge calls cannot set it', async () => {
+  const original = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url, options) => {
+    calls.push({ url: String(url), body: options.body ? JSON.parse(new TextDecoder().decode(options.body)) : null });
+    if (String(url).endsWith('/auth/session')) {
+      return Response.json({
+        ok: true,
+        authenticated: true,
+        account: { email: 'owner@example.test' },
+        csrf: 'csrf-token-value',
+        auth_context: { license_id: 'lic-secret', customer_id: 'tenant-secret', rights: { exports: true } },
+      });
+    }
+    return Response.json({ ok: true });
+  };
+  try {
+    const session = await proxyWebRequest({
+      nextUrl: new URL('https://belgobase.com/api/web/auth/session'),
+      method: 'GET',
+      headers: new Headers(),
+      cookies: { getAll: () => [{ name: '__Host-belgobase_session', value: 'opaque_session' }] },
+      body: null,
+    }, ['auth', 'session']);
+    const revealed = await session.json();
+    assert.equal(revealed.authenticated, true);
+    assert.equal(revealed.csrf, 'csrf-token-value');
+    assert.equal('auth_context' in revealed, false);
+    assert.equal(JSON.stringify(revealed).includes('lic-secret'), false);
+    await proxyWebRequest(request('bridge/search', {
+      filters: { postcode: '1000' },
+      license_id: 'other-licence',
+      customer_id: 'other-tenant',
+      rights: { exports: true },
+    }), ['bridge', 'search']);
+    assert.deepEqual(calls.at(-1).body, {
+      method: 'search',
+      payload: { filters: { postcode: '1000' } },
+    });
+  } finally {
+    globalThis.fetch = original;
+  }
 });

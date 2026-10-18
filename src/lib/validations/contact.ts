@@ -7,26 +7,45 @@ export const CONTACT_FIELD_LIMITS = {
   phone: 50,
 } as const;
 
-export const emailSchema = z
-  .string()
-  .trim()
-  .min(1, "emailRequired")
-  .max(CONTACT_FIELD_LIMITS.email, "emailMax")
-  .email("emailInvalid");
+function hasNoControlCharacters(value: string): boolean {
+  return !/[\u0000-\u001f\u007f\u2028\u2029]/.test(value);
+}
+
+const readableText = (schema: z.ZodString, message: string) =>
+  schema.refine(hasNoControlCharacters, { message });
+
+export const emailSchema = readableText(
+  z
+    .string()
+    .trim()
+    .min(1, "emailRequired")
+    .max(CONTACT_FIELD_LIMITS.email, "emailMax")
+    .email("emailInvalid"),
+  "emailInvalid",
+);
 
 export const contactFormSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(2, "nameMin")
-    .max(CONTACT_FIELD_LIMITS.name, "nameMax"),
+  name: readableText(
+    z
+      .string()
+      .trim()
+      .min(2, "nameMin")
+      .max(CONTACT_FIELD_LIMITS.name, "nameMax"),
+    "nameInvalid",
+  ),
   email: emailSchema,
-  company: z
-    .string()
-    .trim()
-    .min(2, "companyRequired")
-    .max(CONTACT_FIELD_LIMITS.company, "companyMax"),
-  phone: z.string().trim().max(CONTACT_FIELD_LIMITS.phone, "phoneMax").optional(),
+  company: readableText(
+    z
+      .string()
+      .trim()
+      .min(2, "companyRequired")
+      .max(CONTACT_FIELD_LIMITS.company, "companyMax"),
+    "companyInvalid",
+  ),
+  phone: readableText(
+    z.string().trim().max(CONTACT_FIELD_LIMITS.phone, "phoneMax"),
+    "phoneInvalid",
+  ).optional(),
   gdprConfirm: z
     .string()
     .optional()

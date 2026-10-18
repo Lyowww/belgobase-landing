@@ -296,6 +296,7 @@ class WebEnrollmentService:
         credential = str(license_code or "").strip()
         if not credential or len(credential) > 200 or type(remember_browser) is not bool:
             raise AuthError("invalid_request", 400)
+        self.auth._require_mail_ready()
         connection = self.auth._connect()
         try:
             connection.execute("BEGIN IMMEDIATE")
@@ -312,8 +313,9 @@ class WebEnrollmentService:
         if not hmac.compare_digest(preparation.email, normalized):
             try:
                 self.central.cancel(preparation.claim_id)
-            finally:
-                raise AuthError("temporarily_unavailable", 503)
+            except Exception:
+                pass
+            return self._dummy_start()
 
         now = self._now()
         expiry = now + dt.timedelta(minutes=self.auth.config.challenge_minutes)
@@ -357,20 +359,30 @@ class WebEnrollmentService:
                 issued_at=now,
                 expires_at=expiry,
             )
-        except MailDeliveryError as exc:
+        except MailDeliveryError:
             connection = self.auth._connect()
             try:
+                connection.execute("BEGIN IMMEDIATE")
                 connection.execute(
                     "DELETE FROM web_enrollment_challenges WHERE challenge_id=? AND delivered_at IS NULL",
                     (challenge_id,),
+                )
+                self.auth._audit(
+                    connection,
+                    "web_enrollment_mail",
+                    "delivery_failed",
+                    license_id=preparation.license_id,
+                    customer_id=preparation.customer_id,
+                    source_hash=source_hash,
                 )
                 connection.commit()
             finally:
                 connection.close()
             try:
                 self.central.cancel(preparation.claim_id)
-            finally:
-                raise AuthError("mail_unavailable", 503) from exc
+            except Exception:
+                pass
+            return self._dummy_start()
         connection = self.auth._connect()
         try:
             connection.execute(
@@ -772,7 +784,6 @@ class WebEnrollmentHTTPAdapter:
                     "ok": True,
                     "authenticated": True,
                     "account": {"email": grant.context.email},
-                    "auth_context": grant.context.as_dict(),
                     "csrf": grant.csrf_token,
                 }
                 return HTTPResponse(

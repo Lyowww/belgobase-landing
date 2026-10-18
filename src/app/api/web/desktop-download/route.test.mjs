@@ -30,13 +30,13 @@ function loadRoute({
   releaseError,
 } = {}) {
   const calls = { session: 0, manifest: 0, release: 0 };
-  const module = { exports: {} };
+  const commonjs = { exports: {} };
   const output = ts.transpileModule(route, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText;
   vm.runInNewContext(output, {
-    module,
-    exports: module.exports,
+    module: commonjs,
+    exports: commonjs.exports,
     require(id) {
       if (id === "@/lib/workspace/gateway") return {
         privateHeaders: { "Cache-Control": "private, no-store" },
@@ -54,7 +54,7 @@ function loadRoute({
     URL,
     AbortSignal,
   });
-  return { GET: module.exports.GET, calls };
+  return { GET: commonjs.exports.GET, calls };
 }
 
 function request(query = "?lang=en&format=json") {

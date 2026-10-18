@@ -341,6 +341,7 @@
     "timelineRequired": "Selecteer een tijdlijn",
     "gdprRequired": "Vink het akkoordvakje aan om door te gaan",
     "fixErrors": "Corrigeer de fouten hieronder.",
+    "captchaFailed": "Bevestig dat u geen robot bent en probeer opnieuw.",
     "serviceUnavailable": "Service tijdelijk niet beschikbaar. Probeer het later opnieuw.",
     "successMessage": "Bedankt! We nemen binnenkort contact met u op over uw demo.",
     "errorMessage": "Er ging iets mis. Probeer opnieuw of mail ons rechtstreeks."

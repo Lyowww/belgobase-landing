@@ -32,6 +32,9 @@ class LoginCodeMailer(Protocol):
 class DisabledMailer:
     """Fail closed when production mail delivery has not been configured."""
 
+    def available(self) -> bool:
+        return False
+
     def send_login_code(self, **_values: Any) -> None:
         raise MailDeliveryError("authentication_mail_not_configured")
 
@@ -80,6 +83,9 @@ class SignedWebsiteMailer:
         ):
             raise ValueError("mail relay endpoint must use HTTPS")
 
+    def available(self) -> bool:
+        return True
+
     @classmethod
     def from_ed25519_pem(
         cls,
@@ -113,7 +119,7 @@ class SignedWebsiteMailer:
         expires_at: dt.datetime,
         language: str = "nl",
     ) -> None:
-        if language not in {"nl", "en"}:
+        if language not in {"nl", "fr", "en"}:
             raise MailDeliveryError("mail_language_invalid")
         if len(code) != 6 or not code.isascii() or not code.isdigit():
             raise MailDeliveryError("mail_code_invalid")
