@@ -19,6 +19,14 @@ const authMethods = new Set(["start", "verify", "session", "logout", "logout-all
 const enrollmentMethods = new Set(["start", "verify", "session", "autofill", "complete"]);
 const sessionNames = new Set(["__Host-belgobase_session", "belgobase_session", "__Host-belgobase_enrollment", "belgobase_enrollment", "__Host-bb_trust", "bb_trust"]);
 const MAX_REQUEST_BYTES = 8 * 1024 * 1024;
+/** Auth/identity JSON is small; keep a tight buffer for auth_context stripping. */
+export const MAX_IDENTITY_RESPONSE_BYTES = 65_536;
+/**
+ * Bridge success payloads (notably bootstrap with an embedded brand logo data URI)
+ * exceed the identity limit. Bound separately — well below MAX_REQUEST_BYTES — so
+ * sanitization still runs without buffering multi‑megabyte response bodies.
+ */
+export const MAX_BRIDGE_RESPONSE_BYTES = 1 * 1024 * 1024;
 const browserIdentityRoutes = new Set(["auth/session", "auth/verify", "enrollment/complete"]);
 const protectedBridgeFields = [
   "license_id", "customer_id", "user_id", "browser_id", "access_class", "plan", "rights",
@@ -187,8 +195,11 @@ export async function proxyWebRequest(request: NextRequest, parts: string[]): Pr
       upstream.headers.get("content-type")?.includes("application/json") &&
       (browserIdentityRoutes.has(upstreamPath) || parts[0] === "bridge");
     if (shouldSanitizeJson) {
+      const sanitizeLimit = parts[0] === "bridge"
+        ? MAX_BRIDGE_RESPONSE_BYTES
+        : MAX_IDENTITY_RESPONSE_BYTES;
       let bytes: Uint8Array;
-      try { bytes = await readBoundedBytes(upstream.body, 65_536); }
+      try { bytes = await readBoundedBytes(upstream.body, sanitizeLimit); }
       catch { return webError("BelgoBase heeft niet op tijd geantwoord. Controleer de huidige status voordat je de actie opnieuw uitvoert.", 502); }
       if (bytes.byteLength) {
         try {

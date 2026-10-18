@@ -2,7 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { generateKeyPairSync, sign } from 'node:crypto';
 import { verifyLoginMail, loginMailContent } from '../src/lib/workspace/mail-relay.ts';
-import { isAllowedRoute, proxyWebRequest, backendUrl, readBoundedBytes } from '../src/lib/workspace/gateway.ts';
+import {
+  isAllowedRoute,
+  proxyWebRequest,
+  backendUrl,
+  readBoundedBytes,
+  MAX_BRIDGE_RESPONSE_BYTES,
+  MAX_IDENTITY_RESPONSE_BYTES,
+} from '../src/lib/workspace/gateway.ts';
 
 test('login mail requires the server signature, correct purpose and a fresh challenge', () => {
   const {privateKey, publicKey}=generateKeyPairSync('ed25519');
@@ -203,6 +210,84 @@ test('gateway keeps curated product bridge errors for the UI', async () => {
       ['bridge', 'export_results'],
     );
     assert.deepEqual(await response.json(), { ok: false, error: 'Selecteer eerst bedrijven.' });
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test('gateway accepts successful bridge JSON larger than the identity sanitization limit', async () => {
+  assert.ok(MAX_BRIDGE_RESPONSE_BYTES > MAX_IDENTITY_RESPONSE_BYTES);
+  const brandLogo = `data:image/png;base64,${'A'.repeat(MAX_IDENTITY_RESPONSE_BYTES)}`;
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => Response.json({
+    ok: true,
+    version: 'BelgoBase web',
+    brand_logo: brandLogo,
+    workspace: { lists: [], searches: [] },
+  });
+  try {
+    const response = await proxyWebRequest(
+      request('bridge/bootstrap', {}, { 'x-belgobase-csrf': '1234567890abcdefghijklmnop' }),
+      ['bridge', 'bootstrap'],
+    );
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.ok, true);
+    assert.equal(body.brand_logo, brandLogo);
+    assert.ok(JSON.stringify(body).length > MAX_IDENTITY_RESPONSE_BYTES);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test('gateway rejects bridge JSON that exceeds the bridge response sanitization limit', async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => new Response(
+    JSON.stringify({
+      ok: true,
+      brand_logo: `data:image/png;base64,${'B'.repeat(MAX_BRIDGE_RESPONSE_BYTES)}`,
+    }),
+    { status: 200, headers: { 'content-type': 'application/json' } },
+  );
+  try {
+    const response = await proxyWebRequest(
+      request('bridge/bootstrap', {}, { 'x-belgobase-csrf': '1234567890abcdefghijklmnop' }),
+      ['bridge', 'bootstrap'],
+    );
+    assert.equal(response.status, 502);
+    assert.deepEqual(await response.json(), {
+      ok: false,
+      error: 'BelgoBase heeft niet op tijd geantwoord. Controleer de huidige status voordat je de actie opnieuw uitvoert.',
+    });
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test('gateway keeps the tighter identity-route response sanitization limit', async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => new Response(
+    JSON.stringify({
+      ok: true,
+      authenticated: true,
+      padding: 'C'.repeat(MAX_IDENTITY_RESPONSE_BYTES),
+      auth_context: { license_id: 'lic-secret' },
+    }),
+    { status: 200, headers: { 'content-type': 'application/json' } },
+  );
+  try {
+    const response = await proxyWebRequest({
+      nextUrl: new URL('https://belgobase.com/api/web/auth/session'),
+      method: 'GET',
+      headers: new Headers(),
+      cookies: { getAll: () => [{ name: '__Host-belgobase_session', value: 'opaque_session' }] },
+      body: null,
+    }, ['auth', 'session']);
+    assert.equal(response.status, 502);
+    assert.deepEqual(await response.json(), {
+      ok: false,
+      error: 'BelgoBase heeft niet op tijd geantwoord. Controleer de huidige status voordat je de actie opnieuw uitvoert.',
+    });
   } finally {
     globalThis.fetch = original;
   }
