@@ -25,6 +25,144 @@ export type BlogArticle = {
 
 export const blogArticles = [
   {
+    "slug": "belteam-lijst-voorbereiden",
+    "title": "Uw belteam heeft weer geen lijst: zo maakt u de voorbereiding overdraagbaar",
+    "description": "Maak een bruikbare prospectlijst voor uw belteam met een duidelijke zoekbrief, gecontroleerde selectie, bestaande notities en afspraken over opvolging.",
+    "excerpt": "Wie keurt de selectie goed, welke notities blijven behouden en welk bestand is leidend? Zo draagt u een prospectlijst over waar een collega meteen mee kan werken.",
+    "readingTime": "9 min. lezen",
+    "publishedAt": "2026-10-19",
+    "author": "BelgoBase",
+    "intro": [
+      "Het belteam staat klaar, maar de lijst nog niet. Een collega moet eerst uitzoeken welke bedrijven passen, iemand anders zoekt eerdere notities en een derde vraagt welke regio deze keer bedoeld was. Een export kan dat probleem tijdelijk verbergen. Morgen ontstaan dezelfde vragen opnieuw.",
+      "Een bruikbare lijst vraagt daarom om een overdracht: wat is de opdracht, waarom zijn deze bedrijven gekozen, welke twijfelgevallen blijven open en wie verwerkt de volgende resultaten? Het eindpunt is een bestand waar een collega mee kan werken zonder het voorbereidende gesprek opnieuw te voeren.",
+      "Deze gids gaat over dat werk tussen doelgroepkeuze en overdracht aan het team. Wilt u eerst bepalen hoe u een selectie maakt, lees dan de stappen voor een prospectielijst van Belgische bedrijven. Hier zetten we die selectie om in een concrete werkafspraak."
+    ],
+    "sections": [
+      {
+        "heading": "1. Maak van een losse vraag een zoekbrief",
+        "paragraphs": [
+          "‘We hebben nieuwe bedrijven nodig’ bevat te weinig informatie om een lijst goed te keuren. Bespreek vóór het zoeken de volgende handeling. Wil het team een bestaande relatie opvolgen, een nieuwe sector verkennen of bedrijven binnen een afgebakend levergebied voorbereiden? Dat bepaalt welke gegevens nuttig zijn en welke bedrijven u bewust buiten de lijst houdt.",
+          "Gebruik bijvoorbeeld deze zoekbrief. Het is een fictieve demonstratie voor een leverancier die installatiebedrijven wil onderzoeken; de criteria zijn geen aanbeveling voor ieder aanbod.",
+          "Niet elke afspraak is een beschikbaar filter. ‘Heeft behoefte aan ons aanbod’ en ‘heeft een eigen ploeg’ kunnen nadere beoordeling vragen. Leg vast welke kenmerken de selectie daadwerkelijk gebruikt en welke nog een menselijke controle nodig hebben. Anders kan een collega later niet onderscheiden wat gemeten is en wat slechts de bedoeling was."
+        ],
+        "points": [
+          "Aanbod en aanleiding: Levering voor technische installatiebedrijven. Nog controleren: Sluit de zichtbare bedrijfsactiviteit aan?",
+          "Gebied: Antwerpen en Limburg. Nog controleren: Gaat het om de zetel of de relevante werklocatie?",
+          "Activiteit: Installatie en onderhoud, geen zuivere holding. Nog controleren: Zijn geregistreerde activiteiten inhoudelijk passend?",
+          "Grootte: Een eigen operationele ploeg is wenselijk. Nog controleren: Een ontbrekende personeelswaarde bewijst geen afwezigheid van een ploeg.",
+          "Bestaande relaties: Huidige klanten en afgesproken terugbelmomenten apart. Nog controleren: Welke eigen bron bevat de laatste notitie?",
+          "Werkbestand: Alleen gecontroleerde bedrijven in de eerste overdracht. Nog controleren: Welke rijen blijven in de aparte nakijkgroep?"
+        ],
+        "links": [
+          {
+            "href": "/nl/blog/prospectielijst-belgische-bedrijven-maken",
+            "label": "De stappen voor een prospectielijst van Belgische bedrijven"
+          }
+        ]
+      },
+      {
+        "heading": "2. Wijs één verantwoordelijke voor de selectie aan",
+        "paragraphs": [
+          "Wanneer iedereen een eigen bestand voorbereidt, verschillen al snel de uitsluitingen, de kolommen en de uitleg bij lege waarden. Spreek daarom af wie de zoekbrief beheert en wie de eerste selectie beoordeelt. Dat hoeft geen nieuwe functie of ingewikkeld proces te zijn: één eigenaar en een afgesproken controlemoment volstaan voor een kleine campagne.",
+          "De eigenaar bewaart de gebruikte criteria, de datum van de selectie en de reden van belangrijke wijzigingen. Een wijziging als ‘regio uitgebreid naar Vlaams-Brabant’ hoort bij de lijst. Zonder die notitie lijkt een veranderd resultaat later op een fout in de gegevens, terwijl het team zelf het bereik heeft aangepast.",
+          "Maak ook duidelijk wat goedkeuring betekent. Een controleerbare bedrijfsselectie is nog geen bewijs van koopbereidheid en een beschikbare contactroute is nog geen gerealiseerd gesprek. Gebruik omschrijvingen die het team begrijpt, zoals ‘selectie gecontroleerd’, ‘activiteit nog nakijken’ en ‘afgesproken vervolgdatum aanwezig’."
+        ]
+      },
+      {
+        "heading": "3. Controleer inhoud voordat u een aantal afspreekt",
+        "paragraphs": [
+          "Een afgesproken aantal rijen is handig voor planning, maar zegt weinig over de kwaliteit van de voorbereiding. Begin met een kleine controleproef. Bekijk bijvoorbeeld tien bedrijven verspreid over de selectie, met verschillende activiteiten en locaties. Tien is hier een praktische voorbeeldkeuze, geen statistisch bewijs voor de hele lijst.",
+          "Controleer bij die voorbeelden dezelfde vragen: klopt de onderneming, past de activiteit, is de locatie bruikbaar en is de gekozen groottebasis aanwezig? Noteer bij een fout welke regel haar waarschijnlijk veroorzaakte. Een fout regiobegrip vraagt een andere correctie dan een te brede activiteit.",
+          "Spreek vooraf een beslisregel af. Ontdekt u meerdere verkeerde bedrijven door dezelfde regel, herstel dan eerst die regel en beoordeel een nieuwe proef. Is alleen een individuele rij onzeker, zet die apart. Een team hoeft niet te wachten op perfecte gegevens, maar moet wel weten welke onzekerheden in het werkbestand terechtkomen.",
+          "Gebruik beschikbare cijfers zorgvuldig. Een onbekende omzet is geen nul en cijfers uit verschillende boekjaren zijn geen vanzelfsprekende vergelijking. Als de selectie afhangt van een financiële grens, noteer dan welke waarde en periode zijn gebruikt en wat met ontbrekende waarden gebeurt. Een strikte eis kan bedrijven zonder voldoende cijfers buiten de gecontroleerde selectie houden; dat betekent niet dat die bedrijven commercieel ongeschikt zijn."
+        ]
+      },
+      {
+        "heading": "4. Leg de nieuwe selectie naast uw bestaande werk",
+        "paragraphs": [
+          "Een bedrijf dat in een nieuwe selectie verschijnt, kan al in uw klantenbestand of een vorige bellijst staan. Vergelijk daarom de identiteit voordat u de voorbereiding opnieuw begint. Gebruik het gecontroleerde ondernemingsnummer als sterke sleutel; behandel een vergelijkbare naam als een kandidaat die nadere controle vraagt.",
+          "Bewaar interne notities met hun herkomst. ‘Later opnieuw bekijken’ zonder datum geeft een collega onvoldoende richting. ‘Op 6 oktober gevraagd om in november terug te bellen’ beschrijft een concrete werkafspraak, mits die notitie werkelijk uit uw eigen historie komt. Een lege nieuwe notitie mag de bestaande informatie niet wegdrukken.",
+          "Wilt u meerdere bestaande bestanden samenbrengen, volg dan de gids over dubbele bedrijven en behoud van belhistorie. Die behandelt bronrijen en conflicten uitgebreider. Voor de overdracht hier is de vraag eenvoudiger: is het bedrijf nieuw voor deze taak, is er al bruikbare historie of moet iemand een verschil eerst nakijken?"
+        ],
+        "links": [
+          {
+            "href": "/nl/blog/dubbele-bedrijven-excel-belteam",
+            "label": "De gids over dubbele bedrijven en behoud van belhistorie"
+          }
+        ]
+      },
+      {
+        "heading": "5. Kies kolommen vanuit het volgende gesprek",
+        "paragraphs": [
+          "Een bestand met veel kolommen is niet automatisch duidelijker. Neem de bedrijfsidentiteit, de relevante beschikbare selectievelden en de context mee die uw collega nodig heeft. Houd gegevens uit de databron herkenbaar apart van interne werknotities. Controleer de actuele exportkeuze in de toepassing; niet ieder gegeven in het overzicht hieronder is een automatisch geleverd productveld.",
+          "Een voorbeeld van een korte selectienotitie is: ‘Installatieactiviteit geselecteerd; regio op beschikbare locatie; operationele ploeg nog controleren.’ Die formulering helpt meer dan ‘goede lead’, omdat ze zichtbaar maakt wat al onderbouwd is en wat nog niet.",
+          "Maak eerst een kleine export en open die zelf. Zijn de nummers herkenbaar? Begrijpt iemand anders een lege cel? Is duidelijk welke datum een eigen notitie beschrijft? Corrigeer de kolomkeuze of uitleg voordat u het volledige bestand overdraagt."
+        ],
+        "points": [
+          "Ondernemingsnummer en bedrijfsnaam: De onderneming herkennen en terugvinden. Herkomst: Gecontroleerde bedrijfsgegevens.",
+          "Activiteit en relevante locatie: Begrijpen waarom de onderneming is geselecteerd. Herkomst: Beschikbare gegevens, met locatiebetekenis.",
+          "Gebruikt cijfer en boekjaar, indien relevant: Een financiële selectieregel begrijpen. Herkomst: Beschikbare cijfers, onbekend zichtbaar houden.",
+          "Reden van selectie: Het aanbod verbinden met de voorbereiding. Herkomst: Eigen zoekbrief of werknotitie.",
+          "Laatste relevante notitie en vervolgdatum: Eerder werk benutten. Herkomst: Eigen gecontroleerde historie.",
+          "Verantwoordelijke en volgende handeling: Overlap tussen collega's voorkomen. Herkomst: Teamafspraak."
+        ]
+      },
+      {
+        "heading": "6. Onderzoek contactgegevens pas voor de juiste bedrijven",
+        "paragraphs": [
+          "Wanneer een bedrijf niet bij de opdracht past, helpt een gevonden telefoonnummer de voorbereiding niet. Controleer daarom eerst de selectie en de bestaande historie. Bepaal daarna voor welke bedrijven aanvullend contactonderzoek nodig is.",
+          "BelgoBase ondersteunt contactonderzoek, maar dat bewijst geen volledige dekking of een actuele contactpersoon voor elke onderneming. Een vondst blijft gebonden aan de beschikbare bron en de vereiste controle. Een ontbrekend gegeven blijft onbekend; vul het niet met een verondersteld nummer.",
+          "Bespreek een betaalde vervolgstap bewust. Het beschrijven van een doelgroep of het exporteren van een lijst mag geen stilzwijgende opdracht tot betaalde verrijking worden. Laat de verantwoordelijke eerst beoordelen welke gecontroleerde rijen die stap nodig hebben en welke kostenkeuze daarbij hoort."
+        ]
+      },
+      {
+        "heading": "7. Draag één werkbestand over met een korte toelichting",
+        "paragraphs": [
+          "De overdracht is klaar wanneer een collega weet welk bestand leidend is, voor welke taak het is bedoeld en waar nieuwe resultaten worden bijgehouden. Voeg een korte toelichting toe met de zoekbrief, de selectiedatum, de gebruikte uitsluitingen en de open controles.",
+          "Een werkbare teamafspraak kan er zo uitzien: de eigenaar deelt één gecontroleerde lijst; medewerkers registreren hun uitkomst in het afgesproken werkbestand; twijfelgevallen gaan terug naar de eigenaar; wijzigingen aan criteria worden bij de volgende versie benoemd. Dit is een menselijke werkafspraak, geen automatische CRM-synchronisatie.",
+          "Verdeel de rijen op een manier die voorkomt dat twee collega's dezelfde voorbereiding uitvoeren. Bewaar bij een vervolgactie de eerdere notitie en voeg de nieuwe uitkomst herkenbaar toe. Als een bedrijf later opnieuw verschijnt, kan het team zien waarom het terugkomt in plaats van het weer als onbekend te behandelen."
+        ]
+      },
+      {
+        "heading": "8. Gebruik de eerste ervaringen om gericht bij te sturen",
+        "paragraphs": [
+          "Na de eerste werkronde heeft u meer aan concrete oorzaken dan aan een algemeen oordeel ‘slechte lijst’. Laat het team aangeven of de activiteit verkeerd was, de locatie niet paste, de gewenste omvang niet controleerbaar was of de historie onduidelijk bleef.",
+          "Wijzig vervolgens alleen de betrokken regel. Een paar onbereikbare bedrijven bewijzen bijvoorbeeld niet dat de hele sector verkeerd gekozen is. Omgekeerd vraagt een terugkerende activiteit die niets met uw aanbod te maken heeft om een inhoudelijke herziening, ook wanneer de contactgegevens beschikbaar zijn.",
+          "In BelgoBase kunt u uw doelgroep in gewone taal bespreken, zichtbare filters en voorlopige bedrijven beoordelen en de selectie verfijnen. U bevestigt de keuzes en exporteert bewust. De toepassingspagina over prospectielijsten beschrijft die route. Wilt u bestaande bestanden als vertrekpunt gebruiken, bekijk dan klantenbestanden analyseren.",
+          "Het praktische eindresultaat is een overdraagbare selectie: uw collega kan uitleggen waarom een bedrijf erin staat, ziet welke informatie onzeker is en weet waar de volgende uitkomst thuishoort. Daarmee wordt de volgende lijst een vervolg op het bestaande werk."
+        ],
+        "links": [
+          {
+            "href": "/nl/prospectielijsten",
+            "label": "Toepassingspagina over prospectielijsten"
+          },
+          {
+            "href": "/nl/klantenbestand-analyseren",
+            "label": "Klantenbestanden analyseren"
+          }
+        ]
+      }
+    ],
+    "relatedLinks": [
+      {
+        "href": "/nl/prospectielijsten",
+        "label": "Van doelgroep naar prospectielijst"
+      },
+      {
+        "href": "/nl/klantenbestand-analyseren",
+        "label": "Gebruik uw bestaande klantenbestand als context"
+      },
+      {
+        "href": "/nl/blog/prospectielijst-belgische-bedrijven-maken",
+        "label": "Een controleerbare prospectielijst samenstellen"
+      },
+      {
+        "href": "/nl/blog/dubbele-bedrijven-excel-belteam",
+        "label": "Dubbele bedrijven en belnotities zorgvuldig samenbrengen"
+      }
+    ]
+  },
+  {
     slug: "database-belgische-bedrijven-kiezen",
     title: "Waar vindt u een database met Belgische bedrijven?",
     description:
