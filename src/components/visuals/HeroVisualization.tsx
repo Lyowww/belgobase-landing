@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { preload } from "react-dom";
 import { Play } from "lucide-react";
 import { useTranslations } from "@/providers/TranslationsProvider";
 
@@ -59,13 +58,6 @@ const copy = {
 };
 
 export function HeroVisualization({ mode = "prospecting" }: { mode?: DemoId }) {
-  if (mode === "prospecting") {
-    preload("/product/belgobase-selectie-20261022.webp", {
-      as: "image",
-      type: "image/webp",
-      fetchPriority: "high",
-    });
-  }
   const { locale } = useTranslations();
   const language = locale;
   const text = copy[language];
@@ -113,12 +105,12 @@ export function HeroVisualization({ mode = "prospecting" }: { mode?: DemoId }) {
     const videoId = id === "prospecting" ? "hero-product-demo" : "list-cleanup-demo";
     const transcriptId = `${videoId}-transcript`;
 
-    return <article id={id === "cleanup" ? "list-cleanup-demo-card" : "product-demonstration"} className="demo-card min-w-0 scroll-mt-28 rounded-2xl border border-border bg-surface p-3 shadow-[0_28px_80px_-42px_rgba(5,18,45,0.38)] sm:p-4">
-      <div className="mb-4 text-left">
-        <h2 className="text-xl font-semibold tracking-tight text-deep-navy dark:text-white sm:text-2xl">{title}</h2>
+    return <article id={id === "cleanup" ? "list-cleanup-demo-card" : "product-demonstration"} className="design-video min-w-0 scroll-mt-28">
+      <div className="design-video-heading">
+        <h2 className="text-2xl font-semibold tracking-tight text-deep-navy sm:text-4xl">{title}</h2>
         <p className="mt-2 text-sm leading-6 text-muted sm:text-base">{description}</p>
       </div>
-      <div className="relative overflow-hidden rounded-xl border border-border bg-[#0a1730]">
+      <div className="relative overflow-hidden rounded-md border border-border bg-[#0a1730]">
         <video
           ref={element => { videos.current[id] = element; }}
           id={videoId}

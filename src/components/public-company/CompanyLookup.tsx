@@ -269,7 +269,7 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
     <div className="marketing-site company-lookup">
       <Header variant="lookup" onBeforeLanguageChange={changeLanguage} />
       <main className={`lookup-main${company ? " lookup-main-has-company" : ""}`}>
-        <section className={`lookup-search${company ? " lookup-search-has-company" : ""}`} aria-labelledby="lookup-title">
+        <section className={`lookup-search${company ? " lookup-search-has-company" : ""}${!company && matches.length === 0 && !error && !busy ? " lookup-search-empty" : ""}`} aria-labelledby="lookup-title">
           <h1 id="lookup-title">{company ? copy.navigation : <><span>{copy.headingLead}</span>{" "}{copy.heading}</>}</h1>
           {!company && matches.length === 0 && !error && !busy && <p className="lookup-intro">{copy.intro}</p>}
           <form onSubmit={submit} className="lookup-form" aria-busy={!ready || busy}>

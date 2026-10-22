@@ -1,8 +1,13 @@
 .company-lookup {
+  --primary-blue: #245adb;
+  --deep-navy: #101f35;
+  --paper: #f7f9fc;
   --lookup-ink: var(--deep-navy);
   --lookup-muted: var(--muted);
   min-height: 100vh;
-  background: var(--light-bg);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--primary-blue) 5%, transparent) 1px, transparent 1px) 50% 0 / 88px 100%,
+    var(--paper);
   color: var(--lookup-ink);
   font-size: 16px;
   line-height: 1.5;
@@ -11,49 +16,53 @@
 }
 
 .lookup-main {
-  max-width: 1240px;
+  max-width: 1320px;
   width: 100%;
   flex: 1;
   margin: 0 auto;
-  padding: 88px 24px 32px;
+  padding: 112px 32px 48px;
 }
 
 .lookup-main-has-company { padding-top: 78px; }
 
 .lookup-search {
-  max-width: 920px;
+  max-width: 1040px;
   margin: 0 auto;
   text-align: center;
 }
 
 .lookup-search h1 {
-  font-size: clamp(30px, 3.2vw, 42px);
-  line-height: 1.12;
-  letter-spacing: -1.4px;
-  font-weight: 600;
+  font-size: clamp(36px, 4.2vw, 58px);
+  line-height: 1.03;
+  letter-spacing: -.045em;
+  font-weight: 650;
   text-wrap: balance;
 }
 
 .lookup-search h1 > span {
   display: block;
   color: var(--primary-blue);
+  font-size: clamp(.75rem, .3em, .95rem);
+  line-height: 1.5;
+  letter-spacing: .12em;
+  text-transform: uppercase;
 }
 
 .lookup-intro {
   max-width: 720px;
-  margin: 9px auto 0;
+  margin: 18px auto 0;
   color: var(--lookup-muted);
-  font-size: 17px;
-  line-height: 1.55;
-  text-wrap: balance;
+  font-size: 18px;
+  line-height: 1.65;
+  text-wrap: pretty;
 }
 
 .lookup-bridge {
   max-width: 820px;
-  margin: 10px auto 0;
+  margin: 14px auto 0;
   color: var(--lookup-muted);
   font-size: 13px;
-  line-height: 1.45;
+  line-height: 1.55;
   text-align: center;
   text-wrap: pretty;
 }
@@ -80,9 +89,9 @@
   gap: 10px;
   padding: 5px 5px 5px 15px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 3px;
   background: var(--surface);
-  box-shadow: 0 6px 20px var(--shadow-color);
+  box-shadow: 0 14px 36px color-mix(in srgb, var(--deep-navy) 10%, transparent);
 }
 
 .lookup-input-row:focus-within {
@@ -116,7 +125,7 @@
   gap: 7px;
   min-height: 44px;
   padding: 9px 17px;
-  border-radius: 9px;
+  border-radius: 2px;
   background: var(--primary-blue);
   color: white;
   font-size: 15px;
@@ -127,6 +136,62 @@
 .lookup-input-row button:hover { background: var(--dark-blue); }
 .lookup-input-row button:disabled { opacity: .7; cursor: wait; }
 .dark .lookup-input-row button { color: #060a14; }
+
+.dark .company-lookup {
+  --primary-blue: #79a3ff;
+  --deep-navy: #eef4ff;
+  --paper: #0b1423;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--primary-blue) 6%, transparent) 1px, transparent 1px) 50% 0 / 88px 100%,
+    var(--paper);
+}
+
+@media (min-width: 900px) {
+  .lookup-search-empty {
+    display: grid;
+    grid-template-columns: minmax(0, .84fr) minmax(28rem, 1.16fr);
+    grid-template-areas:
+      "heading form"
+      "intro bridge"
+      "message message";
+    align-items: center;
+    column-gap: clamp(3rem, 7vw, 7rem);
+    row-gap: 0;
+    max-width: 1220px;
+    padding-block: 4rem 5rem;
+    text-align: left;
+  }
+
+  .lookup-search-empty h1 {
+    grid-area: heading;
+    max-width: 11ch;
+  }
+
+  .lookup-search-empty .lookup-intro {
+    grid-area: intro;
+    max-width: 35rem;
+    margin: 1.5rem 0 0;
+  }
+
+  .lookup-search-empty .lookup-form {
+    grid-area: form;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+  }
+
+  .lookup-search-empty .lookup-bridge {
+    grid-area: bridge;
+    max-width: none;
+    margin: 1rem 0 0;
+    text-align: left;
+  }
+
+  .lookup-search-empty noscript,
+  .lookup-search-empty #lookup-message {
+    grid-area: message;
+  }
+}
 
 .lookup-hint {
   margin-top: 7px;

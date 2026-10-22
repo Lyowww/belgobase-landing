@@ -67,7 +67,7 @@ export function Footer({ reserveStickyCta = false }: { reserveStickyCta?: boolea
   };
 
   return (
-    <footer className={`border-t border-border bg-surface pt-12 sm:pt-16 ${
+    <footer className={`site-footer border-t border-border bg-surface pt-12 sm:pt-16 ${
       reserveStickyCta ? "pb-sticky-cta" : "pb-12 sm:pb-16"
     }`}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

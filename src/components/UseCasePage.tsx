@@ -1,19 +1,143 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { isLocale } from "@/i18n/config";
+import { isLocale, type Locale } from "@/i18n/config";
 import { getUseCase, useCaseSlugs, type UseCaseSlug } from "@/lib/seo/use-cases";
 import { getBlogArticle } from "@/lib/blog/articles";
 import { buildCanonicalUrl, buildLanguageAlternates, buildLocalizedPath } from "@/lib/seo/metadata";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { ProductShowcase } from "@/components/marketing/ProductShowcase";
+import styles from "./UseCasePage.module.css";
 
 type Props = { params: Promise<{ locale: string }> };
+
 const guideSlugs: Record<UseCaseSlug, string[]> = {
   "bedrijven-zoeken": ["database-belgische-bedrijven-kiezen", "prospectielijst-belgische-bedrijven-maken"],
   prospectielijsten: ["prospectielijst-belgische-bedrijven-maken"],
   "klantenbestand-analyseren": ["dubbele-bedrijven-excel-belteam"],
   bedrijfsanalyse: ["database-belgische-bedrijven-kiezen"],
 };
+
+const pageCopy: Record<Locale, {
+  eyebrow: Record<UseCaseSlug, string>;
+  hero: Record<UseCaseSlug, { heading: string; summary: string }>;
+  task: string;
+  process: string;
+  result: string;
+  criteria: string;
+  prices: string;
+  demo: string;
+  guides: string;
+  related: string;
+  guideLanguage: string;
+}> = {
+  nl: {
+    eyebrow: {
+      "bedrijven-zoeken": "Gerichte bedrijfsselectie",
+      prospectielijsten: "Van doelgroep naar Excel",
+      "klantenbestand-analyseren": "Uw klantenbestand als context",
+      bedrijfsanalyse: "Eén bedrijf helder beoordelen",
+    },
+    hero: {
+      "bedrijven-zoeken": {
+        heading: "Vind Belgische bedrijven. Op uw criteria.",
+        summary: "Bespreek uw doelgroep, controleer de selectie en kies welke bedrijven en gegevens u naar Excel exporteert.",
+      },
+      prospectielijsten: {
+        heading: "Uw doelgroep. Uw volgende prospectielijst.",
+        summary: "Zet regio, activiteit en omvang om in een controleerbare selectie die uw team zelf beoordeelt en naar Excel exporteert.",
+      },
+      "klantenbestand-analyseren": {
+        heading: "Uw klantenbestand. Een scherper vertrekpunt.",
+        summary: "Gebruik uw Excel- of CSV-lijst als context, controleer de voorgestelde doelgroep en zoek Belgische bedrijven op bevestigde criteria.",
+      },
+      bedrijfsanalyse: {
+        heading: "Bedrijfsgegevens. Helder naast elkaar.",
+        summary: "Bekijk beschikbare activiteit, personeel en financiële historiek samen voordat u een bedrijf selecteert of uw lijst verfijnt.",
+      },
+    },
+    task: "Een concrete taak",
+    process: "In drie controleerbare stappen",
+    result: "Wat u overhoudt",
+    criteria: "Waarop u de selectie controleert",
+    prices: "Bekijk prijzen",
+    demo: "Bekijk hoe BelgoBase werkt",
+    guides: "Verder lezen vóór u uw lijst gebruikt",
+    related: "Andere toepassingen",
+    guideLanguage: "",
+  },
+  fr: {
+    eyebrow: {
+      "bedrijven-zoeken": "Sélection ciblée d’entreprises",
+      prospectielijsten: "De la cible à Excel",
+      "klantenbestand-analyseren": "Votre fichier clients comme contexte",
+      bedrijfsanalyse: "Évaluer clairement une entreprise",
+    },
+    hero: {
+      "bedrijven-zoeken": {
+        heading: "Trouvez des entreprises belges. Selon vos critères.",
+        summary: "Définissez votre cible, contrôlez la sélection et choisissez les entreprises et données à exporter vers Excel.",
+      },
+      prospectielijsten: {
+        heading: "Votre cible. Votre prochaine liste de prospection.",
+        summary: "Transformez région, activité et taille en une sélection contrôlable que votre équipe vérifie avant l’export vers Excel.",
+      },
+      "klantenbestand-analyseren": {
+        heading: "Votre fichier clients. Un point de départ plus précis.",
+        summary: "Utilisez votre fichier Excel ou CSV comme contexte, vérifiez la cible proposée et recherchez des entreprises belges selon des critères confirmés.",
+      },
+      bedrijfsanalyse: {
+        heading: "Les données d’une entreprise. Clairement regroupées.",
+        summary: "Consultez l’activité, le personnel et l’historique financier disponibles avant de sélectionner une entreprise ou d’affiner votre liste.",
+      },
+    },
+    task: "Une tâche concrète",
+    process: "Trois étapes contrôlables",
+    result: "Votre résultat",
+    criteria: "Les critères à contrôler",
+    prices: "Voir les prix",
+    demo: "Voir comment fonctionne BelgoBase",
+    guides: "À lire avant d’utiliser votre liste",
+    related: "Autres applications",
+    guideLanguage: " (guide en néerlandais)",
+  },
+  en: {
+    eyebrow: {
+      "bedrijven-zoeken": "Targeted company selection",
+      prospectielijsten: "From target market to Excel",
+      "klantenbestand-analyseren": "Your customer file as context",
+      bedrijfsanalyse: "Assess one company clearly",
+    },
+    hero: {
+      "bedrijven-zoeken": {
+        heading: "Find Belgian companies. On your criteria.",
+        summary: "Define your target market, review the selection and choose which companies and fields to export to Excel.",
+      },
+      prospectielijsten: {
+        heading: "Your target market. Your next prospect list.",
+        summary: "Turn location, activity and size into a reviewable selection your team checks before exporting it to Excel.",
+      },
+      "klantenbestand-analyseren": {
+        heading: "Your customer file. A sharper starting point.",
+        summary: "Use your Excel or CSV file as context, review the proposed target market and find Belgian companies using confirmed criteria.",
+      },
+      bedrijfsanalyse: {
+        heading: "Company data. Clearly side by side.",
+        summary: "Review available activity, staff and financial history together before selecting a company or refining your list.",
+      },
+    },
+    task: "A concrete task",
+    process: "Three reviewable steps",
+    result: "Your result",
+    criteria: "What to review the selection against",
+    prices: "View pricing",
+    demo: "See how BelgoBase works",
+    guides: "Read more before using your list",
+    related: "Other use cases",
+    guideLanguage: " (Dutch-language guide)",
+  },
+};
+
 export function createUseCaseMetadata(slug: UseCaseSlug) {
   return async ({ params }: Props): Promise<Metadata> => {
     const { locale } = await params;
@@ -33,58 +157,102 @@ export async function UseCasePage({ params, slug }: Props & { slug: UseCaseSlug 
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const data = getUseCase(locale, slug);
-  const nl = locale === "nl";
+  const copy = pageCopy[locale];
   const isCompanySearch = slug === "bedrijven-zoeken";
-  const resultSection = <section className="my-12 rounded-2xl bg-[#0a1730] p-7 text-white sm:p-10">
-    <h2 className="text-2xl font-semibold">{nl ? "Wat u overhoudt" : locale === "fr" ? "Votre résultat" : "Your result"}</h2>
-    <p className="mt-4 text-lg leading-8">{data.result}</p>
-    <a href={`/${locale}#contact`} className="mt-7 inline-flex min-h-12 items-center rounded-full bg-white px-6 py-3 font-semibold text-slate-950">{data.primaryCta ?? (nl ? "Bekijk het met uw eigen vraag" : locale === "fr" ? "Voir avec votre propre question" : "See it with your own question")} →</a>
-    <a href={`/${locale}#product-demonstration`} className="mt-5 block text-base text-white underline underline-offset-4">{data.secondaryCta ?? (nl ? "Bekijk de productdemo" : locale === "fr" ? "Voir la démonstration du produit" : "Watch the product demo")} →</a>
-  </section>;
-  const criteriaSection = data.criteria && <section className="mt-14 border-t border-border pt-10">
-    <h2 className="text-2xl font-semibold text-deep-navy">{nl ? "Welke verkeerde bedrijven wilt u niet opnieuw voorbereiden?" : locale === "fr" ? "Quelles entreprises inadaptées ne voulez-vous plus préparer ?" : "Which wrong companies do you not want to prepare for again?"}</h2>
-    <div className="mt-7 grid gap-8 sm:grid-cols-2">
-      {data.criteria.map(([title, body]) => <div key={title}>
-        <h3 className="text-xl font-semibold text-deep-navy">{title}</h3>
-        <p className="mt-3 text-base leading-8 text-muted">{body}</p>
-      </div>)}
-    </div>
-  </section>;
-  return <div className="marketing-site">
+  const showcaseVariant = slug === "bedrijfsanalyse" ? "financial" : slug === "klantenbestand-analyseren" ? "workspace" : "selection";
+
+  return <div className={`marketing-site ${styles.page}`}>
     <Header />
-    <main className="mx-auto max-w-5xl px-5 pb-20 pt-32 sm:px-8 sm:pt-40">
-      <a href={`/${locale}`} className="text-base text-primary hover:underline">← BelgoBase</a>
-      <h1 className="mt-8 max-w-4xl text-4xl font-semibold leading-tight tracking-tight text-deep-navy sm:text-6xl">{data.heading ?? data.title}</h1>
-      <p className="mt-6 max-w-3xl text-lg leading-8 text-muted">{data.intro}</p>
-      {isCompanySearch ? <div className="mt-7 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-        <a href={`/${locale}#contact`} className="inline-flex min-h-12 items-center rounded-full bg-primary px-6 py-3 font-semibold text-white">{data.primaryCta} →</a>
-        <a href={`/${locale}#product-demonstration`} className="inline-flex min-h-12 items-center rounded-full border border-primary px-6 py-3 font-semibold text-primary hover:bg-primary/5">{data.secondaryCta} →</a>
-      </div> : <a href={`/${locale}#product-demonstration`} className="mt-6 inline-flex min-h-12 items-center rounded-full bg-primary px-6 py-3 font-semibold text-white">{nl ? "Bekijk hoe BelgoBase werkt" : locale === "fr" ? "Voir comment fonctionne BelgoBase" : "See how BelgoBase works"} →</a>}
-      {data.ctaMicrocopy && <p className="mt-3 max-w-3xl text-sm leading-6 text-muted">{data.ctaMicrocopy}</p>}
-      {!isCompanySearch && <blockquote className="my-12 rounded-2xl border border-primary/20 bg-primary/5 p-7 text-xl leading-8 text-deep-navy sm:p-10">
-        <p className="mb-3 text-sm font-semibold text-primary">{nl ? "Zo kan uw gesprek beginnen" : locale === "fr" ? "Commencez votre conversation ainsi" : "Start your conversation like this"}</p>
-        “{data.question}”
-      </blockquote>}
-      <ol className={isCompanySearch ? "mt-12 space-y-10" : "space-y-10"}>
-        {data.steps.map(([title, body], index) => <li key={title} className="grid gap-3 sm:grid-cols-[3rem_1fr]">
-          <span className="text-xl font-semibold text-primary">0{index + 1}</span>
-          <div><h2 className="text-2xl font-semibold text-deep-navy">{title}</h2><p className="mt-3 max-w-3xl text-base leading-8 text-muted">{body}</p></div>
-        </li>)}
-      </ol>
-      {isCompanySearch ? <>{resultSection}{criteriaSection}</> : <>{criteriaSection}{resultSection}</>}
-      <p className="text-base leading-7 text-muted">{data.boundary}</p>
-      <section className="mt-10 border-t border-border pt-8">
-        <h2 className="mb-4 text-xl font-semibold text-deep-navy">{nl ? "Verder lezen vóór u uw lijst gebruikt" : locale === "fr" ? "À lire avant d’utiliser votre liste" : "Read more before using your list"}</h2>
-        {guideSlugs[slug].map(guideSlug => {
-          const article = getBlogArticle(guideSlug);
-          if (!article) return null;
-          return <a key={guideSlug} href={`/nl/blog/${article.slug}`} hrefLang="nl" className="block py-2 text-primary hover:underline">{article.title}{nl ? "" : locale === "fr" ? " (guide en néerlandais)" : " (Dutch-language guide)"} →</a>;
-        })}
+    <main>
+      <section className={styles.hero}>
+        <div className={styles.heroInner}>
+          <div className={styles.heroCopy}>
+            <a href={`/${locale}`} className={styles.back}>← BelgoBase</a>
+            <p className={styles.eyebrow}>{copy.eyebrow[slug]}</p>
+            <h1>{copy.hero[slug].heading}</h1>
+            <p className={styles.intro}>{copy.hero[slug].summary}</p>
+            <div className={styles.heroActions}>
+              <a href={`/${locale}${isCompanySearch ? "#contact" : "#product-demonstration"}`} className={styles.primaryAction}>
+                {isCompanySearch ? data.primaryCta : copy.demo} <span aria-hidden="true">→</span>
+              </a>
+              {isCompanySearch && <a href={`/${locale}#product-demonstration`} className={styles.secondaryAction}>
+                {isCompanySearch ? data.secondaryCta : copy.demo} <span aria-hidden="true">→</span>
+              </a>}
+              <a href={`/${locale}#pricing`} className={styles.priceLink}>{copy.prices} →</a>
+            </div>
+            {data.ctaMicrocopy && <p className={styles.microcopy}>{data.ctaMicrocopy}</p>}
+          </div>
+          <div className={styles.product}>
+            <ProductShowcase locale={locale} variant={showcaseVariant} compact />
+          </div>
+        </div>
       </section>
-      <nav aria-label={nl ? "Andere toepassingen" : locale === "fr" ? "Autres applications" : "Related use cases"} className="mt-12 border-t border-border pt-8">
-        <h2 className="mb-4 text-xl font-semibold text-deep-navy">{nl ? "Waar loopt het nog vast?" : locale === "fr" ? "Où cela bloque-t-il encore ?" : "Where else does it get stuck?"}</h2>
-        {useCaseSlugs.filter(other => other !== slug).map(other => <a key={other} href={`/${locale}/${other}`} className="block py-2 text-primary hover:underline">{getUseCase(locale, other).heading ?? getUseCase(locale, other).title} →</a>)}
-      </nav>
+
+      <div className={styles.content}>
+        <blockquote className={styles.task}>
+          <p>{copy.task}</p>
+          <div className={styles.taskBody}>
+            <q>{data.question}</q>
+            <p className={styles.taskIntro}>{data.intro}</p>
+          </div>
+        </blockquote>
+
+        <section className={styles.process} aria-labelledby="use-case-process">
+          <h2 id="use-case-process" className={styles.sectionLabel}>{copy.process}</h2>
+          <ol>
+            {data.steps.map(([title, body], index) => <li key={title}>
+              <span className={styles.stepNumber}>0{index + 1}</span>
+              <div><h3>{title}</h3><p>{body}</p></div>
+            </li>)}
+          </ol>
+        </section>
+
+        <section className={styles.result}>
+          <h2 className={styles.sectionLabel}>{copy.result}</h2>
+          <p>{data.result}</p>
+          <div className={styles.resultActions}>
+            <a href={`/${locale}#contact`} className={styles.resultPrimary}>
+              {data.primaryCta ?? (locale === "nl" ? "Bekijk het met uw eigen vraag" : locale === "fr" ? "Voir avec votre propre question" : "See it with your own question")} →
+            </a>
+            <a href={`/${locale}#product-demonstration`} className={styles.resultSecondary}>
+              {data.secondaryCta ?? copy.demo} →
+            </a>
+          </div>
+        </section>
+
+        {data.criteria && <section className={styles.criteria}>
+          <h2 className={styles.sectionLabel}>{copy.criteria}</h2>
+          <div className={styles.criteriaGrid}>
+            {data.criteria.map(([title, body]) => <article key={title}>
+              <h3>{title}</h3>
+              <p>{body}</p>
+            </article>)}
+          </div>
+        </section>}
+
+        <aside className={styles.boundary}>
+          <span aria-hidden="true">i</span>
+          <p>{data.boundary}</p>
+        </aside>
+
+        <section className={styles.guides}>
+          <h2 className={styles.sectionLabel}>{copy.guides}</h2>
+          <div>
+            {guideSlugs[slug].map(guideSlug => {
+              const article = getBlogArticle(guideSlug);
+              if (!article) return null;
+              return <a key={guideSlug} href={`/nl/blog/${article.slug}`} hrefLang="nl">{article.title}{copy.guideLanguage} →</a>;
+            })}
+          </div>
+        </section>
+
+        <nav aria-label={copy.related} className={styles.related}>
+          <h2 className={styles.sectionLabel}>{copy.related}</h2>
+          <div>
+            {useCaseSlugs.filter(other => other !== slug).map(other => <a key={other} href={`/${locale}/${other}`}>{getUseCase(locale, other).heading ?? getUseCase(locale, other).title} →</a>)}
+          </div>
+        </nav>
+      </div>
     </main>
     <Footer />
   </div>;

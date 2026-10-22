@@ -34,7 +34,7 @@ export function Header({ variant = "default", onBeforeLanguageChange }: HeaderPr
         mobileMenuButtonRef.current?.focus();
       }
     };
-    const desktop = window.matchMedia(isLookup ? "(min-width: 1280px)" : "(min-width: 1536px)");
+    const desktop = window.matchMedia(isLookup ? "(min-width: 1024px)" : "(min-width: 1280px)");
     const closeOnDesktop = () => { if (desktop.matches) setMobileOpen(false); };
     document.addEventListener("keydown", closeOnEscape);
     desktop.addEventListener("change", closeOnDesktop);
@@ -66,7 +66,7 @@ export function Header({ variant = "default", onBeforeLanguageChange }: HeaderPr
   return (
     <header
       className={cn(
-        "glass-nav fixed top-0 right-0 left-0 z-[60] pt-safe transition-shadow duration-300",
+        "site-header glass-nav fixed top-0 right-0 left-0 z-[60] pt-safe transition-shadow duration-300",
         mobileOpen && "site-menu-open",
         scrolled || mobileOpen
           ? "opacity-100 shadow-lg shadow-black/5 dark:shadow-black/20"
@@ -104,8 +104,8 @@ export function Header({ variant = "default", onBeforeLanguageChange }: HeaderPr
       <nav
         aria-label={t("nav.mainNavigation")}
         className={cn(
-          "hidden shrink-0 items-center gap-4 2xl:flex 2xl:gap-5",
-          isComingSoon && "2xl:hidden",
+          "hidden shrink-0 items-center gap-4 xl:flex",
+          isComingSoon && "xl:hidden",
         )}
       >
         {navLinks.map((link) => (
@@ -120,7 +120,7 @@ export function Header({ variant = "default", onBeforeLanguageChange }: HeaderPr
       </nav>
 
         {isLookup && (
-          <nav aria-label={t("nav.mainNavigation")} className="hidden shrink-0 items-center gap-5 xl:flex 2xl:hidden">
+          <nav aria-label={t("nav.mainNavigation")} className="hidden shrink-0 items-center gap-5 lg:flex xl:hidden">
             <Link href={`/${locale}#database`} className="text-sm font-medium text-foreground/90 transition-colors hover:text-primary">
               {lookupApplications}
             </Link>
@@ -134,14 +134,14 @@ export function Header({ variant = "default", onBeforeLanguageChange }: HeaderPr
         )}
 
         {!isComingSoon && (
-          <div className="relative z-10 hidden items-center gap-3 2xl:flex">
+          <div className="relative z-10 hidden items-center gap-3 xl:flex">
             <a href={`/${locale}/app`} className="rounded-full border border-border px-4 py-2.5 text-sm font-semibold text-deep-navy transition-colors hover:border-primary hover:text-primary">
               {t("nav.signIn")}
             </a>
             <a
               href={contactPhoneHref}
               data-company-action={isLookup ? "phone" : undefined}
-              className="inline-flex items-center justify-center rounded-full border border-border bg-surface-elevated p-2.5 text-deep-navy transition-colors hover:border-primary/30 hover:bg-surface-hover"
+              className="hidden items-center justify-center rounded-full border border-border bg-surface-elevated p-2.5 text-deep-navy transition-colors hover:border-primary/30 hover:bg-surface-hover min-[1440px]:inline-flex"
               aria-label={`${t("nav.questions")} ${contactPhone}`}
               title={`${t("nav.questions")} ${contactPhone}`}
             >
@@ -159,17 +159,16 @@ export function Header({ variant = "default", onBeforeLanguageChange }: HeaderPr
         <div
           className={cn(
             "relative z-10 flex items-center gap-1.5",
-            !isLookup && "2xl:hidden",
           )}
         >
-          {!isComingSoon && !isLookup && <Link href={`/${locale}/bedrijf-zoeken`} className="mr-2 hidden items-center gap-2 text-sm font-semibold text-primary md:inline-flex"><Search className="h-4 w-4" aria-hidden="true" />{companyCopy[locale].navigation}</Link>}
+          {!isComingSoon && !isLookup && <Link href={`/${locale}/bedrijf-zoeken`} className="mr-2 hidden items-center gap-2 text-sm font-semibold text-primary md:inline-flex xl:hidden"><Search className="h-4 w-4" aria-hidden="true" />{companyCopy[locale].navigation}</Link>}
           <LanguageSwitcher onBeforeLanguageChange={onBeforeLanguageChange} />
           <ThemeToggle />
           {!isComingSoon && (
             <button
               ref={mobileMenuButtonRef}
               type="button"
-              className={cn("shrink-0 rounded-xl p-2 transition-colors hover:bg-surface-hover touch-manipulation", isLookup && "xl:hidden")}
+              className={cn("shrink-0 rounded-xl p-2 transition-colors hover:bg-surface-hover touch-manipulation xl:hidden", isLookup && "lg:hidden")}
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label={mobileOpen ? t("nav.closeMenu") : t("nav.openMenu")}
               aria-controls="site-navigation-mobile"
@@ -185,9 +184,9 @@ export function Header({ variant = "default", onBeforeLanguageChange }: HeaderPr
         inert={!mobileOpen}
         aria-hidden={!mobileOpen}
         className={cn(
-          "overflow-hidden border-t border-border bg-surface 2xl:hidden",
+          "overflow-hidden border-t border-border bg-surface xl:hidden",
           isComingSoon && "hidden",
-          isLookup && "xl:hidden",
+          isLookup && "lg:hidden",
           mobileOpen
             ? "h-[calc(100dvh-3.5rem-env(safe-area-inset-top,0px))] sm:h-[calc(100dvh-4rem-env(safe-area-inset-top,0px))] opacity-100"
             : "max-h-0 border-transparent opacity-0",

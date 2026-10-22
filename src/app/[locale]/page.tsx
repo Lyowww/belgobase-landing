@@ -3,10 +3,7 @@ import { ComingSoon } from "@/components/ComingSoon";
 import { createLocalizedPageMetadata } from "@/lib/seo/metadata";
 import { Header } from "@/components/layout/Header";
 import { comingSoonEnabled } from "@/lib/site";
-import { FloatingToolbar } from "@/components/layout/FloatingToolbar";
-import { StickyCTA } from "@/components/layout/StickyCTA";
 import { Footer } from "@/components/layout/Footer";
-import { ScrollProgress } from "@/components/layout/ScrollProgress";
 import { ScrollRestoration } from "@/components/layout/ScrollRestoration";
 import { SectionSkeleton } from "@/components/ui/SectionSkeleton";
 import { HeroVisualization } from "@/components/visuals/HeroVisualization";
@@ -51,14 +48,14 @@ export default function Home() {
   return (
     <div className="marketing-site">
       <ScrollRestoration />
-      <ScrollProgress />
       <Header />
-      <FloatingToolbar />
-      <StickyCTA />
       <main className="min-w-0 overflow-x-hidden [overflow-anchor:none]">
         <Hero />
         <div className="section-lazy section-lazy--process">
           <Process />
+        </div>
+        <div className="design-demo design-container">
+          <HeroVisualization />
         </div>
         <div className="section-lazy section-lazy--default">
           <LeadPreview />
@@ -82,7 +79,7 @@ export default function Home() {
           <FinalCTA />
         </div>
       </main>
-      <Footer reserveStickyCta />
+      <Footer />
     </div>
   );
 }
