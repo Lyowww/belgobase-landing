@@ -10,12 +10,13 @@ export function Hero() {
     <section className="homepage-hero" aria-labelledby="homepage-title">
       <div className="homepage-hero-inner">
         <div className="homepage-hero-copy">
+          <p className="homepage-audience">{t("hero.badge")}</p>
           <h1 id="homepage-title">{t("hero.titleLine1")} <span>{t("hero.titleLine2")}</span></h1>
-          <p className="homepage-intro">{t("hero.enrichment")}</p>
-          <p className="homepage-intro homepage-product-summary">{t("hero.productSummary")}</p>
+          <p className="homepage-intro">{t("hero.productSummary")}</p>
           <a href="#contact" className="homepage-primary-cta">
             {t("hero.primaryCta")}<ArrowRight size={19} aria-hidden="true" />
           </a>
+          <p className="homepage-demo-expectation">{t("hero.demoExpectation")}</p>
         </div>
         <div className="homepage-hero-video">
           <HeroVisualization />

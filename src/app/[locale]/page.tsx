@@ -60,14 +60,14 @@ export default function Home() {
         <div className="section-lazy section-lazy--process">
           <Process />
         </div>
-        <div className="homepage-cleanup">
-          <HeroVisualization mode="cleanup" />
+        <div className="section-lazy section-lazy--default">
+          <LeadPreview />
         </div>
         <div className="section-lazy section-lazy--default">
           <Industries />
         </div>
-        <div className="section-lazy section-lazy--default">
-          <LeadPreview />
+        <div className="homepage-cleanup">
+          <HeroVisualization mode="cleanup" />
         </div>
         <div className="section-lazy section-lazy--default">
           <Results />

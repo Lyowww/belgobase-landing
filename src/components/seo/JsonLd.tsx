@@ -29,7 +29,7 @@ export async function JsonLd({ locale, title, description }: JsonLdProps) {
         description: nl
           ? "Echte productdemonstratie: van gesprek en bevestigde criteria naar 239 bedrijven in postcode 2800 met minstens 20 VTE en de daadwerkelijke Excel-export."
           : locale === "fr" ? "Démonstration réelle : de la conversation et des critères confirmés à 239 entreprises du code postal 2800 avec au moins 20 ETP et à l’export Excel réel." : "Real product demonstration: from conversation and confirmed criteria to 239 companies in postcode 2800 with at least 20 FTE and the actual Excel export.",
-        thumbnailUrl: `${siteUrl}/product/belgobase-prospectiepijn-20261005.webp`,
+        thumbnailUrl: `${siteUrl}/product/belgobase-selectie-20261022.webp`,
         contentUrl: `${siteUrl}/product/belgobase-prospectiepijn-20261005.mp4`,
         uploadDate: "2026-10-05",
         inLanguage: "nl-NL",

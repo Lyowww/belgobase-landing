@@ -30,13 +30,13 @@ function handler({ key = 'inert-fixture', providerError = false, providerThrow =
   };
   const source = fs.readFileSync(new URL('../src/app/api/web/mail/route.ts', import.meta.url), 'utf8');
   const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  const module = { exports: {} };
+  const testModule = { exports: {} };
   const require = id => {
     assert.ok(Object.hasOwn(dependencies, id), 'Unexpected dependency must not reach a real provider');
     return dependencies[id];
   };
-  new Function('require', 'module', 'exports', 'process', compiled)(require, module, module.exports, { env: { RESEND_API_KEY: key } });
-  return { post: module.exports.POST, calls, verifications };
+  new Function('require', 'module', 'exports', 'process', compiled)(require, testModule, testModule.exports, { env: { RESEND_API_KEY: key } });
+  return { post: testModule.exports.POST, calls, verifications };
 }
 
 function streamRequest(bytes, { declared, signature = '', chunk = 1024, error = false } = {}) {

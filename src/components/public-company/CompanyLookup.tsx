@@ -271,6 +271,7 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
       <main className={`lookup-main${company ? " lookup-main-has-company" : ""}`}>
         <section className={`lookup-search${company ? " lookup-search-has-company" : ""}`} aria-labelledby="lookup-title">
           <h1 id="lookup-title">{company ? copy.navigation : <><span>{copy.headingLead}</span>{" "}{copy.heading}</>}</h1>
+          {!company && matches.length === 0 && !error && !busy && <p className="lookup-intro">{copy.intro}</p>}
           <form onSubmit={submit} className="lookup-form" aria-busy={!ready || busy}>
             <label htmlFor="company-query" className="lookup-sr-only">{copy.label}</label>
             <div className="lookup-input-row">
@@ -279,6 +280,7 @@ export function CompanyLookup({ locale }: { locale: Locale }) {
               <button type="submit" disabled={!ready || busy}>{!ready || busy ? <LoaderCircle size={21} className="lookup-spin" aria-hidden="true" /> : null}{!ready ? copy.initializing : busy ? copy.loading : copy.search}<ArrowRight size={20} aria-hidden="true" /></button>
             </div>
           </form>
+          {!company && matches.length === 0 && !error && !busy && <p className="lookup-bridge"><Link href={`/${locale}/prospectielijsten`}>{copy.bridge}</Link></p>}
           <noscript><p className="lookup-message">{copy.needsJavaScript}</p></noscript>
           <div id="lookup-message" aria-live="polite" aria-atomic="true">
             {error && <p className="lookup-message" role="alert">{copy[error]}{officialNumber && <a className="lookup-official" data-company-action="kbo" href={`https://kbopub.economie.fgov.be/kbopub/zoeknummerform.html?nummer=${officialNumber}`} target="_blank" rel="noopener noreferrer">{copy.official} <ExternalLink size={16} aria-hidden="true" /></a>}</p>}

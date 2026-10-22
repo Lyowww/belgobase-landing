@@ -2,16 +2,19 @@ import type { Locale } from "@/i18n/config";
 
 export const useCaseSlugs = ["bedrijven-zoeken", "prospectielijsten", "klantenbestand-analyseren", "bedrijfsanalyse"] as const;
 export type UseCaseSlug = typeof useCaseSlugs[number];
-type UseCase = { title: string; heading?: string; description: string; question: string; intro: string; steps: [string, string][]; result: string; boundary: string; criteria?: [string, string][] };
+type UseCase = { title: string; heading?: string; description: string; question: string; intro: string; steps: [string, string][]; result: string; boundary: string; criteria?: [string, string][]; primaryCta?: string; secondaryCta?: string; ctaMicrocopy?: string };
 
 const nl: Record<UseCaseSlug, UseCase> = {
   "bedrijven-zoeken": {
-    heading: "Hoeveel passende bedrijven mist u terwijl u blijft zoeken?",
+    heading: "Belgische bedrijven zoeken voor uw volgende prospectielijst.",
     title: "Belgische bedrijven zoeken op sector, regio en grootte",
     description: "Zoek in de Belgische bedrijvendatabase op sector, NACE-BEL, regio en beschikbare VTE. Controleer uw selectie en stel een bedrijvenlijst samen voor Excel.",
     question: "Ik lever aan bedrijven in de regio Mechelen. Help me een doelgroep kiezen die bij mijn aanbod past.",
-    intro: "U kent uw beste klanten. Maar welke Belgische bedrijven passen bij uw volgende prospectieronde? Met BelgoBase stelt u een bedrijvenlijst of prospectielijst samen op sector, NACE-BEL-activiteit, regio en beschikbare personeelsgrootte in VTE. De bedrijvendatabase combineert beschikbare KBO-gegevens, zoals naam, ondernemingsnummer, adres en rechtsvorm, met NBB-cijfers. Bespreek uw doelgroep, controleer de criteria en kies welke bedrijven en kolommen u naar Excel exporteert.",
-    steps: [["Uw ervaring blijft in uw hoofd", "Vertel welke klanten bij uw aanbod passen. De assistent helpt dit omzetten in criteria, zodat de voorbereiding niet telkens opnieuw begint."], ["Een verkeerde selectie kost ook beluren", "Controleer activiteit, regio en beschikbare bedrijfsinformatie voordat uw team tijd in de bedrijven steekt."], ["Ontbrekende gegevens komen pas tijdens het bellen boven", "Onderzoek beschikbare contactgegevens vooraf en kies de kolommen die uw team nodig heeft. Niet ieder bedrijf publiceert contactinformatie."]],
+    intro: "Selecteer op activiteit, regio en beschikbare bedrijfsgegevens. Controleer uw doelgroep en kies zelf welke bedrijven en kolommen u naar Excel exporteert.",
+    steps: [["Bespreek uw doelgroep", "Vertel welke Belgische bedrijven passen bij uw aanbod en welke regio u wilt bereiken."], ["Controleer de selectie", "Bekijk de activiteiten, regio en beschikbare bedrijfsgegevens voordat u bedrijven kiest."], ["Kies bedrijven en Excel-kolommen", "Selecteer zelf welke bedrijven en gegevens u naar Excel exporteert."]],
+    primaryCta: "Vraag een demo aan met uw doelgroep",
+    secondaryCta: "Bekijk de productvideo",
+    ctaMicrocopy: "Na de aanvraag nemen we contact op. De video kunt u meteen bekijken.",
     criteria: [["Sector en NACE-BEL-activiteit", "Selecteer activiteiten die bij uw aanbod passen. Een activiteitencode beschrijft een geregistreerde activiteit; bekijk ook het bedrijf zelf voordat u het benadert."], ["Regio, gemeente en postcode", "Baken uw werkgebied af met Belgische locatiecriteria. De selectie volgt het beschikbare KBO-bedrijfsadres; dat is niet noodzakelijk iedere locatie waar een onderneming actief is."], ["Personeel en financiële gegevens", "Combineer uw doelgroep met beschikbare VTE- en financiële gegevens. VTE staat voor voltijdsequivalenten en is niet hetzelfde als het aantal personen. Niet ieder bedrijf publiceert omzet of een volledige jaarrekening."], ["Rechtsvorm en rechtstoestand", "Maak onderscheid tussen de rechtsvorm van een onderneming en haar juridische toestand. Gebruik de beschikbare opname- en uitsluitingsfilters om uw selectie verder te verfijnen."]],
     result: "Een gerichte Belgische bedrijvenlijst met de velden die u zelf hebt gekozen. U kunt de selectie verder onderzoeken en gebruiken voor uw commerciële voorbereiding.",
     boundary: "Een bedrijf dat aan uw criteria voldoet, heeft niet automatisch interesse in uw aanbod. De beschikbaarheid van contactgegevens en financiële cijfers verschilt per onderneming.",
@@ -49,12 +52,15 @@ const nl: Record<UseCaseSlug, UseCase> = {
 };
 const en: Record<UseCaseSlug, UseCase> = {
   "bedrijven-zoeken": {
-    heading: "How many suitable companies do you miss while you keep researching?",
+    heading: "Find Belgian companies for your next prospect list.",
     title: "Find Belgian companies by industry, region and size",
     description: "Search the Belgian company database by industry, NACE-BEL, region and available FTE data. Review your selection and build a company list for Excel.",
     question: "I supply businesses around Mechelen. Help me choose a target market that fits my offer.",
-    intro: "You know your best customers. Which Belgian companies fit your next prospecting campaign? Use BelgoBase to build a company or prospect list by industry, NACE-BEL activity, region and available staff size in FTE. The company database combines available CBE data, such as name, enterprise number, address and legal form, with NBB figures. Discuss your target market, check the criteria and choose which companies and columns to export to Excel.",
-    steps: [["Your experience stays in your head", "Explain which customers fit your offer. The assistant helps turn that context into criteria."], ["The wrong selection costs calling hours too", "Review activity, location and available company information before your team invests time."], ["Missing data surfaces only during the call", "Research available contact information in advance and choose the fields your team needs. Not every company publishes contact data."]],
+    intro: "Select by activity, region and available company data. Review your target market and choose which companies and columns to export to Excel.",
+    steps: [["Discuss your target market", "Describe the Belgian companies that fit your offer and the region you want to reach."], ["Review the selection", "Check activities, region and available company data before choosing companies."], ["Choose companies and Excel columns", "Select which companies and information to export to Excel."]],
+    primaryCta: "Request a demo with your target market",
+    secondaryCta: "Watch the product video",
+    ctaMicrocopy: "We will contact you after your request. You can watch the video straight away.",
     criteria: [["Industry and NACE-BEL activity", "Select activities that fit your offer. An activity code describes a registered activity; review the business itself before approaching it."], ["Region, municipality and postcode", "Define your service area using Belgian location criteria. The selection follows the available KBO company address, which does not necessarily cover every location where a business operates."], ["Staff and financial information", "Combine your target criteria with available FTE and financial data. FTE means full-time equivalents, not headcount. Not every company publishes revenue or a complete set of annual accounts."], ["Legal form and legal status", "Distinguish a company's legal form from its legal status. Use the available inclusion and exclusion filters to refine your selection."]],
     result: "A focused Belgian company list with the fields you chose. Continue researching your selection and use it to prepare your sales work.",
     boundary: "Matching your criteria does not mean a company is interested in your offer. Contact details and financial figures are not available for every company.",
@@ -92,24 +98,18 @@ const en: Record<UseCaseSlug, UseCase> = {
 };
 const fr: Record<UseCaseSlug, UseCase> = {
   "bedrijven-zoeken": {
-    "heading": "Combien d’entreprises adaptées manquez-vous en continuant à chercher ?",
+    "heading": "Trouvez des entreprises belges pour votre prochaine liste de prospection.",
     "title": "Trouver des entreprises belges par secteur, région et taille",
     "description": "Cherchez des entreprises belges par secteur, NACE-BEL, région et ETP disponibles. Vérifiez la sélection et constituez une liste à exporter vers Excel.",
     "question": "Je fournis des entreprises autour de Malines. Aidez-moi à choisir une cible adaptée à mon offre.",
-    "intro": "Vous connaissez vos meilleurs clients. Quelles entreprises belges correspondent à votre prochaine campagne de prospection ? Avec BelgoBase, constituez une liste d’entreprises ou de prospects selon le secteur, l’activité NACE-BEL, la région et les effectifs disponibles en ETP. La base d’entreprises combine les données disponibles de la BCE, comme le nom, le numéro d’entreprise, l’adresse et la forme juridique, avec les chiffres de la BNB. Discutez de votre cible, vérifiez les critères et choisissez les entreprises et colonnes à exporter vers Excel.",
+    "intro": "Sélectionnez par activité, région et données d’entreprise disponibles. Vérifiez votre cible et choisissez les entreprises et colonnes à exporter vers Excel.",
+    "primaryCta": "Demandez une démo avec votre cible",
+    "secondaryCta": "Voir la vidéo du produit",
+    "ctaMicrocopy": "Nous vous contacterons après votre demande. Vous pouvez regarder la vidéo dès maintenant.",
     "steps": [
-      [
-        "Votre expérience reste dans votre tête",
-        "Expliquez quels clients correspondent à votre offre. L’assistant aide à transformer ce contexte en critères."
-      ],
-      [
-        "Une mauvaise sélection coûte aussi des heures d’appel",
-        "Examinez l’activité, la localisation et les informations disponibles avant que votre équipe investisse du temps."
-      ],
-      [
-        "Les données manquantes apparaissent pendant l’appel",
-        "Recherchez les coordonnées disponibles à l’avance et choisissez les champs utiles. Toutes les entreprises ne publient pas leurs coordonnées."
-      ]
+      ["Discutez de votre cible", "Décrivez les entreprises belges adaptées à votre offre et la région que vous souhaitez atteindre."],
+      ["Vérifiez la sélection", "Examinez les activités, la région et les données disponibles avant de choisir les entreprises."],
+      ["Choisissez les entreprises et colonnes Excel", "Sélectionnez vous-même les entreprises et les informations à exporter vers Excel."]
     ],
     "criteria": [
       [

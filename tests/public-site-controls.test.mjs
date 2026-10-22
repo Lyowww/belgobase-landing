@@ -49,8 +49,7 @@ test("public routes and section controls resolve to owned targets", async () => 
     );
   }
   assert.equal(footer.includes('href={`/${locale}#faq`}'), true);
-  assert.doesNotMatch(header, /<Link href=\{`\/\$\{locale\}\/app`\}/);
-  assert.equal((header.match(/<a href=\{`\/\$\{locale\}\/app`\}/g) ?? []).length, 2);
+  assert.equal((header.match(/<(?:a|Link) href=\{`\/\$\{locale\}\/app`\}/g) ?? []).length, 3);
 
   for (const route of ["", "privacy", "terms", "cookies", "legal", "app"]) {
     const suffix = route ? `/${route}` : "";
@@ -200,11 +199,11 @@ test("mobile and preference controls retain their keyboard escape path", async (
   assert.match(hero, /aria-controls=\{videoId\}/);
   assert.match(hero, /belgobase-prospectiepijn-20261005\.mp4/);
   assert.match(hero, /belgobase-lijsten-20260929\.mp4/);
-  assert.match(hero, /belgobase-prospectiepijn-20261005\.webp/);
+  assert.match(hero, /belgobase-selectie-20261022\.webp/);
   assert.match(hero, /belgobase-lijsten-20260929\.webp/);
   assert.match(hero, /source\.replace\("\.mp4", ""\)/);
   await Promise.all([
-    "belgobase-prospectiepijn-20261005.webp",
+    "belgobase-selectie-20261022.webp",
     "belgobase-lijsten-20260929.webp",
     "belgobase-prospectiepijn-20261005-nl.vtt",
     "belgobase-prospectiepijn-20261005-en.vtt",

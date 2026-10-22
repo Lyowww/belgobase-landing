@@ -9,13 +9,13 @@ type DemoId = "prospecting" | "cleanup";
 
 const copy = {
   fr: {
-    "prospectingTitle": "Que coûte un mauvais prospect à votre équipe ?",
-    "prospectingDescription": "Le même salaire et la même préparation, même pour une entreprise inadaptée. Reconnaissez-vous où votre équipe perd du temps ?",
-    "prospectingCaption": "Essai de recherche réel du 29 septembre. Narration IA en néerlandais ; temps d’attente raccourcis.",
+    "prospectingTitle": "De votre cible à Excel",
+    "prospectingDescription": "Voyez un fournisseur de fruits au travail préciser sa cible, vérifier les critères et exporter sa sélection. Vous gardez le contrôle sur les entreprises retenues.",
+    "prospectingCaption": "Exemple réel du 29 septembre. La vidéo commence à 1:00, au début de la méthode. Narration IA en néerlandais ; temps d’attente raccourcis.",
     "cleanupTitle": "À quelle fréquence rachetez-vous ce qui se trouve déjà dans vos listes Excel ?",
     "cleanupDescription": "Des doublons, des notes oubliées et une équipe d’appel sans prochaine liste. Voyez ce que révèle un traitement réel de fichiers existants.",
     "cleanupCaption": "Essai Excel réel dans la version de bureau. Données personnelles masquées ; narration IA en néerlandais.",
-    "play": "Voir la présentation",
+    "play": "Voir la vidéo",
     "open": "Ouvrir la vidéo séparément",
     "failed": "La vidéo ne peut pas être lue ici.",
     "next": "Voir comment nettoyer les listes existantes",
@@ -25,13 +25,13 @@ const copy = {
     "cleanupTranscript": "Cet essai réel de la version de bureau réunit des fichiers Excel existants en conservant leur provenance et les notes. Les informations d’appel sont classées, les données incertaines sont soumises à vérification et vous pouvez ensuite poursuivre avec les contacts utiles."
 },
   nl: {
-    prospectingTitle: "Wat kost de verkeerde prospect uw team?",
-    prospectingDescription: "Hetzelfde loon en dezelfde voorbereiding, ook voor een bedrijf dat niet past. Herkent u waar uw team tijd verliest?",
-    prospectingCaption: "Echte zoekproef van 29 september. AI-voice-over; wachttijd ingekort.",
+    prospectingTitle: "Van uw doelgroep naar Excel",
+    prospectingDescription: "Bekijk hoe een leverancier van fruit op het werk zijn doelgroep bespreekt, criteria controleert en de selectie exporteert. U houdt zelf de regie over welke bedrijven u meeneemt.",
+    prospectingCaption: "Echt productvoorbeeld van 29 september. De video begint bij de werkwijze op 1:00. AI-voice-over; wachttijd ingekort.",
     cleanupTitle: "Hoe vaak koopt u opnieuw wat al in uw Excel-lijsten zit?",
     cleanupDescription: "Dubbels, vergeten notities en een belteam dat zonder lijst zit. Bekijk wat een echte verwerking van bestaande bestanden blootlegt.",
     cleanupCaption: "Echte Excel-proef in de desktopversie. Persoonsgegevens afgeschermd; AI-voice-over.",
-    play: "Bekijk de uitleg",
+    play: "Bekijk de video",
     open: "Open de video apart",
     failed: "De video kan hier niet afspelen.",
     next: "Bekijk hoe je bestaande lijsten opschoont",
@@ -41,13 +41,13 @@ const copy = {
     cleanupTranscript: "In deze echte desktopproef worden bestaande Excelbestanden samengebracht met behoud van herkomst en notities. Belinformatie wordt ingedeeld, onzekere gegevens gaan naar controle en u kunt daarna gericht met de bruikbare contacten verder werken.",
   },
   en: {
-    prospectingTitle: "What does the wrong prospect cost your team?",
-    prospectingDescription: "The same salary and preparation, even for a company that does not fit. Recognise where your team loses time?",
-    prospectingCaption: "Real search trial from 29 September. Dutch AI narration; waiting time shortened.",
+    prospectingTitle: "From your target market to Excel",
+    prospectingDescription: "Watch a workplace fruit supplier discuss his target market, check the criteria and export the selection. You stay in control of which companies to include.",
+    prospectingCaption: "Real product example from 29 September. The video starts with the workflow at 1:00. Dutch AI narration; waiting time shortened.",
     cleanupTitle: "How often do you buy what is already in your Excel lists?",
     cleanupDescription: "Duplicates, forgotten notes and a calling team with no next list. See what a real processing run of existing files reveals.",
     cleanupCaption: "Real Excel trial in the desktop version. Personal data concealed; Dutch AI narration.",
-    play: "Watch the walkthrough",
+    play: "Watch the video",
     open: "Open the video directly",
     failed: "The video cannot play here.",
     next: "See how to clean up existing lists",
@@ -60,7 +60,7 @@ const copy = {
 
 export function HeroVisualization({ mode = "prospecting" }: { mode?: DemoId }) {
   if (mode === "prospecting") {
-    preload("/product/belgobase-prospectiepijn-20261005.webp", {
+    preload("/product/belgobase-selectie-20261022.webp", {
       as: "image",
       type: "image/webp",
       fetchPriority: "high",
@@ -97,6 +97,7 @@ export function HeroVisualization({ mode = "prospecting" }: { mode?: DemoId }) {
     poster,
     width,
     height,
+    startAt = 0,
   }: {
     id: DemoId;
     title: string;
@@ -107,12 +108,13 @@ export function HeroVisualization({ mode = "prospecting" }: { mode?: DemoId }) {
     poster: string;
     width: number;
     height: number;
+    startAt?: number;
   }) => {
     const videoId = id === "prospecting" ? "hero-product-demo" : "list-cleanup-demo";
     const transcriptId = `${videoId}-transcript`;
 
     return <article id={id === "cleanup" ? "list-cleanup-demo-card" : "product-demonstration"} className="demo-card min-w-0 scroll-mt-28 rounded-2xl border border-border bg-surface p-3 shadow-[0_28px_80px_-42px_rgba(5,18,45,0.38)] sm:p-4">
-      <div className={id === "prospecting" ? "sr-only" : "mb-4 text-left"}>
+      <div className="mb-4 text-left">
         <h2 className="text-xl font-semibold tracking-tight text-deep-navy dark:text-white sm:text-2xl">{title}</h2>
         <p className="mt-2 text-sm leading-6 text-muted sm:text-base">{description}</p>
       </div>
@@ -120,7 +122,7 @@ export function HeroVisualization({ mode = "prospecting" }: { mode?: DemoId }) {
         <video
           ref={element => { videos.current[id] = element; }}
           id={videoId}
-          src={source}
+          src={startAt ? `${source}#t=${startAt}` : source}
           controls
           playsInline
           preload="none"
@@ -145,9 +147,9 @@ export function HeroVisualization({ mode = "prospecting" }: { mode?: DemoId }) {
         </div>}
         {failed[id] && <p role="status" className="p-5 text-base text-white">{text.failed} <a className="underline" href={source}>{text.open}</a>.</p>}
       </div>
+      <p className="mt-3 text-xs leading-5 text-muted">{caption}</p>
       <details className="mx-auto mt-3 max-w-3xl text-left text-base leading-7 text-muted">
         <summary className="cursor-pointer text-center underline underline-offset-4">{text.transcript}</summary>
-        <p className="mt-3">{caption}</p>
         <p id={transcriptId} className="mt-3">{transcript}</p>
       </details>
     </article>;
@@ -161,9 +163,10 @@ export function HeroVisualization({ mode = "prospecting" }: { mode?: DemoId }) {
       caption: text.prospectingCaption,
       transcript: text.prospectingTranscript,
       source: "/product/belgobase-prospectiepijn-20261005.mp4",
-      poster: "/product/belgobase-prospectiepijn-20261005.webp",
+      poster: "/product/belgobase-selectie-20261022.webp",
       width: 1920,
       height: 1080,
+      startAt: 60,
     })}
     {mode === "cleanup" && renderVideo({
       id: "cleanup",

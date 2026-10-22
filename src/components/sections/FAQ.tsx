@@ -75,21 +75,20 @@ export function FAQ() {
   const { isMobile } = usePerformanceMode();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
-  const faqs = [
-    { question: t("faq.q10"), answer: t("faq.a10") },
-    { question: t("faq.q11"), answer: t("faq.a11") },
-    { question: t("faq.q12"), answer: t("faq.a12") },
-    { question: t("faq.q13"), answer: t("faq.a13") },
-    { question: t("faq.q1"), answer: t("faq.a1") },
-    { question: t("faq.q2"), answer: t("faq.a2") },
-    { question: t("faq.q3"), answer: t("faq.a3") },
-    { question: t("faq.q4"), answer: t("faq.a4") },
-    { question: t("faq.q5"), answer: t("faq.a5") },
-    { question: t("faq.q6"), answer: t("faq.a6") },
-    { question: t("faq.q7"), answer: t("faq.a7") },
-    { question: t("faq.q8"), answer: t("faq.a8") },
-    { question: t("faq.q9"), answer: t("faq.a9") },
-  ];
+  const primaryFaqs = [5, 3, 7, 8, 11];
+  const additionalFaqs = [1, 2, 4, 6, 9, 10, 12, 13];
+  const renderFaq = (number: number, index: number, isLast: boolean) => (
+    <FAQItem
+      key={number}
+      question={t(`faq.q${number}`)}
+      answer={t(`faq.a${number}`)}
+      isOpen={openIndex === index}
+      onToggle={() => setOpenIndex(openIndex === index ? null : index)}
+      isLast={isLast}
+      liteAnimation={isMobile}
+      answerId={`faq-answer-${number}`}
+    />
+  );
 
   return (
     <section id="faq" className="noise-overlay relative bg-surface py-16 sm:py-24 md:py-32">
@@ -114,18 +113,13 @@ export function FAQ() {
 
           <SectionReveal delay={0.1}>
             <div>
-              {faqs.map((faq, i) => (
-                <FAQItem
-                  key={faq.question}
-                  question={faq.question}
-                  answer={faq.answer}
-                  isOpen={openIndex === i}
-                  onToggle={() => setOpenIndex(openIndex === i ? null : i)}
-                  isLast={i === faqs.length - 1}
-                  liteAnimation={isMobile}
-                  answerId={`faq-answer-${i}`}
-                />
-              ))}
+              {primaryFaqs.map((number, index) => renderFaq(number, index, index === primaryFaqs.length - 1))}
+              <details className="mt-6">
+                <summary className="cursor-pointer py-3 text-base font-medium text-deep-navy underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-primary">{t("faq.moreQuestions")}</summary>
+                <div className="mt-3">
+                  {additionalFaqs.map((number, index) => renderFaq(number, primaryFaqs.length + index, index === additionalFaqs.length - 1))}
+                </div>
+              </details>
             </div>
           </SectionReveal>
         </div>
